@@ -1,0 +1,10 @@
+# apps 下是四个独立 git 仓库，不纳入编排仓库
+apps/*
+!apps/README.md
+
+# Claude Code 本地态
+.claude/settings.local.json
+
+# 系统文件
+.DS_Store
+node_modules/
