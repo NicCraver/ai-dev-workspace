@@ -13,9 +13,9 @@ web 端「智信 AI 框」目前选择对话对象走宿主 native（`selectAgen
 
 ## 范围
 
-- **本期做（web PC）**：`SelectAiBoxDialog` 弹窗（三 tab + 搜索 + 组织架构钻取 + 单选）、选中后 agent 出现/定位/对话切换、`bridge.md` 补全协议
-- **本期做（三端 native，多端任务）**：实现新增的 wnsdk/webview 桥接口（最近联系人补字段、群组、组织架构）
-- **本期不做**：移动端（web mobile 入口）仍走原有/后续 native 方案；不做多选；不做转发附言/消息预览
+- **本期做（apps/web）**：`SelectAiBoxDialog` 弹窗（三 tab + 搜索 + 组织架构钻取 + 单选）、选中后 agent 出现/定位/对话切换、`bridge.md` 补全协议
+- **本期做（apps/desktop，PC 壳）**：实现 `window.webview.*` 桥接口（`getRecentContacts` 补 `agentName`/`lastChatAt`；新增 `getMyGroups` / `getOrgCompanies` / `getDeptUsers`）
+- **本期不做**：android / ios（移动端 native 桥与选择 UI 均后续）；web mobile 入口；多选；转发附言/消息预览
 
 ## 用户流程
 
@@ -40,7 +40,7 @@ web 端「智信 AI 框」目前选择对话对象走宿主 native（`selectAgen
 
 ## 数据契约（wnsdk / webview 桥）
 
-PC 走 `window.webview.*`（扁平），移动端对应 `wnsdk.aiChat.*`（命名空间，本期仅预留）。以下写入 `context/bridge.md`（当前为空模板，需补全通信机制 / 消息格式 / Changelog）：
+PC 走 `window.webview.*`（扁平，由 apps/desktop 壳实现）；移动端 `wnsdk.aiChat.*`（命名空间）本期不做、仅协议预留。以下写入 `context/bridge.md`（当前为空模板，需补全通信机制 / 消息格式 / Changelog）：
 
 | 数据 | 方法 | 入参 | 返回字段 | 状态 |
 |---|---|---|---|---|
@@ -91,13 +91,13 @@ web 端无单测：`pnpm build`（vue-tsc）类型检查 + 壳内真机联调。
 
 | 差异点 | web | android | ios | desktop |
 |---|---|---|---|---|
-| 选择 UI | PC 走 H5 弹窗（本期）；mobile 后续 | native 供给数据，不做选择 UI | 同 android | native 供给数据 |
-| 桥接口实现 | 消费方 | 实现 `wnsdk.aiChat.*` | 实现 `wnsdk.aiChat.*` | 实现 `window.webview.*`（含补 `getRecentContacts` 字段） |
+| 选择 UI | PC 走 H5 弹窗（本期）；mobile 后续 | 本期不动 | 本期不动 | 本期不动（仅供给数据） |
+| 桥接口实现 | 消费 `window.webview.*` | 本期不动 | 本期不动 | 实现 `window.webview.*`（含补 `getRecentContacts` 字段） |
 | 移动端选择 | 后续 | 后续 | 后续 | - |
 
 ## 待联调确认
 
 1. `getRecentContacts` 现有返回是否已含 `agentName` + `lastChatAt`（决定宿主是否加字段）
 2. home 页 agent 列表渲染/切换/对话加载是否已存在（决定是否一并搭建）
-3. 桥接口命名：PC `window.webview.getMyGroups`（扁平）、移动 `wnsdk.aiChat.getMyGroups`（命名空间）—— 待 native 团队对齐
+3. desktop 壳 `window.webview.*` 接口命名与入参与 web 对齐；移动端 `wnsdk.aiChat.*` 后续再议
 4. 群组列表量级 / 全公司可私聊人员量级（决定搜索是否需宿主接口）
