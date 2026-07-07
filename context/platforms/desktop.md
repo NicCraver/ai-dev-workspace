@@ -48,3 +48,6 @@ npm run build:clean
 - `electron-builder.yml` 已在 .gitignore，但仓库内仍存在，**Windows 签名证书密码明文**（`certificatePassword`）——勿外泄，勿重新提交该文件。
 - 多窗口 + `@electron/remote` + IPC 交错，窗口生命周期/单例/关闭逻辑易出竞态（`src/main/index.js` 的 `closeWin`/`gologin`/`realQuit` 等）。
 - 渲染层三套 UI 库（element-ui/ant-design-vue/iview）混用，体积大、风格不统一，新功能尽量沿用同域既有库。
+
+## 深度参考（组件级调研）
+- [转发弹窗（消息转发）](./desktop-forward-dialog.md) —— `transmit-message.vue` 全链路：UI/五条取数通道/三种转发模式/智能体字段/子组件契约/移植要点。关键词提醒：代码里「转发」=`transmit`。
