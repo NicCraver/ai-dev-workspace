@@ -8,7 +8,7 @@
 |---|------|-----|---------|-----|---------|
 | T1 | bridge.md 桥协议（4 项） | ✅ | — | — | ✅ |
 | T2 | desktop 桥方法（getMyGroups/getOrgCompanies/getDeptUsers + 补 getRecentContacts 字段） | — | — | — | ⬜ |
-| T3 | useAiBoxPickerData 取数组合函数 + 单测 | ⬜ | — | — | — |
+| T3 | useAiBoxPickerData 取数组合函数 + 单测 | ✅ | — | — | — |
 | T4 | SelectAiBoxDialog 骨架（AcDialog + 三 tab + 单选） | ⬜ | — | — | — |
 | T5 | 群组 tab（组织群/外联群切换 + AiBoxRow） | ⬜ | — | — | — |
 | T6 | OrgPicker 组织架构钻取（公司→部门→人员 + 面包屑） | ⬜ | — | — | — |
