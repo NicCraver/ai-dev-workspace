@@ -38,6 +38,8 @@ web 端「智信 AI 框」目前选择对话对象走宿主 native（`selectAgen
 
 **单选语义**：单个 `selectedKey`；点行即选并高亮、底部即时更新；再点其他切换；未选时「确定」禁用。
 
+**视觉还原（硬性要求）**：严格按蓝湖设计稿还原视觉——源文件 `/Users/nic/Downloads/LanhuProject/src/views/lanhu_xuanzeaikuang/index.vue` + 4 张截图（最近联系人 / 组织·公司 / 组织·部门树 / 组织·面包屑+人员）。尺寸、间距、圆角、配色一律用 UnoCSS 原子类表达（对照 `context/dev-rules/unocss-conventions.mdc` 与 `apps/web/uno.config.js` token）。设计稿中的位图图标（`SketchPng*.png`）**不直接搬**，替换为项目既有 `SvgIcon` 体系或等价矢量图标；切图缺失则向设计索取 SVG。
+
 ## 数据契约（wnsdk / webview 桥）
 
 PC 走 `window.webview.*`（扁平，由 apps/desktop 壳实现）；移动端 `wnsdk.aiChat.*`（命名空间）本期不做、仅协议预留。以下写入 `context/bridge.md`（当前为空模板，需补全通信机制 / 消息格式 / Changelog）：
