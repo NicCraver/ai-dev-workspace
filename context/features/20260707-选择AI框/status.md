@@ -6,7 +6,7 @@
 
 | # | 任务 | web | android | ios | desktop |
 |---|------|-----|---------|-----|---------|
-| T1 | bridge.md 桥协议（4 项） | ⬜ | — | — | ⬜ |
+| T1 | bridge.md 桥协议（4 项） | ✅ | — | — | ✅ |
 | T2 | desktop 桥方法（getMyGroups/getOrgCompanies/getDeptUsers + 补 getRecentContacts 字段） | — | — | — | ⬜ |
 | T3 | useAiBoxPickerData 取数组合函数 + 单测 | ⬜ | — | — | — |
 | T4 | SelectAiBoxDialog 骨架（AcDialog + 三 tab + 单选） | ⬜ | — | — | — |

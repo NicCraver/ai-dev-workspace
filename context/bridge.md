@@ -1,35 +1,55 @@
 # JSBridge 协议（WebView ↔ 原生）
 
 > 三端（Android / iOS / Electron）内嵌 web 的通信契约。任何一端改协议必须先改本文件。
-> 最后更新：YYYY-MM-DD
+> 最后更新：2026-07-07
 
 ## 通信机制
 
+内嵌 web（`apps/web`）经 `window.webview.*`（PC，desktop 壳实现）或 `wnsdk.aiChat.*`（移动端，android/ios 实现）向原生取数。本期仅 desktop 落地，移动端仅命名预留。
+
 | 端 | web → 原生 | 原生 → web |
 |----|-----------|-----------|
-| android | <!-- 如 window.NativeBridge.invoke(json) --> | <!-- 如 evaluateJavascript 回调 --> |
-| ios | <!-- 如 webkit.messageHandlers.bridge.postMessage --> | |
-| desktop | <!-- 如 ipcRenderer / preload 暴露的 API --> | |
+| desktop | 内嵌 web 调 `window.webview.<method>(params)` → preload（`apps/desktop/static/plugin/webview.js`）生成 `uuid` 存入 `registerCallback[uuid]`，再 `ipcRenderer.sendToHost(<channel>, params, uuid)` | 宿主 renderer（`src/renderer/views/main.vue`）处理后 `webContents.send("trigger-result", { type:<channel>, data, uuid })` → preload 按 `uuid` 取 `registerCallback[uuid]` 的 `resolve/reject`，按 `case type` 分发（成功 `data.code===1` → `resolve(data.data)`；`data.code===0` → `reject(data)`） |
+| android | `wnsdk.aiChat.<method>(params)`（本期不实现，预留命名） | 回调（本期不实现） |
+| ios | `wnsdk.aiChat.<method>(params)`（本期不实现，预留命名） | 回调（本期不实现） |
+
+> 新增方法需同时在 preload 的 `trigger-result` `switch(type)` 增对应 `case`（或复用 `default` 分支：`code!==0` 即 resolve），并在宿主 `main.vue` 增 `<channel>` 监听处理。
 
 ## 消息格式
 
 ```jsonc
-// 请求
-{ "id": "uuid", "method": "方法名", "params": {} }
-// 响应
-{ "id": "uuid", "code": 0, "data": {}, "msg": "" }
+// 请求（web → 原生，经 sendToHost）
+[<channel>, <params>, <uuid>]
+// 例：sendToHost("get-my-groups", { type:"organization", pageNum:1, pageSize:200 }, "a1b2c3d4")
+
+// 响应（原生 → web，经 trigger-result）
+{ "type": "<channel>", "uuid": "<uuid>", "data": { "code": 1, "data": <结果>, "msg": "" } }
+// code: 1=成功(resolve data.data) / 0=失败(reject)
 ```
 
 ## 方法清单
 
-| method | 方向 | params | 返回 | 支持端 | 备注 |
-|--------|------|--------|------|--------|------|
-| <!-- getToken --> | web→原生 | | | android/ios/desktop | |
+> 完整方法集见 `apps/desktop/static/plugin/webview.js`；本表记录各功能用到的契约面，新增/变更须在此登记并写 Changelog。
+
+| method | channel | 方向 | params | 返回（resolve 值） | 支持端 | 状态 |
+|--------|---------|------|--------|------------------|--------|------|
+| `getRecentContacts` | `get-recent-contacts` | web→原生 | — | `[{accountId/id, name, agentName, avatar, ownerType:'group'\|'private', groupType?, lastChatAt:number}]` | desktop | 已有，**补 `agentName` + `lastChatAt`**（选择AI框） |
+| `getMyGroups` | `get-my-groups` | web→原生 | `{type:'organization'\|'outsource', pageNum?:number, pageSize?:number}` | `[{id, name, agentName, avatar, memberCount, groupType:0\|10, lastChatAt}]` | desktop | 新增（选择AI框） |
+| `getOrgCompanies` | `get-org-companies` | web→原生 | `{type:'organization'\|'outsource'}` | `[{corpId, name, memberCount, corpType}]`（organization 含「入职企业」「我的下级」分组字段） | desktop | 新增（选择AI框） |
+| `getDeptUsers` | `get-dept-users` | web→原生 | `{corpId:string, pid:string}`（`pid:'0'` 表公司根部门） | `{depts:[{id,name,memberCount,pid}], users:[{accountId,name,agentName,avatar}]}` | desktop | 新增（选择AI框） |
+
+**统一字段约定**（与 `apps/web/src/components/views/home/personalAiAgentAdapter.js` 对齐）：
+- 人员主键 `accountId`、群主键 `id`、AI 框名 `agentName`、最近对话时间 `lastChatAt`（毫秒时间戳）
+- `ownerType` ∈ `group`（群） / `private`（私聊）
+- `groupType`：`0`=组织群 / `10`=外联群（沿用 desktop 转发窗，见 `context/platforms/desktop-forward-dialog.md`）
 
 ## 版本与兼容
 
-<!-- 老版本壳不支持新方法时 web 端的降级策略 -->
+- 老 desktop 壳无 `getMyGroups`/`getOrgCompanies`/`getDeptUsers` 时，web 端 `useAiBoxPickerData` 捕获异常 → 弹窗提示「请升级到最新版本」。
+- `getRecentContacts` 缺 `agentName`/`lastChatAt`：视为宿主 bug，联调时由 desktop 侧补齐（见选择AI框 spec「待联调确认 1」）。
+- 移动端（`wnsdk.aiChat.*`）对应接口本期不实现，仅预留命名；后续落地时补 android/ios 列与回传机制。
 
 ## Changelog
 
-- YYYY-MM-DD 初始化
+- 2026-07-07 新增 `getMyGroups`/`getOrgCompanies`/`getDeptUsers`；`getRecentContacts` 补 `agentName`/`lastChatAt`（选择AI框功能）。
+- 2026-07-07 初始化：补全真实通信机制（preload `registerCallback`+`sendToHost`/`trigger-result`）与消息格式。
