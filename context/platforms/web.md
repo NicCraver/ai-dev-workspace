@@ -31,7 +31,7 @@ pnpm format
 - **网络层 `src/server/`**：`http.js` 是 axios 实例（baseURL `/api/aiBasic`，30s；请求拦截自动加 `Authorization`/`zxCorpId`/`clientType`/`version`；响应拦截处理业务码：`M0000` 成功 / `O_T_001/002` 静默刷新 token / `O_T_003` 登录过期 / 失败重试 ≤3 次）。按业务域拆 `src/server/module/*.js`；**`src/server/index.js` 由 `vite-auto-api-exports` 自动生成，勿手改——加新 module 文件即自动并入导出。**
 - **AI 流式接口**不走 http 实例：用编译期常量 `API_AI_BASE_URL`（vite define，源 `VITE_API_AI_BASE_URL`）+ 直接 axios 或 `src/stream/useEventSource.ts`（SSE）。
 - **状态**：composables 放 `src/use/`；登录态集中在 `src/loginUtil.js`（sessionStorage：`aiToken`/`aiUser`/`aiCorpId`）。
-- **样式/组件**：UnoCSS 原子类 + `uno.config.js` 主题 token（primary `#3E7EFF` 等）；Element Plus / Vant / ant-design-x-vue 走 unplugin 按需自动注册。
+- **样式/组件**：UnoCSS 原子类 + `uno.config.js` 主题 token（primary `#3E7EFF` 等）；Element Plus / Vant / ant-design-x-vue 走 unplugin 按需自动注册。原子类写法与 px 换算见 `context/dev-rules/unocss-conventions.mdc`（编辑 `apps/web/**` 时 Cursor 自动加载）。
 - **别名**：`@/` → `src/`。
 
 ## Mock 开关方式

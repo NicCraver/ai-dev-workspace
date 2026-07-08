@@ -1,0 +1,125 @@
+---
+description: UnoCSS 原子类写法与 UI 尺寸换算约定（仅 apps/web）
+globs: apps/web/**/*.{vue,css,js,ts}
+alwaysApply: false
+---
+
+# UnoCSS 写法约定
+
+本项目样式统一用 **UnoCSS 原子类**（`preset-wind3`），配置见 `uno.config.js`。写 class 时按 UI 设计稿的 **px 值反推数字**。
+
+## 核心换算
+
+**`数字 × 4px = 设计稿尺寸`**（根字号 16px，CSS 输出为 `数字 × 0.25rem`）
+
+| 类名 | 换算 | 实际尺寸 |
+|------|------|----------|
+| `w-4` | 4 × 4px | 16px |
+| `h-5` | 5 × 4px | 20px |
+| `gap-2` | 2 × 4px | 8px |
+| `px-3` | 3 × 4px | 左右各 12px |
+| `text-3.5` | 3.5 × 4px | 14px |
+| `rounded-1` | 1 × 4px | 4px 圆角 |
+| `leading-3` | 3 × 4px | 12px 行高 |
+
+支持小数：`w-4.5`（18px）、`h-7.5`（30px）、`text-2.5`（10px）、`text-3.25`（13px）。
+
+设计稿标注 16px → 写 `4`；标注 14px → 写 `3.5`。不要心算 rem。
+
+## 尺寸类前缀
+
+同一换算规则适用于：
+
+- **宽高**：`w-` `h-` `min-w-` `max-w-` `min-h-` `max-h-`
+- **内外边距**：`p-` `px-` `py-` `pt-` `pb-` `pl-` `pr-` `m-` `mx-` `my-` `mt-` `mb-` `ml-` `mr-`
+- **间距**：`gap-` `space-x-` `space-y-`
+- **定位**：`top-` `right-` `bottom-` `left-`（含负值 `-mb-13`）
+- **圆角**：`rounded-` `rounded-t-` 等
+- **行高**：`leading-`
+
+## 字号
+
+优先用 **数字类** 与 UI 对齐：`text-3`（12px）、`text-3.5`（14px）、`text-4`（16px）。
+
+语义别名也可用：`text-xs`（12px）、`text-sm`（14px）、`text-base`（16px）、`text-lg`（18px）。全局 `body` 默认 `text-sm`。
+
+## 颜色
+
+**优先用主题 token**（`uno.config.js` → `theme.colors`）：
+
+| 类名 | 色值 | 用途 |
+|------|------|------|
+| `text-primary` / `bg-primary` | `#3E7EFF` | 主色 |
+| `text-primary-active` | `#2E6BE6` | 主色按下/悬停 |
+| `text-black` | `#1F2329` | 主文字 |
+| `text-gray-dark` | `#5D616B` | 次要文字 |
+| `text-gray-medium` | `#8F959E` | 辅助文字 |
+| `text-danger` | `#FA4141` | 错误/删除 |
+| `bg-gray-light` | `#F4F6F8` | 浅灰背景 |
+| `border-edge` | `#E1E5EB` | 边框 |
+
+设计稿色值不在 token 里时：
+
+- 模板：`text-[#536DFF]`、`bg-[#F7F9FE]`
+- `@apply` / `style.css`：`text-#536DFF`（更简洁）
+
+## 布局常用组合
+
+```html
+<div class="flex items-center gap-2">
+<span class="truncate whitespace-nowrap">
+<img class="flex-shrink-0 w-4 h-4">
+```
+
+- `flex` + `items-center` + `justify-center`：水平垂直居中
+- `flex-shrink-0`：图标/按钮不被挤压
+- `truncate` + `whitespace-nowrap`：单行省略
+- `overflow-hidden`：配合截断
+- `absolute` + `right-3`：右侧绝对定位
+
+## 交互变体
+
+```html
+class="hover:text-primary hover:bg-gray-light"
+class="hover:(text-danger-active border-danger-active)"  <!-- variant group -->
+class="!w-4.5"                                           <!-- !important -->
+class="disabled:opacity-50"
+```
+
+移动端去掉 hover：用 `hoverClass('hover:bg-gray-light')`（`src/utils/mobile.js`）。
+
+## 自定义规则（`uno.config.js`）
+
+| 类名 | 作用 |
+|------|------|
+| `bg-layout-gradient` | 页面渐变背景 |
+| `gutter-stable` | 滚动条占位稳定 |
+| `drag-area` / `no-drag-area` | 桌面端窗口拖拽区 |
+| `t0-item-{ts\|tzero\|other}` | T0 时间轴颜色变量 shortcut |
+
+## 特殊写法
+
+| 类名 | 含义 |
+|------|------|
+| `rounded-4px` | 显式 4px 圆角（非倍数场景） |
+| `border-1` | 1px 边框 |
+| `w-22` | 88px（22 × 4px） |
+
+JS 内联尺寸（移动端适配）用 `mobilePx(n)`，基准 375px 等比缩放。
+
+## 禁止事项
+
+- 不要写 `<style scoped>` 传统 CSS，除非覆盖第三方组件且无法用原子类表达
+- 不要硬编码 rem/px，优先用数字原子类
+- 新颜色先查 `uno.config.js` token，再考虑任意值
+
+## 示例：`Header.vue`
+
+```html
+<!-- 头部高 100px，图标 16px，标题 14px，副标题 10px -->
+<div class="h-25">
+  <img class="w-4 h-4" />
+  <span class="text-3.5 font-semibold text-[#536DFF]">标题</span>
+  <span class="text-2.5 h-3 leading-3 text-gray-medium">副标题</span>
+</div>
+```

@@ -1,6 +1,6 @@
 # Desktop (Electron) 端一页纸
 
-> 保持在约 100 行以内。由 /distill 定期结晶更新，人工修正错误。最后更新：2026-07-07
+> 保持在约 100 行以内。由 /distill 定期结晶更新，人工修正错误。最后更新：2026-07-08
 
 ## 基本信息
 - 仓库：apps/desktop/（独立 git 仓库，electron-vue 脚手架）
@@ -45,6 +45,7 @@ npm run build:clean
 - **Node 14.21.3**（volta，README 建议 14.17.6）；原生模块 sqlite3/leveldown 依赖该版本，**macOS arm64（M1）需特殊编译**：leveldown ≥6，sqlite3 `--build-from-source --target_arch=arm64`（见 README「m1芯片运行」）。
 - `yarn.lock` 与 `package-lock.json` **并存**，依赖版本可能漂移；统一用一种（README 示例用 npm）。
 - 工具链整体偏老（Vue 2 / webpack 4 / ESLint 4 / babel 6-7），新 IDE 插件可能不兼容；`postinstall` 会自动 `lint:fix`，拉代码后留意工作区 diff。
+- **禁用 ES2020 语法**（可选链 `?.`、空值合并 `??`）：webpack4/babel6-7 目标运行时不转译，用 `&&` 兜底（如 `(x && x.y) || []`、`data && data.type`）。渲染层 `.vue`/`.js`、preload `static/plugin/webview.js` 均适用。（web 端 apps/web 可用 `?.`——跑在 webview 现代 Chromium。）
 - `electron-builder.yml` 已在 .gitignore，但仓库内仍存在，**Windows 签名证书密码明文**（`certificatePassword`）——勿外泄，勿重新提交该文件。
 - 多窗口 + `@electron/remote` + IPC 交错，窗口生命周期/单例/关闭逻辑易出竞态（`src/main/index.js` 的 `closeWin`/`gologin`/`realQuit` 等）。
 - 渲染层三套 UI 库（element-ui/ant-design-vue/iview）混用，体积大、风格不统一，新功能尽量沿用同域既有库。

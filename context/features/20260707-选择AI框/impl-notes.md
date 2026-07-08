@@ -20,6 +20,17 @@
 ## 联调坑（实际接口 ≠ 文档之处）
 <!-- 每条：现象 → 实际行为 → 契约是否已更新。移植端必看 -->
 
+**desktop 侧字段映射（实现时发现，契约以 bridge.md 为准，desktop handler 内部做转换）：**
+- `groupListApi` 返回群项用 **`type`**（0/10），契约要求 `groupType` → handler 内 `groupType: g.type` 映射。会话模型里才叫 `groupType`，两套字段名同语义。
+- `getContactTree` 公司节点：名在 **`label`**（非 `name`/`corpName`）、人数在 **`num`**（非 `memberCount`）→ handler 映射为 `name/memberCount`。组织树的分组节点（type 1/2）的 `label` 作为公司项 `category`（如「入职企业/我的下级」），web OrgPicker 据此分组显示。
+- `getDeptUserPagelist` 入参除 `corpId/pid` 外，既有调用还传 `corpType/corpAndCorpRelType/labelType`；当前桥只传 `{corpId,pid,pageNum,pageSize}` → **待联调确认是否必需**（若 400/空，需在 bridge.md `getDeptUsers` 入参补 `corpType` 并由 web 透传）。
+- **`agentName` 桌面端无独立 store 字段**：私聊取对方昵称、群聊取群名（对齐 `selectAiAgentMapper.js`）。若产品要求 AI 框名与群/人名不同，需后端补字段。
+- **`lastChatAt` 群组 tab 暂为 0**：`groupListApi` 不返回最近消息时间，handler 当前填 0 → 群组 tab 不按时间倒序。待联调确认是否从 `GetLatestOneMsg`/`lastConversationTime` 补（需知群会话 key 格式）。最近联系人 tab 的 `lastChatAt` 取 `item.lastConversationTime || item.message?.messageTime`，已实现。
+- `getRecentContacts` 旧 handler 形参 `(e,data,uuid,webContentsId)` 与 `sendToHost` 实参不匹配（`webContentsId` 实为 undefined，靠 `e.sender.sendTo` 在 Electron 19 退化/兜底跑通）——新增 3 个 handler 照搬此既有模式，未改。
+- **AiBrowser 个人 AI webview 不走 `main.vue` ipcRenderer 监听**：`sendToHost` 触发宿主 `<webview @ipc-message>`，`AiBrowser.personalAiIpcMessageHandler` 调 `aiBoxPickerHost` 取数后须用 **`event.target.send("trigger-result", …)`** 回传（Electron 19 已移除 `ipcRenderer.sendTo`）。
+- **最近联系人排序**：与 PC 转发弹窗 `transmit-message.vue` `allConversation` 一致——有 `message` 的项靠前，同有则按 `messageTime` 倒序。**排序在 web 端**（`sortRecentLikeTransmitMessage`）；桥返回 `hasMessage` + `messageTime`（`messageTime` 允许为 0，勿用 falsy 判断）。
+- **群 2x2 头像**：桥返回 `accountInfoList`（`[{id,nickName,avatar}]`，最多 4 项）；web 归一化须保留该字段，不可只留 `avatar`。
+
 ## 与 bridge 的交互
 <!-- 若涉及 WebView↔原生通信，列出用到的 bridge 方法与时序；否则写"无" -->
 
@@ -28,6 +39,15 @@
 - `getMyGroups({type})` → 群组 tab（按组织群/外联群二级切换懒拉）
 - `getOrgCompanies({type})` / `getDeptUsers({corpId,pid})` → 组织架构钻取
 - 桥缺失/失败 → 调用方 `.catch(() => [])` 兜底；旧壳无新方法时 `useAiBoxPickerData` 抛「请升级到最新版本」（当前以空列表降级，T9 联调补提示）。
+
+**PC 个人 AI 框（`/zx/personal`，`main.vue` 内 `AiBrowser`）**：
+- 原走 `<iframe>`（无 `window.webview` 桥）→ 改为 `<webview :preload="static/plugin/webview.js" webpreferences="contextIsolation=0">`。
+- 桥请求时序：web 内 `SelectAiBoxDialog` 调 `window.webview.getXxx` → preload `sendToHost(channel,{webcontentsId,...},uuid)` → **AiBrowser** `<webview @ipc-message="personalAiIpcMessageHandler">` → `aiBoxPickerHost.js` 取数（主窗口 Vuex store/service）→ **`webview.send("trigger-result", {type,data,uuid})`** → preload 按 uuid resolve。
+- `dom-ready` 时注入 `window.myWebContentsId`（供 preload 携带 `webcontentsId`）。
+- 微应用路径（`webview-control.vue`）仍走 `@ipc-message` + `webview.send`/`ipcRenderer.sendTo` 回传；与 AiBrowser 共用 `aiBoxPickerHost` 取数。
+- token：webview 内 `window.webview.ipcRenderer.sendSync("get-token",1/2)`。
+- 群头像成员：取数在主窗口进程，对未缓存群并发 `groupInfoApi` 补取后拼 `accountInfoList`（与 `group-photo` 一致）。
+- ⚠️ 改 `webview.js`(preload) / `AiBrowser` 需**重启** `npm run dev`（preload 不热重载）。
 
 ## web 端视觉/实现备忘（蓝湖还原）
 
