@@ -9,7 +9,8 @@
 
 | 端 | web → 原生 | 原生 → web |
 |----|-----------|-----------|
-| desktop | 内嵌 web 调 `window.webview.<method>(params)` → preload 生成 `uuid`，`ipcRenderer.sendToHost(<channel>, params, uuid)` | 宿主 renderer 处理：`main.vue` ipc 监听（微应用经 `ipcTargetWebContentsId` 转发）或 **AiBrowser** `<webview @ipc-message>` → `webContents.send` / **`webview.send("trigger-result", …)`**（Electron 19 勿用已移除的 `ipcRenderer.sendTo`）→ preload 按 `uuid` resolve |
+| desktop（微应用 webview） | 内嵌 web 调 `window.webview.<method>(params)` → preload 生成 `uuid`，`ipcRenderer.sendToHost(<channel>, params, uuid)` | 宿主 `webview-control` `@ipc-message` → `aiBoxPickerHost` 取数 → `webview.send("trigger-result", …)` → preload 按 `uuid` resolve |
+| desktop（AiBrowser iframe） | iframe 内 `window.parent.postMessage({ type:"personal-ai:bridge-request", channel, params, uuid })` | **AiBrowser** `handlePersonalAiMessage` → `aiBoxPickerHost` 取数 → `event.source.postMessage({ type:"personal-ai:bridge-result", channel, uuid, data:{code,data} })` |
 | android | `wnsdk.aiChat.<method>(params)`（本期不实现，预留命名） | 回调（本期不实现） |
 | ios | `wnsdk.aiChat.<method>(params)`（本期不实现，预留命名） | 回调（本期不实现） |
 
@@ -18,13 +19,14 @@
 ## 消息格式
 
 ```jsonc
-// 请求（web → 原生，经 sendToHost）
-[<channel>, <params>, <uuid>]
-// 例：sendToHost("get-my-groups", { type:"organization", pageNum:1, pageSize:200 }, "a1b2c3d4")
-
-// 响应（原生 → web，经 trigger-result）
-{ "type": "<channel>", "uuid": "<uuid>", "data": { "code": 1, "data": <结果>, "msg": "" } }
+// 响应（原生 → web，经 trigger-result 或 personal-ai:bridge-result）
+{ "type": "<channel>|personal-ai:bridge-result", "uuid": "<uuid>", "data": { "code": 1, "data": <结果>, "msg": "" } }
 // code: 1=成功(resolve data.data) / 0=失败(reject)
+
+// AiBrowser iframe 请求（web → AiBrowser）
+{ "type": "personal-ai:bridge-request", "channel": "get-recent-contacts", "params": {}, "uuid": "<uuid>" }
+// AiBrowser iframe 响应（AiBrowser → web，channel/uuid 与请求一致）
+{ "type": "personal-ai:bridge-result", "channel": "get-recent-contacts", "uuid": "<uuid>", "data": { "code": 1, "data": <结果> } }
 ```
 
 ## 方法清单
@@ -51,6 +53,7 @@
 
 ## Changelog
 
-- 2026-07-08 `getRecentContacts` 补 `accountInfoList`（群 2×2 头像）、`hasMessage`/`messageTime`（web 端排序）；AiBrowser 路径回传改用 `webview.send`。
+- 2026-07-08 AiBrowser 个人 AI 改回 **iframe + postMessage**（`personal-ai:bridge-request/result`）；微应用仍走 webview preload。
+- 2026-07-08 `getRecentContacts` 补 `accountInfoList`（群 2×2 头像）、`hasMessage`/`messageTime`（web 端排序）。
 - 2026-07-07 新增 `getMyGroups`/`getOrgCompanies`/`getDeptUsers`；`getRecentContacts` 补 `agentName`/`lastChatAt`（选择AI框功能）。
 - 2026-07-07 初始化：补全真实通信机制（preload `registerCallback`+`sendToHost`/`trigger-result`）与消息格式。

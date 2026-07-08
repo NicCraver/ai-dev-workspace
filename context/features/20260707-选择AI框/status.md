@@ -20,7 +20,7 @@
 
 ## 待办 / 阻塞
 
-- (desktop) T2：`main.vue` handler + `webview.js` preload 已完成；**AiBrowser 个人 AI webview** 已补 `@ipc-message` + `webview.send` 回传（Electron 19 无 `ipcRenderer.sendTo`），最近联系人/群头像/排序已初步联调通过；**待验证** 群组/组织架构三 tab 及微应用 `webview-control` 路径
+- (desktop) T2：`main.vue` handler + `webview.js` preload（微应用）已完成；**AiBrowser 个人 AI** 改回 **iframe + postMessage 桥**（`personal-ai:bridge-request/result`），与 `aiBoxPickerHost` 共用取数；待验证三 tab 全链路
 - (多端) T9 待视觉对照蓝湖 4 张截图验收；组织架构 `getDeptUsers` 等边界待继续联调
 - (desktop) 待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`（当前只传 corpId/pid）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
@@ -36,5 +36,6 @@
 - 2026-07-07 弹窗用 AcDialog 壳，交互对齐 desktop 转发窗，布局按蓝湖稿单栏，单选
 - 2026-07-07 选中后复用 `personalAiAgentAdapter`（mapSelectionToAgent/upsertSelectedAgent/sortAgents），24h 判 `lastChatAt`
 - 2026-07-07 视觉严格还原蓝湖 4 张截图（UnoCSS 原子类，位图图标换 SvgIcon）
+- 2026-07-08 AiBrowser 个人 AI 改回 **iframe + postMessage 桥**（便于调试）；微应用仍走 webview preload
 - 2026-07-08 最近联系人 tab **排序在 web 端**执行（`sortRecentLikeTransmitMessage`，对齐 `transmit-message.vue`）；PC 桥只返回 `hasMessage`/`messageTime` 等字段，不在宿主侧排序
 - 2026-07-08 群 2x2 头像经桥字段 `accountInfoList` 下发，web `normalizeRecentItem` 须透传
