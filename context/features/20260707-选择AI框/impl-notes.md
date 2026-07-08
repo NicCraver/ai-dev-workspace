@@ -9,16 +9,14 @@
 
 事件：切 tab → 懒取数（每 tab 首次进入拉一次，缓存）→ 点行即选（`selectedKey/selected` 即时更新，底部「已选」即时）→ 确定 → 上抛 `submit(selection)` 并关窗。组织架构 tab 由 OrgPicker 自管钻取状态（公司→部门→人员 + 面包屑），选中人员上抛与其它 tab 同形态 item。
 
-**搜索（当前实现）**：`keyword` 对最近联系人/群组 tab 的已缓存列表做 `name + agentName` 前端 `includes` 过滤；OrgPicker 同步按 keyword 过滤当前层。
-
-**搜索（计划改造）**：focus 搜索框 → 浮层覆盖主列表区 → 初始空态图 → 输入关键词 300ms 防抖 → 宿主并行搜人+搜群 → 浮层内 tab（全部/群组/人员）展示结果，标题/副标题关键词高亮 → 选中后关浮层并写入 `selected`。主 tab 列表不再受 keyword 影响。
+**搜索（已实现）**：focus 搜索框 → `AiBoxSearchPanel` 浮层覆盖主列表 → 无关键词显示空态图 → 输入 300ms 防抖 → `searchAiBoxPicker` 宿主双接口 → 浮层 tab（全部/群组/人员）+ 标题/副标题 `#3E7EFF` 高亮 → 选中关浮层。主 tab 列表不受 keyword 影响。
 
 ## 接口调用时序
 
 1. **弹窗打开**（`open=true`）：并行预取 `getRecentContacts` + `getMyGroups({type:'organization'})`；外联群在切到群组 tab 且选「外联群」时懒拉；组织架构由 OrgPicker 在 mount / 切 scope 时拉 `getOrgCompanies`。
 2. **群组二级切换**：首次进入某 `type` 时 `getMyGroups({type})`，结果缓存于内存，不重复请求。
 3. **组织钻取**：点公司 → `getDeptUsers({corpId, pid:'0'})`；点部门 → `getDeptUsers({corpId, pid: deptId})`；面包屑回溯复用已缓存或重新 `getDeptUsers`。
-4. **搜索（计划）**：`searchAiBoxPicker({search})` → 宿主 `getAccountSearchByUserName` + `getGroupBySearch` 并行；空 keyword 不请求。
+4. **搜索**：`searchAiBoxPicker({search})` → 宿主 `getAccountSearchByUserName` + `getGroupBySearch` 并行（300ms 防抖）；空 keyword 不请求，浮层显示空态图。
 5. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底，列表显示空态，不阻断弹窗其它 tab。
 
 ## 边界情况
@@ -61,7 +59,7 @@
 - `getRecentContacts()` → 最近联系人 tab（首入懒拉，缓存；web 端 `sortRecentLikeTransmitMessage` 排序）
 - `getMyGroups({type})` → 群组 tab（按组织群/外联群二级切换懒拉）
 - `getOrgCompanies({type})` / `getDeptUsers({corpId,pid})` → 组织架构钻取
-- `searchAiBoxPicker({search})` → **待新增**；搜索浮层（双接口并行，见上）
+- `searchAiBoxPicker({search})` → 搜索浮层（双接口并行）
 - 桥缺失/失败 → 调用方 `.catch(() => [])` 兜底
 
 **PC 个人 AI 框（`/zx/personal`，`main.vue` 内 `AiBrowser`）**：
@@ -79,5 +77,5 @@
 - **单选图标**：用全局 `CheckboxView` 的 `radio` 模式（`<CheckboxView radio :v="selected" />`，14px 圆形单选），不要用 `SvgIcon name="check"`。
 - **SvgIcon 可用名**（`src/assets/svg/`）：`search`（搜索）、`close`（清除/关窗）、`folder`/`folder2`（部门）、`success`（对勾）、`tabs-next`（右箭头，进公司/部门用，plan 里的 `arrow-right` 不存在需替换）。无 `check`/`arrow-right`。
 - **全局组件无需 import**：`AcDialog`/`AcAvatar`/`AcGroupAvatar`/`CheckboxView`/`SvgIcon` 已全局注册（参照 `ShareTargetDialog.vue` 直接用）。
-- **组件文件**：`SelectAiBoxDialog.vue`（壳）· `AiBoxRow.vue`（列表行）· `OrgPicker.vue`（组织钻取）· `SearchInput.vue`（搜索输入）；搜索浮层 `AiBoxSearchPanel.vue` 待建。
+- **组件文件**：`SelectAiBoxDialog.vue`（壳）· `AiBoxRow.vue`（列表行）· `OrgPicker.vue`（组织钻取）· `SearchInput.vue`（搜索输入）· `AiBoxSearchPanel.vue`（搜索浮层）· `AiBoxSearchRow.vue`（搜索行+高亮）。
 - **搜索空态图**：对齐 PC `no-data.png`（160×160）+ 文案「未搜索到相关结果」；关键词高亮色 `#3E7EFF`（`text-primary`）。

@@ -39,6 +39,7 @@
 | `getMyGroups` | `get-my-groups` | web→原生 | `{type:'organization'\|'outsource', pageNum?:number, pageSize?:number}` | `[{id, name, agentName, avatar, memberCount, groupType:0\|10, lastChatAt}]` | desktop | 新增（选择AI框） |
 | `getOrgCompanies` | `get-org-companies` | web→原生 | `{type:'organization'\|'outsource'}` | `[{corpId, name, memberCount, corpType}]`（organization 含「入职企业」「我的下级」分组字段） | desktop | 新增（选择AI框） |
 | `getDeptUsers` | `get-dept-users` | web→原生 | `{corpId:string, pid:string}`（`pid:'0'` 表公司根部门） | `{depts:[{id,name,memberCount,pid}], users:[{accountId,name,agentName,avatar}]}` | desktop | 新增（选择AI框） |
+| `searchAiBoxPicker` | `search-ai-box-picker` | web→原生 | `{search:string}` | `{users:[{accountId,name,agentName,avatar,ownerType:'private',lastChatAt}], groups:[{id,name,agentName,avatar,accountInfoList?,ownerType:'group',groupType?,lastChatAt}]}` | desktop | 新增（选择AI框搜索） |
 
 **统一字段约定**（与 `apps/web/src/components/views/home/personalAiAgentAdapter.js` 对齐）：
 - 人员主键 `accountId`、群主键 `id`、AI 框名 `agentName`、最近对话时间 `lastChatAt`（毫秒时间戳）
@@ -47,12 +48,13 @@
 
 ## 版本与兼容
 
-- 老 desktop 壳无 `getMyGroups`/`getOrgCompanies`/`getDeptUsers` 时，web 端 `useAiBoxPickerData` 捕获异常 → 弹窗提示「请升级到最新版本」。
+- 老 desktop 壳无 `getMyGroups`/`getOrgCompanies`/`getDeptUsers`/`searchAiBoxPicker` 时，web 端 `useAiBoxPickerData` 捕获异常 → 弹窗提示「请升级到最新版本」。
 - `getRecentContacts` 缺 `agentName`/`lastChatAt`：视为宿主 bug，联调时由 desktop 侧补齐（见选择AI框 spec「待联调确认 1」）。
 - 移动端（`wnsdk.aiChat.*`）对应接口本期不实现，仅预留命名；后续落地时补 android/ios 列与回传机制。
 
 ## Changelog
 
+- 2026-07-08 新增 `searchAiBoxPicker`（`search-ai-box-picker`）：搜索联系人/群，宿主并行 `getAccountSearchByUserName` + `getGroupBySearch`。
 - 2026-07-08 AiBrowser 个人 AI 改回 **iframe + postMessage**（`personal-ai:bridge-request/result`）；微应用仍走 webview preload。
 - 2026-07-08 `getRecentContacts` 补 `accountInfoList`（群 2×2 头像）、`hasMessage`/`messageTime`（web 端排序）。
 - 2026-07-07 新增 `getMyGroups`/`getOrgCompanies`/`getDeptUsers`；`getRecentContacts` 补 `agentName`/`lastChatAt`（选择AI框功能）。
