@@ -5,18 +5,23 @@
 
 ## 状态流转
 
-弹窗状态：`activeTab ∈ {recent, group, org}` · `keyword` · `selectedKey = ${ownerType}:${id}` · `selected`（当前选中项整体）· `loading` · `searchOpen`（搜索焦点浮层，**待实现**）。
+弹窗状态：`activeTab ∈ {recent, group, org}` · `keyword` · `selectedKey = ${ownerType}:${id}` · `selected`（当前选中项整体）· `loading`。搜索由 `AiBoxSearchBox` 自管 `open` 状态（focus 开 / blur 延迟关 / 选中关）。
 
 事件：切 tab → 懒取数（每 tab 首次进入拉一次，缓存）→ 点行即选（`selectedKey/selected` 即时更新，底部「已选」即时）→ 确定 → 上抛 `submit(selection)` 并关窗。组织架构 tab 由 OrgPicker 自管钻取状态（公司→部门→人员 + 面包屑），选中人员上抛与其它 tab 同形态 item。
 
-**搜索（已实现）**：focus 搜索框 → `AiBoxSearchPanel` 浮层覆盖主列表 → 无关键词显示空态图 → 输入 300ms 防抖 → `searchAiBoxPicker` 宿主双接口 → 浮层 tab（全部/群组/人员）+ 标题/副标题 `#3E7EFF` 高亮 → 选中关浮层。主 tab 列表不受 keyword 影响。
+**搜索（已实现，对齐 PC 转发 search-box）**：
+- focus 搜索框 → `Teleport` 到 body 的 popover 锚定在输入框下方（宽 320px，高 max 400px 且不超过视口剩余空间）
+- 无关键词：popover 内显示空态图 +「未搜索到相关结果」
+- 有关键词：300ms 防抖 → `searchAiBoxPicker` 宿主双接口 → 先人员、后群组列表，标题/副标题关键词高亮
+- 点选一行 → 写入 `selected`、清空 keyword、关闭 popover；主 tab 列表始终可见、不受 keyword 影响
+- popover 内 `mousedown.prevent` + blur 延迟，避免点结果时先关层
 
 ## 接口调用时序
 
 1. **弹窗打开**（`open=true`）：并行预取 `getRecentContacts` + `getMyGroups({type:'organization'})`；外联群在切到群组 tab 且选「外联群」时懒拉；组织架构由 OrgPicker 在 mount / 切 scope 时拉 `getOrgCompanies`。
 2. **群组二级切换**：首次进入某 `type` 时 `getMyGroups({type})`，结果缓存于内存，不重复请求。
 3. **组织钻取**：点公司 → `getDeptUsers({corpId, pid:'0'})`；点部门 → `getDeptUsers({corpId, pid: deptId})`；面包屑回溯复用已缓存或重新 `getDeptUsers`。
-4. **搜索**：`searchAiBoxPicker({search})` → 宿主 `getAccountSearchByUserName` + `getGroupBySearch` 并行（300ms 防抖）；空 keyword 不请求，浮层显示空态图。
+4. **搜索**：`searchAiBoxPicker({search})` → 宿主 `getAccountSearchByUserName` + `getGroupBySearch` 并行（300ms 防抖）；空 keyword 不请求，popover 显示空态图。
 5. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底，列表显示空态，不阻断弹窗其它 tab。
 
 ## 边界情况
@@ -24,15 +29,16 @@
 | 场景 | 预期行为 |
 |------|----------|
 | 桥方法不存在（老壳） | `useAiBoxPickerData` reject → 调用方可 toast「请升级到最新版本」 |
-| 列表为空 | 无 keyword：「暂无数据」/「加载中…」；有 keyword：「未搜索到相关结果」 |
-| 搜索浮层 focus 无输入 | 显示空态图（对齐 PC `search-result` no-data） |
+| 列表为空 | 主列表：「暂无数据」/「加载中…」；搜索 popover 无结果：空态图 +「未搜索到相关结果」 |
+| 搜索 focus 无输入 | popover 显示空态图（对齐 PC `search-result` no-data） |
 | 未选中点确定 | 「确定」按钮 disabled |
-| 弹窗关闭 | 重置 keyword、searchOpen、不强制清缓存（二次打开秒显） |
+| 弹窗关闭 | 重置 keyword；不强制清列表缓存（二次打开秒显） |
 | 群 store 无成员 | 宿主并发 `groupInfoApi` 补取后拼 `accountInfoList`（最多 4 人） |
+| popover Teleport 到 body | 须用 inline `height`/`maxHeight` 限制高度；勿在根节点用 `h-full`（会按视口撑满） |
 
 ## 错误处理策略
 
-- 桥请求超时（iframe postMessage 30s）：reject，搜索浮层可显示失败重试（可选）。
+- 桥请求超时（iframe postMessage 30s）：reject，搜索 popover 可显示失败重试。
 - 单群详情补取失败：不阻塞整表，该群降级为单头像或无 2×2 拼图。
 - `getDeptUsers` 若因缺 `corpType` 返回 400：待联调后在契约补参并由 web 透传公司节点的 `corpType`。
 
@@ -44,7 +50,7 @@
 - `getDeptUserPagelist` 入参除 `corpId/pid` 外，既有调用还传 `corpType/corpAndCorpRelType/labelType`；当前桥只传 `{corpId,pid,pageNum,pageSize}` → **待联调确认是否必需**（若 400/空，需在 bridge.md `getDeptUsers` 入参补 `corpType` 并由 web 透传）。
 - **`agentName` 桌面端无独立 store 字段**：私聊取对方昵称、群聊取群名（对齐 `selectAiAgentMapper.js`）。若产品要求 AI 框名与群/人名不同，需后端补字段。
 - **`lastChatAt` 群组 tab 暂为 0**：`groupListApi` 不返回最近消息时间，handler 当前填 0 → 群组 tab 不按时间倒序。待联调确认是否从 `GetLatestOneMsg`/`lastConversationTime` 补（需知群会话 key 格式）。最近联系人 tab 的 `lastChatAt` 取 `item.lastConversationTime || item.message?.messageTime`，已实现。
-- `getRecentContacts` 旧 handler 形参 `(e,data,uuid,webContentsId)` 与 `sendToHost` 实参不匹配（`webContentsId` 实为 undefined，靠 `e.sender.sendTo` 在 Electron 19 退化/兜底跑通）——新增 3 个 handler 照搬此既有模式，未改。
+- `getRecentContacts` 旧 handler 形参 `(e,data,uuid,webContentsId)` 与 `sendToHost` 实参不匹配（`webContentsId` 实为 undefined，靠 `e.sender.sendTo` 在 Electron 19 退化/兜底跑通）——新增 handler 照搬此既有模式，未改。
 - **AiBrowser 个人 AI iframe 桥**：`/zx/personal` 在 iframe 内无 `window.webview`；`useAiBoxPickerData` 检测 iframe 后走 `parent.postMessage(personal-ai:bridge-request)` → AiBrowser `handlePersonalAiMessage` → `aiBoxPickerHost` → `personal-ai:bridge-result` 回传。token 仍走既有 `getToken`/`setToken`（`App.vue`）。
 - **最近联系人排序**：与 PC 转发弹窗 `transmit-message.vue` `allConversation` 一致——有 `message` 的项靠前，同有则按 `messageTime` 倒序。**排序在 web 端**（`sortRecentLikeTransmitMessage`）；桥返回 `hasMessage` + `messageTime`（`messageTime` 允许为 0，勿用 falsy 判断）。
 - **群 2x2 头像**：桥返回 `accountInfoList`（`[{id,nickName,avatar}]`，最多 4 项）；web 归一化须保留该字段，不可只留 `avatar`。
@@ -59,7 +65,7 @@
 - `getRecentContacts()` → 最近联系人 tab（首入懒拉，缓存；web 端 `sortRecentLikeTransmitMessage` 排序）
 - `getMyGroups({type})` → 群组 tab（按组织群/外联群二级切换懒拉）
 - `getOrgCompanies({type})` / `getDeptUsers({corpId,pid})` → 组织架构钻取
-- `searchAiBoxPicker({search})` → 搜索浮层（双接口并行）
+- `searchAiBoxPicker({search})` → 搜索 popover（双接口并行，人员+群组）
 - 桥缺失/失败 → 调用方 `.catch(() => [])` 兜底
 
 **PC 个人 AI 框（`/zx/personal`，`main.vue` 内 `AiBrowser`）**：
@@ -70,12 +76,11 @@
 
 ## web 端视觉/实现备忘（蓝湖还原）
 
-- **弹窗尺寸**：蓝湖稿面板 **440×580**（plan.md 写的 690×540 是近似值，以蓝湖为准）。`AcDialog splitTheme`，`class="!w-440px !h-580px"`。
+- **弹窗尺寸**：蓝湖稿面板 **440×580**。`AcDialog splitTheme`，`class="!w-440px !h-580px"`。
 - **行高**：最近联系人/群组行 60px、组织·公司行 48px、组织·人员行 40px、组织/外联切换头 40px。
 - **字号**：名称 `text-3.5`(14px·近黑 `text-black`)、AI框名/人数/面包屑 `text-3`(12px·`text-gray-medium`)、tab `text-3.5`。
 - **配色 token**：active tab/面包屑前级 `primary`；inactive tab `gray-dark`；副文案 `gray-medium`；行分隔 `border-gray-light`；搜索框底 `bg-gray-light`（`#F4F6F8`）；选中行底 `bg-primary-light`；搜索框圆角 **13px**。
-- **单选图标**：用全局 `CheckboxView` 的 `radio` 模式（`<CheckboxView radio :v="selected" />`，14px 圆形单选），不要用 `SvgIcon name="check"`。
-- **SvgIcon 可用名**（`src/assets/svg/`）：`search`（搜索）、`close`（清除/关窗）、`folder`/`folder2`（部门）、`success`（对勾）、`tabs-next`（右箭头，进公司/部门用，plan 里的 `arrow-right` 不存在需替换）。无 `check`/`arrow-right`。
-- **全局组件无需 import**：`AcDialog`/`AcAvatar`/`AcGroupAvatar`/`CheckboxView`/`SvgIcon` 已全局注册（参照 `ShareTargetDialog.vue` 直接用）。
-- **组件文件**：`SelectAiBoxDialog.vue`（壳）· `AiBoxRow.vue`（列表行）· `OrgPicker.vue`（组织钻取）· `SearchInput.vue`（搜索输入）· `AiBoxSearchPanel.vue`（搜索浮层）· `AiBoxSearchRow.vue`（搜索行+高亮）。
-- **搜索空态图**：对齐 PC `no-data.png`（160×160）+ 文案「未搜索到相关结果」；关键词高亮色 `#3E7EFF`（`text-primary`）。
+- **单选图标**：`CheckboxView` 的 `radio` 模式（14px 圆形单选）。
+- **搜索 popover**：对齐 PC `search-box`/`search-result`——320px 宽、max 400px 高、`box-shadow: 0 0 10px rgba(0,0,0,0.3)`、圆角 4px；`Teleport` 到 body 避免 Dialog `overflow:hidden` 裁切。
+- **组件文件**：`SelectAiBoxDialog` · `AiBoxSearchBox`（输入+popover 壳）· `AiBoxSearchPanel`（结果列表）· `AiBoxSearchRow` · `AiBoxRow` · `OrgPicker` · `SearchInput`。
+- **搜索空态图**：`no-data.png` +「未搜索到相关结果」；关键词高亮 `#3E7EFF`（`text-primary`）。
