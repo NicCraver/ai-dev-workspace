@@ -12,8 +12,9 @@
 contracts/
 ├─ _common.d.ts            # 跨域通用（ApiResponse / 错误码 …）
 ├─ personalAiFrame/        # 业务域
-│  ├─ list.d.ts            # POST /personalAiFrame/list
-│  └─ recentContactList.d.ts
+│  ├─ list.d.ts                 # POST /personalAiFrame/list
+│  ├─ recentContactList.d.ts    # POST /personalAiFrame/recentContactList
+│  └─ selectGroupBySearch.d.ts  # POST /personalAiFrame/selectGroupBySearch
 └─ README.md
 ```
 

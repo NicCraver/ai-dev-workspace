@@ -18,11 +18,11 @@
 
 ## 接口调用时序
 
-1. **弹窗打开**（`open=true`）：并行预取 `getRecentContacts` + `getMyGroups({type:'organization'})`；外联群在切到群组 tab 且选「外联群」时懒拉；组织架构由 OrgPicker 在 mount / 切 scope 时拉 `getOrgCompanies`。
+1. **弹窗打开**（`open=true`）：并行预取最近联系人 + `getMyGroups({type:'organization'})`。最近联系人时序：`getRecentContacts`（桥）→ web 端 `sortRecentLikeTransmitMessage` → `POST /personalAiFrame/recentContactList`（HTTP，按 id/type 批量补齐 `agentName` 等）；外联群在切到群组 tab 且选「外联群」时懒拉；组织架构由 OrgPicker 在 mount / 切 scope 时拉 `getOrgCompanies`。
 2. **群组二级切换**：首次进入某 `type` 时 `getMyGroups({type})`，结果缓存于内存，不重复请求。
 3. **组织钻取**：点公司 → `getDeptUsers({corpId, pid:'0'})`；点部门 → `getDeptUsers({corpId, pid: deptId})`；面包屑回溯复用已缓存或重新 `getDeptUsers`。
 4. **搜索**：`searchAiBoxPicker({search})` → 宿主 `getAccountSearchByUserName` + `getGroupBySearch` 并行（300ms 防抖）；空 keyword 不请求，popover 显示空态图。
-5. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底，列表显示空态，不阻断弹窗其它 tab。
+5. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底；`recentContactList` 失败则保留桥侧名称（昵称/群名），不阻断弹窗其它 tab。
 
 ## 边界情况
 
@@ -48,7 +48,7 @@
 - `groupListApi` 返回群项用 **`type`**（0/10），契约要求 `groupType` → handler 内 `groupType: g.type` 映射。会话模型里才叫 `groupType`，两套字段名同语义。
 - `getContactTree` 公司节点：名在 **`label`**（非 `name`/`corpName`）、人数在 **`num`**（非 `memberCount`）→ handler 映射为 `name/memberCount`。组织树的分组节点（type 1/2）的 `label` 作为公司项 `category`（如「入职企业/我的下级」），web OrgPicker 据此分组显示。
 - `getDeptUserPagelist` 入参除 `corpId/pid` 外，既有调用还传 `corpType/corpAndCorpRelType/labelType`；当前桥只传 `{corpId,pid,pageNum,pageSize}` → **待联调确认是否必需**（若 400/空，需在 bridge.md `getDeptUsers` 入参补 `corpType` 并由 web 透传）。
-- **`agentName` 桌面端无独立 store 字段**：私聊取对方昵称、群聊取群名（对齐 `selectAiAgentMapper.js`）。若产品要求 AI 框名与群/人名不同，需后端补字段。
+- **`agentName`**：桌面桥无独立 AI 框名时，私聊/群聊会先用昵称/群名兜底。**最近联系人 tab** 在 web 端再调 `POST /personalAiFrame/recentContactList` 按 `type+id` 批量覆盖 `agentName`（及 agentId/aiRoleId/agentVersionId）；搜索与群组 tab 仍用桥侧兜底，待产品确认是否同样补齐。
 - **`lastChatAt` 群组 tab 暂为 0**：`groupListApi` 不返回最近消息时间，handler 当前填 0 → 群组 tab 不按时间倒序。待联调确认是否从 `GetLatestOneMsg`/`lastConversationTime` 补（需知群会话 key 格式）。最近联系人 tab 的 `lastChatAt` 取 `item.lastConversationTime || item.message?.messageTime`，已实现。
 - `getRecentContacts` 旧 handler 形参 `(e,data,uuid,webContentsId)` 与 `sendToHost` 实参不匹配（`webContentsId` 实为 undefined，靠 `e.sender.sendTo` 在 Electron 19 退化/兜底跑通）——新增 handler 照搬此既有模式，未改。
 - **AiBrowser 个人 AI iframe 桥**：`/zx/personal` 在 iframe 内无 `window.webview`；`useAiBoxPickerData` 检测 iframe 后走 `parent.postMessage(personal-ai:bridge-request)` → AiBrowser `handlePersonalAiMessage` → `aiBoxPickerHost` → `personal-ai:bridge-result` 回传。token 仍走既有 `getToken`/`setToken`（`App.vue`）。
@@ -62,11 +62,22 @@
 - **AiBrowser iframe**：`parent.postMessage(personal-ai:bridge-request)` → AiBrowser → `aiBoxPickerHost` → `personal-ai:bridge-result`
 
 方法映射：
-- `getRecentContacts()` → 最近联系人 tab（首入懒拉，缓存；web 端 `sortRecentLikeTransmitMessage` 排序）
+- `getRecentContacts()` → 最近联系人 tab（首入懒拉，缓存；web 端排序后再调 `recentContactList` 补齐 agentName）
 - `getMyGroups({type})` → 群组 tab（按组织群/外联群二级切换懒拉）
 - `getOrgCompanies({type})` / `getDeptUsers({corpId,pid})` → 组织架构钻取
 - `searchAiBoxPicker({search})` → 搜索 popover（双接口并行，人员+群组）
 - 桥缺失/失败 → 调用方 `.catch(() => [])` 兜底
+
+## 最近联系人 agentName 补齐（`POST /personalAiFrame/recentContactList`）
+
+选择弹窗「最近联系人」在桥取数之后的 **HTTP 补齐**（`baseMap.ai`），与主列表 `list` 接口同域、不同用途。
+
+**时序**：桥 `getRecentContacts` → 归一化 → `sortRecentLikeTransmitMessage` → 构造 `items[{id,type}]`（群 `type='1'`、人 `type='2'`）→ `accountId` 取登录用户 id → `recentContactList` → 按 `type+id` 合并回列表行的 `agentName`（有则覆盖桥兜底）。
+
+**边界**：
+- 无登录 `accountId` 或桥列表为空 → 跳过 HTTP，直接展示桥数据。
+- 接口失败 / 单项无匹配 → 该行保留桥侧 `agentName`（昵称或群名），不整表失败。
+- 同步透传回参中的 `agentId` / `aiRoleId` / `agentVersionId`（若有），供选中后 upsert 对齐主列表。
 
 **PC 个人 AI 框（`/zx/personal`，`main.vue` 内 `AiBrowser`）**：
 - 内置 tab 使用 **`<iframe>`**（便于 DevTools 调试；web 热更新无需重启 preload）。

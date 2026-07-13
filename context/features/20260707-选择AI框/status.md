@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-13（web 接入 /personalAiFrame/list 列表取数）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-13（契约新增 selectGroupBySearch 弹窗搜索）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -25,13 +25,16 @@
 - (desktop) 待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`（当前只传 corpId/pid）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
 - (web) 待联调确认 zx 页是否支持 `resume=1` 参数（24h 恢复 vs 新建）
-- (多端) 待联调确认 `agentName` 是否需独立字段（搜索/列表当前私聊取昵称、群聊取群名）
+- (多端) 待联调确认 `agentName` 是否需独立字段（搜索/群组 tab 当前私聊取昵称、群聊取群名；**最近联系人 tab 已走** `POST /personalAiFrame/recentContactList` 补齐）
 - (web) `POST /personalAiFrame/list` **已接入** `PersonalAiChat.vue`（`getPersonalAiFrameList` + `mapFrameListToAgents` 替换 mock；入参 `accountId`+`filterType:0`）；desktop / android / ios 尚无调用方
+- (web) `POST /personalAiFrame/recentContactList` **已接入**选择弹窗最近联系人：`fetchRecent` 桥取数排序后批量补齐 `agentName`（及 agentId/aiRoleId/agentVersionId）；失败沿用桥侧名称；desktop 仍只负责 `getRecentContacts`
 - (web) **筛选记忆接口未就绪**：list 暂固定 `filterType:0`（全部），接口到位后在 `loadAgentList` 先取勾选态再拉列表（代码已留 TODO seam）
 - (web) 列表项 `chatType`/`targetId` **仍沿用 DEFAULT_CHAT mock**：契约 list 项无 chat 跳转字段，只回 `belongType`/`belongId`；真实 `belongId→targetId`、`belongType→路由 chatType` 待联调确认后接
 - (web) 三个点菜单（置顶/隐藏/打开私聊）操作**尚未接线**：`PersonalAiChat.vue` 未处理 `@agent-more`，且置顶/隐藏状态持久化依赖后端操作接口（同筛选记忆域），待接口到位
 - (web) list 主列表搜索（顶部搜索框）当前仍走**客户端过滤**，未使用契约 `searchKeyword` 服务端搜索；确认产品是否要求服务端搜索后再改
-- (多端) 契约新增 `POST /personalAiFrame/recentContactList`（批量按 id/type 补齐最近联系人 AI 框字段）；四端尚无 HTTP 调用方；当前最近联系人仍走桥 `getRecentContacts`——确认是否用本接口替换/补充 `agentName` 等字段后再改 web/desktop
+- (web) 契约新增 `POST /personalAiFrame/selectGroupBySearch`（选择AI框弹窗搜索）；当前仍走桥 `searchAiBoxPicker`——**需改代码**：`useAiBoxPickerData.searchPicker` / `AiBoxSearchPanel` 改 HTTP，映射 `privateList`/`groupList`（`nickName`/`groupId`/`groupNumber`/`agent*`/`selected`）
+- (desktop) 若 web 改走 HTTP 搜索：桥 `search-ai-box-picker` 可保留兜底或后续下线；**仅需回归**弹窗搜索链路
+- (android / ios) `selectGroupBySearch` **不受影响**（本期不做选择AI框弹窗）
 - (ios) 仓库内有个人 AI / 选择智能体 WIP 改动，**本期矩阵不做**（spec 范围仅 web + desktop）
 
 ## 关键决策记录
@@ -50,7 +53,9 @@
 - 2026-07-13 新增后端契约 `POST /personalAiFrame/list`；同步修正 `_common.d.ts` 外层 `code` 为 string（`M0000`）
 - 2026-07-13 `/personalAiFrame/list` 入参按最新文档去掉 `selectCorpId`，`accountId` mock 改为 `'280'`
 - 2026-07-13 新增后端契约 `POST /personalAiFrame/recentContactList`（入参 `accountId` + `items[{id,type}]`，回参补齐群/人信息与 agent 字段）
+- 2026-07-13 新增后端契约 `POST /personalAiFrame/selectGroupBySearch`（选择AI框弹窗搜索；入参 `accountId`+`searchContent`，回参 `groupList`+`privateList`，含 agent 字段与 `selected`）
 - 2026-07-13 web 列表取数接入 `/personalAiFrame/list`：`belongType 0/1/3 → personal/private/group`，标题取 `belongName`、副标题取 `name`，`lastChatTime`/`pinTime` 串转毫秒时间戳；`accountId` 取登录用户 `user.id`（回退 defaultQuery）；成功替换 mock，失败保留 mock 兜底
 - 2026-07-13 「先筛选记忆、后 list」时序在 web 端保留 seam（`loadAgentList` 内 TODO），筛选记忆接口未就绪期间 `filterType` 固定 0
 - 2026-07-13 web 本功能代码从 `views/home/` 集中迁到独立域目录 `views/personal-ai/`（22 文件，入口 `PersonalAiChat.vue`；仅 desktop/mobile `pages/personal/index.vue` 两处 import 改路径）；并在 root `CLAUDE.md` 立「功能内聚」总则，四端通用
 - 2026-07-13 `personal-ai/` 再按子功能细分：`list/` + `picker/`（含 `search/`）+ `selector/` + `tests/`（单测集中）；入口改为 `list/PersonalAiChat.vue`；「功能内可细分子目录、单测归 tests/」写入 root `CLAUDE.md` 总则
+- 2026-07-13 web 选择弹窗最近联系人：PC 桥 `getRecentContacts` 之后调用 `POST /personalAiFrame/recentContactList` 按 id/type 批量补齐 `agentName`（群 type=1、人 type=2）；失败不阻断列表

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/session-start.sh"
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/docs-guard.sh",
+        "loop_limit": 2
+      }
+    ]
+  }
+}

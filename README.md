@@ -1,6 +1,6 @@
 # ai-dev-workspace
 
-四端（web / android / ios / electron）多仓库协同的 AI 开发编排工作区。`context/` 存唯一事实文档，`apps/` 挂四个独立项目仓库，Claude Code 从本目录启动统一调度。
+四端（web / android / ios / electron）多仓库协同的 AI 开发编排工作区。`context/` 存唯一事实文档，`apps/` 挂四个独立项目仓库，从本目录启动统一调度（Claude Code 与 Cursor 均支持）。
 
 配套插件分工：Superpowers 负责 spec→plan→执行的工作流；claude-mem 负责跨会话过程记忆；codebase-memory 负责代码结构索引。本仓库只保留人需要审计的四类文档：spec、进度矩阵、实现笔记、接口契约。
 
@@ -34,18 +34,18 @@ bash scripts/bootstrap.sh
 
 ```
 CLAUDE.md                  全局规则（路由、契约、移植、收尾）
-.claude/settings.json      hooks 注册
-.claude/hooks/             session-start.sh（注入状态）/ docs-guard.sh（文档守门）
-.claude/commands/          /new-feature /port /sync-contract /distill
-.claude/skills/wrapup/     自动收尾技能
+.claude/                   Claude Code 配置（hooks / commands / skills）
+.cursor/                   Cursor 配置（hooks / commands / skills / rules）
 context/                   文档（见 context/README.md）
 scripts/                   new-feature.sh / bootstrap.sh
 apps/                      四个项目仓库挂载点（被 gitignore）
 ```
+
+两套配置内容对齐：`.claude/commands/` 与 `.cursor/commands/` 提供相同的 `/new-feature`、`/port`、`/sync-contract`、`/distill`、`/codebase` 斜杠命令；wrapup 技能在两边均有注册。
 
 ## 约定速查
 
 - 活跃功能：`context/features/ACTIVE`，同一时间只推进一个功能（多功能并行时切换此文件）。
 - 状态图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞；"完成"= 自测通过，不是"代码写完"。
 - 功能上线后目录改名加 `done-` 前缀归档。
-- Stop hook 只在 apps 有未提交改动且 status.md 未动时拦截一次；纯问答会话不受影响。
+- 文档守门 hook 只在 apps 有未提交改动且 status.md 未动时触发一次；纯问答会话不受影响（Claude 阻止结束，Cursor 自动续跑提示补齐）。

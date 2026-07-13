@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-chmod +x .claude/hooks/*.sh scripts/*.sh
+chmod +x .claude/hooks/*.sh .cursor/hooks/*.sh scripts/*.sh
 
 if [[ ! -d .git ]]; then
   git init -b main
@@ -47,6 +47,8 @@ cat << 'EOF'
      并在 apps/web/ 下生成该仓库自己的 CLAUDE.md（构建/测试/lint 命令与代码规范）
    （android / ios / desktop 同理，然后人工校对一遍）
 
-5. 验证 hooks 已注册：会话内执行 /hooks 应能看到 SessionStart 和 Stop。
+5. 验证 hooks 已注册：
+   - Claude Code：会话内执行 /hooks 应能看到 SessionStart 和 Stop。
+   - Cursor：Settings → Hooks 应能看到 sessionStart 和 stop（配置在 .cursor/hooks.json）。
 ────────────────────────────────────────────
 EOF
