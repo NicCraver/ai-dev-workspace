@@ -1,11 +1,29 @@
 # contracts/ —— 接口契约（唯一事实来源）
 
-规则：
+## 目录组织
 
-1. 每个业务域一个 `.d.ts` 文件（TypeScript 类型 + 注释描述语义），文件头维护 Changelog。
-2. mock 先行阶段：四端的 mock 数据必须能通过这里的类型检查（web 直接引用类型；android/ios 按字段一一对应）。
-3. 接口到位/变更：**先改契约、记 Changelog，再改代码**（用 /sync-contract 走流程）。
-4. 联调发现实际行为与契约不符：以实际为准更新契约，并在活跃功能 impl-notes.md 的「联调坑」补一条。
-5. 通用约定（分页结构、错误码、时间格式）写在 `_common.d.ts`，各域文件不要重复定义。
+- **每个业务域一个文件夹**：`contracts/<域>/`（如 `personalAiFrame/`）。
+- **每个接口单独一个文件**：`contracts/<域>/<接口>.d.ts`（一个接口一文件，**不要把多个接口挤在一个文件里**）。文件名用接口动作名，如 `list.d.ts`、`recentContactList.d.ts`。
+- **每个接口文件头维护自己的 Changelog**（只记该接口的变更）。
+- **域内多接口共享的类型** → `contracts/<域>/_shared.d.ts`（当前若无共享类型可省略）。
+- **跨域通用约定**（外层包裹 `ApiResponse`、错误码、时间格式、分页结构）→ 根级 `_common.d.ts`，各接口文件 `import type { ... } from '../_common'`，不要重复定义。
+
+```
+contracts/
+├─ _common.d.ts            # 跨域通用（ApiResponse / 错误码 …）
+├─ _example.d.ts           # 写法示例
+├─ personalAiFrame/        # 业务域
+│  ├─ list.d.ts            # POST /personalAiFrame/list
+│  └─ recentContactList.d.ts
+└─ README.md
+```
+
+> 组织规则只约束**新增契约**；既有契约在下次改动它时顺手迁到该结构，不为合规专门搬迁。
+
+## 使用规则
+
+1. mock 先行阶段：四端的 mock 数据必须能通过这里的类型检查（web 直接引用类型；android/ios 按字段一一对应）。
+2. 接口到位/变更：**先改契约、记 Changelog，再改代码**（用 /sync-contract 走流程）。
+3. 联调发现实际行为与契约不符：以实际为准更新契约，并在活跃功能 impl-notes.md 的「联调坑」补一条。
 
 参考 `_example.d.ts` 的写法。

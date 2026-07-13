@@ -1,5 +1,7 @@
 /**
- * 契约示例：语音消息域
+ * 契约示例：语音消息域（演示类型/注释写法）
+ * 放置约定：真实契约按「一域一文件夹、一接口一文件」组织，
+ *   本示例内容应落在 `voiceMessage/messageList.d.ts`，`import type { ApiResponse } from '../_common'`。
  * Changelog:
  * - 2026-07-06 初始化（mock 阶段，未与后端确认字段以 @unconfirmed 标注）
  */
