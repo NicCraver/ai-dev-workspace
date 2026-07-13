@@ -25,4 +25,11 @@ contracts/
 2. 接口到位/变更：**先改契约、记 Changelog，再改代码**（用 /sync-contract 走流程）。
 3. 联调发现实际行为与契约不符：以实际为准更新契约，并在活跃功能 impl-notes.md 的「联调坑」补一条。
 
-写法参考 `personalAiFrame/list.d.ts`（类型 + 中文注释描述语义、字段 mock 值、`@unconfirmed` 标注未确认字段）。
+## 写法约定
+
+- 用 TypeScript 类型 + **中文注释**描述每个字段的语义。
+- 字段注释里标 mock 值，格式 `mock: <值>`（如 `mock: '280'`、`mock: 0`）。
+- 后端**未确认**的字段/行为，用 `@unconfirmed` 注明，联调确认后去除。
+- 时间/枚举等取值范围写清楚（如「格式 yyyy-MM-dd HH:mm:ss」「0-全部；1-…」）。
+
+现成范例见 `personalAiFrame/list.d.ts`。
