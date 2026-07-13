@@ -12,7 +12,7 @@
 **搜索（已实现，对齐 PC 转发 search-box）**：
 - focus 搜索框 → `Teleport` 到 body 的 popover 锚定在输入框下方（宽 320px，高 max 400px 且不超过视口剩余空间）
 - 无关键词：popover 内显示空态图 +「未搜索到相关结果」
-- 有关键词：300ms 防抖 → `searchAiBoxPicker` 宿主双接口 → 先人员、后群组列表，标题/副标题关键词高亮
+- 有关键词：300ms 防抖 → HTTP `POST /personalAiFrame/selectGroupBySearch`（`accountId`+`searchContent`）→ 结果分「全部/群组/人员」三 tab（全部=群组在前、人员在后），标题/副标题关键词高亮
 - 点选一行 → 写入 `selected`、清空 keyword、关闭 popover；主 tab 列表始终可见、不受 keyword 影响
 - popover 内 `mousedown.prevent` + blur 延迟，避免点结果时先关层
 
@@ -21,7 +21,7 @@
 1. **弹窗打开**（`open=true`）：并行预取最近联系人 + `getMyGroups({type:'organization'})`。最近联系人时序：`getRecentContacts`（桥）→ web 端 `sortRecentLikeTransmitMessage` → `POST /personalAiFrame/recentContactList`（HTTP，按 id/type 批量补齐 `agentName` 等）；外联群在切到群组 tab 且选「外联群」时懒拉；组织架构由 OrgPicker 在 mount / 切 scope 时拉 `getOrgCompanies`。
 2. **群组二级切换**：首次进入某 `type` 时 `getMyGroups({type})`，结果缓存于内存，不重复请求。
 3. **组织钻取**：点公司 → `getDeptUsers({corpId, pid:'0'})`；点部门 → `getDeptUsers({corpId, pid: deptId})`；面包屑回溯复用已缓存或重新 `getDeptUsers`。
-4. **搜索**：`searchAiBoxPicker({search})` → 宿主 `getAccountSearchByUserName` + `getGroupBySearch` 并行（300ms 防抖）；空 keyword 不请求，popover 显示空态图。
+4. **搜索**：HTTP `POST /personalAiFrame/selectGroupBySearch({accountId, searchContent})`（300ms 防抖）→ 回参 `groupList`+`privateList`，前端分三 tab 展示；空 keyword 不请求，popover 显示空态图。（旧桥 `searchAiBoxPicker`/宿主 `getAccountSearchByUserName`+`getGroupBySearch` 已由 web 弃用，desktop 侧可保留兜底或后续下线）
 5. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底；`recentContactList` 失败则保留桥侧名称（昵称/群名），不阻断弹窗其它 tab。
 
 ## 边界情况
@@ -65,7 +65,7 @@
 - `getRecentContacts()` → 最近联系人 tab（首入懒拉，缓存；web 端排序后再调 `recentContactList` 补齐 agentName）
 - `getMyGroups({type})` → 群组 tab（按组织群/外联群二级切换懒拉）
 - `getOrgCompanies({type})` / `getDeptUsers({corpId,pid})` → 组织架构钻取
-- `searchAiBoxPicker({search})` → 搜索 popover（双接口并行，人员+群组）
+- ~~`searchAiBoxPicker({search})` → 搜索 popover~~ **已弃用**：搜索改走 HTTP `POST /personalAiFrame/selectGroupBySearch`（见下「弹窗搜索取数」）
 - 桥缺失/失败 → 调用方 `.catch(() => [])` 兜底
 
 ## 最近联系人 agentName 补齐（`POST /personalAiFrame/recentContactList`）
@@ -84,6 +84,28 @@
 - 桥请求时序见上「AiBrowser iframe」通路；取数逻辑与微应用共用 `aiBoxPickerHost.js`。
 - token：`postMessage("getToken")` → `App.vue` 回 `setToken`（与群 AI 框等 iframe 一致）。
 - 群头像成员：取数在主窗口进程，对未缓存群并发 `groupInfoApi` 补取后拼 `accountInfoList`。
+
+## 弹窗搜索取数（`POST /personalAiFrame/selectGroupBySearch`）
+
+选择弹窗顶部搜索框的取数（**普通 HTTP**，`baseMap.ai`，替换旧桥 `searchAiBoxPicker`）。
+
+**时序**：focus 开 popover → 输入 → 300ms 防抖 → `selectGroupBySearch({accountId, searchContent})`（`accountId` 取登录用户 id）→ 回参 `groupList`+`privateList` → 分 tab 渲染。空关键词不请求（沿用空态图；契约支持「空即全量」，本期未启用）。
+
+**结果 UI（三 tab）**：
+- `全部`：群组在前、人员在后（契约回两个独立数组，前端拼接；后端未给统一排序字段）。
+- `群组`：仅 `groupList`；`人员`：仅 `privateList`。
+- 每次新搜索重置到「全部」；某 tab 子集为空时该 tab 下显示空态图（其它 tab 仍可能有结果）。
+- 行内：单选圆点 + 头像 + 名称（关键词高亮）+ 副标题 `agentName`（高亮）。
+
+**回参 → 统一搜索项映射**：
+- 私聊项：`nickName`→名称、`accountId`→id、`agentName`（缺省回退 `nickName`），透传 `agentId/aiRoleId/agentVersionId/selected`，`ownerType='private'`。
+- 群组项：`groupName`→名称、`groupId`→id、`groupNumber`→人数、`agentName`（缺省回退 `groupName`），透传 agent 字段，`ownerType='group'`。
+- **选中**：搜索项与其它 tab 选中项同形态上抛 `submit`；选中后清空 keyword、关闭 popover。
+
+**边界 / 联调坑**：
+- 群组项契约**只回单个 `avatar`**（无成员列表）→ 搜索结果群头像用单图，**无 2×2 拼图**（与最近联系人/群组 tab 的 2×2 不同，若产品要求需后端补成员或前端再取群详情）。
+- `selected` 字段后端可回；前端选中态以本地 `selectedKey` 为准，`selected` 暂作参考。
+- 失败 → popover 显示「搜索失败，重试」；不影响主弹窗其它 tab。
 
 ## AI框列表取数（`POST /personalAiFrame/list`）
 
