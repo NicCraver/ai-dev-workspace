@@ -81,8 +81,9 @@
 
 **PC 个人 AI 框（`/zx/personal`，`main.vue` 内 `AiBrowser`）**：
 - 宿主仍用 **外层 `<iframe>`** 嵌 `/zx/personal`（便于 DevTools 调试；web 热更新无需重启 preload）。
-- **右侧对话面板**在 personal 页内改为**同页组件直渲**（传入归属 `chatType`/`targetId`/`aiRoleId`，切换智能体时整面板重挂载），不再二次嵌套 `/zx/home/...` iframe。
-- **切换列表即刷新右侧**：重挂载 key 必须并入**选中项唯一 id**（agentId）——个人AI框/群/私聊当前常共用同一 `chatType`/`targetId`（会话跳转字段待联调），只按 `chatType/targetId/aiRoleId` 组 key 会导致切换不同 AI框时 key 不变、右侧不刷新。key = `agentId + chatType + targetId + aiRoleId + resume`。
+- **右侧对话面板**在 personal 页内改为**同页组件直渲** `HomeIndex`（传 `chatType`/`targetId`/`aiRoleId`，切换智能体时整面板重挂载），不再二次嵌套 `/zx/home/...` iframe。
+- **HomeIndex 嵌入契约**：`chatType=belongType`、`targetId=belongId`；`aiRoleId` **prop 优先、缺省回退 URL `?aiRoleId=`**。原有入口（`home` 页 `v-bind="$attrs"`、`[chatType]/[targetId]` 路由）**不传 aiRoleId prop → 走 URL**，与改造前逐字等价；只有 personal 嵌入才用 prop → **共享组件向后兼容，不影响原有会话功能**。
+- **切换列表即刷新右侧**：重挂载 key 必须并入**选中项唯一 id**（agentId）。私聊/群现已用真实 `belongType`/`belongId`（各项不同、key 天然变化）；但**个人AI框(0) 仍共用 `DEFAULT_CHAT` 占位**，若 key 不含 agentId，则从个人AI框切到另一占位项时 key 不变、右侧不刷新。key = `agentId + chatType + targetId + aiRoleId + resume`。
 - 桥请求时序见上「AiBrowser iframe」通路；取数逻辑与微应用共用 `aiBoxPickerHost.js`。
 - token：`postMessage("getToken")` → `App.vue` 回 `setToken`（与群 AI 框等 iframe 一致）。
 - 群头像成员：取数在主窗口进程，对未缓存群并发 `groupInfoApi` 补取后拼 `accountInfoList`。
