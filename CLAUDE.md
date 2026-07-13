@@ -20,6 +20,7 @@
 1. 当前活跃功能记录在 `context/features/ACTIVE` 文件中（SessionStart hook 会自动注入其 status.md）。
 2. 开始任何编码任务前，先读活跃功能的 `status.md`，明确本次要推进矩阵中的哪一格。
 3. 涉及某端代码时，先读 `context/platforms/<端>.md`；查代码结构优先用 codebase-memory 检索，不要盲目大量读文件。
+4. Web 端样式规范见 `context/dev-rules/unocss-conventions.mdc`（编辑 `apps/web/**` 时由 Cursor 按 glob 自动注入，其他端不加载）。Cursor 用户见 `.cursor/` 目录（hooks / commands / skills / rules 与 `.claude/` 对齐）。
 
 ## 文档产出路径（覆盖 Superpowers 默认行为）
 
@@ -51,6 +52,16 @@
 3. 在 context 仓库执行 `git add -A && git commit`（提交信息格式：`docs(<feature>): <一句话>`）。
 
 > Stop hook 会检查：apps 有代码改动但活跃功能 status.md 未更新时，将阻止结束并提示补齐。
+
+## 功能内聚（目录/模块组织，四端通用）
+
+每个功能域/迭代的代码**集中在一个独立目录/模块**，禁止散落到公共目录里与其它功能混放：
+
+- **web**：`apps/web/src/components/views/<功能域>/`（含入口组件、子组件、取数/adapter、该功能私有的工具与单测）。示例：个人AI框在 `views/personal-ai/`，其入口 `PersonalAiChat.vue` 由 `/personal` 路由引用。功能私有工具（如高亮、搜索输入框）随功能目录走，不放公共 `utils/`；确实被多功能复用时才上提到公共层。
+- **android / ios**：一个功能一个 package / group（对应 Kotlin package、Xcode group/文件夹）。
+- **desktop**：一个功能一个模块目录。
+
+判据：只被本功能引用的文件 → 放功能目录；被 2+ 功能引用 → 上提公共层。移动后同步更新引用方 import。
 
 ## 各仓库内部约定
 

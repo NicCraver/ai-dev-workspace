@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-08 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-13（web 接入 /personalAiFrame/list 列表取数）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -26,6 +26,12 @@
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
 - (web) 待联调确认 zx 页是否支持 `resume=1` 参数（24h 恢复 vs 新建）
 - (多端) 待联调确认 `agentName` 是否需独立字段（搜索/列表当前私聊取昵称、群聊取群名）
+- (web) `POST /personalAiFrame/list` **已接入** `PersonalAiChat.vue`（`getPersonalAiFrameList` + `mapFrameListToAgents` 替换 mock；入参 `accountId`+`filterType:0`）；desktop / android / ios 尚无调用方
+- (web) **筛选记忆接口未就绪**：list 暂固定 `filterType:0`（全部），接口到位后在 `loadAgentList` 先取勾选态再拉列表（代码已留 TODO seam）
+- (web) 列表项 `chatType`/`targetId` **仍沿用 DEFAULT_CHAT mock**：契约 list 项无 chat 跳转字段，只回 `belongType`/`belongId`；真实 `belongId→targetId`、`belongType→路由 chatType` 待联调确认后接
+- (web) 三个点菜单（置顶/隐藏/打开私聊）操作**尚未接线**：`PersonalAiChat.vue` 未处理 `@agent-more`，且置顶/隐藏状态持久化依赖后端操作接口（同筛选记忆域），待接口到位
+- (web) list 主列表搜索（顶部搜索框）当前仍走**客户端过滤**，未使用契约 `searchKeyword` 服务端搜索；确认产品是否要求服务端搜索后再改
+- (多端) 契约新增 `POST /personalAiFrame/recentContactList`（批量按 id/type 补齐最近联系人 AI 框字段）；四端尚无 HTTP 调用方；当前最近联系人仍走桥 `getRecentContacts`——确认是否用本接口替换/补充 `agentName` 等字段后再改 web/desktop
 - (ios) 仓库内有个人 AI / 选择智能体 WIP 改动，**本期矩阵不做**（spec 范围仅 web + desktop）
 
 ## 关键决策记录
@@ -41,3 +47,9 @@
 - 2026-07-08 群 2x2 头像经桥字段 `accountInfoList` 下发，web `normalizeRecentItem` 须透传
 - 2026-07-08 搜索对齐 PC 转发 `search-box` + `search-result`：`AiBoxSearchBox` Teleport popover（320×400 max），人员+群组列表，无搜索内 tab；主列表始终可见
 - 2026-07-08 `searchAiBoxPicker` 宿主双接口（`getAccountSearchByUserName` + `getGroupBySearch`，不含机器人）
+- 2026-07-13 新增后端契约 `POST /personalAiFrame/list`；同步修正 `_common.d.ts` 外层 `code` 为 string（`M0000`）
+- 2026-07-13 `/personalAiFrame/list` 入参按最新文档去掉 `selectCorpId`，`accountId` mock 改为 `'280'`
+- 2026-07-13 新增后端契约 `POST /personalAiFrame/recentContactList`（入参 `accountId` + `items[{id,type}]`，回参补齐群/人信息与 agent 字段）
+- 2026-07-13 web 列表取数接入 `/personalAiFrame/list`：`belongType 0/1/3 → personal/private/group`，标题取 `belongName`、副标题取 `name`，`lastChatTime`/`pinTime` 串转毫秒时间戳；`accountId` 取登录用户 `user.id`（回退 defaultQuery）；成功替换 mock，失败保留 mock 兜底
+- 2026-07-13 「先筛选记忆、后 list」时序在 web 端保留 seam（`loadAgentList` 内 TODO），筛选记忆接口未就绪期间 `filterType` 固定 0
+- 2026-07-13 web 本功能代码从 `views/home/` 集中迁到独立域目录 `views/personal-ai/`（22 文件，入口 `PersonalAiChat.vue`；仅 desktop/mobile `pages/personal/index.vue` 两处 import 改路径）；并在 root `CLAUDE.md` 立「功能内聚」总则，四端通用

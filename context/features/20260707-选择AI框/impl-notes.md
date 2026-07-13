@@ -74,6 +74,28 @@
 - token：`postMessage("getToken")` → `App.vue` 回 `setToken`（与群 AI 框等 iframe 一致）。
 - 群头像成员：取数在主窗口进程，对未缓存群并发 `groupInfoApi` 补取后拼 `accountInfoList`。
 
+## AI框列表取数（`POST /personalAiFrame/list`）
+
+主侧栏「AI框列表」的数据来源（区别于选择弹窗的桥取数）。这是**普通 HTTP 接口**（`baseMap.ai`），非宿主桥。
+
+**时序**：页面挂载 → （规划中：先取「筛选记忆」得勾选态 → 算 filterType）→ 拉 `list` → 映射为内部 agent → 排序渲染。
+- 筛选记忆接口未就绪时，`filterType` 固定 `0`（全部）；代码留 seam，接口到位后在拉 list 前插入。
+- `accountId` 取当前登录用户 id（无则回退页面默认查询参数）。
+- 成功 → 用回参 `aiFrameList` 整表替换本地列表；失败 → 保留初始 mock，不清空（保证无后端/老壳环境不白屏）。
+- 选中项若不在新列表中 → 回退到排序后首项。
+
+**回参 → 内部 agent 映射**（契约 `PersonalAiFrameItem`）：
+- `belongType`：`0→个人AI框`（个人、无三点菜单）/`1→私聊`/`3→群聊`；据此定 ownerType、标签、是否个人。
+- **标题** = `belongName`（个人='个人AI框'/群=群名/私聊=对方名）；**副标题** = `name`（AI框名）。
+- `lastChatTime` / `pinTime` 是 `"yyyy-MM-dd HH:mm:ss"` 字符串 → 转毫秒时间戳（解析时把 `-` 换 `/` 规避时区差异）；缺失回 0。
+- 排序沿用既有规则：个人置顶 → 置顶项按置顶时间 → 其余按 `lastChatAt` 倒序。
+- `hasKnowledge`/`unreadCount`/`isPinned` 透传；`belongType`/`belongId`/`corpId`/`aiRoleId` 原样保留，供后续会话跳转与置顶/隐藏操作使用。
+
+**联调坑 / 待确认**：
+- 契约 list 项**不含会话跳转字段**（无 chatType/targetId），只回 `belongType`/`belongId`。列表项的 `chatType`/`targetId` **暂沿用 mock 常量**；真实跳转（`belongId→targetId`、`belongType→路由 chatType`）待联调后接。
+- 顶部搜索框当前是**客户端过滤**，未用契约 `searchKeyword` 做服务端搜索。
+- 三个点菜单（置顶/隐藏/打开私聊）尚未接线，且状态持久化依赖后端操作接口（与「筛选记忆」同域），待接口到位。
+
 ## web 端视觉/实现备忘（蓝湖还原）
 
 - **弹窗尺寸**：蓝湖稿面板 **440×580**。`AcDialog splitTheme`，`class="!w-440px !h-580px"`。
@@ -82,5 +104,6 @@
 - **配色 token**：active tab/面包屑前级 `primary`；inactive tab `gray-dark`；副文案 `gray-medium`；行分隔 `border-gray-light`；搜索框底 `bg-gray-light`（`#F4F6F8`）；选中行底 `bg-primary-light`；搜索框圆角 **13px**。
 - **单选图标**：`CheckboxView` 的 `radio` 模式（14px 圆形单选）。
 - **搜索 popover**：对齐 PC `search-box`/`search-result`——320px 宽、max 400px 高、`box-shadow: 0 0 10px rgba(0,0,0,0.3)`、圆角 4px；`Teleport` 到 body 避免 Dialog `overflow:hidden` 裁切。
+- **代码目录**：web 本功能全部代码集中在 `apps/web/src/components/views/personal-ai/`（入口 `PersonalAiChat.vue`，其余为子组件/取数/adapter/私有工具/单测）；功能私有工具（`highlightKeyword`、`SearchInput`）随目录走，不放公共 `utils/`。对应 root `CLAUDE.md`「功能内聚」总则（其它端按各自 package/模块惯例落地）。
 - **组件文件**：`SelectAiBoxDialog` · `AiBoxSearchBox`（输入+popover 壳）· `AiBoxSearchPanel`（结果列表）· `AiBoxSearchRow` · `AiBoxRow` · `OrgPicker` · `SearchInput`。
 - **搜索空态图**：`no-data.png` +「未搜索到相关结果」；关键词高亮 `#3E7EFF`（`text-primary`）。
