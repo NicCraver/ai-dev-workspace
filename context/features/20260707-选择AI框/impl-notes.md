@@ -80,10 +80,13 @@
 - 同步透传回参中的 `agentId` / `aiRoleId` / `agentVersionId`（若有），供选中后 upsert 对齐主列表。
 
 **PC 个人 AI 框（`/zx/personal`，`main.vue` 内 `AiBrowser`）**：
-- 内置 tab 使用 **`<iframe>`**（便于 DevTools 调试；web 热更新无需重启 preload）。
+- 宿主仍用 **外层 `<iframe>`** 嵌 `/zx/personal`（便于 DevTools 调试；web 热更新无需重启 preload）。
+- **右侧对话面板**在 personal 页内改为**同页组件直渲**（传入归属 `chatType`/`targetId`/`aiRoleId`，切换智能体时整面板重挂载），不再二次嵌套 `/zx/home/...` iframe。
+- **切换列表即刷新右侧**：重挂载 key 必须并入**选中项唯一 id**（agentId）——个人AI框/群/私聊当前常共用同一 `chatType`/`targetId`（会话跳转字段待联调），只按 `chatType/targetId/aiRoleId` 组 key 会导致切换不同 AI框时 key 不变、右侧不刷新。key = `agentId + chatType + targetId + aiRoleId + resume`。
 - 桥请求时序见上「AiBrowser iframe」通路；取数逻辑与微应用共用 `aiBoxPickerHost.js`。
 - token：`postMessage("getToken")` → `App.vue` 回 `setToken`（与群 AI 框等 iframe 一致）。
 - 群头像成员：取数在主窗口进程，对未缓存群并发 `groupInfoApi` 补取后拼 `accountInfoList`。
+- 24h 恢复：列表侧已按 `lastChatAt` 判定 `resume` 并参与面板重挂载；对话侧是否消费「恢复 vs 新建」待联调。
 
 ## 弹窗搜索取数（`POST /personalAiFrame/selectGroupBySearch`）
 
@@ -125,7 +128,8 @@
 - `hasKnowledge`/`unreadCount`/`isPinned` 透传；`belongType`/`belongId`/`corpId`/`aiRoleId` 原样保留，供后续会话跳转与置顶/隐藏操作使用。
 
 **联调坑 / 待确认**：
-- 契约 list 项**不含会话跳转字段**（无 chatType/targetId），只回 `belongType`/`belongId`。列表项的 `chatType`/`targetId` **暂沿用 mock 常量**；真实跳转（`belongId→targetId`、`belongType→路由 chatType`）待联调后接。
+- 契约 list 项**不含会话跳转字段**（无 chatType/targetId），只回 `belongType`/`belongId`。列表项的 `chatType`/`targetId` **暂沿用 mock 常量**；真实跳转（`belongId→targetId`、`belongType→会话 chatType`）待联调后接。
+- 选中列表项后右侧直接挂载对话面板（传 `chatType`/`targetId`/`aiRoleId`），切换时重挂载；不再拼 `/zx/home/...` URL。
 - 顶部搜索框当前是**客户端过滤**，未用契约 `searchKeyword` 做服务端搜索。
 - 三个点菜单（置顶/隐藏/打开私聊）尚未接线，且状态持久化依赖后端操作接口（与「筛选记忆」同域），待接口到位。
 
