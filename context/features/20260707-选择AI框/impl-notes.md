@@ -128,7 +128,7 @@
 - `hasKnowledge`/`unreadCount`/`isPinned` 透传；`belongType`/`belongId`/`corpId`/`aiRoleId` 原样保留，供后续会话跳转与置顶/隐藏操作使用。
 
 **联调坑 / 待确认**：
-- 契约 list 项**不含会话跳转字段**（无 chatType/targetId），只回 `belongType`/`belongId`。列表项的 `chatType`/`targetId` **暂沿用 mock 常量**；真实跳转（`belongId→targetId`、`belongType→会话 chatType`）待联调后接。
+- **会话跳转**：右侧 `HomeIndex` 约定 `chatType=belongType`、`targetId=belongId`（type 1→`getUserInfo` 私聊、type 3→`getGroupInfo` 群）。**私聊/群已按真实 `belongType`/`belongId` 打开对应会话**——切换列表即换 key 重挂载右侧、内容随之正确。**个人AI框(belongType 0)**：`HomeIndex.getBelongInfo` 只处理 1/3，type 0 会卡在 loading，且个人AI框无外部会话目标 → 列表项暂回退 `DEFAULT_CHAT` 占位。**待联调**：HomeIndex 补 type 0（个人AI/自会话）分支 + 后端给个人AI框真实会话目标。
 - 选中列表项后右侧直接挂载对话面板（传 `chatType`/`targetId`/`aiRoleId`），切换时重挂载；不再拼 `/zx/home/...` URL。
 - 顶部搜索框当前是**客户端过滤**，未用契约 `searchKeyword` 做服务端搜索。
 - 三个点菜单（置顶/隐藏/打开私聊）尚未接线，且状态持久化依赖后端操作接口（与「筛选记忆」同域），待接口到位。
