@@ -11,7 +11,6 @@
 ```
 contracts/
 ├─ _common.d.ts            # 跨域通用（ApiResponse / 错误码 …）
-├─ _example.d.ts           # 写法示例
 ├─ personalAiFrame/        # 业务域
 │  ├─ list.d.ts            # POST /personalAiFrame/list
 │  └─ recentContactList.d.ts
@@ -26,4 +25,4 @@ contracts/
 2. 接口到位/变更：**先改契约、记 Changelog，再改代码**（用 /sync-contract 走流程）。
 3. 联调发现实际行为与契约不符：以实际为准更新契约，并在活跃功能 impl-notes.md 的「联调坑」补一条。
 
-参考 `_example.d.ts` 的写法。
+写法参考 `personalAiFrame/list.d.ts`（类型 + 中文注释描述语义、字段 mock 值、`@unconfirmed` 标注未确认字段）。
