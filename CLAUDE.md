@@ -57,10 +57,12 @@
 
 每个功能域/迭代的代码**集中在一个独立目录/模块**，禁止散落到公共目录里与其它功能混放：
 
-- **web**：`apps/web/src/components/views/<功能域>/`（含入口组件、子组件、取数/adapter、该功能私有的工具与单测）。示例：个人AI框在 `views/personal-ai/`，其入口 `PersonalAiChat.vue` 由 `/personal` 路由引用。功能私有工具（如高亮、搜索输入框）随功能目录走，不放公共 `utils/`；确实被多功能复用时才上提到公共层。
+- **web**：`apps/web/src/components/views/<功能域>/`（含入口组件、子组件、取数/adapter、该功能私有的工具）。功能私有工具（如高亮、搜索输入框）随功能目录走，不放公共 `utils/`；确实被多功能复用时才上提到公共层。示例：个人AI框在 `views/personal-ai/`，入口 `list/PersonalAiChat.vue` 由 `/personal` 路由引用。
 - **android / ios**：一个功能一个 package / group（对应 Kotlin package、Xcode group/文件夹）。
 - **desktop**：一个功能一个模块目录。
 
+**子功能细分**：功能目录内可再按子功能拆子目录（如 `personal-ai/` → `list/`、`picker/`（内含 `search/`）、`selector/`）。
+**单测归置**：单测集中到该功能的 `tests/` 子目录（web=`tests/`，其它端按各自测试目录惯例），不与源码同级散放。
 判据：只被本功能引用的文件 → 放功能目录；被 2+ 功能引用 → 上提公共层。移动后同步更新引用方 import。
 
 ## 各仓库内部约定
