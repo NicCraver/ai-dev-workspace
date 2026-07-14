@@ -144,7 +144,7 @@
 **时序**：
 1. 选中项 → `selectedList` 单项：`belongType`（private→1 / group→3）、`belongId`（优先 `ownerId`，否则 `id`/`accountId`/`groupId`）、有则带 `agentId`。无法得到 `belongType+belongId` 时该项为 null，`selectedList` 可为 `[]`。
 2. `POST /personalAiFrame/saveSelected({ accountId, selectedList })`。
-3. 将本次 `agentId` **去重 push** 进会话内 `exemptAgentIds`（无 `agentId` 则名单不变）。
+3. 将本次 **真实** `agentId` **去重 push** 进会话内 `exemptAgentIds`（空或 `group:`/`private:` 合成 id 不追加）。
 4. `POST /personalAiFrame/list({ accountId, filterTypes: null, exemptAgentIds })`——`filterTypes:null` 沿用筛选记忆；豁免名单保证新选中项不被当前筛选挡掉。
 5. 用 `aiFrameList` 整表替换侧栏；按 `agentId`（其次 `belongType+belongId`）定位并激活；找不到则本地 upsert 兜底。
 6. **任一步失败** → 不阻断：本地 `mapSelectionToAgent` + upsert 仍写入侧栏。
@@ -156,13 +156,13 @@
 - `exemptAgentIds` 为**会话内累加**（同页多次选择不断 push），非跨刷新持久化。
 - **与建会话解耦**：save 映射已用 `ownerId`；打开右侧会话目标仍走列表项的 `belongType`/`belongId`（或占位），勿在 save 编排里顺手改 chat 目标。
 
-**移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可。各端勿在 UI 层散写这两步时序。web 已提交（`personalAiSaveSelectedFlow.js` + 单测，`6796595`）；**真实后端联调尚未验收**（T9 仍 🚧）。
+**移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可。各端勿在 UI 层散写这两步时序。web 已提交（`6796595` + `588d044` 合成 id 过滤）；**真实后端联调尚未验收**（T9 仍 🚧）。
 
 ### ios 原生选择 → web 触发 save/list
 
 1. web 调 `wnsdk.aiChat.selectAiAgent` → 原生选人/群页。
 2. 确定后桥回传 `messagePayload`（见 `bridge.md`）：必含 `ownerType` + `ownerId`（群=groupId、人=accountId）+ `id`/`name`/`lastChatAt`；**无真实 agentId 时省略字段**。
-3. web `normalizeNativeSelectAgentResult` → `applySelection` → 共用 `saveSelectedAndReloadList`（与 PC 弹窗同一条链路）。
+3. web 归一化原生回传 → `applySelection` → 共用 `saveSelectedAndReloadList`（与 PC 弹窗同一条链路）。本地侧栏 upsert 可用 `ownerType:ownerId` 作列表 key；**save/exempt 须过滤** `group:`/`private:` 前缀合成 id。
 4. 取消 `code=-1`，不调 save/list。
 
 ## web 端视觉/实现备忘（蓝湖还原）
