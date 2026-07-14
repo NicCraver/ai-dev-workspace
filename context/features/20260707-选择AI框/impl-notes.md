@@ -154,7 +154,7 @@
 - 最近联系人（HTTP 补齐后）与搜索结果通常带真实 `agentId`，豁免生效。
 - `exemptAgentIds` 为**会话内累加**（同页多次选择不断 push），非跨刷新持久化。
 
-**移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可（web 注入 axios 封装）。
+**移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可。各端勿在 UI 层散写这两步时序。
 
 ## web 端视觉/实现备忘（蓝湖还原）
 
