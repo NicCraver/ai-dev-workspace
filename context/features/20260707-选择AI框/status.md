@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-14（web `588d044` 合成 agentId 过滤；ios selectAiAgent 未提交；desktop 仅 .env.test）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-14（web `personal-ai-chat` 已合入 `test-202512` @ `b3e47d1`；ios selectAiAgent 未提交；desktop 仅 .env.test）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -18,10 +18,11 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：desktop T2 **handler 已合入**（`aiBoxPickerHost` + 五 channel），未提交仅 `.env.test`→localhost；web T8 saveSelected 已提交（`6796595` + `588d044` 合成 agentId 过滤/原生归一化）；ios `selectAiAgent` 桥+选择页**工作区未提交**（回传已按 bridge 去掉合成 agentId）；T8/T9 待真机/后端联调。
+> **本轮 apps 事实**：desktop T2 **handler 已合入**（`aiBoxPickerHost` + 五 channel），未提交仅 `.env.test`→localhost；web `personal-ai-chat` **已合入** `test-202512`（merge `b3e47d1`，含 T8 saveSelected `6796595`+`588d044`）；ios `selectAiAgent` 桥+选择页**工作区未提交**（回传已按 bridge 去掉合成 agentId）；T8/T9 待真机/后端联调。
 
 ## 待办 / 阻塞
 
+- (web) `personal-ai-chat` 已合入本地 `test-202512`（`b3e47d1`），**尚未 push**；冲突仅 `src/assets/index.ts`（取 personal 侧自动导出）
 - (desktop) T2：**handler 已落地**（`aiBoxPickerHost` + webview 五 channel + AiBrowser postMessage）；工作区未提交仅 `.env.test` 将 `APP_AICHAT`→`http://localhost:6173/ai-chat`。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
 - (多端) T9 待视觉对照蓝湖 4 张主 tab + 搜索 popover 截图验收；**列表顶栏**「选择AI框」胶囊样式已按稿调整（见关键决策）
 - (desktop) 待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`（当前只传 corpId/pid）
