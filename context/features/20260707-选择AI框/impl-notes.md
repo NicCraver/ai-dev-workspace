@@ -151,11 +151,19 @@
 
 **边界**：
 - 群组 / 组织架构 tab 可能无 `agentId`（桥侧未补齐）→ save 仍可只带 `belongType+belongId`；`exemptAgentIds` 不追加空 id。新项能否出现在筛选列表依赖后端 save 后是否默认可见。
+- **合成 agentId**（前缀 `group:` / `private:`，ios/本地列表兜底）**不得**写入 `saveSelected.agentId` 与 `exemptAgentIds`。
 - 最近联系人（HTTP 补齐后）与搜索结果通常带真实 `agentId`，豁免生效。
 - `exemptAgentIds` 为**会话内累加**（同页多次选择不断 push），非跨刷新持久化。
 - **与建会话解耦**：save 映射已用 `ownerId`；打开右侧会话目标仍走列表项的 `belongType`/`belongId`（或占位），勿在 save 编排里顺手改 chat 目标。
 
 **移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可。各端勿在 UI 层散写这两步时序。web 已提交（`personalAiSaveSelectedFlow.js` + 单测，`6796595`）；**真实后端联调尚未验收**（T9 仍 🚧）。
+
+### ios 原生选择 → web 触发 save/list
+
+1. web 调 `wnsdk.aiChat.selectAiAgent` → 原生选人/群页。
+2. 确定后桥回传 `messagePayload`（见 `bridge.md`）：必含 `ownerType` + `ownerId`（群=groupId、人=accountId）+ `id`/`name`/`lastChatAt`；**无真实 agentId 时省略字段**。
+3. web `normalizeNativeSelectAgentResult` → `applySelection` → 共用 `saveSelectedAndReloadList`（与 PC 弹窗同一条链路）。
+4. 取消 `code=-1`，不调 save/list。
 
 ## web 端视觉/实现备忘（蓝湖还原）
 
