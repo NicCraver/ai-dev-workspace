@@ -14,6 +14,7 @@ contracts/
 ├─ personalAiFrame/        # 业务域
 │  ├─ list.d.ts                 # POST /personalAiFrame/list
 │  ├─ recentContactList.d.ts    # POST /personalAiFrame/recentContactList
+│  ├─ saveSelected.d.ts         # POST /personalAiFrame/saveSelected
 │  └─ selectGroupBySearch.d.ts  # POST /personalAiFrame/selectGroupBySearch
 └─ README.md
 ```

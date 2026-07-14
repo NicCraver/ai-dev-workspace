@@ -137,6 +137,7 @@
 ## web 端视觉/实现备忘（蓝湖还原）
 
 - **弹窗尺寸**：蓝湖稿面板 **440×580**。`AcDialog splitTheme`，`class="!w-440px !h-580px"`。
+- **底栏「已选」截断**：`AcDialog` footer 为左右两区——`footer-left`（`flex-1 min-w-0 overflow-hidden`）放「已选：xxx」，`footer-right` 固定放取消/确定；`buttonTip`（若有）限 `max-w-32 truncate`。`SelectAiBoxDialog` 已选文案用 `block min-w-0 max-w-full truncate`，长群名/昵称不挤按钮。
 - **行高**：最近联系人/群组行 60px、组织·公司行 48px、组织·人员行 40px、组织/外联切换头 40px。
 - **字号**：名称 `text-3.5`(14px·近黑 `text-black`)、AI框名/人数/面包屑 `text-3`(12px·`text-gray-medium`)、tab `text-3.5`。
 - **配色 token**：active tab/面包屑前级 `primary`；inactive tab `gray-dark`；副文案 `gray-medium`；行分隔 `border-gray-light`；搜索框底 `bg-gray-light`（`#F4F6F8`）；选中行底 `bg-primary-light`；搜索框圆角 **13px**。
