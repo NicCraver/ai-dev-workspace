@@ -142,9 +142,9 @@
 弹窗/原生确定选中后的**平台无关编排**（web 已接线；移动端注入各自 HTTP 即可复用同一逻辑）。
 
 **时序**：
-1. 选中项 → `selectedList` 单项：`belongType`（private→1 / group→3）、`belongId`（优先 `ownerId`，否则 `id`/`accountId`/`groupId`）、有则带 `agentId`。
+1. 选中项 → `selectedList` 单项：`belongType`（private→1 / group→3）、`belongId`（优先 `ownerId`，否则 `id`/`accountId`/`groupId`）、有则带 `agentId`。无法得到 `belongType+belongId` 时该项为 null，`selectedList` 可为 `[]`。
 2. `POST /personalAiFrame/saveSelected({ accountId, selectedList })`。
-3. 将本次 `agentId` **去重 push** 进会话内 `exemptAgentIds`。
+3. 将本次 `agentId` **去重 push** 进会话内 `exemptAgentIds`（无 `agentId` 则名单不变）。
 4. `POST /personalAiFrame/list({ accountId, filterTypes: null, exemptAgentIds })`——`filterTypes:null` 沿用筛选记忆；豁免名单保证新选中项不被当前筛选挡掉。
 5. 用 `aiFrameList` 整表替换侧栏；按 `agentId`（其次 `belongType+belongId`）定位并激活；找不到则本地 upsert 兜底。
 6. **任一步失败** → 不阻断：本地 `mapSelectionToAgent` + upsert 仍写入侧栏。
@@ -153,8 +153,9 @@
 - 群组 / 组织架构 tab 可能无 `agentId`（桥侧未补齐）→ save 仍可只带 `belongType+belongId`；`exemptAgentIds` 不追加空 id。新项能否出现在筛选列表依赖后端 save 后是否默认可见。
 - 最近联系人（HTTP 补齐后）与搜索结果通常带真实 `agentId`，豁免生效。
 - `exemptAgentIds` 为**会话内累加**（同页多次选择不断 push），非跨刷新持久化。
+- **与建会话解耦**：save 映射已用 `ownerId`；打开右侧会话目标仍走列表项的 `belongType`/`belongId`（或占位），勿在 save 编排里顺手改 chat 目标。
 
-**移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可。各端勿在 UI 层散写这两步时序。
+**移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可。各端勿在 UI 层散写这两步时序。web 已实现并有单测；**真实后端联调尚未验收**（T9 仍 🚧）。
 
 ## web 端视觉/实现备忘（蓝湖还原）
 
