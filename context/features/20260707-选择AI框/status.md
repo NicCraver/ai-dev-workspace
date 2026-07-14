@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-14（web 弹窗底栏截断修复；desktop 本地 AiChat 配置；iOS 会话列表合成 Cell + 个人 AI 宿主页 WIP；契约 saveSelected）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-14（web 选中后 saveSelected→list+exemptAgentIds；编排可复用）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -27,18 +27,18 @@
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
 - (web) 待联调确认 Home 对话是否支持「24h 恢复 vs 新建」（`resumeChat` 状态已保留并参与 pane key 重挂载，尚未传入 HomeIndex）
 - (多端) 待联调确认 `agentName` 是否需独立字段（搜索/群组 tab 当前私聊取昵称、群聊取群名；**最近联系人 tab 已走** `POST /personalAiFrame/recentContactList` 补齐）
-- (web) `POST /personalAiFrame/list` **已接入** `PersonalAiChat.vue`（`getPersonalAiFrameList` + `mapFrameListToAgents` 替换 mock；入参 `accountId`+`filterType:0`）；desktop / android / ios 尚无调用方
+- (web) `POST /personalAiFrame/list` **已接入**；入参已对齐契约 `filterTypes`（`null` 沿用记忆）+ `exemptAgentIds`（选中后会话内累加）；desktop / android / ios 尚无调用方
 - (web) `POST /personalAiFrame/recentContactList` **已接入**选择弹窗最近联系人：`fetchRecent` 桥取数排序后批量补齐 `agentName`（及 agentId/aiRoleId/agentVersionId）；失败沿用桥侧名称；desktop 仍只负责 `getRecentContacts`
-- (web) **筛选记忆接口未就绪**：list 暂固定 `filterType:0`（全部），接口到位后在 `loadAgentList` 先取勾选态再拉列表（代码已留 TODO seam）
+- (web) **筛选记忆已并入 list 契约**：回参 `filterInfo.filterTypes`；入参 `filterTypes:null` 沿用记忆；筛选 UI 勾选态同步待接线
 - (web) 列表项**私聊/群会话已接真实归属**（`chatType=belongType`、`targetId=belongId`，`HomeIndex` type1→getUserInfo/type3→getGroupInfo），切换列表即刷新到对应会话；**个人AI框(belongType 0) 仍占位 `DEFAULT_CHAT`**：`HomeIndex` 无 type 0 分支会卡 loading、且无外部会话目标——待补 type 0 会话 + 个人AI框真实目标
 - (web) 三个点菜单（置顶/隐藏/打开私聊）操作**尚未接线**：`PersonalAiChat.vue` 未处理 `@agent-more`，且置顶/隐藏状态持久化依赖后端操作接口（同筛选记忆域），待接口到位
-- (web) list 主列表搜索（顶部搜索框）当前仍走**客户端过滤**，未使用契约 `searchKeyword` 服务端搜索；确认产品是否要求服务端搜索后再改
+- (web) list 主列表搜索（顶部搜索框）当前仍走**客户端过滤**；契约已移除 `searchKeyword`，服务端搜索若产品需要另开接口或扩展 list
 - (web) `POST /personalAiFrame/selectGroupBySearch` **已接入**选择弹窗搜索：`searchPicker` 改走 HTTP（`selectGroupBySearchApi` 动态导入，`accountId` 取登录用户），映射 `privateList`/`groupList`；搜索结果 popover 新增「全部/群组/人员」三 tab（全部=群组在前+人员在后）。web 不再调用桥 `searchAiBoxPicker`
 - (web) 个人 AI 右侧对话面板已改为**组件直渲** `HomeIndex`（`chatType`/`targetId`/`aiRoleId` props + key 重挂载），不再嵌套 `/zx/home/...` iframe；独立 `zx/home` 路由入口仍可用
 - (desktop) 若 web 改走 HTTP 搜索：桥 `search-ai-box-picker` 可保留兜底或后续下线；**仅需回归**弹窗搜索链路
 - (android / ios) `selectGroupBySearch` **不受影响**（本期不做 web 侧选择AI框弹窗；ios 走原生选择）
 - (web) 选择弹窗底栏「已选：xxx」截断：`AcDialog` footer 改为 `footer-left` 占 `flex-1 min-w-0`、`buttonTip` 限宽截断；`SelectAiBoxDialog` 已选文案改 `max-w-full truncate`，避免长名称挤占确定按钮
-- (契约) 新增 `POST /personalAiFrame/saveSelected`（`accountId`+`selectedList[{agentId,belongType,belongId}]`）；**四端均未接线**，待选中后持久化时接入
+- (web) `POST /personalAiFrame/saveSelected` **已接入**选中后链路：确定 → saveSelected → list（`exemptAgentIds` push 本次 `agentId`）→ 刷新侧栏；编排模块 `personalAiSaveSelectedFlow`（注入 HTTP，移动端可复用）；失败回退本地 upsert。**待联调**无 `agentId` 的群组/组织项豁免是否仍能出现在筛选列表
 - (ios) **原生选择 WIP（T1/T8/T9）**：已落地 `selectAiAgent` 桥 + `ZXSelectAiAgentController`（复用转发页 `selectAiAgentOnly` 短路，不弹发送确认）；选中成功回传 payload 含 `agentId`/`agentName`/`ownerType`/`ownerId`/`ownerName`/`avatar`；取消 `code=-1`。缺口：`agentId` 现为 `ownerType:显示名`（非真实 id，真实主键在 `ownerId`）；未回传 `aiRoleId`/`agentVersionId`；`agentName` 仍等于群名/昵称
 - (ios) **个人 AI 宿主页 + 会话入口 WIP**：新增 `ZXPersonalAIChatController`（内嵌 Web，仿行动中心）；会话列表合成 `ConversationType_PersonalAI(101)` 置顶 Cell（`ZXPersonalAIChatId`），点击 push 宿主页；名称/角标一期占位（固定「个人 AI 框」、无未读），待 A1/A4 接真数据
 - (ios / web) web `mapSelectionToAgent` 当前未消费 `ownerId` 建会话目标（仍走 `DEFAULT_CHAT` 占位）——与 ios 已回传 `ownerId` 未对齐，待补
@@ -71,5 +71,7 @@
 - 2026-07-14 iOS 原生选择回传约定：`selectAiAgent` → `{ type:"personal-ai:selected-agent", payload:{ agentId, agentName, ownerType, ownerId, ownerName, avatar } }`；群 `ownerId=groupId`、人 `ownerId=accountId`；`agentId` 暂拼 `ownerType:name`；无 `aiRoleId`/`agentVersionId`（与 web 最近联系人 HTTP 补齐字段不对齐，待后续）
 - 2026-07-14 web `AcDialog` footer 布局：`footer-left` 弹性占满剩余宽并 `min-w-0` 截断；右侧 `buttonTip` 限 `max-w-32`，避免与取消/确定按钮争抢空间（选择弹窗「已选」长名称场景）
 - 2026-07-14 desktop `.env.test`：`APP_AICHAT` 指向 `localhost:6173` 便于本地调试 personal 微应用 iframe
+- 2026-07-14 list 契约更新：入参 `filterTypes` 多选（`null` 沿用记忆 / `[]` 全部落库）；回参 `filterInfo.filterTypes`；列表项新增 `isPersonal`/`latestMessageBrief`；`hasRecentSession` 对齐近15天问答链路
 - 2026-07-14 新增契约 `POST /personalAiFrame/saveSelected`（保存选中 AI 框列表；`belongType` 仅 1/3）
 - 2026-07-14 iOS 会话列表新增本地合成 `ConversationType_PersonalAI` 置顶 Cell + `ZXPersonalAIChatController` 宿主页入口；选择页复用转发组件 `selectAiAgentOnly` 模式
+- 2026-07-14 选中后时序定为 `saveSelected` → `list(exemptAgentIds push agentId)`；编排与 HTTP 解耦，移动端注入即可复用；`filterTypes:null` 沿用记忆

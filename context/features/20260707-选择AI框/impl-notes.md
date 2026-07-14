@@ -22,7 +22,8 @@
 2. **群组二级切换**：首次进入某 `type` 时 `getMyGroups({type})`，结果缓存于内存，不重复请求。
 3. **组织钻取**：点公司 → `getDeptUsers({corpId, pid:'0'})`；点部门 → `getDeptUsers({corpId, pid: deptId})`；面包屑回溯复用已缓存或重新 `getDeptUsers`。
 4. **搜索**：HTTP `POST /personalAiFrame/selectGroupBySearch({accountId, searchContent})`（300ms 防抖）→ 回参 `groupList`+`privateList`，前端分三 tab 展示；空 keyword 不请求，popover 显示空态图。（旧桥 `searchAiBoxPicker`/宿主 `getAccountSearchByUserName`+`getGroupBySearch` 已由 web 弃用，desktop 侧可保留兜底或后续下线）
-5. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底；`recentContactList` 失败则保留桥侧名称（昵称/群名），不阻断弹窗其它 tab。
+5. **确定选中**：`saveSelected` → `list(filterTypes:null, exemptAgentIds push 本次 agentId)` → 用回参刷新主侧栏并激活该项（详见下「选中后持久化」）；失败则本地 upsert 兜底。
+6. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底；`recentContactList` 失败则保留桥侧名称（昵称/群名），不阻断弹窗其它 tab。
 
 ## 边界情况
 
@@ -115,8 +116,8 @@
 
 主侧栏「AI框列表」的数据来源（区别于选择弹窗的桥取数）。这是**普通 HTTP 接口**（`baseMap.ai`），非宿主桥。
 
-**时序**：页面挂载 → （规划中：先取「筛选记忆」得勾选态 → 算 filterType）→ 拉 `list` → 映射为内部 agent → 排序渲染。
-- 筛选记忆接口未就绪时，`filterType` 固定 `0`（全部）；代码留 seam，接口到位后在拉 list 前插入。
+**时序**：页面挂载 → 拉 `list`（`filterTypes: null` 沿用记忆，或 `[]` 表全部）→ 用回参 `filterInfo.filterTypes` 同步筛选 UI → 映射为内部 agent → 排序渲染。
+- 首次/无记忆：`filterTypes` 传 `null` 由后端沿用；显式「全部」传 `[]` 并落库。
 - `accountId` 取当前登录用户 id（无则回退页面默认查询参数）。
 - 成功 → 用回参 `aiFrameList` 整表替换本地列表；失败 → 保留初始 mock，不清空（保证无后端/老壳环境不白屏）。
 - 选中项若不在新列表中 → 回退到排序后首项。
@@ -126,13 +127,34 @@
 - **标题** = `belongName`（个人='个人AI框'/群=群名/私聊=对方名）；**副标题** = `name`（AI框名）。
 - `lastChatTime` / `pinTime` 是 `"yyyy-MM-dd HH:mm:ss"` 字符串 → 转毫秒时间戳（解析时把 `-` 换 `/` 规避时区差异）；缺失回 0。
 - 排序沿用既有规则：个人置顶 → 置顶项按置顶时间 → 其余按 `lastChatAt` 倒序。
-- `hasKnowledge`/`unreadCount`/`isPinned` 透传；`belongType`/`belongId`/`corpId`/`aiRoleId` 原样保留，供后续会话跳转与置顶/隐藏操作使用。
+- `hasKnowledge`/`unreadCount`/`isPinned`/`isPersonal` 透传；`belongType`/`belongId`/`corpId`/`aiRoleId` 原样保留，供后续会话跳转与置顶/隐藏操作使用。
+- `latestMessageBrief`：24h 内最新消息缩略（`null` 表示无）；含 `question`/`answer`/`finishAt`/`sender`，可用于列表副文案或 24h 恢复判定（待 web 接线）。
+- **筛选 UI**：`filterInfo.personalChecked` 恒 true；`filterInfo.filterTypes` 含 `1` → 近15天勾选、含 `2` → 有知识库勾选。
 
 **联调坑 / 待确认**：
 - **会话跳转**：右侧 `HomeIndex` 约定 `chatType=belongType`、`targetId=belongId`（type 1→`getUserInfo` 私聊、type 3→`getGroupInfo` 群）。**私聊/群已按真实 `belongType`/`belongId` 打开对应会话**——切换列表即换 key 重挂载右侧、内容随之正确。**个人AI框(belongType 0)**：`HomeIndex.getBelongInfo` 只处理 1/3，type 0 会卡在 loading，且个人AI框无外部会话目标 → 列表项暂回退 `DEFAULT_CHAT` 占位。**待联调**：HomeIndex 补 type 0（个人AI/自会话）分支 + 后端给个人AI框真实会话目标。
 - 选中列表项后右侧直接挂载对话面板（传 `chatType`/`targetId`/`aiRoleId`），切换时重挂载；不再拼 `/zx/home/...` URL。
-- 顶部搜索框当前是**客户端过滤**，未用契约 `searchKeyword` 做服务端搜索。
+- 顶部搜索框当前是**客户端过滤**；list 契约已无 `searchKeyword` 字段。
 - 三个点菜单（置顶/隐藏/打开私聊）尚未接线，且状态持久化依赖后端操作接口（与「筛选记忆」同域），待接口到位。
+
+## 选中后持久化（`saveSelected` → `list` + `exemptAgentIds`）
+
+弹窗/原生确定选中后的**平台无关编排**（web 已接线；移动端注入各自 HTTP 即可复用同一逻辑）。
+
+**时序**：
+1. 选中项 → `selectedList` 单项：`belongType`（private→1 / group→3）、`belongId`（优先 `ownerId`，否则 `id`/`accountId`/`groupId`）、有则带 `agentId`。
+2. `POST /personalAiFrame/saveSelected({ accountId, selectedList })`。
+3. 将本次 `agentId` **去重 push** 进会话内 `exemptAgentIds`。
+4. `POST /personalAiFrame/list({ accountId, filterTypes: null, exemptAgentIds })`——`filterTypes:null` 沿用筛选记忆；豁免名单保证新选中项不被当前筛选挡掉。
+5. 用 `aiFrameList` 整表替换侧栏；按 `agentId`（其次 `belongType+belongId`）定位并激活；找不到则本地 upsert 兜底。
+6. **任一步失败** → 不阻断：本地 `mapSelectionToAgent` + upsert 仍写入侧栏。
+
+**边界**：
+- 群组 / 组织架构 tab 可能无 `agentId`（桥侧未补齐）→ save 仍可只带 `belongType+belongId`；`exemptAgentIds` 不追加空 id。新项能否出现在筛选列表依赖后端 save 后是否默认可见。
+- 最近联系人（HTTP 补齐后）与搜索结果通常带真实 `agentId`，豁免生效。
+- `exemptAgentIds` 为**会话内累加**（同页多次选择不断 push），非跨刷新持久化。
+
+**移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可（web 注入 axios 封装）。
 
 ## web 端视觉/实现备忘（蓝湖还原）
 
