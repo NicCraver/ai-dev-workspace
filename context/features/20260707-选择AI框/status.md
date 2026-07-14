@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-14（ios/android 会话入口图标已换同套素材；ios 宿主+选择未提交；desktop 仅 .env.test）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-14（ios/android 会话入口文案改为「AI框」；入口图标已换同套素材；ios 宿主+选择未提交；desktop 仅 .env.test）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -43,9 +43,9 @@
 - (web) `POST /personalAiFrame/saveSelected` **已接线并提交**（`6796595` + `588d044`）：确定 → `personalAiSaveSelectedFlow`（`toSaveSelectedItem` 优先 `ownerId`；**跳过** `group:`/`private:` 合成 agentId）→ saveSelected → list（`exemptAgentIds` 仅真实 agentId）→ 刷新侧栏；失败本地 upsert；含单测。**待联调**真实后端 + 无 agentId 项豁免是否仍可见
 - (web) 移动端原生回传归一化（`588d044`）：`normalizeNativeSelectAgentResult` 兼容 wnsdk 解包；本地列表可用 `ownerType:ownerId` 作合成 key，save/exempt 仍过滤
 - (ios) **`selectAiAgent` 桥+选择页 WIP（工作区未提交）**：`ZXJSAIChatAPI` 注册 handler；payload 含 `id`/`name`/`ownerType`/`ownerId`/`ownerName`/`agentName`/`avatar`/`lastChatAt`；**无真实 agentId 时省略**（勿传 `ownerType:name`）。web 收后走同一套 saveSelected→list。**待真机联调**；`aiRoleId`/`agentVersionId` 仍缺
-- (ios) **个人 AI 宿主页 + 会话入口 WIP（工作区未提交）**：`ZXPersonalAIChatController`（内嵌 Web，`ZXPersonalAIChatPath=ai-chat/m/personal`）；会话列表合成 `ConversationType_PersonalAI` 置顶 Cell（`ZXPersonalAIChatId`）；名称/角标一期占位，待 A1/A4 接真数据
+- (ios) **个人 AI 宿主页 + 会话入口 WIP（工作区未提交）**：`ZXPersonalAIChatController`（内嵌 Web，`ZXPersonalAIChatPath=ai-chat/m/personal`）；会话列表合成 `ConversationType_PersonalAI` 置顶 Cell（`ZXPersonalAIChatId`）；入口名称已改为「AI框」，角标一期占位，待 A1/A4 接真数据
 - (ios) **会话入口图标已接线（工作区未提交）**：`zx_personal_ai_icon`（@2x/@3x）→ `ConversationType_PersonalAI` 头像
-- (android) **会话列表入口 WIP（工作区未提交）**：`PersonalAiListCellBinder` 置顶 Cell + 打开 `ai-chat/m/personal`；入口图标已由 `ai_tool_icon` 改为同套 `personal_ai_icon`（hdpi~xxxhdpi）。选中链路 / `selectAiAgent` / saveSelected **尚未做**
+- (android) **会话列表入口 WIP（工作区未提交）**：`PersonalAiListCellBinder` 置顶 Cell + 打开 `ai-chat/m/personal`；入口文案已改为「AI框」；入口图标已由 `ai_tool_icon` 改为同套 `personal_ai_icon`（hdpi~xxxhdpi）。选中链路 / `selectAiAgent` / saveSelected **尚未做**
 - (ios / web) save 映射已消费 `ownerId`→`belongId`；但 `mapSelectionToAgent` **建会话目标**仍未用 `ownerId`（仍走 `DEFAULT_CHAT` 占位）——与 ios 回传未对齐，待补
 
 ## 关键决策记录
@@ -86,3 +86,4 @@
 - 2026-07-14 web saveSelected 编排 + AcDialog 底栏截断合入 `6796595`；list 入参 `filterTypes:null` + 会话内 `exemptAgentIds` 累加已接线
 - 2026-07-14 web `588d044`：`isSyntheticAgentId` 过滤 `group:`/`private:` 前缀；原生归一化优先 `ownerId`、兼容 wnsdk 解包；本地列表合成 key 与 save/exempt 解耦
 - 2026-07-14 移动端会话列表「个人 AI 框」入口图标统一为紫蓝渐变 AI 素材：ios `zx_personal_ai_icon`、android `personal_ai_icon`（替换原 `ai_tool_icon`）
+- 2026-07-14 移动端会话列表入口显示名统一为「AI框」（原「个人 AI 框」）：ios `ZXConversationListCell`、android `PersonalAiListCellBinder`
