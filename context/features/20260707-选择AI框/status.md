@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-14（对齐 apps 未提交：web saveSelected 编排；ios 原生选择+宿主；desktop 仅 .env.test）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-14（web saveSelected+AcDialog 底栏已提交 6796595；desktop 仅 .env.test 未提交；ios 原生选择+宿主未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -18,7 +18,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：desktop T2 **handler 已合入**（`aiBoxPickerHost` + 五 channel），未提交仅 `.env.test`→localhost；web T8 saveSelected 编排已写（含单测）待联调；ios T1/T8 原生选择+会话入口代码在工作区未提交。
+> **本轮 apps 事实**：desktop T2 **handler 已合入**（`aiBoxPickerHost` + 五 channel），未提交仅 `.env.test`→localhost；web T8 saveSelected 编排**已提交**（`6796595`，含 `personalAiSaveSelectedFlow` 单测）待后端联调；ios T1/T8 原生选择+会话入口代码在工作区未提交。
 
 ## 待办 / 阻塞
 
@@ -38,8 +38,8 @@
 - (web) 个人 AI 右侧对话面板已改为**组件直渲** `HomeIndex`（`chatType`/`targetId`/`aiRoleId` props + key 重挂载），不再嵌套 `/zx/home/...` iframe；独立 `zx/home` 路由入口仍可用
 - (desktop) 若 web 改走 HTTP 搜索：桥 `search-ai-box-picker` 可保留兜底或后续下线；**仅需回归**弹窗搜索链路
 - (android / ios) `selectGroupBySearch` **不受影响**（本期不做 web 侧选择AI框弹窗；ios 走原生选择）
-- (web) 选择弹窗底栏「已选：xxx」截断：`AcDialog` footer 改为 `footer-left` 占 `flex-1 min-w-0`、`buttonTip` 限宽截断；`SelectAiBoxDialog` 已选文案改 `max-w-full truncate`（工作区未提交改动含此项）
-- (web) `POST /personalAiFrame/saveSelected` **代码已接线**（工作区未提交）：确定 → `personalAiSaveSelectedFlow`（`toSaveSelectedItem` 优先 `ownerId`）→ saveSelected → list（`exemptAgentIds` push）→ 刷新侧栏；失败本地 upsert；含单测。**待联调**真实后端 + 无 `agentId` 群组/组织项豁免是否仍可见
+- (web) 选择弹窗底栏「已选：xxx」截断：**已提交**（`6796595`）——`AcDialog` footer `footer-left` 占 `flex-1 min-w-0`、`buttonTip` 限 `max-w-32`；`SelectAiBoxDialog` 已选文案 `max-w-full truncate`
+- (web) `POST /personalAiFrame/saveSelected` **已接线并提交**（`6796595`）：确定 → `personalAiSaveSelectedFlow`（`toSaveSelectedItem` 优先 `ownerId`）→ saveSelected → list（`exemptAgentIds` push）→ 刷新侧栏；失败本地 upsert；含单测。**待联调**真实后端 + 无 `agentId` 群组/组织项豁免是否仍可见
 - (ios) **原生选择 WIP（T1/T8/T9，工作区未提交）**：`selectAiAgent` 桥 + `ZXSelectAiAgentController`（转发页 `selectAiAgentOnly` 短路）；回传 `agentId`/`agentName`/`ownerType`/`ownerId`/`ownerName`/`avatar`；取消 `code=-1`。缺口：`agentId` 现为 `ownerType:显示名`；未回传 `aiRoleId`/`agentVersionId`；`agentName`=群名/昵称
 - (ios) **个人 AI 宿主页 + 会话入口 WIP（工作区未提交）**：`ZXPersonalAIChatController`（内嵌 Web，`ZXPersonalAIChatPath=ai-chat/m/personal`）；会话列表合成 `ConversationType_PersonalAI` 置顶 Cell（`ZXPersonalAIChatId`）；名称/角标一期占位，待 A1/A4 接真数据
 - (ios / web) save 映射已消费 `ownerId`→`belongId`；但 `mapSelectionToAgent` **建会话目标**仍未用 `ownerId`（仍走 `DEFAULT_CHAT` 占位）——与 ios 回传未对齐，待补
@@ -78,3 +78,4 @@
 - 2026-07-14 选中后时序定为 `saveSelected` → `list(exemptAgentIds push agentId)`；编排与 HTTP 解耦，移动端注入即可复用；`filterTypes:null` 沿用记忆
 - 2026-07-14 desktop T2 handler 已合入分支；本地联调仅改 `.env.test` 的 `APP_AICHAT` 指向 localhost（勿当功能未实现）
 - 2026-07-14 `toSaveSelectedItem`：`belongId` 优先 `ownerId`（对齐 ios 回传），再回退 `id`/`accountId`/`groupId`；建会话目标仍与 `mapSelectionToAgent` 解耦
+- 2026-07-14 web saveSelected 编排 + AcDialog 底栏截断合入 `6796595`；list 入参 `filterTypes:null` + 会话内 `exemptAgentIds` 累加已接线
