@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-15（侧栏 list loading；契约补齐 getFilter/updateSetting/batchGetAgent 等）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-15（收尾：核对 android/ios/desktop 工作区未提交改动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -18,7 +18,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `a7fa5fd`（筛选/updateSetting/batchGetAgent/组织进公司）已提交 `personal-ai-chat`、**尚未 push**；desktop `1ca7496e`（组织桥 rootDeptId 对齐）已提交，工作区仅余 `.env.test`→localhost；web 早前亦已合入本地 `test-202512`（含 saveSelected）；ios 宿主+`selectAiAgent`+入口图标 **工作区未提交**；android 会话列表入口 Cell + `personal_ai_icon` **工作区未提交**（入口图标已换，选中链路未做）。
+> **本轮 apps 事实**：web `a7fa5fd` 已提交 `personal-ai-chat`、工作区干净、**尚未 push**；desktop `1ca7496e` 已提交，工作区仅 `.env.test`→`localhost:6173`；ios `personal-ai-chat`：**已暂存未提交**（宿主页 + `selectAiAgent` 选择页/回传 + 会话入口「AI框」+ `zx_personal_ai_icon`，约 +1314 行）；android `personal-ai-chat`：**工作区未提交**（入口文案「AI框」+ `personal_ai_icon` hdpi~xxxhdpi，选中链路未做）。
 
 ## 待办 / 阻塞
 
@@ -46,10 +46,11 @@
 - (web) 选择弹窗底栏「已选：xxx」截断：**已提交**（`6796595`）——`AcDialog` footer `footer-left` 占 `flex-1 min-w-0`、`buttonTip` 限 `max-w-32`；`SelectAiBoxDialog` 已选文案 `max-w-full truncate`
 - (web) `POST /personalAiFrame/saveSelected` **已接线并提交**（`6796595` + `588d044`）：确定 → `personalAiSaveSelectedFlow`（`toSaveSelectedItem` 优先 `ownerId`；**跳过** `group:`/`private:` 合成 agentId）→ saveSelected → list（`exemptAgentIds` 仅真实 agentId）→ 刷新侧栏；失败本地 upsert；含单测。**待联调**真实后端 + 无 agentId 项豁免是否仍可见
 - (web) 移动端原生回传归一化（`588d044`）：`normalizeNativeSelectAgentResult` 兼容 wnsdk 解包；本地列表可用 `ownerType:ownerId` 作合成 key，save/exempt 仍过滤
-- (ios) **`selectAiAgent` 桥+选择页 WIP（工作区未提交）**：`ZXJSAIChatAPI` 注册 handler；payload 含 `id`/`name`/`ownerType`/`ownerId`/`ownerName`/`agentName`/`avatar`/`lastChatAt`；**无真实 agentId 时省略**（勿传 `ownerType:name`）。web 收后走同一套 saveSelected→list。**待真机联调**；`aiRoleId`/`agentVersionId` 仍缺
-- (ios) **个人 AI 宿主页 + 会话入口 WIP（工作区未提交）**：`ZXPersonalAIChatController`（内嵌 Web，`ZXPersonalAIChatPath=ai-chat/m/personal`）；会话列表合成 `ConversationType_PersonalAI` 置顶 Cell（`ZXPersonalAIChatId`）；入口名称已改为「AI框」，角标一期占位，待 A1/A4 接真数据
-- (ios) **会话入口图标已接线（工作区未提交）**：`zx_personal_ai_icon`（@2x/@3x）→ `ConversationType_PersonalAI` 头像
-- (android) **会话列表入口 WIP（工作区未提交）**：`PersonalAiListCellBinder` 置顶 Cell + 打开 `ai-chat/m/personal`；入口文案已改为「AI框」；入口图标已由 `ai_tool_icon` 改为同套 `personal_ai_icon`（hdpi~xxxhdpi）。选中链路 / `selectAiAgent` / saveSelected **尚未做**
+- (ios) **`selectAiAgent` 桥+选择页 WIP（已暂存未提交）**：`ZXJSAIChatAPI` 注册 handler；payload 含 `id`/`name`/`ownerType`/`ownerId`/`ownerName`/`agentName`/`avatar`/`lastChatAt`；**无真实 agentId 时省略**（勿传 `ownerType:name`）。web 收后走同一套 saveSelected→list。**待真机联调**；`aiRoleId`/`agentVersionId` 仍缺
+- (ios) **个人 AI 宿主页 + 会话入口 WIP（已暂存未提交）**：`ZXPersonalAIChatController`（内嵌 Web，`ZXPersonalAIChatPath=ai-chat/m/personal`）；会话列表合成 `ConversationType_PersonalAI` 置顶 Cell（`ZXPersonalAIChatId`）；入口名称已改为「AI框」，角标一期占位，待 A1/A4 接真数据
+- (ios) **会话入口图标已接线（已暂存未提交）**：`zx_personal_ai_icon`（@2x/@3x）→ `ConversationType_PersonalAI` 头像
+- (android) **会话列表入口 WIP（工作区未提交）**：`PersonalAiListCellBinder` 置顶 Cell + 打开 `ai-chat/m/personal`；入口文案「AI框」；图标 `personal_ai_icon`（hdpi~xxxhdpi，替换 `ai_tool_icon`）。选中链路 / `selectAiAgent` / saveSelected **尚未做**
+- (desktop) 工作区仅本地联调改动：`.env.test` 的 `APP_AICHAT`→`localhost:6173`（勿当功能未实现；handler 已在 `1ca7496e`）
 - (ios / web) save 映射已消费 `ownerId`→`belongId`；但 `mapSelectionToAgent` **建会话目标**仍未用 `ownerId`（仍走 `DEFAULT_CHAT` 占位）——与 ios 回传未对齐，待补
 
 ## 关键决策记录
