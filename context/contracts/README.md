@@ -11,11 +11,24 @@
 ```
 contracts/
 ├─ _common.d.ts            # 跨域通用（ApiResponse / 错误码 …）
-├─ personalAiFrame/        # 业务域
+├─ personalAiFrame/        # 个人AI框相关接口（含跨路径子域）
+│  ├─ _shared.d.ts              # 域内共享类型
 │  ├─ list.d.ts                 # POST /personalAiFrame/list
-│  ├─ recentContactList.d.ts    # POST /personalAiFrame/recentContactList
+│  ├─ getFilter.d.ts            # POST /personalAiFrame/getFilter
+│  ├─ batchGetAgent.d.ts        # POST /personalAiFrame/batchGetAgent（公共接口）
 │  ├─ saveSelected.d.ts         # POST /personalAiFrame/saveSelected
-│  └─ selectGroupBySearch.d.ts  # POST /personalAiFrame/selectGroupBySearch
+│  ├─ selectGroupBySearch.d.ts  # POST /personalAiFrame/selectGroupBySearch
+│  ├─ recentContactList.d.ts    # POST /personalAiFrame/recentContactList
+│  ├─ updateSetting.d.ts        # POST /personalAiFrame/updateSetting
+│  ├─ quickReplyList.d.ts       # POST /quickReply/list
+│  ├─ quickReplySave.d.ts       # POST /quickReply/save
+│  ├─ quickReplyDelete.d.ts     # POST /quickReply/delete
+│  ├─ getLastSessionMessage.d.ts # POST /sessionMsg/getLastSessionMessage
+│  ├─ saveDataRange.d.ts        # POST /agentSetDataRangeExpand/saveDataRange
+│  ├─ getAgentDataRange.d.ts    # POST /agentSetDataRangeExpand/getAgentDataRange
+│  ├─ shareFileData.d.ts        # POST /agentFileShare/shareFileData
+│  ├─ shareFileDataList.d.ts    # POST /agentFileShare/shareFileDataList
+│  └─ saveAgentSetInfo.d.ts     # POST /agentSetBasic/saveAgentSetInfo
 └─ README.md
 ```
 

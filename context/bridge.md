@@ -37,8 +37,8 @@
 |--------|---------|------|--------|------------------|--------|------|
 | `getRecentContacts` | `get-recent-contacts` | web→原生 | — | `[{accountId/id, name, agentName, avatar, ownerType:'group'\|'private', groupType?, lastChatAt:number, hasMessage?:boolean, messageTime?:number, accountInfoList?:[{id,nickName,avatar}]}]`（群项含 `accountInfoList` 供 2×2 头像；`hasMessage`/`messageTime` 供 web 排序） | desktop | 已有，选择AI框联调中 |
 | `getMyGroups` | `get-my-groups` | web→原生 | `{type:'organization'\|'outsource', pageNum?:number, pageSize?:number}` | `[{id, name, agentName, avatar, memberCount, groupType:0\|10, lastChatAt}]` | desktop | 新增（选择AI框） |
-| `getOrgCompanies` | `get-org-companies` | web→原生 | `{type:'organization'\|'outsource'}` | `[{corpId, name, memberCount, corpType}]`（organization 含「入职企业」「我的下级」分组字段） | desktop | 新增（选择AI框） |
-| `getDeptUsers` | `get-dept-users` | web→原生 | `{corpId:string, pid:string}`（`pid:'0'` 表公司根部门） | `{depts:[{id,name,memberCount,pid}], users:[{accountId,name,agentName,avatar}]}` | desktop | 新增（选择AI框） |
+| `getOrgCompanies` | `get-org-companies` | web→原生 | `{type:'organization'\|'outsource'}` | `[{id, corpId, name, memberCount, corpType, rootDeptId?, corpAndCorpRelType?, labelType?, category?}]`（宿主 `getContactTree({isGroup:1})` 对齐 PC 转发；`corpId`=`id`；进公司后 `getDeptUsers` 用 `rootDeptId`+附加字段） | desktop | 新增（选择AI框） |
+| `getDeptUsers` | `get-dept-users` | web→原生 | `{corpId, pid, corpType?, corpAndCorpRelType?, labelType?}`（对齐 PC `company-dept-user.getUsers`；进公司首屏 `pid=rootDeptId\|\|id`，勿裸传 `'0'`） | `{depts:[{id,name,memberCount,pid}], users:[{accountId,name,agentName,avatar}]}` | desktop | 新增（选择AI框） |
 | `searchAiBoxPicker` | `search-ai-box-picker` | web→原生 | `{search:string}` | `{users:[{accountId,name,agentName,avatar,ownerType:'private',lastChatAt}], groups:[{id,name,agentName,avatar,accountInfoList?,ownerType:'group',groupType?,lastChatAt}]}` | desktop | 新增（选择AI框搜索） |
 | `selectAiAgent` | —（wnsdk `aiChat.selectAiAgent`） | web→原生 | — | 见下「selectAiAgent 回传」 | ios | 已落地；android 待移植 |
 
@@ -78,6 +78,7 @@
 
 ## Changelog
 
+- 2026-07-15 `getOrgCompanies` 对齐 PC 转发：`getContactTree({isGroup:1})`，回参补 `id`/`rootDeptId`/`corpAndCorpRelType`/`labelType`；`getDeptUsers` 入参对齐 `company-dept-user`（透传 corpType 等；进公司首屏 pid=`rootDeptId||id`，勿裸传 `'0'`）。
 - 2026-07-14 登记 ios `selectAiAgent` 回传契约：`personal-ai:selected-agent` payload（`ownerId`/`id`/`lastChatAt`；无真实 `agentId` 时省略）；web 收后走 saveSelected→list。
 - 2026-07-08 新增 `searchAiBoxPicker`（`search-ai-box-picker`）：搜索联系人/群，宿主并行 `getAccountSearchByUserName` + `getGroupBySearch`。
 - 2026-07-08 AiBrowser 个人 AI 改回 **iframe + postMessage**（`personal-ai:bridge-request/result`）；微应用仍走 webview preload。

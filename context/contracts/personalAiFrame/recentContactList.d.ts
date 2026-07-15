@@ -2,10 +2,12 @@
  * 契约：个人AI框域 · 最近联系人补齐
  * POST /personalAiFrame/recentContactList
  * Changelog:
- * - 2026-07-13 新增 POST /personalAiFrame/recentContactList（选择AI框-最近联系人）
+ * - 2026-07-13 新增 POST /personalAiFrame/recentContactList
+ * - 2026-07-14 对齐后端文档：群组项新增 owner/accountIdList/accountInfoList；群头像由前端拼 4 宫格
  */
 
 import type { ApiResponse } from '../_common';
+import type { PersonalAiFrameAccountInfo } from './_shared';
 
 /** 最近联系人类型：1-群组；2-个人 */
 export type PersonalAiFrameRecentContactType = '1' | '2';
@@ -20,9 +22,9 @@ export interface PersonalAiFrameRecentContactReqItem {
 
 /** POST /personalAiFrame/recentContactList 入参 */
 export interface PersonalAiFrameRecentContactListReq {
-  /** 当前登录账号 id；mock: 'u10086' */
+  /** 当前登录账号 id；mock: '280' */
   accountId: string;
-  /** 待查询的最近联系人列表 */
+  /** 前端传入的智信 wnsdk 最近联系人列表（id + type） */
   items: PersonalAiFrameRecentContactReqItem[];
 }
 
@@ -36,8 +38,15 @@ export interface PersonalAiFrameRecentContactItem {
   groupId?: string;
   /** 群名称（type=1）；mock: '@cname()项目组' */
   groupName?: string;
-  /** 群头像（type=1）；mock: 'https://cdn.example.com/g@string("number", 4).png' */
-  groupAvatar?: string;
+  /** 群主账号 ID（type=1）；mock: 'u@string("number", 6)' */
+  owner?: string;
+  /** 群成员账号 ID 列表（type=1） */
+  accountIdList?: string[];
+  /**
+   * 群成员信息列表（type=1）
+   * 前端用其内 avatar 自行拼群头像：群主 + 3 个成员 4 宫格
+   */
+  accountInfoList?: PersonalAiFrameAccountInfo[];
   /** 账号 id（type=2）；mock: 'u@string("number", 6)' */
   accountId?: string;
   /** 昵称（type=2）；mock: '@cname()' */

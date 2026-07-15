@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-14（ios/android 会话入口文案改为「AI框」；入口图标已换同套素材；ios 宿主+选择未提交；desktop 仅 .env.test）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-15（侧栏 list loading；契约补齐 getFilter/updateSetting/batchGetAgent 等）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -18,22 +18,26 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：desktop T2 **handler 已合入**，未提交仅 `.env.test`→localhost；web `personal-ai-chat` **已合入** `test-202512`（含 saveSelected）；ios 宿主+`selectAiAgent`+入口图标 **工作区未提交**；android 会话列表入口 Cell + `personal_ai_icon` **工作区未提交**（入口图标已换，选中链路未做）。
+> **本轮 apps 事实**：web `a7fa5fd`（筛选/updateSetting/batchGetAgent/组织进公司）已提交 `personal-ai-chat`、**尚未 push**；desktop `1ca7496e`（组织桥 rootDeptId 对齐）已提交，工作区仅余 `.env.test`→localhost；web 早前亦已合入本地 `test-202512`（含 saveSelected）；ios 宿主+`selectAiAgent`+入口图标 **工作区未提交**；android 会话列表入口 Cell + `personal_ai_icon` **工作区未提交**（入口图标已换，选中链路未做）。
 
 ## 待办 / 阻塞
 
-- (web) `personal-ai-chat` 已合入本地 `test-202512`（`b3e47d1`），**尚未 push**；冲突仅 `src/assets/index.ts`（取 personal 侧自动导出）
-- (desktop) T2：**handler 已落地**（`aiBoxPickerHost` + webview 五 channel + AiBrowser postMessage）；工作区未提交仅 `.env.test` 将 `APP_AICHAT`→`http://localhost:6173/ai-chat`。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
+- (web / desktop) **组织架构进公司**：已按 PC 转发对齐——`getContactTree({isGroup:1})`、公司 `id` 作 corpId、`rootDeptId||id` 作首屏 pid、透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过。**待 E2E**：点企业应直接见部门+人员（不再多一层企业 / 暂无人员）
+- (desktop) ~~待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`~~ → **已按 PC 转发透传**
+- (web) `personal-ai-chat` 已合入本地 `test-202512`（含 saveSelected）；本轮增量 `a7fa5fd` 已提交、**尚未 push**
+- (desktop) T2：**handler 已落地并提交**（`1ca7496e` 含组织进公司参数）；工作区未提交仅 `.env.test`→`localhost:6173`。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
 - (多端) T9 待视觉对照蓝湖 4 张主 tab + 搜索 popover 截图验收；**列表顶栏**「选择AI框」胶囊样式已按稿调整（见关键决策）
-- (desktop) 待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`（当前只传 corpId/pid）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
 - (web) 待联调确认 Home 对话是否支持「24h 恢复 vs 新建」（`resumeChat` 状态已保留并参与 pane key 重挂载，尚未传入 HomeIndex）
 - (多端) 待联调确认 `agentName` 是否需独立字段（搜索/群组 tab 当前私聊取昵称、群聊取群名；**最近联系人 tab 已走** `POST /personalAiFrame/recentContactList` 补齐）
 - (web) `POST /personalAiFrame/list` **已接入**；入参已对齐契约 `filterTypes`（`null` 沿用记忆）+ `exemptAgentIds`（选中后会话内累加）；desktop / android / ios 尚无调用方
 - (web) `POST /personalAiFrame/recentContactList` **已接入**选择弹窗最近联系人：`fetchRecent` 桥取数排序后批量补齐 `agentName`（及 agentId/aiRoleId/agentVersionId）；失败沿用桥侧名称；desktop 仍只负责 `getRecentContacts`
-- (web) **筛选记忆已并入 list 契约**：回参 `filterInfo.filterTypes`；入参 `filterTypes:null` 沿用记忆；筛选 UI 勾选态同步待接线
-- (web) 列表项**私聊/群会话已接真实归属**（`chatType=belongType`、`targetId=belongId`，`HomeIndex` type1→getUserInfo/type3→getGroupInfo），切换列表即刷新到对应会话；**个人AI框(belongType 0) 仍占位 `DEFAULT_CHAT`**：`HomeIndex` 无 type 0 分支会卡 loading、且无外部会话目标——待补 type 0 会话 + 个人AI框真实目标
-- (web) 三个点菜单（置顶/隐藏/打开私聊）操作**尚未接线**：`PersonalAiChat.vue` 未处理 `@agent-more`，且置顶/隐藏状态持久化依赖后端操作接口（同筛选记忆域），待接口到位
+- (web) **筛选记忆**：`getFilter` → 再 `list(filterTypes)` 初始化 **已接线**；底栏「筛选对话」弹层（个人恒勾 / 近15天=1 / 知识库=2）改筛即调 list **已接线**；选中勾 `filter-checkbox-on` 已换实心蓝勾、弹层宽 `200`（原 220）
+- (android / ios / desktop) `getFilter` **不受影响**（尚无调用方；改筛仍走 list）
+- (web) `POST /personalAiFrame/batchGetAgent` **已接入**选择弹窗：**群组 tab** `getMyGroups` 后 `groupIds` 批量补齐 `agentId/agentAvatar/agentName`（`AiBoxRow` 有 `agentAvatar` 时单头像+上群名下 agentName）；**组织架构人员** 每层 `getDeptUsers` 后 `accountIds` 补齐，选中项带 agent 字段。**待联调** Map 无 key 时兜底展示
+- (web) 列表项**私聊/群会话已接真实归属**（`chatType=belongType`、`targetId=belongId`）；**个人AI框(belongType 0) 已改用真实 belongType/belongId**（不再 DEFAULT_CHAT 占位）；`HomeIndex` type 0 分支已有（`belongName=个人AI框`）
+- (web) **列表项 UI**：默认常显「打开私聊」+「更多」；更多菜单三项（置顶/隐藏/打开私聊），popover `placement=bottom`；个人框固定置顶角标；「打开私聊」仅 UI 待实现功能
+- (web) **三点菜单置顶/隐藏已接线**（`updateSetting` → 从 `exemptAgentIds` 移除该 agentId → `list` 刷新）；编排 `personalAiUpdateSettingFlow`；合成 agentId 跳过接口走本地兜底；**「打开私聊」尚未做**；**待真机/后端联调验收**
 - (web) list 主列表搜索（顶部搜索框）当前仍走**客户端过滤**；契约已移除 `searchKeyword`，服务端搜索若产品需要另开接口或扩展 list
 - (web) `POST /personalAiFrame/selectGroupBySearch` **已接入**选择弹窗搜索：`searchPicker` 改走 HTTP（`selectGroupBySearchApi` 动态导入，`accountId` 取登录用户），映射 `privateList`/`groupList`；搜索结果 popover 新增「全部/群组/人员」三 tab（全部=群组在前+人员在后）。web 不再调用桥 `searchAiBoxPicker`
 - (web) 个人 AI 右侧对话面板已改为**组件直渲** `HomeIndex`（`chatType`/`targetId`/`aiRoleId` props + key 重挂载），不再嵌套 `/zx/home/...` iframe；独立 `zx/home` 路由入口仍可用
@@ -67,6 +71,8 @@
 - 2026-07-13 新增后端契约 `POST /personalAiFrame/selectGroupBySearch`（选择AI框弹窗搜索；入参 `accountId`+`searchContent`，回参 `groupList`+`privateList`，含 agent 字段与 `selected`）
 - 2026-07-13 web 列表取数接入 `/personalAiFrame/list`：`belongType 0/1/3 → personal/private/group`，标题取 `belongName`、副标题取 `name`，`lastChatTime`/`pinTime` 串转毫秒时间戳；`accountId` 取登录用户 `user.id`（回退 defaultQuery）；成功替换 mock，失败保留 mock 兜底
 - 2026-07-13 「先筛选记忆、后 list」时序在 web 端保留 seam（`loadAgentList` 内 TODO），筛选记忆接口未就绪期间 `filterType` 固定 0
+- 2026-07-14 web 初始化改为 `getFilter` → `list(filterTypes)`；getFilter 失败则 list 传 `null` 沿用记忆；后续 save/update 刷新复用本地 `filterTypes`
+- 2026-07-14 web 侧栏底栏改为「筛选对话」弹层：个人AI框恒勾；近15天=`1`、有知识库=`2`；勾选变更立刻调 list 落库并刷新列表
 - 2026-07-13 web 本功能代码从 `views/home/` 集中迁到独立域目录 `views/personal-ai/`（22 文件，入口 `PersonalAiChat.vue`；仅 desktop/mobile `pages/personal/index.vue` 两处 import 改路径）；并在 root `CLAUDE.md` 立「功能内聚」总则，四端通用
 - 2026-07-13 `personal-ai/` 再按子功能细分：`list/` + `picker/`（含 `search/`）+ `selector/` + `tests/`（单测集中）；入口改为 `list/PersonalAiChat.vue`；「功能内可细分子目录、单测归 tests/」写入 root `CLAUDE.md` 总则
 - 2026-07-13 web 选择弹窗最近联系人：PC 桥 `getRecentContacts` 之后调用 `POST /personalAiFrame/recentContactList` 按 id/type 批量补齐 `agentName`（群 type=1、人 type=2）；失败不阻断列表
@@ -87,3 +93,11 @@
 - 2026-07-14 web `588d044`：`isSyntheticAgentId` 过滤 `group:`/`private:` 前缀；原生归一化优先 `ownerId`、兼容 wnsdk 解包；本地列表合成 key 与 save/exempt 解耦
 - 2026-07-14 移动端会话列表「个人 AI 框」入口图标统一为紫蓝渐变 AI 素材：ios `zx_personal_ai_icon`、android `personal_ai_icon`（替换原 `ai_tool_icon`）
 - 2026-07-14 移动端会话列表入口显示名统一为「AI框」（原「个人 AI 框」）：ios `ZXConversationListCell`、android `PersonalAiListCellBinder`
+- 2026-07-14 web 列表三点菜单：置顶/取消置顶/隐藏 → `POST /personalAiFrame/updateSetting`；成功后若该 `agentId` 在会话 `exemptAgentIds` 中则移除，再 `list` 刷新；编排与 HTTP 解耦（同 saveSelected）
+- 2026-07-14 个人 AI 框：list 接口回传（belongType=0）；固定置顶排序+角标；会话跳转改用 `chatType=belongType`/`targetId=belongId`（修复选中后右侧错渲第二项）；列表项 UI 对齐稿：常显打开私聊+更多，更多菜单三项（打开私聊仅 UI）
+- 2026-07-14 `getFilter` 对齐 YApi #14169：初始化只读拉取（入参仅 `accountId`）；YApi Body 误列的 `filterTypes` 写入语义不采纳，改筛仍走 list
+- 2026-07-14 新增公共契约 `POST /personalAiFrame/batchGetAgent`（YApi #14187）：`groupIds`+`accountIds` → `groupMap`/`accountMap`；不限创建人（次日选择弹窗已接入，见下）
+- 2026-07-15 选择弹窗群组/组织架构接入 `batchGetAgent`：群 `groupIds`、人 `accountIds`；群组行优先 `agentAvatar`；组织选中带 `agentId` 等
+- 2026-07-15 组织架构进公司对齐 PC 转发：`getContactTree({isGroup:1})`；`corpId=节点id`；首屏 `pid=rootDeptId||id`；透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过；OrgPicker 公司层勿裸传 `pid:'0'`
+- 2026-07-15 web `a7fa5fd` + desktop `1ca7496e` 已提交（筛选/updateSetting/batchGetAgent/组织进公司）；两边均未 push；desktop 本地仍可改 `.env.test` 指 localhost
+- 2026-07-15 web 侧栏列表加载：`loadAgentList` 期间 `listLoading` + `v-loading` 转圈（含初始拉取与改筛刷新）
