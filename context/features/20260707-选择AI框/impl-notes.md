@@ -137,8 +137,8 @@
 **联调坑 / 待确认**：
 - **会话跳转**：右侧 `HomeIndex` 约定 `chatType=belongType`、`targetId=belongId`。list 映射：有 `belongId` 时个人(0)/私聊(1)/群(3) 均用真实归属；缺 `belongId` 才回退占位。`HomeIndex` type 0 分支已有（`belongName=个人AI框`）。**本地选中兜底** `mapSelectionToAgent` 仍展开占位会话（未消费 `ownerId`）——save 路径已用 `ownerId→belongId`，与建会话目标解耦，待补齐。
 - 选中列表项后右侧直接挂载对话面板（传 `chatType`/`targetId`/`aiRoleId`），切换时重挂载；不再拼 `/zx/home/...` URL。
-- 顶部搜索框当前是**客户端过滤**；list 契约已无 `searchKeyword` 字段。
-- 「打开私聊」菜单项尚未做（本期仅置顶/隐藏）。
+- 侧栏搜索与选择弹窗共用 `AiBoxSearchBox` → `POST /personalAiFrame/selectGroupBySearch`（全部/群组/人员 popover）；点选结果侧栏直达 `applySelection`（等同弹窗确定），主列表不再客户端过滤。
+- **打开私聊/群聊**：…只用真实 `belongId`/`ownerId`（勿回退 `targetId` 占位）。重建私聊缺 `groupType` 时对齐会话列表：`GetAllOrganizationUserIds`（含自己/机器人）→组织，否则→外联。
 
 ## 列表设置（`updateSetting` → 移除 exempt → `list`）
 
@@ -155,7 +155,7 @@
 **边界**：
 - 隐藏成功后该项不再出现在 list 回参（由后端过滤）；前端不再依赖本地 `hidden` 长期态。
 - 置顶角标跟 `isPinned`（来自 list 的 `isPinned`/`pinTime`），与选中态背景解耦。
-- 「打开私聊」不在本编排内。
+- 「打开私聊/群聊」走 `openImChat`（见上），不在本编排内。
 
 **移植**：与 saveSelected 同模式——纯编排 + 注入 HTTP；各端勿在 UI 散写两步时序。
 
