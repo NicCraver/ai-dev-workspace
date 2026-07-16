@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-16（android selectAiAgent 桥 + 独立原生选择页移植，编译通过待真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-16（android 真机默认 onTest；onTestDebug 已出包待手机点允许安装）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -18,7 +18,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：**工作区未提交**——History 顶栏改为左头像 + 右上归属名（个人AI框/群名/人名）/ 右下智能体名；desktop `1ca7496e` 已提交，**工作区未提交**：AiBrowser 侧栏改 `aiToolList`（`aiId=0`）+ tab 保活 + 侧栏随 tab 同步；仍含 `.env.test`→`localhost:6173`；ios `personal-ai-chat`：**`836a25327` 已提交**；android `personal-ai-chat`：**工作区未提交**——入口文案「AI框」+ 图标 + **本轮新增 `selectAiAgent` 桥 + 独立原生选择页（选人/群单选回传）+ 入口 URL 补 accountId**，`:smart_message:compileDevelopDebugJavaWithJavac` 通过，**待真机 E2E**。
+> **本轮 apps 事实**：web `personal-ai-chat`：**工作区未提交**——History 顶栏改为左头像 + 右上归属名（个人AI框/群名/人名）/ 右下智能体名；desktop `1ca7496e` 已提交，**工作区未提交**：AiBrowser 侧栏改 `aiToolList`（`aiId=0`）+ tab 保活 + 侧栏随 tab 同步；仍含 `.env.test`→`localhost:6173`；ios `personal-ai-chat`：**`836a25327` 已提交**；android `personal-ai-chat`：**工作区未提交**——入口文案「AI框」+ 图标 + **本轮新增 `selectAiAgent` 桥 + 独立原生选择页（选人/群单选回传）+ 入口 URL 补 accountId**；**真机调试默认 onTest**（已记入 `platforms/android.md`），`assembleOnTestDebug` v3.6.16 已出包，**待手机允许 USB 安装后 E2E**。
 
 ## 待办 / 阻塞
 

@@ -11,15 +11,35 @@
 ## 常用命令
 ```bash
 # 构建（Flavor ∈ develop|onTest|preOnline|gray|publish，与 BuildType 组合）：
+./gradlew assembleOnTestDebug         # 测试环境（192.168.10.25，与 web dev 代理同域）★真机默认
 ./gradlew assembleDevelopDebug        # 开发环境 debug（后端 192.168.5.47）
-./gradlew assembleOnTestDebug         # 测试环境（192.168.10.25，与 web dev 代理同域）
 ./gradlew assemblePublishRelease      # 正式 release（360 加固基于此包）
-# 安装到设备：
-./gradlew installDevelopDebug   # 或 adb install -r <apk>
+# 安装到设备（真机调试默认用 onTest，勿默认 develop）：
+./gradlew installOnTestDebug          # 包名 com.cnmts.smart_message.test
+# 或：adb install -r smart_message/build/outputs/apk/onTest/debug/*.apk
 # 360 加固（自动先 assemblePublish，输出 smart_message/build/outputs/packers/）：
 ./gradlew protect360
 # 清理 / 列任务：./gradlew clean ; ./gradlew tasks
 ```
+
+## 真机调试流程（默认测试环境）
+1. **JDK**：确认 `java -version` 为 8 或 11（Gradle 6.5 不兼容 17+）。
+2. **设备**：`adb devices -l`，状态须为 `device`（非 `unauthorized`）；手机弹出 USB 调试/安装提示时点允许。
+3. **装包（默认 onTest）**：
+   ```bash
+   chmod +x ./gradlew   # 仅首次若 permission denied
+   ./gradlew installOnTestDebug --no-daemon
+   # 若 APK 已是最新构建，可直接：
+   # adb install -r smart_message/build/outputs/apk/onTest/debug/smart_message-onTest-debug_*.apk
+   ```
+4. **启动**：
+   ```bash
+   adb shell am start -n com.cnmts.smart_message.test/com.cnmts.smart_message.activity.AppStartSplashActivity
+   # 或 monkey：adb shell monkey -p com.cnmts.smart_message.test -c android.intent.category.LAUNCHER 1
+   ```
+5. **注意**：`develop` / `onTest` / 正式包 **applicationId 不同**，可并存；用户说「真机调试」默认走 **onTest**，除非明确要求 develop。
+6. **小米等机型**：若报 `INSTALL_FAILED_USER_RESTRICTED`，需在手机上点允许 USB 安装（开发者选项里也可开「USB 安装」）；编译已成功时可只重跑 `adb install -r …`。
+
 > ⚠️ **没有单元测试、没有 lint/checkstyle/detekt**；`lintOptions.abortOnError=false` 实际关掉了 lint；仅 `androidTest` 有默认脚手架。质量靠真机自测。
 
 ## 目录与架构约定
