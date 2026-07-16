@@ -189,7 +189,11 @@
 
 ### android 原生选择（与 ios 对称）
 
-逻辑同上：原生只负责「弹选择页 → 回传选中项」，`saveSelected/list` 全在 web H5。回传载荷形态与 ios 完全一致（`personal-ai:selected-agent`：`ownerType/ownerId/id/name/agentName/avatar/lastChatAt`；**无真实 agentId 时省略**，`lastChatAt=0`，群头像暂空串）。取消回传 `code=-1`。差异仅在移植范式：桥方法异步回结果复用宿主既有「注册端口 → startActivityForResult → onResult 按端口重建回调」模板；选择页为独立页，本轮先实现「最近会话（人+群）单选」，**群组/组织架构/搜索子页为后续债**（与 ios「选择页待裁剪」同类）。
+逻辑同上：原生只负责「弹选择页 → 回传选中项」，`saveSelected/list` 全在 web H5。回传载荷形态与 ios 完全一致（`personal-ai:selected-agent`：`ownerType/ownerId/id/name/agentName/avatar/lastChatAt`；**无真实 agentId 时省略**，`lastChatAt=0`，群头像暂空串）。取消回传 `code=-1`。差异仅在移植范式：桥方法异步回结果复用宿主既有「注册端口 → startActivityForResult → onResult 按端口重建回调」模板；选择页为**独立页**（不碰存量转发页），版式对齐 ios：顶部搜索 +「选择联系人」+「选择已有群组」+「最近聊天」。三入口各为独立子页，选中项统一 setResult 回传、主页 onActivityResult 汇总后再回传 WebView：
+- **选择联系人** 复用宿主现成通讯录选择（单选返回一个人）。
+- **选择已有群组** 独立页，组织群/外协群两 tab（按群类型阈值本地拆分）。
+- **搜索** 独立页，本地库搜人+群，全部/群组/人员三 tab（android 走**本地 DB**，非 web 的 HTTP 搜索）。
+- 后续债：搜索关键词高亮/空态图、群头像 2×2、`agentId`/`lastChatAt` 缺省（与 ios 同）。
 
 ## PC 左侧 AI伙伴入口（AiBrowser · `POST /aiTools/aiToolList`）
 
