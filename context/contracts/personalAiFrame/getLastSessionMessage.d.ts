@@ -4,6 +4,9 @@
  * 用途：点击 AI 框打开时调用，不确定是否有 AI 会话记录
  * Changelog:
  * - 2026-07-14 新增 POST /sessionMsg/getLastSessionMessage
+ * - 2026-07-16 对齐 YApi：入参新增 `code`；`wpsCode` 标 @unconfirmed（web 现网发送、文档未列）；
+ *   `agentSetDataRangeExpandVo` 子项 dataRangeType/choose 必填，dataRangeType 含 3-个人知识/4-共享知识；
+ *   `agentVersionId` 注释改为「智能体设置版本 id」
  */
 
 import type { ApiResponse } from '../_common';
@@ -45,8 +48,17 @@ export interface PersonalAiFrameGetLastSessionMessageReq {
   belongType: number;
   /** ai 框角色 id */
   aiRoleId: string;
-  /** 智能体调试 id；预览调试时必传 */
+  /** 智能体模式：智能体调试 id；预览调试时必传 */
   previewDebugId?: string;
+  /**
+   * 授权/业务 code（如飞书授权回传）
+   * web 现网传 feishuCode
+   */
+  code?: string;
+  /**
+   * @unconfirmed YApi 未列；web 现网传 wps 授权 code（错误码 N_L_C_00002 重试时）
+   */
+  wpsCode?: string;
 }
 
 /** 业务系统筛选 · 选择对象 */
@@ -216,6 +228,7 @@ export interface PersonalAiFrameLastSessionInfo {
 export interface PersonalAiFrameSessionAiRoleInfo {
   aiRoleId?: string;
   agentId?: string;
+  /** 智能体设置版本 id */
   agentVersionId?: string;
   /** 0-不可以编辑智能体；1-可以编辑智能体 */
   canEditAgent?: number;
@@ -232,12 +245,28 @@ export interface PersonalAiFrameSessionAiRoleInfo {
   showKnowledgeFrom?: number;
 }
 
+/**
+ * 聊天中存的选中数据 · 知识范围单项（dataRangeType / choose 必填）
+ * dataRangeType：0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人知识；4-共享知识
+ */
+export type PersonalAiFrameAgentSetDataRangeItem = Required<
+  Pick<PersonalAiFrameDataRangeChoose, 'dataRangeType' | 'choose'>
+>;
+
 /** 聊天中存的选中数据（回参必填） */
 export interface PersonalAiFrameAgentSetDataRangeExpandVo {
+  /** 选择的时间类型 */
   timeType: number;
-  dataRangeList: PersonalAiFrameDataRangeChoose[];
+  /** 智能体知识范围 */
+  dataRangeList: PersonalAiFrameAgentSetDataRangeItem[];
+  /** 联网搜索：0-未开启；1-开启 */
   netSearch: number;
+  /** 深度思考：0-未开启；1-开启 */
   deepThink: number;
+  /**
+   * 数据范围（人和群）
+   * 子项必填：scopeDataType（1-私聊；3-群聊）、scopeDataId（私聊=人员 id；群聊=群组 id）
+   */
   dataRangeScopeList: PersonalAiFrameDataRangeScope[];
 }
 
