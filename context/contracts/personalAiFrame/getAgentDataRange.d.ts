@@ -3,6 +3,7 @@
  * POST /agentSetDataRangeExpand/getAgentDataRange
  * Changelog:
  * - 2026-07-14 新增 POST /agentSetDataRangeExpand/getAgentDataRange
+ * - 2026-07-16 dataRangeType 补齐 3-个人 / 4-分享（与 saveDataRange 对齐）
  */
 
 import type { ApiResponse } from '../_common';
@@ -37,7 +38,7 @@ export interface PersonalAiFrameAgentDataRangeItem {
   iconBgColor?: string;
   /**
    * 智能体数据范围标记
-   * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件
+   * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享
    */
   dataRangeType?: number;
   /** 0-未选中；1-选中 */

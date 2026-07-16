@@ -3,6 +3,8 @@
  * Changelog:
  * - 2026-07-14 新增（群成员信息、附件、数据范围等）
  * - 2026-07-14 新增筛选类型 PersonalAiFrameFilterType / PersonalAiFrameFilterInfo（list / getFilter 共用）
+ * - 2026-07-16 dataRangeType 补齐 3-个人 / 4-分享；DataRangeScope 子项 scopeDataType/scopeDataId 改为必填（对齐 saveDataRange）
+ * - 2026-07-16 附件 analysisStatus 补 3-没有得到分析（大小超限）（对齐 aiChat）
  */
 
 /** 筛选类型（多选）：1-近15天问答的 AI 框；2-有知识库的 AI 框（个人 AI 框不受影响） */
@@ -42,17 +44,20 @@ export interface PersonalAiFrameAttachment {
   fileType?: string;
   /**
    * 附件是否得到 AI 分析
-   * 0-得到了分析；1-没有得到分析（绿盾加密）；2-没有得到分析（格式错误）
+   * 0-得到了分析；1-没有得到分析（绿盾加密）；2-没有得到分析（格式错误）；3-没有得到分析（大小超限）
    */
   analysisStatus?: number;
 }
 
 /**
  * 智能体数据范围勾选项
- * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件
- * 扩展：3-个人知识；4-共享知识（agentSetDataRangeExpand / getLastSessionMessage 回参）
+ * dataRangeType：0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享
  */
 export interface PersonalAiFrameDataRangeChoose {
+  /**
+   * 智能体数据范围标记
+   * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享
+   */
   dataRangeType?: number;
   /** 0-未选中；1-选中 */
   choose?: number;
@@ -60,10 +65,10 @@ export interface PersonalAiFrameDataRangeChoose {
 
 /** 智能体数据范围 scope（私聊/群聊对象） */
 export interface PersonalAiFrameDataRangeScope {
-  /** 1-私聊；3-群聊 */
-  scopeDataType?: number;
+  /** 智能体数据范围类型：1-私聊；3-群聊 */
+  scopeDataType: number;
   /** 私聊=人员 id；群聊=群组 id */
-  scopeDataId?: string;
+  scopeDataId: string;
 }
 
 /** 引导问题 */

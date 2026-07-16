@@ -24,6 +24,7 @@ contracts/
 │  ├─ quickReplySave.d.ts       # POST /quickReply/save
 │  ├─ quickReplyDelete.d.ts     # POST /quickReply/delete
 │  ├─ getLastSessionMessage.d.ts # POST /sessionMsg/getLastSessionMessage
+│  ├─ aiChat.d.ts               # POST /v1/aiChat（流式）
 │  ├─ saveDataRange.d.ts        # POST /agentSetDataRangeExpand/saveDataRange
 │  ├─ getAgentDataRange.d.ts    # POST /agentSetDataRangeExpand/getAgentDataRange
 │  ├─ shareFileData.d.ts        # POST /agentFileShare/shareFileData
