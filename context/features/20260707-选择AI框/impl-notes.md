@@ -187,6 +187,10 @@
 3. web 归一化原生回传 → `applySelection` → 共用 `saveSelectedAndReloadList`（与 PC 弹窗同一条链路）。本地侧栏 upsert 可用 `ownerType:ownerId` 作列表 key；**save/exempt 须过滤** `group:`/`private:` 前缀合成 id。
 4. 取消 `code=-1`，不调 save/list。
 
+### android 原生选择（与 ios 对称）
+
+逻辑同上：原生只负责「弹选择页 → 回传选中项」，`saveSelected/list` 全在 web H5。回传载荷形态与 ios 完全一致（`personal-ai:selected-agent`：`ownerType/ownerId/id/name/agentName/avatar/lastChatAt`；**无真实 agentId 时省略**，`lastChatAt=0`，群头像暂空串）。取消回传 `code=-1`。差异仅在移植范式：桥方法异步回结果复用宿主既有「注册端口 → startActivityForResult → onResult 按端口重建回调」模板；选择页为独立页，本轮先实现「最近会话（人+群）单选」，**群组/组织架构/搜索子页为后续债**（与 ios「选择页待裁剪」同类）。
+
 ## PC 左侧 AI伙伴入口（AiBrowser · `POST /aiTools/aiToolList`）
 
 智信 PC 主窗口左侧第二项 + AiBrowser 顶栏 tab 列表，共用 **`POST /aiTools/aiToolList`**（`chatPath/aiTools/aiToolList`，入参 `accountId`）。

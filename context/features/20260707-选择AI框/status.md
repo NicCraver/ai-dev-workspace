@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-16（desktop 侧栏 AI框 aiToolList + tab 保活）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-16（android selectAiAgent 桥 + 独立原生选择页移植，编译通过待真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -14,11 +14,11 @@
 | T6 | OrgPicker 组织架构钻取（公司→部门→人员 + 面包屑） | ✅ | — | — | — |
 | T7 | 搜索 popover（对齐 PC search-box + searchAiBoxPicker + 高亮） | ✅ | — | — | — |
 | T8 | 入口接线 + 选中后链路（upsert/sort/24h） | ✅ | 🚧 | 🚧 | — |
-| T9 | 联调 + 视觉还原验收 + impl-notes | 🚧 | — | 🚧 | 🚧 |
+| T9 | 联调 + 视觉还原验收 + impl-notes | 🚧 | 🚧 | 🚧 | 🚧 |
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `a7fa5fd` 已提交 `personal-ai-chat`、工作区干净、**尚未 push**；desktop `1ca7496e` 已提交，**工作区未提交**：AiBrowser 侧栏改 `aiToolList`（`aiId=0`）+ tab 保活 + 侧栏随 tab 同步；仍含 `.env.test`→`localhost:6173`；ios `personal-ai-chat`：**`836a25327` 已提交**；android `personal-ai-chat`：**工作区未提交**（入口文案「AI框」+ 图标，选中链路未做）。
+> **本轮 apps 事实**：web `personal-ai-chat`：**工作区未提交**——History 顶栏改为左头像 + 右上归属名（个人AI框/群名/人名）/ 右下智能体名；desktop `1ca7496e` 已提交，**工作区未提交**：AiBrowser 侧栏改 `aiToolList`（`aiId=0`）+ tab 保活 + 侧栏随 tab 同步；仍含 `.env.test`→`localhost:6173`；ios `personal-ai-chat`：**`836a25327` 已提交**；android `personal-ai-chat`：**工作区未提交**——入口文案「AI框」+ 图标 + **本轮新增 `selectAiAgent` 桥 + 独立原生选择页（选人/群单选回传）+ 入口 URL 补 accountId**，`:smart_message:compileDevelopDebugJavaWithJavac` 通过，**待真机 E2E**。
 
 ## 待办 / 阻塞
 
@@ -51,7 +51,9 @@
 - (ios) **个人 AI 宿主页 + 会话入口已合入 `836a25327`**：`ZXPersonalAIChatController`（内嵌 Web，`ZXPersonalAIChatPath=ai-chat/m/personal`）；会话列表合成 `ConversationType_PersonalAI` 置顶 Cell（`ZXPersonalAIChatId`）；入口名称「AI框」，角标一期占位，待 A1/A4 接真数据
 - (ios) **会话入口图标已合入 `836a25327`**：`zx_personal_ai_icon`（@2x/@3x）→ `ConversationType_PersonalAI` 头像
 - (ios) **合入后债（未挡一期验收）**：PersonalAI 副标题 RCIM 短路待接 list 接口；选择页仍转发页拷贝待裁剪；桥重入/dismiss cancel 真机复现再补；`ZXSelectAiAgentResultTest.m` 留工作区勿合
-- (android) **会话列表入口 WIP（工作区未提交）**：`PersonalAiListCellBinder` 置顶 Cell + 打开 `ai-chat/m/personal`；入口文案「AI框」；图标 `personal_ai_icon`（hdpi~xxxhdpi，替换 `ai_tool_icon`）。选中链路 / `selectAiAgent` / saveSelected **尚未做**
+- (android) **会话列表入口 WIP（工作区未提交）**：`PersonalAiListCellBinder` 置顶 Cell + 打开 `ai-chat/m/personal`；入口文案「AI框」；图标 `personal_ai_icon`（hdpi~xxxhdpi，替换 `ai_tool_icon`）。本轮 URL query 补 `accountId`（登录用户 id）
+- (android) **`selectAiAgent` 桥 + 独立原生选择页已落地（工作区未提交，编译通过）**：`api/AiChat.selectAiAgent`（`aiChat` 别名已注册）→ `addPort` + 跨模块 `CoreApiUtil.selectAiAgent`（新 `CoreApiInterface.SelectAiAgent`，`InitCrossModuleApproach` 注册拉起 `SelectAiAgentActivity`）→ `startActivityForResult(238)` → `WebloaderControl.onResult` 新分支读回选中项 → `AutoCallbackEvent.onSelectAiAgent` 组装 `personal-ai:selected-agent` 载荷回传（取消 `onSelectAiAgentCancel` → code=-1）。选择页 `smart_message/personal_ai_select/`（`SelectAiAgentActivity`+`SelectAiAgentAdapter`，复用 `item_friend_content`，最近会话人+群单选，剥离转发发送）。saveSelected/list 仍在 web H5。**待真机 E2E**
+- (android) **选择页后续债**（未挡本轮）：目前仅「最近会话」单选；群组 tab / 组织架构钻取 / 搜索子页待补（对齐转发页子页，与 ios「选择页待裁剪」同类债）；群头像回传暂空串；`agentId`/`aiRoleId`/`lastChatAt` 缺省（与 ios 同）
 - (desktop) **左侧第二项 / AiBrowser tab 列表**：`POST /aiTools/aiToolList` 回参 **`aiId=0`** 为 AI框（`aiName`/`pcLogoJsonStr` 驱动侧栏与 tab 文案图标）；`aiUrl` 空则内嵌 `${APP_AICHAT}/zx/personal` iframe（`getUserCode` 拼参）。**固定排首**，不参与置顶/最近使用/更多菜单。切换 tab → `ai-sider-item` 同步左侧菜单；`pageUrlMap` 首次打开缓存 url，切回不重载。**待 E2E**
 - (ios / web) save 映射已消费 `ownerId`→`belongId`；但 `mapSelectionToAgent` **建会话目标**仍未用 `ownerId`（仍走 `DEFAULT_CHAT` 占位）——与 ios 回传未对齐，待补
 
@@ -114,3 +116,5 @@
 - 2026-07-16 desktop 左侧第二项 AI框：`aiToolList` 中 `aiId=0` 驱动侧栏名称/图标（`ai-sider-item`）；AiBrowser 去掉内置 tab 注入，固定排首且屏蔽置顶/最近使用/更多菜单；`aiUrl` 空走 personal iframe
 - 2026-07-16 web 列表顶栏「选择AI框」右侧新增刷新图标（`SvgIcon refresh`），点击 `location.reload()` 整页刷新
 - 2026-07-16 web 个人 AI 列表去掉 `createMockAgents` 初始数据：侧栏初始空列表，仅 `list` 接口填充；失败清空不保留 mock；`accountId` 仅取登录用户
+- 2026-07-16 web 历史侧栏（History）顶栏：去掉品牌 logo，改为左头像 `w-10 h-10` + `gap-1` + 右上归属名（`belongName`，`text-3.5 text-[#1F2329]`）/ 右下智能体名；Chat 经 `assistant-profile` 同步至 Home `historyAssistant`
+- 2026-07-16 android `selectAiAgent` 移植对称 ios：原生只负责「弹选择页→回传选中项」，saveSelected/list 全在 web H5。回传通路复用既有 `getAddressBook` 异步模板（`addPort`/`onResult`/`AutoCallbackEvent`/portMap）；跨模块经新 `CoreApiInterface.SelectAiAgent`（`core_function_api` 不能直接引 `smart_message`）。选择页选**独立复制**方案（用户定），落 `smart_message/personal_ai_select/`，不碰巨型 `TransmitFriendsFragment`（避免与 liuyiling 冲突）；本轮先做「最近会话单选」，群组/组织/搜索子页留后续债

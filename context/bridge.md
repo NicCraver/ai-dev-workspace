@@ -1,7 +1,7 @@
 # JSBridge 协议（WebView ↔ 原生）
 
 > 三端（Android / iOS / Electron）内嵌 web 的通信契约。任何一端改协议必须先改本文件。
-> 最后更新：2026-07-14
+> 最后更新：2026-07-15
 
 ## 通信机制
 
@@ -11,6 +11,7 @@
 |----|-----------|-----------|
 | desktop（微应用 webview） | 内嵌 web 调 `window.webview.<method>(params)` → preload 生成 `uuid`，`ipcRenderer.sendToHost(<channel>, params, uuid)` | 宿主 `webview-control` `@ipc-message` → `aiBoxPickerHost` 取数 → `webview.send("trigger-result", …)` → preload 按 `uuid` resolve |
 | desktop（AiBrowser iframe） | iframe 内 `window.parent.postMessage({ type:"personal-ai:bridge-request", channel, params, uuid })` | **AiBrowser** `handlePersonalAiMessage` → `aiBoxPickerHost` 取数 → `event.source.postMessage({ type:"personal-ai:bridge-result", channel, uuid, data:{code,data} })` |
+| desktop（AiBrowser iframe，打开 IM） | iframe 内 `window.parent.postMessage({ type:"personal-ai:open-chat", payload:{ id, type, name?, avatar? } })`（fire-and-forget） | **AiBrowser**（主窗口内）直接 `openConversationById`；列表无会话时用 `name`/`avatar` `PushDialogue` 重建；**不**调 `resume-main-win-size` |
 | android | `wnsdk.aiChat.<method>(params)` | 回调 `success(result)` / `error`（选择 AI 框见下表） |
 | ios | `wnsdk.aiChat.selectAiAgent` 等 | 回调 `success(result)`：`result` 为 `ZXJSWebResponseModel.result` 解包值 |
 
@@ -27,6 +28,10 @@
 { "type": "personal-ai:bridge-request", "channel": "get-recent-contacts", "params": {}, "uuid": "<uuid>" }
 // AiBrowser iframe 响应（AiBrowser → web，channel/uuid 与请求一致）
 { "type": "personal-ai:bridge-result", "channel": "get-recent-contacts", "uuid": "<uuid>", "data": { "code": 1, "data": <结果> } }
+
+// AiBrowser iframe 打开 IM（web → AiBrowser，无响应）
+{ "type": "personal-ai:open-chat", "payload": { "id": "<belongId>", "type": "group" | "chat", "name"?: "<显示名>", "avatar"?: "", "corpId"?: "", "groupType"?: 0 } }
+// type: "group"=群聊 / 其它（如 "chat"）=私聊；宿主 openConversationById：列表有则选中，无则用 name/avatar 重建会话再打开
 ```
 
 ## 方法清单
@@ -40,7 +45,8 @@
 | `getOrgCompanies` | `get-org-companies` | web→原生 | `{type:'organization'\|'outsource'}` | `[{id, corpId, name, memberCount, corpType, rootDeptId?, corpAndCorpRelType?, labelType?, category?}]`（宿主 `getContactTree({isGroup:1})` 对齐 PC 转发；`corpId`=`id`；进公司后 `getDeptUsers` 用 `rootDeptId`+附加字段） | desktop | 新增（选择AI框） |
 | `getDeptUsers` | `get-dept-users` | web→原生 | `{corpId, pid, corpType?, corpAndCorpRelType?, labelType?}`（对齐 PC `company-dept-user.getUsers`；进公司首屏 `pid=rootDeptId\|\|id`，勿裸传 `'0'`） | `{depts:[{id,name,memberCount,pid}], users:[{accountId,name,agentName,avatar}]}` | desktop | 新增（选择AI框） |
 | `searchAiBoxPicker` | `search-ai-box-picker` | web→原生 | `{search:string}` | `{users:[{accountId,name,agentName,avatar,ownerType:'private',lastChatAt}], groups:[{id,name,agentName,avatar,accountInfoList?,ownerType:'group',groupType?,lastChatAt}]}` | desktop | 新增（选择AI框搜索） |
-| `selectAiAgent` | —（wnsdk `aiChat.selectAiAgent`） | web→原生 | — | 见下「selectAiAgent 回传」 | ios | 已落地；android 待移植 |
+| `openChat` | `openChat` | web→原生 | `{ id:string, type:'group'\|'chat', name?:string, avatar?:string, corpId?:string, groupType?:number }`（`id`=belongId；`type`='group' 群 / 其它私聊；`name`/`avatar` 供列表无会话时重建） | 无（fire-and-forget）；主窗口 `openConversationById`（缺失则 PushDialogue 重建）选中左侧会话 | desktop | 已有（个人 AI 列表「打开私聊/群聊」） |
+| `selectAiAgent` | —（wnsdk `aiChat.selectAiAgent`） | web→原生 | — | 见下「selectAiAgent 回传」 | ios / android | ios 已落地；android 已落地（原生代码，编译通过，待真机联调） |
 
 ### `selectAiAgent` 回传（ios → web）
 
@@ -74,10 +80,12 @@
 
 - 老 desktop 壳无 `getMyGroups`/`getOrgCompanies`/`getDeptUsers`/`searchAiBoxPicker` 时，web 端 `useAiBoxPickerData` 捕获异常 → 弹窗提示「请升级到最新版本」。
 - `getRecentContacts` 缺 `agentName`/`lastChatAt`：视为宿主 bug，联调时由 desktop 侧补齐（见选择AI框 spec「待联调确认 1」）。
-- 移动端（`wnsdk.aiChat.*`）取数类接口（最近联系人/群组/组织）本期不实现；**`selectAiAgent` ios 已落地**（见上表）。
+- 移动端（`wnsdk.aiChat.*`）取数类接口（最近联系人/群组/组织）本期不实现；**`selectAiAgent` ios/android 均已落地**（android 见上表；原生只回传选中项，saveSelected/list 在 web H5）。
 
 ## Changelog
 
+- 2026-07-16 android `selectAiAgent` 落地（原生代码，编译通过待真机）：`aiChat.selectAiAgent` → 独立原生选择页（选人/群单选）→ 回传 `personal-ai:selected-agent`（无真实 agentId 省略；取消 code=-1），与 ios 回传契约一致。
+- 2026-07-15 登记 `openChat`（微应用 `window.webview.openChat`）与个人 AI 列表「打开私聊/群聊」；AiBrowser iframe 通路 `personal-ai:open-chat` → 主窗口直接 `openConversationById`（缺会话则 PushDialogue 重建）；payload 透传 `name`/`avatar`。
 - 2026-07-15 `getOrgCompanies` 对齐 PC 转发：`getContactTree({isGroup:1})`，回参补 `id`/`rootDeptId`/`corpAndCorpRelType`/`labelType`；`getDeptUsers` 入参对齐 `company-dept-user`（透传 corpType 等；进公司首屏 pid=`rootDeptId||id`，勿裸传 `'0'`）。
 - 2026-07-14 登记 ios `selectAiAgent` 回传契约：`personal-ai:selected-agent` payload（`ownerId`/`id`/`lastChatAt`；无真实 `agentId` 时省略）；web 收后走 saveSelected→list。
 - 2026-07-08 新增 `searchAiBoxPicker`（`search-ai-box-picker`）：搜索联系人/群，宿主并行 `getAccountSearchByUserName` + `getGroupBySearch`。
