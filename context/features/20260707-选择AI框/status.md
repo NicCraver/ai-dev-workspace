@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-15（侧栏搜索对齐选择弹窗）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-16（desktop 侧栏 AI框 aiToolList + tab 保活）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -18,7 +18,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `a7fa5fd` 已提交 `personal-ai-chat`、工作区干净、**尚未 push**；desktop `1ca7496e` 已提交，工作区仅 `.env.test`→`localhost:6173`；ios `personal-ai-chat`：**`836a25327` 已提交**（宿主/入口/selectAiAgent 主链路，21 文件 +1272 行）；工作区留 `ZXSelectAiAgentResultTest.m`（未跟踪）+ `.gitignore` 改动；android `personal-ai-chat`：**工作区未提交**（入口文案「AI框」+ `personal_ai_icon` hdpi~xxxhdpi，选中链路未做）。
+> **本轮 apps 事实**：web `a7fa5fd` 已提交 `personal-ai-chat`、工作区干净、**尚未 push**；desktop `1ca7496e` 已提交，**工作区未提交**：AiBrowser 侧栏改 `aiToolList`（`aiId=0`）+ tab 保活 + 侧栏随 tab 同步；仍含 `.env.test`→`localhost:6173`；ios `personal-ai-chat`：**`836a25327` 已提交**；android `personal-ai-chat`：**工作区未提交**（入口文案「AI框」+ 图标，选中链路未做）。
 
 ## 待办 / 阻塞
 
@@ -36,11 +36,12 @@
 - (android / ios / desktop) `getFilter` **不受影响**（尚无调用方；改筛仍走 list）
 - (web) `POST /personalAiFrame/batchGetAgent` **已接入**选择弹窗：**群组 tab** `getMyGroups` 后 `groupIds` 批量补齐 `agentId/agentAvatar/agentName`（`AiBoxRow` 有 `agentAvatar` 时单头像+上群名下 agentName）；**组织架构人员** 每层 `getDeptUsers` 后 `accountIds` 补齐，选中项带 agent 字段。**待联调** Map 无 key 时兜底展示
 - (web) 列表项**私聊/群会话已接真实归属**（`chatType=belongType`、`targetId=belongId`）；**个人AI框(belongType 0) 已改用真实 belongType/belongId**（不再 DEFAULT_CHAT 占位）；`HomeIndex` type 0 分支已有（`belongName=个人AI框`）
-- (web) **列表项 UI**：私聊/群项常显「打开私聊/群聊」+「更多」；个人 AI 框无操作区（无三点、无打开图标）；更多菜单三项（置顶/隐藏/打开私聊或群聊），popover `placement=bottom`；个人框固定置顶角标
-- (web) **三点菜单置顶/隐藏已接线**（`updateSetting` → 从 `exemptAgentIds` 移除该 agentId → `list` 刷新）；编排 `personalAiUpdateSettingFlow`；合成 agentId 跳过接口走本地兜底；**「打开私聊/群聊」已接线**（`openImChat` → 主窗口 `openConversationById`；会话不在列表时用 name/avatar 重建）；**待 E2E**
+- (web) **列表项 UI**：三点左侧图标 = **开启新对话**（`new-chat` → `Chat.startNewChat`；个人框仅此图标无三点）；私聊/群三点菜单：置顶/隐藏/**打开智信私聊|群聊**（`open-private` → `openImChat`）；个人框固定置顶角标
+- (web) **三点菜单置顶/隐藏已接线**（`updateSetting` → 从 `exemptAgentIds` 移除该 agentId → `list` 刷新）；编排 `personalAiUpdateSettingFlow`；合成 agentId 跳过接口走本地兜底；**跳转智信已接线**（`openImChat` → 主窗口 `openConversationById`）；**开启新对话已接线**（先选中 → `chat-ready` → `newChatNonce` → `startNewChat`；弹窗历史会收起）；**待 E2E**
 - (web) 侧栏搜索**已对齐选择弹窗**：复用 `AiBoxSearchBox` + `POST /personalAiFrame/selectGroupBySearch`；输入框 `rounded-[14px]` / `border #E7E7E7`；点选结果直达 `applySelection`（等同弹窗「确定」）；主列表不再客户端过滤
 - (web) `POST /personalAiFrame/selectGroupBySearch` **已接入**选择弹窗与侧栏搜索：`searchPicker` 改走 HTTP（`selectGroupBySearchApi` 动态导入，`accountId` 取登录用户），映射 `privateList`/`groupList`；搜索结果 popover 新增「全部/群组/人员」三 tab（全部=群组在前+人员在后）。web 不再调用桥 `searchAiBoxPicker`；**`AiBoxSearchRow` 有 `agentAvatar` 时优先单头像**（群组对齐 `AiBoxRow`，人员同理）
 - (web) 个人 AI 右侧对话面板已改为**组件直渲** `HomeIndex`（`chatType`/`targetId`/`aiRoleId` props + key 重挂载），不再嵌套 `/zx/home/...` iframe；独立 `zx/home` 路由入口仍可用
+- (web) **PC 个人 AI 内嵌对话**：历史侧栏随 **Home 自身 `elWidth`** 在弹窗/双栏间切换（`DRAWER_MAX_WIDTH=700`：`≤700` popup 宽 280px，`>700` 双栏）；首次窄屏默认 popup，变宽自动解除并切双栏；独立首页默认收起
 - (desktop) 若 web 改走 HTTP 搜索：桥 `search-ai-box-picker` 可保留兜底或后续下线；**仅需回归**弹窗搜索链路
 - (android / ios) `selectGroupBySearch` **不受影响**（本期不做 web 侧选择AI框弹窗；ios 走原生选择）
 - (web) 选择弹窗底栏「已选：xxx」截断：**已提交**（`6796595`）——`AcDialog` footer `footer-left` 占 `flex-1 min-w-0`、`buttonTip` 限 `max-w-32`；`SelectAiBoxDialog` 已选文案 `max-w-full truncate`
@@ -51,7 +52,7 @@
 - (ios) **会话入口图标已合入 `836a25327`**：`zx_personal_ai_icon`（@2x/@3x）→ `ConversationType_PersonalAI` 头像
 - (ios) **合入后债（未挡一期验收）**：PersonalAI 副标题 RCIM 短路待接 list 接口；选择页仍转发页拷贝待裁剪；桥重入/dismiss cancel 真机复现再补；`ZXSelectAiAgentResultTest.m` 留工作区勿合
 - (android) **会话列表入口 WIP（工作区未提交）**：`PersonalAiListCellBinder` 置顶 Cell + 打开 `ai-chat/m/personal`；入口文案「AI框」；图标 `personal_ai_icon`（hdpi~xxxhdpi，替换 `ai_tool_icon`）。选中链路 / `selectAiAgent` / saveSelected **尚未做**
-- (desktop) 工作区仅本地联调改动：`.env.test` 的 `APP_AICHAT`→`localhost:6173`（勿当功能未实现；handler 已在 `1ca7496e`）
+- (desktop) **左侧第二项 / AiBrowser tab 列表**：`POST /aiTools/aiToolList` 回参 **`aiId=0`** 为 AI框（`aiName`/`pcLogoJsonStr` 驱动侧栏与 tab 文案图标）；`aiUrl` 空则内嵌 `${APP_AICHAT}/zx/personal` iframe（`getUserCode` 拼参）。**固定排首**，不参与置顶/最近使用/更多菜单。切换 tab → `ai-sider-item` 同步左侧菜单；`pageUrlMap` 首次打开缓存 url，切回不重载。**待 E2E**
 - (ios / web) save 映射已消费 `ownerId`→`belongId`；但 `mapSelectionToAgent` **建会话目标**仍未用 `ownerId`（仍走 `DEFAULT_CHAT` 占位）——与 ios 回传未对齐，待补
 
 ## 关键决策记录
@@ -103,6 +104,13 @@
 - 2026-07-15 组织架构进公司对齐 PC 转发：`getContactTree({isGroup:1})`；`corpId=节点id`；首屏 `pid=rootDeptId||id`；透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过；OrgPicker 公司层勿裸传 `pid:'0'`
 - 2026-07-15 web `a7fa5fd` + desktop `1ca7496e` 已提交（筛选/updateSetting/batchGetAgent/组织进公司）；两边均未 push；desktop 本地仍可改 `.env.test` 指 localhost
 - 2026-07-15 web 侧栏列表加载：`loadAgentList` 期间 `listLoading` + `v-loading` 转圈（含初始拉取与改筛刷新）
-- 2026-07-15 个人 AI 列表：个人框隐藏三点与打开图标；私聊/群项「打开私聊/群聊」→ `openImChat` → desktop 主窗口 `openConversationById`（缺会话则用 name/avatar PushDialogue 重建）
+- 2026-07-15 个人 AI 列表：个人框仅「开启新对话」图标（无三点）；私聊/群三点左=新开 AI 框会话、三点内「打开智信私聊/群聊」→ `openImChat`
 - 2026-07-15 选择弹窗搜索 `AiBoxSearchRow`：回参含 `agentAvatar` 时优先展示 AI 框头像（群组与 `AiBoxRow` 一致；人员有则覆盖 `avatar`）；`normalizeSearchGroup/Private` 透传 `agentAvatar`/`accountInfoList`
 - 2026-07-15 侧栏搜索对齐选择弹窗：复用 `AiBoxSearchBox`/`SearchInput`（`rounded-[14px]`、`border #E7E7E7`、placeholder「搜索联系人、智能体」）；HTTP `selectGroupBySearch`；点选即 `applySelection`（跳过弹窗确定）；主列表始终展示完整 list
+- 2026-07-15 PC 个人 AI 默认展开历史：窄屏用 `preferDrawer` 强制 van-popup（280px）；变宽后清掉强制态，按自身 `elWidth` 与 `DRAWER_MAX_WIDTH=700` 在弹窗/双栏间切换
+- 2026-07-15 `hasDrawer` 窄屏阈值定为 `DRAWER_MAX_WIDTH=700`
+- 2026-07-15 列表开启新对话时序：先选中 AI 框 → 等 `chat-ready`（getChatLastMessages 完成）→ 再 `newChatNonce` 调 `startNewChat`；去掉挂载直开 `openAsNewChat` 避免竞态报错
+- 2026-07-16 desktop AiBrowser：`aiToolList` **`aiId=0`** 为 AI框（去内置 tab）；固定首位；tab 切换 `ai-sider-item` 同步左侧菜单；`pageUrlMap` 保活 iframe/webview（`loadList` 刷新不改已挂载 src）
+- 2026-07-16 desktop 左侧第二项 AI框：`aiToolList` 中 `aiId=0` 驱动侧栏名称/图标（`ai-sider-item`）；AiBrowser 去掉内置 tab 注入，固定排首且屏蔽置顶/最近使用/更多菜单；`aiUrl` 空走 personal iframe
+- 2026-07-16 web 列表顶栏「选择AI框」右侧新增刷新图标（`SvgIcon refresh`），点击 `location.reload()` 整页刷新
+- 2026-07-16 web 个人 AI 列表去掉 `createMockAgents` 初始数据：侧栏初始空列表，仅 `list` 接口填充；失败清空不保留 mock；`accountId` 仅取登录用户

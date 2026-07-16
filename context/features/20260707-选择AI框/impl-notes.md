@@ -187,6 +187,48 @@
 3. web 归一化原生回传 → `applySelection` → 共用 `saveSelectedAndReloadList`（与 PC 弹窗同一条链路）。本地侧栏 upsert 可用 `ownerType:ownerId` 作列表 key；**save/exempt 须过滤** `group:`/`private:` 前缀合成 id。
 4. 取消 `code=-1`，不调 save/list。
 
+## PC 左侧 AI伙伴入口（AiBrowser · `POST /aiTools/aiToolList`）
+
+智信 PC 主窗口左侧第二项 + AiBrowser 顶栏 tab 列表，共用 **`POST /aiTools/aiToolList`**（`chatPath/aiTools/aiToolList`，入参 `accountId`）。
+
+### 列表项语义（联调实测）
+
+| 字段 | 说明 |
+|------|------|
+| `aiId` | **`"0"`** = 个人 AI框（系统项）；其余为外链 AI 伙伴（DeepSeek/KIMI 等） |
+| `aiName` | 侧栏与 tab 展示名（如「AI框」） |
+| `aiUrl` | 外链 webview 地址；**AI框为空**，由宿主拼 personal 页 |
+| `pcLogoJsonStr` | JSON：`logoChoosedUrl`（tab 选中/列表）、`logoUnChoosedUrl`（侧栏未选中/tab 未选中） |
+| `isSystem` | `1` 系统项不可编辑删除 |
+| `sort` | AI框为 **`-1`**，其余递增；宿主仍 **强制 AI框排首**（双保险） |
+| `isTop` / `isRecent` | AI框不参与置顶与最近使用排序 |
+
+### 个人 AI框（`aiId=0`）宿主行为
+
+1. **取数**：`aiToolList` 与外链伙伴同一列表；识别 `aiId===0`（字符串比较）。
+2. **打开地址**：`aiUrl` 空 → `${APP_AICHAT}/zx/personal`，有 `corpId` 时先 `getUserCode` 再拼 `userCode`+`corpId`；以 **iframe** 打开（非 webview），走 `personal-ai:bridge-request` 桥（见上「AiBrowser 个人 AI iframe 桥」）。
+3. **固定首位**：从列表拆出 `aiId=0` 置首，其余保持接口顺序；**不**再客户端注入内置 tab。
+4. **能力屏蔽**：无置顶/取消置顶、无「最近使用」上报、无右键/更多菜单（与 `isSystem` 外链系统项不同，AI框单独判断 `aiId=0`）。
+
+### 左侧菜单与 tab 同步
+
+- AiBrowser 每次 **切换 tab** 向主窗口上抛当前项（名称 + 图标字段）。
+- 主窗口左侧第二项展示 **当前激活 tab** 的 `aiName` 与 `whiteLogo||logo`（非写死「AI框」）。
+- 点击左侧第二项仍进入 AiBrowser 路由，不强制重置 tab。
+
+### Tab 保活（避免切回重载）
+
+- 每个 tab **首次选中**时把最终打开 url 写入 **`pageUrlMap[aiId]`**，iframe/webview 的 `src` 只读该缓存，**`loadList` 刷新列表 metadata 时不改已挂载 src**（避免 `getUserCode` 新 token 导致 AI框白屏重载）。
+- 非激活 tab 用 `visibility:hidden` + `pointer-events:none` 隐藏（不用 `display:none`），保留页面状态。
+- 切换外链 tab 可调 `updateRecentlyUsed`；可能触发宿主 `refresh-ai-link` 重拉列表——因 `pageUrlMap` 已缓存，已打开页不重载。
+
+### 涉及文件（desktop）
+
+- `views/AiBrowser/index.vue` — 列表映射、tab 保活、桥消息
+- `views/main.vue` — 接收侧栏同步事件
+- `components/layouts/new-aside-menu.vue` — 左侧第二项渲染
+- `service/tools.js` — `getAiLinkList` 等 `aiTools/*` 封装
+
 ## web 端视觉/实现备忘（蓝湖还原）
 
 - **弹窗尺寸**：蓝湖稿面板 **440×580**。`AcDialog splitTheme`，`class="!w-440px !h-580px"`。
