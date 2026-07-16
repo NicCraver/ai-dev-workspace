@@ -103,3 +103,16 @@ web 端无单测：`pnpm build`（vue-tsc）类型检查 + 壳内真机联调。
 2. home 页 agent 列表渲染/切换/对话加载是否已存在（决定是否一并搭建）
 3. desktop 壳 `window.webview.*` 接口命名与入参与 web 对齐；移动端 `wnsdk.aiChat.*` 后续再议
 4. 群组列表量级 / 全公司可私聊人员量级（决定搜索是否需宿主接口）
+
+## 附录：列表/历史双栏收起悬浮条（2026-07-16）
+
+个人 AI（`PersonalAiChat`）编排，共用 `PersonalAiFloatingDock`：
+
+| 状态 | UI | 内容 |
+|------|-----|------|
+| 列表收起 · 历史展开 | 白底胶囊，左吸附，可上下拖；初始 top 在头像下 | 展开列表 + 选择AI框 |
+| 列表展开 · 历史收起 | 对话区左上；**无白底无圆角** | 展开历史 + 开启新对话 |
+| 双收起 | 白底胶囊 | 列表 + 选择AI框 ‖ 历史记录 + 开启新对话 |
+| 双展开 | 无悬浮条 | 用各自顶栏收起 |
+
+独立 `zx/home` 不启用；Home 经 `v-model:history-sidebar-open` + `hideBuiltinCollapseChrome` 与父级联动。
