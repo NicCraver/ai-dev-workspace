@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-16（契约：`/v1/aiChat` + `getLastSessionMessage` 对齐；web `personal-ai-chat` 已 push `a805b11`；android selectAiAgent 全链路真机 E2E 通过）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-16（web `656ff3a` Home 数据范围多选+scope 记忆；android selectAiAgent 真机 E2E 通过工作区未提交；desktop AiBrowser 工作区未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -15,21 +15,22 @@
 | T7 | 搜索 popover（对齐 PC search-box + searchAiBoxPicker + 高亮） | ✅ | — | — | — |
 | T8 | 入口接线 + 选中后链路（upsert/sort/24h） | ✅ | ✅ | 🚧 | — |
 | T9 | 联调 + 视觉还原验收 + impl-notes | 🚧 | ✅ | 🚧 | 🚧 |
+| T10 | Home 数据范围（人/群 scope 多选 + 记忆 + aiChat） | 🚧 | — | — | — |
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：**已 push**（`a805b11`，rebase 含远端 `feat: PC端常用语`）——History 顶栏左头像+归属名/智能体名、历史侧栏宽度切换、开启新对话 chat-ready 时序、列表去 mock/刷新；desktop `1ca7496e` 已提交，**工作区未提交**：AiBrowser 侧栏改 `aiToolList`（`aiId=0`）+ tab 保活 + 侧栏随 tab 同步；仍含 `.env.test`→`localhost:6173`；ios `personal-ai-chat`：**`836a25327` 已提交**；android `personal-ai-chat`：**工作区未提交**——入口文案「AI框」+ 图标 + **本轮新增 `selectAiAgent` 桥 + 独立原生选择页（选人/群单选回传）+ 入口 URL 补 accountId**；**真机调试默认 onTest**（已记入 `platforms/android.md`），`assembleOnTestDebug` v3.6.16 出包安装，**selectAiAgent 全链路真机 E2E 通过**（最近/选择联系人/选择已有群组/搜索 四路选中 + 取消，回传 web `saveSelected→list` 生效）。
+> **本轮 apps 事实**：web `personal-ai-chat`：**已提交** `656ff3a`（Home 数据范围多选弹窗 + `dataRangeScopeList` 记忆/发消息贯通），本地领先 origin 1 commit **未 push**；含 `a805b11` 历史侧栏/新对话时序等。desktop `1ca7496e` 已提交，**工作区未提交**：AiBrowser `aiToolList`（`aiId=0`）+ tab 保活 + 侧栏同步 + `.env.test`→localhost；ios `836a25327` 已提交，工作区仅 `ZXSelectAiAgentResultTest.m` 勿合。android `personal-ai-chat`：**工作区未提交**（领先 origin 74），`selectAiAgent` 桥 + 原生选择页（最近/联系人/群组/搜索）**真机 E2E 通过**，saveSelected/list 在 web H5。
 
 ## 待办 / 阻塞
 
-- (web) **`POST /v1/aiChat` 契约已落地**（`contracts/personalAiFrame/aiChat.d.ts`）：`Chat.vue` `connectSSE` 经 `...conditionMode` **已传** `dataRangeScopeList`；**待 E2E** 联调真实后端
+- (web) **`POST /v1/aiChat`**：`connectSSE` 经 `conditionMode` **已传** `dataRangeScopeList`（`656ff3a`）；**待 E2E** 真实后端
+- (web) **Home 数据范围（T10，`656ff3a` 已提交）**：勾聊天记录/文件/共享 → FilterBar「数据范围」胶囊 → `SelectDataRangeDialog` 多选（复用 picker 桥取数，**每次打开重新拉 PC**；最近/群组「全部」；搜索多选；清空已选右置）→ 记忆 `getLastSessionMessage.agentSetDataRangeExpandVo.dataRangeScopeList` 回显 → 确定 `saveDataRange` → 发消息带 scope。**待 E2E** save/aiChat 真实后端
+- (android / ios / desktop) T10 数据范围 scope **不受影响**（web H5 Home 内；android/ios 不走该弹窗）
 - (web) aiChat 附件 `analysisStatus=3`（大小超限）已写入 `_shared`；上传/展示侧若有枚举文案 → **仅需回归**
 - (android / ios / desktop) `/v1/aiChat` 由 web H5 发起 → **不受影响**
-- (web) **`getLastSessionMessage` 记忆 `dataRangeScopeList` 已接线**：`updateMemoryFromAgentSetting` 写入 `conditionMode`；FilterBar 新增「数据范围」胶囊（勾聊天记录/文件/共享时显示）→ `SelectDataRangeDialog` 多选（复用选择 AI 框取数 + 最近/群组「全部」+ 组织架构无全选）→ 确定 `saveDataRange` + 弹窗按记忆回显；**待 E2E**
-- (android / desktop) `getLastSessionMessage` 无原生调用方 → **不受影响**；(ios) 仅注释提及、本期个人 AI 走 web H5 → **不受影响**
 - (web / desktop) **组织架构进公司**：已按 PC 转发对齐——`getContactTree({isGroup:1})`、公司 `id` 作 corpId、`rootDeptId||id` 作首屏 pid、透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过。**待 E2E**：点企业应直接见部门+人员（不再多一层企业 / 暂无人员）
 - (desktop) ~~待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`~~ → **已按 PC 转发透传**
-- (web) `personal-ai-chat` 已合入本地 `test-202512`（含 saveSelected）；本轮已 push 至 `a805b11`（含历史侧栏/新对话时序等）
+- (web) `personal-ai-chat` 已合入本地 `test-202512`；本轮 `656ff3a` 已提交、**尚未 push**
 - (desktop) T2：**handler 已落地并提交**（`1ca7496e` 含组织进公司参数）；工作区未提交仅 `.env.test`→`localhost:6173`。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
 - (多端) T9 待视觉对照蓝湖 4 张主 tab + 搜索 popover 截图验收；**列表顶栏**「选择AI框」胶囊样式已按稿调整（见关键决策）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
@@ -125,5 +126,5 @@
 - 2026-07-16 web 列表顶栏「选择AI框」右侧新增刷新图标（`SvgIcon refresh`），点击 `location.reload()` 整页刷新
 - 2026-07-16 web 个人 AI 列表去掉 `createMockAgents` 初始数据：侧栏初始空列表，仅 `list` 接口填充；失败清空不保留 mock；`accountId` 仅取登录用户
 - 2026-07-16 web 历史侧栏（History）顶栏：去掉品牌 logo，改为左头像 `w-10 h-10` + `gap-1` + 右上归属名（`belongName`，`text-3.5 text-[#1F2329]`）/ 右下智能体名；Chat 经 `assistant-profile` 同步至 Home `historyAssistant`
-- 2026-07-16 web Home `FilterBar`：勾聊天记录/文件/共享时显示「数据范围」胶囊；`SelectDataRangeDialog` 多选复用 picker 取数；`getLastSessionMessage`/`saveDataRange`/`aiChat` 贯通 `dataRangeScopeList`
+- 2026-07-16 web Home **数据范围 scope（T10）**：`FilterBar` 勾 1/2/4 显示胶囊 → `SelectDataRangeDialog` 多选（复用 picker 桥 + `batchGetAgent` 补齐记忆项）；确定 `saveDataRange`；`getLastSessionMessage`/`aiChat` 贯通 `dataRangeScopeList`；每次打开弹窗重新从 PC 取数
 - 2026-07-16 android `selectAiAgent` 移植对称 ios：原生只负责「弹选择页→回传选中项」，saveSelected/list 全在 web H5。选择页独立复制落 `smart_message/personal_ai_select/`；**真机 E2E 已通过**

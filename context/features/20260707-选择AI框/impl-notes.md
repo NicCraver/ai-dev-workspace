@@ -247,5 +247,54 @@
 - **单选图标**：`CheckboxView` 的 `radio` 模式（14px 圆形单选）。
 - **搜索 popover**：对齐 PC `search-box`/`search-result`——320px 宽、max 400px 高、`box-shadow: 0 0 10px rgba(0,0,0,0.3)`、圆角 4px；`Teleport` 到 body 避免 Dialog `overflow:hidden` 裁切。
 - **代码目录**：web 本功能全部代码集中在 `apps/web/src/components/views/personal-ai/`，内部再按子功能细分：`list/`（主列表+会话，入口 `list/PersonalAiChat.vue` 由 `/personal` 路由引用）、`picker/`（选择弹窗，内含 `search/` 搜索子模块）、`selector/`（移动端原生选择/共享知识消息）、`tests/`（全部单测集中）。功能私有工具（`highlightKeyword`、`SearchInput`）随 `search/` 目录走，不放公共 `utils/`。对应 root `CLAUDE.md`「功能内聚」总则（其它端按各自 package/模块惯例落地，单测归各自 `tests/`）。
-- **组件文件**：`SelectAiBoxDialog` · `AiBoxSearchBox`（输入+popover 壳）· `AiBoxSearchPanel`（结果列表）· `AiBoxSearchRow` · `AiBoxRow` · `OrgPicker` · `SearchInput`。
+- **组件文件**：`SelectAiBoxDialog` · `SelectDataRangeDialog`（Home 数据范围多选）· `AiBoxSearchBox`（输入+popover 壳）· `AiBoxSearchPanel`（结果列表）· `AiBoxSearchRow` · `AiBoxRow` · `OrgPicker` · `SearchInput`。
 - **搜索空态图**：`no-data.png` +「未搜索到相关结果」；关键词高亮 `#3E7EFF`（`text-primary`）。
+
+## Home 对话 · 数据范围 scope（`dataRangeScopeList`）
+
+Home 输入区 FilterBar 在**知识范围**（聊天记录/聊天文件/共享知识，即 `dataRangeType` 1/2/4 任一项 `choose=1`）勾选时，于「数据+N」与时间范围之间展示 **「数据范围」** 胶囊。点击打开 `SelectDataRangeDialog`（多选，复用选择 AI 框取数链路，与 `SelectAiBoxDialog` 单选独立）。
+
+### 显隐与本地态
+
+- 胶囊显隐只看 `dataRangeList` 勾选态，与是否已选 scope 无关。
+- 会话本地态 `conditionMode.dataRangeScopeList`：`[{ scopeDataType, scopeDataId }]`；`scopeDataType` 1=私聊、3=群聊；`scopeDataId` 为人/群 id。
+- 与 `dataRangeList`（知识类型勾选）、`conditionPara.im.timeType`（时间范围）、附件/联网/深度思考并列，发消息时整包 `conditionMode` 带入 aiChat。
+
+### 记忆回显时序
+
+1. 打开 Home / 切 AI 框 → `POST /sessionMsg/getLastSessionMessage`。
+2. 回参 **`agentSetDataRangeExpandVo`**（必填）含 `dataRangeList`、`timeType`、`netSearch`、`deepThink`、**`dataRangeScopeList`**。
+3. 写入 `conditionMode`（含 scope）；FilterBar 知识勾选与时间范围同步回显。
+4. 用户点「数据范围」→ 弹窗用 **`initialScopes=dataRangeScopeList`** 预勾选；scope 仅 id/type 时先 `batchGetAgent` 补齐名称/头像再展示。
+
+### 弹窗多选行为
+
+- **取数**：与选择 AI 框同源——最近联系人/群组/组织架构经宿主桥；搜索走 HTTP `selectGroupBySearch`（与侧栏搜索同接口）。
+- **每次打开弹窗**：清空列表缓存，**重新从 PC 拉**最近联系人 + 组织群（外联群切 tab 时懒拉）。
+- **最近联系人 / 群组 tab**：列表顶「全部」checkbox，当前 tab 列表全选/取消；半选态支持。
+- **组织架构 tab**：无「全部」；人员行多选 checkbox；跨 tab 切换**保留**已选（全局 `selectedMap`，key=`${ownerType}:${id}`）。
+- **搜索 popover**：`multi` 模式——点行 toggle 勾选，**不关闭** popover、不清空关键词；行内 checkbox（非 radio）。
+- **底栏**：左「已选：N个」可展开 chip 列表删单项；右「清空已选」+ 取消 + 确定(N)（`AcDialog` `#footer-before-actions`）。
+
+### 确定与持久化
+
+1. 选中项 → `{ scopeDataType, scopeDataId }[]`（私聊 ownerType→1，群→3）。
+2. 写本地 `conditionMode.dataRangeScopeList`。
+3. `POST /agentSetDataRangeExpand/saveDataRange`：`agentId` + 当前 `dataRangeList` + `timeType` + `netSearch` + `deepThink` + **`dataRangeScopeList`**（与 getLastSessionMessage 记忆对称）。
+4. save 失败不阻断本地态（仅 warn）；用户仍可发消息带当前 scope。
+
+### 发消息
+
+- `POST /v1/aiChat`（SSE）body 须含 **`dataRangeScopeList`**（与契约对齐，必填）；随 `...conditionMode` 展开带入。
+
+### 边界
+
+| 场景 | 预期 |
+|------|------|
+| 未勾 1/2/4 知识类型 | 不显示数据范围胶囊；scope 仍可能在 memory 里，但不暴露 UI |
+| 确定时 0 项 | 确定按钮 disabled |
+| 记忆 scope 的人/群不在 PC 最近/群列表 | 仍保留勾选；`batchGetAgent` 补展示字段 |
+| 老壳无桥 | 列表空 + toast；不影响已记忆 scope 的保存/发送 |
+| android/ios | 不走该弹窗；scope 仅在 web Home 对话内 |
+
+**联调状态**：web 代码已贯通（`656ff3a`）；**saveDataRange / aiChat 真实后端 E2E 待验收**（T10 🚧）。
