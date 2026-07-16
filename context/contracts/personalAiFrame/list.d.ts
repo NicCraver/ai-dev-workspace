@@ -9,6 +9,7 @@
  * - 2026-07-14 对齐后端文档：新增 `lastMessageTime`
  * - 2026-07-14 `exemptAgentIds` 保留为 @unconfirmed（web 选中后豁免用，YApi 文档未列）
  * - 2026-07-14 筛选类型 `PersonalAiFrameFilterType` / `PersonalAiFrameFilterInfo` 迁至 `_shared.d.ts`（与 getFilter 共用）
+ * - 2026-07-16 筛选写入亦可走 POST /personalAiFrame/saveFilter；本接口带 filterTypes 时仍会隐式落库（与 saveFilter 等价）
  */
 
 import type { ApiResponse } from '../_common';

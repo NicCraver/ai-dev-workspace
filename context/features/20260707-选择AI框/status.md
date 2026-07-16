@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-16（web `656ff3a` Home 数据范围多选+scope 记忆；android selectAiAgent 真机 E2E 通过工作区未提交；desktop AiBrowser 工作区未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-16（契约+web 筛选记忆 `saveFilter` 接线；web `656ff3a` Home 数据范围；android selectAiAgent 真机 E2E 工作区未提交；desktop AiBrowser 工作区未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,7 +19,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：**已提交** `656ff3a`（Home 数据范围多选弹窗 + `dataRangeScopeList` 记忆/发消息贯通），本地领先 origin 1 commit **未 push**；含 `a805b11` 历史侧栏/新对话时序等。desktop `1ca7496e` 已提交，**工作区未提交**：AiBrowser `aiToolList`（`aiId=0`）+ tab 保活 + 侧栏同步 + `.env.test`→localhost；ios `836a25327` 已提交，工作区仅 `ZXSelectAiAgentResultTest.m` 勿合。android `personal-ai-chat`：**工作区未提交**（领先 origin 74），`selectAiAgent` 桥 + 原生选择页（最近/联系人/群组/搜索）**真机 E2E 通过**，saveSelected/list 在 web H5。
+> **本轮 apps 事实**：web `personal-ai-chat`：**已提交** `656ff3a`（Home 数据范围多选弹窗 + `dataRangeScopeList` 记忆/发消息贯通），本地领先 origin 1 commit **未 push**；**工作区未提交**：底栏「筛选对话」改筛 → `saveFilter` 落库 → `list` 刷新（`PersonalAiChat.vue` + `personalAiFrame.js`）。desktop `1ca7496e` 已提交，**工作区未提交**：AiBrowser `aiToolList`（`aiId=0`）+ tab 保活 + 侧栏同步 + `.env.test`→localhost；ios `836a25327` 已提交，工作区仅 `ZXSelectAiAgentResultTest.m` 勿合。android `personal-ai-chat`：**工作区未提交**（领先 origin 74），`selectAiAgent` 桥 + 原生选择页（最近/联系人/群组/搜索）**真机 E2E 通过**，saveSelected/list 在 web H5。
 
 ## 待办 / 阻塞
 
@@ -38,8 +38,8 @@
 - (多端) 待联调确认 `agentName` 是否需独立字段（搜索/群组 tab 当前私聊取昵称、群聊取群名；**最近联系人 tab 已走** `POST /personalAiFrame/recentContactList` 补齐）
 - (web) `POST /personalAiFrame/list` **已接入**；入参已对齐契约 `filterTypes`（`null` 沿用记忆）+ `exemptAgentIds`（选中后会话内累加）；desktop / android / ios 尚无调用方
 - (web) `POST /personalAiFrame/recentContactList` **已接入**选择弹窗最近联系人：`fetchRecent` 桥取数排序后批量补齐 `agentName`（及 agentId/aiRoleId/agentVersionId）；失败沿用桥侧名称；desktop 仍只负责 `getRecentContacts`
-- (web) **筛选记忆**：`getFilter` → 再 `list(filterTypes)` 初始化 **已接线**；底栏「筛选对话」弹层（个人恒勾 / 近15天=1 / 知识库=2）改筛即调 list **已接线**；选中勾 `filter-checkbox-on` 已换实心蓝勾、弹层宽 `200`（原 220）
-- (android / ios / desktop) `getFilter` **不受影响**（尚无调用方；改筛仍走 list）
+- (web) **筛选记忆（契约 `saveFilter.d.ts`）**：初始化 `getFilter` → `list(filterTypes)` **已接线**；底栏「筛选对话」勾选变更 → **`POST /personalAiFrame/saveFilter`** 覆盖落库 → `list` 刷新 **已接线**（工作区未提交）；`saveFilter` 失败时 list 仍带 `filterTypes` 兜底。**待 E2E** 真实后端 save/get 往返记忆
+- (android / ios / desktop) `getFilter` / `saveFilter` **不受影响**（尚无调用方；列表筛选仅 web H5）
 - (web) `POST /personalAiFrame/batchGetAgent` **已接入**选择弹窗：**群组 tab** `getMyGroups` 后 `groupIds` 批量补齐 `agentId/agentAvatar/agentName`（`AiBoxRow` 有 `agentAvatar` 时单头像+上群名下 agentName）；**组织架构人员** 每层 `getDeptUsers` 后 `accountIds` 补齐，选中项带 agent 字段。**待联调** Map 无 key 时兜底展示
 - (web) 列表项**私聊/群会话已接真实归属**（`chatType=belongType`、`targetId=belongId`）；**个人AI框(belongType 0) 已改用真实 belongType/belongId**（不再 DEFAULT_CHAT 占位）；`HomeIndex` type 0 分支已有（`belongName=个人AI框`）
 - (web) **列表项 UI**：三点左侧图标 = **开启新对话**（`new-chat` → `Chat.startNewChat`；个人框仅此图标无三点）；私聊/群三点菜单：置顶/隐藏/**打开智信私聊|群聊**（`open-private` → `openImChat`）；个人框固定置顶角标
@@ -127,4 +127,4 @@
 - 2026-07-16 web 个人 AI 列表去掉 `createMockAgents` 初始数据：侧栏初始空列表，仅 `list` 接口填充；失败清空不保留 mock；`accountId` 仅取登录用户
 - 2026-07-16 web 历史侧栏（History）顶栏：去掉品牌 logo，改为左头像 `w-10 h-10` + `gap-1` + 右上归属名（`belongName`，`text-3.5 text-[#1F2329]`）/ 右下智能体名；Chat 经 `assistant-profile` 同步至 Home `historyAssistant`
 - 2026-07-16 web Home **数据范围 scope（T10）**：`FilterBar` 勾 1/2/4 显示胶囊 → `SelectDataRangeDialog` 多选（复用 picker 桥 + `batchGetAgent` 补齐记忆项）；确定 `saveDataRange`；`getLastSessionMessage`/`aiChat` 贯通 `dataRangeScopeList`；每次打开弹窗重新从 PC 取数
-- 2026-07-16 android `selectAiAgent` 移植对称 ios：原生只负责「弹选择页→回传选中项」，saveSelected/list 全在 web H5。选择页独立复制落 `smart_message/personal_ai_select/`；**真机 E2E 已通过**
+- 2026-07-16 新增契约 `POST /personalAiFrame/saveFilter`（YApi #14166）；入参 `accountId`+`filterTypes`（覆盖式，`[]` 清空）；web 底栏「筛选对话」勾选 → `saveFilter` → `list`；`list` 带 `filterTypes` 仍可隐式落库（兜底）

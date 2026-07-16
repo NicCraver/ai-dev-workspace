@@ -15,6 +15,7 @@ contracts/
 │  ├─ _shared.d.ts              # 域内共享类型
 │  ├─ list.d.ts                 # POST /personalAiFrame/list
 │  ├─ getFilter.d.ts            # POST /personalAiFrame/getFilter
+│  ├─ saveFilter.d.ts          # POST /personalAiFrame/saveFilter
 │  ├─ batchGetAgent.d.ts        # POST /personalAiFrame/batchGetAgent（公共接口）
 │  ├─ saveSelected.d.ts         # POST /personalAiFrame/saveSelected
 │  ├─ selectGroupBySearch.d.ts  # POST /personalAiFrame/selectGroupBySearch

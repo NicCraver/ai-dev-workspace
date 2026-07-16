@@ -5,7 +5,8 @@
  * Changelog:
  * - 2026-07-14 新增 POST /personalAiFrame/getFilter（返回用户上次保存的筛选条件；无记录时 filterTypes 为空数组）
  * - 2026-07-14 对齐 YApi #14169：回参 personalChecked + filterTypes 确认；入参仅 accountId
- *   （YApi Body 表误列 filterTypes「覆盖式/空数组清空」——属 list 写入语义，本接口为初始化只读拉取，不采纳）
+ *   （YApi Body 表误列 filterTypes「覆盖式/空数组清空」——属 saveFilter / list 写入语义，本接口为初始化只读拉取，不采纳）
+ * - 2026-07-16 筛选写入专用接口见 saveFilter.d.ts
  */
 
 import type { ApiResponse } from '../_common';

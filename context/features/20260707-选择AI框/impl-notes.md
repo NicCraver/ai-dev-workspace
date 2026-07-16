@@ -119,9 +119,10 @@
 
 **时序**：页面挂载 → `getFilter(accountId)` 取筛选记忆 → `list({ accountId, filterTypes, exemptAgentIds })` → 用回参/记忆同步筛选 UI → 映射为内部 agent → 排序渲染。
 - `getFilter` 无记录时 `filterTypes=[]`；失败则 list 传 `null` 由后端沿用记忆。
-- 显式改筛：「全部」传 `[]` 并落库；`[1]`/`[2]`/`[1,2]` 写记忆并筛。
-- `accountId` 取当前登录用户 id（无则回退页面默认查询参数）。
-- 成功 → 用回参 `aiFrameList` 整表替换本地列表；失败 → 保留初始 mock，不清空（保证无后端/老壳环境不白屏）。
+- **改筛落库**（底栏「筛选对话」弹层）：勾选变更 → `POST /personalAiFrame/saveFilter({ accountId, filterTypes })` 覆盖写记忆 → `list` 刷新（跳过 getFilter，复用本地 `filterTypes`）。`filterTypes` 取值：`[]` 清空附加筛；`[1]` 近15天；`[2]` 有知识库；`[1,2]` 同时勾选。个人 AI 框恒展示，不参与 `filterTypes`。
+- `saveFilter` 失败不阻断刷新：仍带当前 `filterTypes` 调 `list`（后端 list 可隐式落库兜底）。
+- `accountId` 取当前登录用户 id。
+- 成功 → 用回参 `aiFrameList` 整表替换本地列表；失败 → 清空列表（无 mock 兜底）。
 - 选中项若不在新列表中 → 回退到排序后首项。
 - 后续 saveSelected / updateSetting 刷新 list 时复用本地已同步的 `filterTypes`。
 
@@ -132,9 +133,29 @@
 - 排序沿用既有规则：个人置顶 → 置顶项按置顶时间 → 其余按 `lastChatAt` 倒序。
 - `hasKnowledge`/`unreadCount`/`isPinned`/`isPersonal` 透传；`belongType`/`belongId`/`corpId`/`aiRoleId` 原样保留，供后续会话跳转与置顶/隐藏操作使用。
 - `latestMessageBrief`：24h 内最新消息缩略（`null` 表示无）；含 `question`/`answer`/`finishAt`/`sender`，可用于列表副文案或 24h 恢复判定（待 web 接线）。
-- **筛选 UI**：底栏「筛选对话」弹层；`personalChecked` 恒 true（不可取消）；勾选 `1`→近15天、`2`→有知识库；变更后立刻 `list(filterTypes)` 落库并刷新。
+- **筛选 UI**：底栏「筛选对话」弹层（宽 200）；`personalChecked` 恒 true（不可取消）；勾选 `1`→近15天、`2`→有知识库；每次 toggle 走 `saveFilter` → `list`（见上「改筛落库」）。
 
-**联调坑 / 待确认**：
+## 筛选记忆（`getFilter` / `saveFilter`）
+
+个人 AI 框列表侧栏底栏的筛选条件读写，与 list 解耦的专用写入接口。
+
+| 接口 | 时机 | 入参要点 |
+|------|------|----------|
+| `POST /personalAiFrame/getFilter` | 页面初始化（只读） | 仅 `accountId` |
+| `POST /personalAiFrame/saveFilter` | 用户勾选/取消附加筛选项 | `accountId` + `filterTypes`（覆盖式；`[]`=清空） |
+| `POST /personalAiFrame/list` | 初始化 / 改筛后刷新 / saveSelected 等 | `filterTypes: null` 沿用记忆；显式传数组可筛+隐式落库 |
+
+**初始化**：`getFilter` → 同步本地 `filterTypes` → `list` 带同步后的值拉表。
+
+**改筛**：弹层 toggle → 更新本地 `filterTypes` → `saveFilter` → `list(skipGetFilter)` 刷新列表与 `filterInfo`。
+
+**后续刷新**（saveSelected / updateSetting）：只调 `list`，`filterTypes` 复用本地已同步记忆，不再调 saveFilter。
+
+**契约**：`getFilter.d.ts` / `saveFilter.d.ts`（YApi #14169 / #14166）；筛选类型 `1|2` 定义见 `_shared.d.ts` `PersonalAiFrameFilterType`。
+
+**移植**：android / ios / desktop 本期无列表筛选 UI；若后续接入，改筛须先 `saveFilter` 再 `list`，与 web 时序一致。
+
+**联调坑 / 待确认**（列表取数）：
 - **会话跳转**：右侧 `HomeIndex` 约定 `chatType=belongType`、`targetId=belongId`。list 映射：有 `belongId` 时个人(0)/私聊(1)/群(3) 均用真实归属；缺 `belongId` 才回退占位。`HomeIndex` type 0 分支已有（`belongName=个人AI框`）。**本地选中兜底** `mapSelectionToAgent` 仍展开占位会话（未消费 `ownerId`）——save 路径已用 `ownerId→belongId`，与建会话目标解耦，待补齐。
 - 选中列表项后右侧直接挂载对话面板（传 `chatType`/`targetId`/`aiRoleId`），切换时重挂载；不再拼 `/zx/home/...` URL。
 - 侧栏搜索与选择弹窗共用 `AiBoxSearchBox` → `POST /personalAiFrame/selectGroupBySearch`（全部/群组/人员 popover）；点选结果侧栏直达 `applySelection`（等同弹窗确定），主列表不再客户端过滤。
