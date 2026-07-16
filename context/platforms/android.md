@@ -23,6 +23,9 @@
 ```
 
 ## 真机调试流程（默认测试环境）
+
+> 可执行流程以 skill **`zhixin-run-android`** 为准（`.cursor/skills/zhixin-run-android/`）。用户说「真机调试」时优先读该 skill。
+
 1. **JDK**：确认 `java -version` 为 8 或 11（Gradle 6.5 不兼容 17+）。
 2. **设备**：`adb devices -l`，状态须为 `device`（非 `unauthorized`）；手机弹出 USB 调试/安装提示时点允许。
 3. **装包（默认 onTest）**：
