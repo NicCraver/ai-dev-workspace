@@ -118,7 +118,7 @@ JSON.stringify({
 
 web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听（log + 联调推送次数）；**刷 list 仍 TODO**。
 
-移动端：原生 → WebView 用 **`wnsdk.page.refreshViewDate`**（行动中心 / 呼叫群同款），`extra` 里带同等字段；`a89a112` 已注册 success 回调并 bump 联调计数（无 type 时也计数便于先通链路）。
+移动端：原生 → WebView 用 **`wnsdk.page.refreshViewDate`**（行动中心 / 呼叫群同款），**id/name 均必填**；`extra` 扁平带 `type/sessionIds/badge`。web `4aca44d` 已按 microAppId 注册，并校验 `extra.type === "aiBoxSendMessage"` 再 bump（联调计数）。
 
 ### 2.4 PC 行为摘要
 
@@ -172,7 +172,10 @@ web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听�
 ```
 
 - **PC**：外层再包 `source: "zx-pc"`（已实现）
-- **移动**：`wnsdk.page.refreshViewDate({ id, name, success })`，在 success 的 `extra` 里带上述 JSON；web `MPersonalAiChatWrapper`（`a89a112`）已注册监听 + 联调计数
+- **移动**：`wnsdk.page.refreshViewDate({ id, name, success })`，**id/name 均必填**（wnsdk 缺 id 直接 error）
+  - 统一微应用 Id：`1915674367645798402`（Android `AI_FRAME_ID` / iOS `ZXPersonalAIAppId`）
+  - success 的 `extra` 为扁平 JSON：`{ type, sessionIds, badge, cmdMsg? }`（勿再包一层）
+  - web `MPersonalAiChatWrapper` 已按 id 注册并校验 `extra.type === "aiBoxSendMessage"`
 
 ### 3.3 挂点速查
 
@@ -197,7 +200,7 @@ web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听�
 | 启动补拉 | `ZXChatMenuController` 与呼叫群同批 | `ZhiXinFragmentThing` initData / case 121 |
 | 离线 | 进 `onReceivedAllCmdMessage` 合并（未单独 filter） | **离线忽略**（与行动中心同） |
 
-角标展示：移动端对齐呼叫群，**仅 yellow > 0** 显示（PC 含 0 为桌面联调策略）。
+角标展示：移动端与 PC 对齐——**getBadgePushInfo 成功后展示黄角标，含 0**。
 
 ### 3.4 内容侧（另线，非本推送必做）
 
