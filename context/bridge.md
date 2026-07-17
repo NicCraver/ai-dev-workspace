@@ -47,6 +47,7 @@
 | `searchAiBoxPicker` | `search-ai-box-picker` | web→原生 | `{search:string}` | `{users:[{accountId,name,agentName,avatar,ownerType:'private',lastChatAt}], groups:[{id,name,agentName,avatar,accountInfoList?,ownerType:'group',groupType?,lastChatAt}]}` | desktop | 新增（选择AI框搜索） |
 | `openChat` | `openChat` | web→原生 | `{ id:string, type:'group'\|'chat', name?:string, avatar?:string, corpId?:string, groupType?:number }`（`id`=belongId；`type`='group' 群 / 其它私聊；`name`/`avatar` 供列表无会话时重建） | 无（fire-and-forget）；主窗口 `openConversationById`（缺失则 PushDialogue 重建）选中左侧会话 | desktop | 已有（个人 AI 列表「打开私聊/群聊」） |
 | `selectAiAgent` | —（wnsdk `aiChat.selectAiAgent`） | web→原生 | — | 见下「selectAiAgent 回传」 | ios / android | ios 已落地；android 已落地（真机 E2E 通过） |
+| `selectDataRangeScope` | —（wnsdk `aiChat.selectDataRangeScope`） | web→原生 | `{ initialScopes?:[{scopeDataType:1\|3, scopeDataId:string}] }` | 见下「selectDataRangeScope 回传」 | ios / android | ios 落地中；android 落地中 |
 
 ### `selectAiAgent` 回传（ios → web）
 
@@ -71,6 +72,28 @@
 
 取消：`code=-1`。web 收到后走 `saveSelected` → `list(exemptAgentIds)`（编排与 PC 弹窗共用）。
 
+### `selectDataRangeScope` 回传（ios → web）
+
+Home「数据范围」胶囊（移动端）调 `wnsdk.aiChat.selectDataRangeScope`。原生复用选择 AI 框页形态，**强制多选**；最近聊天 / 选择已有群组支持「全部」；底栏展示已选。成功时 `success` 收到（已解包 `response.result`）：
+
+```jsonc
+{
+  "type": "personal-ai:selected-data-range",
+  "payload": {
+    "scopes": [
+      {
+        "scopeDataType": 1,          // 1=私聊(人)；3=群聊
+        "scopeDataId": "<accountId|groupId>",
+        "name": "<显示名>",          // 可选，展示用
+        "avatar": ""                 // 可选
+      }
+    ]
+  }
+}
+```
+
+取消：`code=-1`。web 收到后写 `conditionMode.dataRangeScopeList` → `saveDataRange`（与 PC `SelectDataRangeDialog` 同源；原生不调接口）。
+
 **统一字段约定**（与 `apps/web/src/components/views/home/personalAiAgentAdapter.js` 对齐）：
 - 人员主键 `accountId`、群主键 `id`、AI 框名 `agentName`、最近对话时间 `lastChatAt`（毫秒时间戳）
 - `ownerType` ∈ `group`（群） / `private`（私聊）
@@ -84,6 +107,8 @@
 
 ## Changelog
 
+- 2026-07-17 android `selectDataRangeScope`：镜像 selectAiAgent 桥通路（requestCode 239）+ 独立多选页；底栏已选仅人/群名与头像；最近/群「全部」；web 移动端已接线。
+- 2026-07-17 登记 ios `selectDataRangeScope`：入参 `initialScopes`；回传 `personal-ai:selected-data-range` + `scopes[{scopeDataType,scopeDataId,name?,avatar?}]`；复用选择 AI 框页多选 + 最近/群「全部」；web 移动端 `DataScopeBar` 走原生，PC 仍 H5 弹窗。
 - 2026-07-16 android `selectAiAgent` 落地并**真机 E2E 通过**：`aiChat.selectAiAgent` → 独立原生选择页（最近/选择联系人/选择已有群组/搜索 四路单选）→ 回传 `personal-ai:selected-agent`（无真实 agentId 省略；取消 code=-1），与 ios 回传契约一致。
 - 2026-07-15 登记 `openChat`（微应用 `window.webview.openChat`）与个人 AI 列表「打开私聊/群聊」；AiBrowser iframe 通路 `personal-ai:open-chat` → 主窗口直接 `openConversationById`（缺会话则 PushDialogue 重建）；payload 透传 `name`/`avatar`。
 - 2026-07-15 `getOrgCompanies` 对齐 PC 转发：`getContactTree({isGroup:1})`，回参补 `id`/`rootDeptId`/`corpAndCorpRelType`/`labelType`；`getDeptUsers` 入参对齐 `company-dept-user`（透传 corpType 等；进公司首屏 pid=`rootDeptId||id`，勿裸传 `'0'`）。

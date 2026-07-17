@@ -316,6 +316,13 @@ Home 输入区 FilterBar 在**知识范围**（聊天记录/聊天文件/共享�
 | 确定时 0 项 | 确定按钮 disabled |
 | 记忆 scope 的人/群不在 PC 最近/群列表 | 仍保留勾选；`batchGetAgent` 补展示字段 |
 | 老壳无桥 | 列表空 + toast；不影响已记忆 scope 的保存/发送 |
-| android/ios | 不走该弹窗；scope 仅在 web Home 对话内 |
+| android | **走原生多选**：`wnsdk.aiChat.selectDataRangeScope` → `SelectDataRangeActivity`（独立多选页，不改 selectAiAgent）→ 回传 `personal-ai:selected-data-range`；最近/群「全部」；底栏已选仅人/群名头像；组织架构=通讯录多选钻取；saveDataRange 在 web |
+| ios | **走原生多选**：`wnsdk.aiChat.selectDataRangeScope` → 复用 `ZXSelectAiAgentController`（`selectDataRangeMode`）→ 回传 `personal-ai:selected-data-range`；web `DataScopeBar` 移动端接桥，PC 仍 H5 弹窗 |
 
-**联调状态**：web 代码已贯通（`656ff3a`）；**saveDataRange / aiChat 真实后端 E2E 待验收**（T10 🚧）。
+### 移动端桥时序（android / ios 对称）
+
+1. web `DataScopeBar`（`isMobile`）→ `selectDataRangeScopeByNative(wnsdk, initialScopes)`。
+2. 原生多选页预勾 `initialScopes`，确认回传 `{ type:"personal-ai:selected-data-range", payload:{ scopes:[{scopeDataType,scopeDataId,name?,avatar?}] } }`；取消 `code=-1`。
+3. web 归一化后走与 PC 弹窗相同的 `onSubmit`：本地 `conditionMode` + `saveDataRange`。
+
+**联调状态**：web PC 弹窗已贯通（`656ff3a`）；移动端桥+原生页 android/ios/web 已接线；**saveDataRange / aiChat / 真机 E2E 待验收**（T10 🚧）。

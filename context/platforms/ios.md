@@ -42,7 +42,7 @@ xcrun simctl launch booted com.zhiguan.iot.test
 - 内嵌 H5 走 **WKWebView + 自研 JSBridge**（`ZX_Kit/ZX_JSWebKit/`）。核心：`ZXJSWKWebViewBridge`（`+bridgeForWebView:`）通过 `WKScriptMessageHandler` 收 web→原生消息，`registerHandler:handler:` 注册方法、`callHandler:data:responseHandler:` 回调 web。
 - **API 按模块注册**：`ZX_WebJSCoreAPI/` 下每个 `ZXJS*API` 类（`ZXJSAIChatAPI`/`ZXJSAuthAPI`/`ZXJSIMAPI`/`ZXJSMediaAPI`/`ZXJSUIAPI`/`ZXJSUtilAPI`/`ZXJSDeviceAPI`/`ZXJSPageAPI`/`ZXJSRuntimeAPI`/`ZXJSBulletinAPI`/`ZXJSO5API`）在 `registerHandlers` 里 `registerHandlerName:` 注册若干方法名。**加新 bridge 方法：在对应模块的 `ZXJS*API.m` 内 `registerHandler`，勿散落。** 协议对照见 `context/bridge.md`。
 - **加载入口**：`ZXJSWebLoader`（`ZX_WebJSController/`）封装 WKWebView + Bridge + UA 定制 + 加载态/错误页；`initialize` 里 `dispatch_once` 设置全局自定义 UserAgent（含 `MTCoreApiJS/x.x.x`），UA 一旦设好进程内不可再改。
-- AI 会话相关：`ZX_Modules/ZX_AIChat/`（`ZXPersonalAIChatController` 独立聊天页、`ZXAIChatManager`、`AIAgent/` 智能体选择与管理），与 web 端通过 `ZXJSAIChatAPI` 桥互通（如 `selectAiAgent`、`actionCardTransmit` 转发）。
+- AI 会话相关：`ZX_Modules/ZX_AIChat/`（`ZXPersonalAIChatController` 独立聊天页、`ZXAIChatManager`、`AIAgent/` 智能体选择与管理），与 web 端通过 `ZXJSAIChatAPI` 桥互通（如 `selectAiAgent`、`selectDataRangeScope` 数据范围多选、`actionCardTransmit` 转发）。选择页在 `ZX_Modules/ZX_Message/ZX_PersonalAi/SelectAiAgent/`（`selectDataRangeMode` 强制多选）。
 
 ## 已知坑
 - 融云 SDK `5.3.7` 的 xcframework **只含 x86_64 模拟器 slice，无 arm64 模拟器 slice**：Apple Silicon Mac 上只能用 **iPhone 15 / iOS 17.0** 这类 x86_64 模拟器，iPhone 16e / iOS 26 之类 arm64 模拟器会黑屏/架构不匹配。要跑 arm64 模拟器须按 `docs/local-dev-patch.md` 打本地 patch（融云升 `~>5.10.0`、注释百度地图/Bugly/ShareSDK 平台/阿里云实人/YYImage-WebP，`#if TARGET_OS_SIMULATOR` stub 个推等）——**该 patch 勿提交**。

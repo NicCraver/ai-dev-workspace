@@ -116,3 +116,19 @@ web 端无单测：`pnpm build`（vue-tsc）类型检查 + 壳内真机联调。
 | 双展开 | 无悬浮条 | 用各自顶栏收起 |
 
 独立 `zx/home` 不启用；Home 经 `v-model:history-sidebar-open` + `hideBuiltinCollapseChrome` 与父级联动。
+
+## 附录：ios 选择数据范围（2026-07-17）
+
+Home FilterBar「数据范围」在 **ios 原生多选**（方案 1：复用选择 AI 框页，不对齐 web 三 tab/OrgPicker）。
+
+| 项 | 约定 |
+|---|---|
+| 桥 | `wnsdk.aiChat.selectDataRangeScope`（新建，见 `context/bridge.md`） |
+| 入参 | `{ initialScopes:[{scopeDataType,scopeDataId}] }` 预勾 |
+| 回传 | `{ type:"personal-ai:selected-data-range", payload:{ scopes:[{scopeDataType,scopeDataId,name?,avatar?}] } }` |
+| UI | 标题「选择数据范围」；强制多选；最近聊天/选择已有群组「全部」；选择联系人/搜索多选无全部；底栏已选；0 项确定 disabled |
+| 职责 | 原生只选人/群回传；web 写 `conditionMode` + `saveDataRange` |
+| web | `DataScopeBar`：`isMobile()` → 原生桥；PC 仍 `SelectDataRangeDialog` |
+| android | 已对称：`SelectDataRangeActivity` 独立多选页 + 同名桥（待真机 E2E） |
+
+成功标准：ios 真机点「数据范围」→ 原生多选 → 确定后 scope 回显并可随 aiChat 发送。
