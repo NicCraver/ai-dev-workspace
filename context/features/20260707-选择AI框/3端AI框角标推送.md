@@ -84,7 +84,7 @@ ReceiveMessageListener.js          case "aiBoxSendMessage"
        ├─ main.vue              左侧 sider 图标强制切回 AI框（aiId=0）
        ├─ new-aside-menu.vue    黄角标（Badge + num-yellow；0 用字符串 "0"）
        └─ AiBrowser/index.vue   postMessage → personal AI iframe
-            → PersonalAiChat.vue 监听 source=zx-pc type=aiBoxSendMessage（目前仅 log）
+            → PersonalAiChat.vue 监听 source=zx-pc type=aiBoxSendMessage（log + 联调推送次数角标）
 ```
 
 ### 2.2 关键文件
@@ -98,7 +98,7 @@ ReceiveMessageListener.js          case "aiBoxSendMessage"
 | `apps/desktop/.../layouts/new-aside-menu.vue` | 左侧黄角标；点击 aibrowser 时 emit 切 tab |
 | `apps/desktop/.../views/main.vue` | `onAiBoxBadgeUpdated` 设 `aiBrowserSiderItem` |
 | `apps/desktop/.../views/AiBrowser/index.vue` | iframe `postMessage`；听 `ai-browser-select-sider-item` |
-| `apps/web/.../personal-ai/list/PersonalAiChat.vue` | 收 zx-pc 推送 log |
+| `apps/web/.../personal-ai/list/PersonalAiChat.vue` | 收 zx-pc 推送：log + 联调次数角标（验完删） |
 
 ### 2.3 壳 → Web 消息格式（对齐行动中心）
 
@@ -115,7 +115,7 @@ JSON.stringify({
 })
 ```
 
-web（`PersonalAiChat`）已监听；**刷 list 仍 TODO**。
+web（`PersonalAiChat`）已监听（log + 联调推送次数角标）；**刷 list 仍 TODO**。
 
 移动端应对齐：原生 → WebView 用 **`wnsdk.page.refreshViewDate`**（行动中心 / 呼叫群同款），`extra` 里带同等字段；或向 WebView 注入 / evaluate 等价消息。web 侧最终应能区分 PC `postMessage` 与移动 `refreshViewDate`。
 
@@ -139,19 +139,19 @@ web（`PersonalAiChat`）已监听；**刷 list 仍 TODO**。
 
 ---
 
-## 3. iOS / Android 移植清单（待做）
+## 3. iOS / Android 移植清单（已落地，待真机 E2E）
 
 ### 3.1 建议对称步骤
 
 | # | 步骤 | iOS | Android | 参考 |
 |---|---|---|---|---|
-| 1 | 融云入口加 `aiBoxSendMessage` | `AppDelegate+RCIM.m` → `onReceivedCommandMessage:` | `RongIM.java` → `RC:CmdMsg` 且 `!offline && left==0` | 同文件内 `actionCornerRefresh` 旁 |
-| 2 | 解析 `pushAccountIdSessionIdSetMap` | `mj_JSONObject` | Gson / JSONObject | **不要**当顶层 Map |
-| 3 | accountId 命中判断 | `ZXDataInstance.accountModel.accountId` | `RongIM.getCurrentUserId()` | 与 PC `GetCompany.accountId` 对齐确认 |
-| 4 | 调 `getBadgePushInfo` | `ZXActionManager` 或新建 AI 框 API 封装 | `NewActionInterface` 或 aiBasic 模块 | path 同契约 |
-| 5 | 入口角标 UI | 会话列表「AI框」Cell（`ConversationType_PersonalAI`）黄角标 + 副标题 `lastAbbreviationInfo` | `PersonalAiListCellBinder` 等同位置 | PC 是左侧 aside；移动是会话列表入口 |
-| 6 | 通知 Web | 若 personal AI WebView 已打开：`refreshViewDate` 或等价，`extra` 含 sessionIds / badge / raw | 同左（EventBus → WebView） | PC：`source:zx-pc` postMessage |
-| 7 | 离线策略 | 默认会进 `onReceivedAllCmdMessage` 合并；AI框是否合并需定 | **离线忽略**（与行动中心同）；回前台可补拉 getBadgePushInfo | 显式选型 |
+| 1 | 融云入口加 `aiBoxSendMessage` | ✅ `AppDelegate+RCIM.m` | ✅ `RongIM.java`（`!offline && left==0`） | 同文件内 `actionCornerRefresh` 旁 |
+| 2 | 解析 `pushAccountIdSessionIdSetMap` | ✅ | ✅ Gson `AiBoxSendMessageCmd` | **不要**当顶层 Map |
+| 3 | accountId 命中判断 | ✅ `ZXDataInstance.accountModel.accountId` | ✅ `RongIM.getCurrentUserId()` | 与 PC `GetCompany.accountId` 对齐确认 |
+| 4 | 调 `getBadgePushInfo` | ✅ `ZXIMShortcutManager` | ✅ `PersonalAiBadgeController` + `AiChatBasicInterface` | path 同契约 |
+| 5 | 入口角标 UI | ✅ PersonalAI Cell 黄角标 + 副标题 | ✅ `PersonalAiListCellBinder` | PC 是左侧 aside；移动是会话列表入口 |
+| 6 | 通知 Web | ✅ `refreshViewDate` | ✅ `refreshDate`（`AI_FRAME_ID`） | PC：`source:zx-pc` postMessage |
+| 7 | 离线策略 | 默认进合并 | ✅ **离线忽略**；启动/回前台补拉 | 显式选型 |
 
 ### 3.2 通知 Web 时建议 extra / payload
 
@@ -178,9 +178,25 @@ web（`PersonalAiChat`）已监听；**刷 list 仍 TODO**。
 | 端 | 文件 | 状态 |
 |---|---|---|
 | Desktop | `ReceiveMessageListener.js` → `case "aiBoxSendMessage"` | ✅ |
-| iOS | `AppDelegate+RCIM.m` ~255 旁加分支 | ⬜ |
-| Android | `RongIM.java` ~410 旁加 `else if` | ⬜ |
+| iOS | `AppDelegate+RCIM.m` → `aiBoxSendMessage` → `refreshPersonalAiBadgeWithRCCmd` | ✅ |
+| Android | `RongIM.java` → `aiBoxSendMessage` → `PersonalAiBadgeController` | ✅ |
 | web | `PersonalAiChat.vue` 听 zx-pc；移动 refreshViewDate 待补 | 🚧 仅 PC log |
+
+### 3.4 iOS / Android 实现摘要（2026-07-17）
+
+对齐呼叫群（`callAccountIdSet` → 拉数 → 会话列表 Cell 黄角标 + 副标题）：
+
+| 步骤 | iOS | Android |
+|---|---|---|
+| 融云 cmd | `AppDelegate+RCIM` `aiBoxSendMessage` | `RongIM` `!offline && left==0` |
+| 命中 | `pushAccountIdSessionIdSetMap` 含 `accountId` | 同左，`RongIM.getCurrentUserId()` |
+| HTTP | `ZXIMShortcutManager refreshPersonalAiBadgeWithRCCmd` → `getBadgePushInfo` | `PersonalAiBadgeController` → `AiChatBasicInterface.getBadgePushInfo` |
+| 列表 UI | `ZXConversationListCell` PersonalAI：黄角标 knowNum + 副标题 abbr | `PersonalAiListCellBinder`：LEVEL_SECOND 黄标 + desc |
+| 通知 Web | `ZXPersonalAIChatController` → `refreshViewDate` | 打开中且 `microAppId=AI_FRAME_ID` → `refreshDate` |
+| 启动补拉 | `ZXChatMenuController` 与呼叫群同批 | `ZhiXinFragmentThing` initData / case 121 |
+| 离线 | 进 `onReceivedAllCmdMessage` 合并（未单独 filter） | **离线忽略**（与行动中心同） |
+
+角标展示：移动端对齐呼叫群，**仅 yellow > 0** 显示（PC 含 0 为桌面联调策略）。
 
 ### 3.4 内容侧（另线，非本推送必做）
 
@@ -215,15 +231,18 @@ apps/web/src/components/views/personal-ai/list/PersonalAiChat.vue
 # 契约
 context/contracts/personalAiFrame/getBadgePushInfo.d.ts
 
-# iOS（待接，仿 actionCornerRefresh）
+# iOS（已落地，对齐呼叫群）
 apps/ios/SmartMessage/ZX_Base/ZX_AppDelegate/AppDelegate+RCIM.m
-apps/ios/.../ZXIMShortcutManager.m          # 角标 API / 通知可对照
-# 个人 AI 入口 Cell / WebView 宿主：ZXPersonalAIChatController 一带
+apps/ios/.../ZXIMShortcutManager.m          # refreshPersonalAiBadgeWithRCCmd
+apps/ios/.../ZXConversationListCell.m       # PersonalAI 黄角标 + 缩略
+apps/ios/.../ZXPersonalAIChatController.m   # refreshViewDate
+apps/ios/.../ZXPersonalAiBadgeModel.{h,m}
 
-# Android（待接，仿 actionCornerRefresh）
+# Android（已落地，对齐呼叫群）
 apps/android/IM/src/main/java/com/im/base/RongIM.java
-apps/android/IM/src/main/java/com/im/manager/RongMessageHandlerManager.java
-# 个人 AI 入口：PersonalAiListCellBinder / personal WebView
+apps/android/IM/.../conversation/personal_ai/PersonalAiBadgeController.java
+apps/android/IM/.../conversation/PersonalAiListCellBinder.java
+apps/android/android_net/.../AiChatBasicInterface.java  # getBadgePushInfo
 
 # 行动中心 Web 刷新参考（o5-shortcut）
 /Users/nic/w/dev-o5-shortcut/src/components/action-call/store/useACRefreshListener.js
@@ -263,4 +282,4 @@ AI框挂点与下列 cmd **同入口、不同 name**。
 | 点击入口打开 AI框 tab | ✅ |
 | iframe postMessage + web log | ✅ |
 | web 刷 list / 清角标 | ⬜ |
-| iOS / Android | ⬜ |
+| iOS / Android 推送→角标→缩略（对齐呼叫群） | ✅ 代码落地，待真机 E2E |
