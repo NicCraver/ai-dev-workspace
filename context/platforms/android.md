@@ -24,7 +24,7 @@
 
 ## 真机调试流程（默认测试环境）
 
-> 一键执行：`bash .cursor/commands/scripts/zhixin-run-android.sh`（Cursor 指令 `/zhixin-run-android`）。默认 onTest，自动判断是否需要编译。
+> 一键执行（在 **apps/android** 工作区）：`/zhixin-run-android` 或 `bash .cursor/commands/scripts/zhixin-run-android.sh`
 
 1. **JDK**：确认 `java -version` 为 8 或 11（Gradle 6.5 不兼容 17+）。
 2. **设备**：`adb devices -l`，状态须为 `device`（非 `unauthorized`）；手机弹出 USB 调试/安装提示时点允许。
