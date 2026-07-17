@@ -273,7 +273,7 @@
 
 ## Home 对话 · 数据范围 scope（`dataRangeScopeList`）
 
-Home 输入区 FilterBar 在**知识范围**（聊天记录/聊天文件/共享知识，即 `dataRangeType` 1/2/4 任一项 `choose=1`）勾选时，于「数据+N」与时间范围之间展示 **「数据范围」** 胶囊。点击打开 `SelectDataRangeDialog`（多选，复用选择 AI 框取数链路，与 `SelectAiBoxDialog` 单选独立）。
+Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范围**（聊天记录/聊天文件/共享知识，即 `dataRangeType` 1/2/4 任一项 `choose=1`）勾选时，于「数据+N」与时间范围之间展示 **「数据范围」** 胶囊。私聊/群 AI 框不展示。点击打开 `SelectDataRangeDialog`（多选，复用选择 AI 框取数链路，与 `SelectAiBoxDialog` 单选独立）。
 
 ### 显隐与本地态
 
@@ -286,7 +286,7 @@ Home 输入区 FilterBar 在**知识范围**（聊天记录/聊天文件/共享�
 1. 打开 Home / 切 AI 框 → `POST /sessionMsg/getLastSessionMessage`。
 2. 回参 **`agentSetDataRangeExpandVo`**（必填）含 `dataRangeList`、`timeType`、`netSearch`、`deepThink`、**`dataRangeScopeList`**。
 3. 写入 `conditionMode`（含 scope）；FilterBar 知识勾选与时间范围同步回显。
-4. 用户点「数据范围」→ 弹窗用 **`initialScopes=dataRangeScopeList`** 预勾选；scope 仅 id/type 时先 `batchGetAgent` 补齐名称/头像再展示。
+4. 用户点「数据范围」→ 弹窗用 **`initialScopes=dataRangeScopeList`** 预勾选；scope 仅 id/type 时先 `POST /personalAiFrame/recentContactList`（按 id+type 批量）补齐昵称/头像/群名/`accountInfoList` 再展示。**不要**用 `batchGetAgent`：该接口只回有 AI 框的智能体字段，无 key 时 chip 会退化成数字 id。
 
 ### 弹窗多选行为
 
@@ -313,8 +313,9 @@ Home 输入区 FilterBar 在**知识范围**（聊天记录/聊天文件/共享�
 | 场景 | 预期 |
 |------|------|
 | 未勾 1/2/4 知识类型 | 不显示数据范围胶囊；scope 仍可能在 memory 里，但不暴露 UI |
+| 非个人 AI 框（belongType≠0） | 不显示数据范围胶囊（私聊/群会话本身已限定归属） |
 | 确定时 0 项 | 确定按钮 disabled |
-| 记忆 scope 的人/群不在 PC 最近/群列表 | 仍保留勾选；`batchGetAgent` 补展示字段 |
+| 记忆 scope 的人/群不在 PC 最近/群列表 | 仍保留勾选；`recentContactList` 按 id 补展示字段 |
 | 老壳无桥 | 列表空 + toast；不影响已记忆 scope 的保存/发送 |
 | android | **走原生多选**：`wnsdk.aiChat.selectDataRangeScope` → 独立多选页（不改选择 AI 框单选主链路）→ 回传 `personal-ai:selected-data-range`；最近/群「全部」；底栏「已选：N」点开底部弹层（仅人/群名头像，可删单项）+ 清空 + 取消 + 确定(N=0 disabled)；组织架构=通讯录多选钻取；saveDataRange 在 web |
 | ios | **走原生多选**：`wnsdk.aiChat.selectDataRangeScope` → 复用选择 AI 框页强制多选 → 回传 `personal-ai:selected-data-range`；web `DataScopeBar` 移动端接桥，PC 仍 H5 弹窗 |
