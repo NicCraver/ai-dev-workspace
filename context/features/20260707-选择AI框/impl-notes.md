@@ -85,7 +85,7 @@
 - 宿主仍用 **外层 `<iframe>`** 嵌 `/zx/personal`（便于 DevTools 调试；web 热更新无需重启 preload）。
 - **右侧对话面板**在 personal 页内改为**同页组件直渲** `HomeIndex`（传 `chatType`/`targetId`/`aiRoleId`，切换智能体时整面板重挂载），不再二次嵌套 `/zx/home/...` iframe。
 - **HomeIndex 嵌入契约**：`chatType=belongType`、`targetId=belongId`；`aiRoleId` **prop 优先、缺省回退 URL `?aiRoleId=`**。原有入口（`home` 页 `v-bind="$attrs"`、`[chatType]/[targetId]` 路由）**不传 aiRoleId prop → 走 URL**，与改造前逐字等价；只有 personal 嵌入才用 prop → **共享组件向后兼容，不影响原有会话功能**。
-- **切换列表即刷新右侧**：重挂载 key 必须并入**选中项唯一 id**（agentId）。list 回参个人/私聊/群均用真实 `belongType`/`belongId` 作 `chatType`/`targetId`；key = `agentId + chatType + targetId + aiRoleId + resume`。本地 upsert 兜底路径（`mapSelectionToAgent`）仍可能填占位会话，故 key 不能省略 agentId。
+- **切换列表即刷新右侧**：重挂载 key 必须并入**选中项唯一 id**（agentId）。list 回参个人/私聊/群均用真实 `belongType`/`belongId` 作 `chatType`/`targetId`；key = `agentId + chatType + targetId + aiRoleId + resume`。本地 upsert 兜底（`mapSelectionToAgent`）已消费 `ownerId` 等派生真实归属，仅缺 id 时才占位——key 仍须带 agentId 防同归属多框冲突。
 - 桥请求时序见上「AiBrowser iframe」通路；取数逻辑与微应用共用 `aiBoxPickerHost.js`。
 - token：`postMessage("getToken")` → `App.vue` 回 `setToken`（与群 AI 框等 iframe 一致）。
 - 群头像成员：取数在主窗口进程，对未缓存群并发 `groupInfoApi` 补取后拼 `accountInfoList`。
@@ -156,7 +156,7 @@
 **移植**：android / ios / desktop 本期无列表筛选 UI；若后续接入，改筛须先 `saveFilter` 再 `list`，与 web 时序一致。
 
 **联调坑 / 待确认**（列表取数）：
-- **会话跳转**：右侧 `HomeIndex` 约定 `chatType=belongType`、`targetId=belongId`。list 映射：有 `belongId` 时个人(0)/私聊(1)/群(3) 均用真实归属；缺 `belongId` 才回退占位。`HomeIndex` type 0 分支已有（`belongName=个人AI框`）。**本地选中兜底** `mapSelectionToAgent` 仍展开占位会话（未消费 `ownerId`）——save 路径已用 `ownerId→belongId`，与建会话目标解耦，待补齐。
+- **会话跳转**：右侧 `HomeIndex` 约定 `chatType=belongType`、`targetId=belongId`。list 映射：有 `belongId` 时个人(0)/私聊(1)/群(3) 均用真实归属；缺 `belongId` 才回退占位。`HomeIndex` type 0 分支已有（`belongName=个人AI框`）。**本地选中兜底** `mapSelectionToAgent` 已与 list 映射对齐：`belongId` 优先 `ownerId` → `id`/`accountId`/`groupId`，有值则写真实 `chatType`/`targetId`（与 save 的 `ownerId→belongId` 一致）；仅缺 id 时回退占位。
 - 选中列表项后右侧直接挂载对话面板（传 `chatType`/`targetId`/`aiRoleId`），切换时重挂载；不再拼 `/zx/home/...` URL。
 - 侧栏搜索与选择弹窗共用 `AiBoxSearchBox` → `POST /personalAiFrame/selectGroupBySearch`（全部/群组/人员 popover）；点选结果侧栏直达 `applySelection`（等同弹窗确定），主列表不再客户端过滤。
 - **打开私聊/群聊**：…只用真实 `belongId`/`ownerId`（勿回退 `targetId` 占位）。重建私聊缺 `groupType` 时对齐会话列表：`GetAllOrganizationUserIds`（含自己/机器人）→组织，否则→外联。
@@ -203,14 +203,15 @@
 
 ### ios 原生选择 → web 触发 save/list
 
-1. web 调 `wnsdk.aiChat.selectAiAgent` → 原生选人/群页。
+1. web 调 `wnsdk.aiChat.selectAiAgent`（**必须长回调 `isLongCb`**，对齐 `util.chooseAddressBook`：`runCode` 内 `this.api.isLongCb=true` 再 `callInner`；只收 `success`/`error`，勿 `.then` Promise——长回调打开页即 resolve undefined）。
 2. 确定后桥回传 `messagePayload`（见 `bridge.md`）：必含 `ownerType` + `ownerId`（群=groupId、人=accountId）+ `id`/`name`/`lastChatAt`；**无真实 agentId 时省略字段**。
-3. web 归一化原生回传 → `applySelection` → 共用 `saveSelectedAndReloadList`（与 PC 弹窗同一条链路）。本地侧栏 upsert 可用 `ownerType:ownerId` 作列表 key；**save/exempt 须过滤** `group:`/`private:` 前缀合成 id。
-4. 取消 `code=-1`，不调 save/list。
+3. **回传时机**：原生须在选择页 **dismiss 完成后再** 灌 JS（ios：`dismiss` completion；android：`onResult` 后 `wv.post`），避免 WebView 仍被盖住/未 resume 时回调推迟约 10s。
+4. web 归一化原生回传 → `applySelection`（先本地落库）→ 共用 `saveSelectedAndReloadList`。本地侧栏 upsert 可用 `ownerType:ownerId` 作列表 key；**save/exempt 须过滤** `group:`/`private:` 前缀合成 id。
+5. 取消 `code=-1`，不调 save/list。
 
 ### android 原生选择（与 ios 对称）
 
-逻辑同上：原生只负责「弹选择页 → 回传选中项」，`saveSelected/list` 全在 web H5。回传载荷形态与 ios 完全一致（`personal-ai:selected-agent`：`ownerType/ownerId/id/name/agentName/avatar/lastChatAt`；**无真实 agentId 时省略**，`lastChatAt=0`，群头像暂空串）。取消回传 `code=-1`。差异仅在移植范式：桥方法异步回结果复用宿主既有「注册端口 → startActivityForResult → onResult 按端口重建回调」模板；选择页为**独立页**（不碰存量转发页），版式对齐 ios：顶部搜索 +「选择联系人」+「选择已有群组」+「最近聊天」。三入口各为独立子页，选中项统一 setResult 回传、主页 onActivityResult 汇总后再回传 WebView：
+逻辑同上：原生只负责「弹选择页 → 回传选中项」，`saveSelected/list` 全在 web H5。回传载荷形态与 ios 完全一致（`personal-ai:selected-agent`：`ownerType/ownerId/id/name/agentName/avatar/lastChatAt`；**无真实 agentId 时省略**，`lastChatAt=0`，群头像暂空串）。取消回传 `code=-1`。差异仅在移植范式：桥方法异步回结果复用宿主既有「注册端口 → startActivityForResult → onResult 按端口重建回调」模板；**`SELECT_AI_AGENT` / `SELECT_DATA_RANGE_SCOPE` 在 `onResult` 内 `wv.post` 后再 `onSelectAiAgent`**，避开 Activity pause 窗口。选择页为**独立页**（不碰存量转发页），版式对齐 ios：顶部搜索 +「选择联系人」+「选择已有群组」+「最近聊天」。三入口各为独立子页，选中项统一 setResult 回传、主页 onActivityResult 汇总后再回传 WebView：
 - **选择联系人** 复用宿主现成通讯录选择（单选返回一个人）。
 - **选择已有群组** 独立页，组织群/外协群两 tab（按群类型阈值本地拆分）。
 - **搜索** 独立页，本地库搜人+群，全部/群组/人员三 tab（android 走**本地 DB**，非 web 的 HTTP 搜索）。
@@ -270,6 +271,34 @@
 - **代码目录**：web 本功能全部代码集中在 `apps/web/src/components/views/personal-ai/`，内部再按子功能细分：`list/`（主列表+会话，入口 `list/PersonalAiChat.vue` 由 `/personal` 路由引用）、`picker/`（选择弹窗，内含 `search/` 搜索子模块）、`selector/`（移动端原生选择/共享知识消息）、`tests/`（全部单测集中）。功能私有工具（`highlightKeyword`、`SearchInput`）随 `search/` 目录走，不放公共 `utils/`。对应 root `CLAUDE.md`「功能内聚」总则（其它端按各自 package/模块惯例落地，单测归各自 `tests/`）。
 - **组件文件**：`SelectAiBoxDialog` · `SelectDataRangeDialog`（Home 数据范围多选）· `AiBoxSearchBox`（输入+popover 壳）· `AiBoxSearchPanel`（结果列表）· `AiBoxSearchRow` · `AiBoxRow` · `OrgPicker` · `SearchInput`。
 - **搜索空态图**：`no-data.png` +「未搜索到相关结果」；关键词高亮 `#3E7EFF`（`text-primary`）。
+- **DataRangeBar 已选图标**：已选项叠加小图标固定为 `data-range-icon`（与「数据范围」胶囊同素材），勿再按人/群类型切图标。
+
+## 移动端个人 AI 宿主（web H5）
+
+与 PC 侧栏+右栏不同：移动端为 **基座对话 + 底部弹窗选框**。
+
+**结构**：
+- 路由薄壳等用户数据就绪后挂载基座页；基座常驻对话面板，状态/请求/选中编排在基座内。
+- 「选择 AI 框 / 历史」走独立底部弹窗（列表 + History）；经弹窗工具打开，History 随选中项重挂载，按会话 id 决定选中。
+- 改筛与 PC 同源：更新本地 `filterTypes` → `saveFilter`（失败仅告警不阻断）→ 再刷列表。
+
+**顶栏**：
+- 对话面板支持左侧/右侧具名插槽；移动端左侧放返回关页，右侧可整替换默认「设置/全屏/关闭」。
+- 当前右侧：开启新对话（仅图标）+ 侧栏入口图标（打开选择弹窗）；旧「切换AI框」文案胶囊已弃用。
+- 选择弹窗默认全屏高；History 按开合模式控制关栏按钮显隐，并将新对话按钮文案收敛为短文案（如「新对话」）。
+
+## PC 个人 AI 对话头栏（四按钮）
+
+PC `PersonalAiChat` 内嵌 `Home`（`hideBuiltinCollapseChrome=true`）时，`Chat` 默认头栏右侧改为四按钮（有 `#header-right` 插槽时仍整替换，移动端不受影响）：
+
+| 顺序 | 图标 | 行为 |
+|------|------|------|
+| 1 | `fullscreen-in` / `fullscreen-out` | 全屏（既有 `handleFullscreen` / `zoomType`） |
+| 2 | `setting` | 设置（`gotoSettingPage`，仍受 `hasSetting`/`canEditAgent`） |
+| 3 | `file-trans-zx` | 打开智信私聊/群聊（`openImChat`）；**`belongType===0` 个人框隐藏**；1→私聊、3→群聊 |
+| 4 | `open-independent` | 打开独立弹窗（`WindowPostWinMessage` → `/home/{belongType}/{belongId}` + `aiRoleId`/`corpId`/`accountId`） |
+
+不显示关闭按钮。独立 `zx/home` 入口仍用默认「设置/全屏/关闭」。
 
 ## Home 对话 · 数据范围 scope（`dataRangeScopeList`）
 

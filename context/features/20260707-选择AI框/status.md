@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-17（web「数据范围」仅个人AI框；已选 chip recentContactList）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-17（fix selectAiAgent 回传延迟：web isLongCb runCode + 原生 dismiss/post 后再灌 JS）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,11 +19,13 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：**`9a1dd2d` 已提交并 push**——数据范围已选 chip 记忆回显改走 `recentContactList`；「数据范围」胶囊仅 `belongType=0` 展示；desktop 本地联调略；ios `personal-ai-chat`：**`75ac9ab1b` 已提交**——`selectDataRangeScope` + 搜索底栏对齐、已选人名 DB 补齐、chevron、审查修复；android `personal-ai-chat`：**工作区未提交**——统一 `include_data_range_multi_footer` + pull-down chevron，**待真机 E2E**。
+> **本轮 apps 事实**：web `personal-ai-chat`：**tip `3c055a6`（lifeng，已 pull）**——移动端个人 AI 头部改版（返回 / 新对话 / 侧栏入口）；其上已合入 `62dcd87` DataRangeBar 统一 `data-range-icon`、`9a1dd2d` 数据范围 chip/`belongType=0` 门控；更早 lifeng：`bd1e06c` 基座 Chat+弹窗 + `mapSelectionToAgent` 修归属、`16b5835` 移动端改筛对齐 `saveFilter`。desktop 本地联调略；ios `personal-ai-chat`：**`75ac9ab1b` 已提交**——`selectDataRangeScope` + 搜索底栏对齐、已选人名 DB 补齐、chevron、审查修复；android `personal-ai-chat`：**工作区未提交**——统一 `include_data_range_multi_footer` + pull-down chevron，**待真机 E2E**。
 
 ## 待办 / 阻塞
 
-- (web) ~~**T10 已选 chip 名/头像**~~：记忆 scope 补齐改走 `recentContactList`（`9a1dd2d`）；「数据范围」仅个人 AI 框。**待 PC 弹窗 E2E 回显**
+- (web / ios / android) **selectAiAgent 回传延迟修复（待真机 E2E）**：web `App.vue` 用 `runCode` 强制 `isLongCb`（对齐 `chooseAddressBook`）；移动端禁止 H5 假桥抢注；ios dismiss completion 后再 `responseHandler`；android `onResult` 后 `wv.post` 再回调。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
+- (web) ~~**T10 已选 chip 名/头像**~~：记忆 scope 补齐改走 `recentContactList`（`9a1dd2d`）；「数据范围」仅个人 AI 框；已选叠加小图标改固定 `data-range-icon`（`62dcd87`）。**待 PC 弹窗 E2E 回显**
+- (web) **移动端个人 AI 宿主（lifeng）**：`bd1e06c` 基座 `MPersonalAiChatWrapper`（Chat）+ `SelectAiChatPopup`（列表+History）；`16b5835` 改筛先 `saveFilter` 再 `list`（对齐 PC）；`3c055a6` 头部——左 `back` 关页、右 `StartChatButton`(仅图标)+`side-close` 开弹窗（旧「切换AI框」胶囊注释掉）；`Chat` 新增 `#header-right`（有则替换默认设置/全屏/关闭）；弹窗 `h-100vh`；History `openCloseMode` 控关栏按钮与「新对话」文案。**待真机 E2E / 视觉验收**
 - (ios / web) **选择数据范围原生多选（T10）**：桥 `selectDataRangeScope` + 复用选择 AI 框页强制多选已接线；web `DataScopeBar` 移动端走原生、PC 仍 H5；回传 scopes → `saveDataRange`。本轮：搜索页底栏对齐主页（已选/清空/**完成**，无取消；不再用转发「发送」栏）；已选展示名本地 DB 补齐；下拉箭头改 chevron；审查修复——搜索内点选/清空**不 live sync**（仅「完成」写回）、群 tab 从已选移除须清群列表、空 id 用同人判断、键盘中间态底栏贴键盘顶。**待真机 E2E**
 - (android) **选择数据范围原生多选（T10，编译通过）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` → 子页联系人多选 / 群组·搜索 `EXTRA_MULTI` 回主页合并 → 回传 `personal-ai:selected-data-range`。底栏共用 `include_data_range_multi_footer`：`已选：N个` 弹层 + 清空 + 取消 + 确定(N)；**搜索/群组子页隐藏取消**（左侧返回）；箭头 `ic_data_range_pull_down`（对齐 web pull-down）。Bugbot：**无阻断级问题**。**待真机 E2E**
 - (android) **低风险债**：若需 AI 框搜索保持旧交互（右侧取消、不自动弹键盘），应用 `EXTRA_MULTI` 门控返回样式与键盘行为
@@ -47,6 +49,7 @@
 - (web) `POST /personalAiFrame/selectGroupBySearch` **已接入**选择弹窗与侧栏搜索：`searchPicker` 改走 HTTP（`selectGroupBySearchApi` 动态导入，`accountId` 取登录用户），映射 `privateList`/`groupList`；搜索结果 popover 新增「全部/群组/人员」三 tab（全部=群组在前+人员在后）。web 不再调用桥 `searchAiBoxPicker`；**`AiBoxSearchRow` 有 `agentAvatar` 时优先单头像**（群组对齐 `AiBoxRow`，人员同理）
 - (web) 个人 AI 右侧对话面板已改为**组件直渲** `HomeIndex`（`chatType`/`targetId`/`aiRoleId` props + key 重挂载），不再嵌套 `/zx/home/...` iframe；独立 `zx/home` 路由入口仍可用
 - (web) **PC 个人 AI 内嵌对话**：历史侧栏随 **Home 自身 `elWidth`** 在弹窗/双栏间切换（`DRAWER_MAX_WIDTH=700`：`≤700` popup 宽 280px，`>700` 双栏）；首次窄屏默认 popup，变宽自动解除并切双栏；独立首页默认收起
+- (web) **PC 个人 AI 头栏四按钮**：`hideBuiltinCollapseChrome` 下传至 `Chat` → 全屏 / 设置 / 打开智信私聊·群聊（个人框隐藏）/ 打开独立弹窗；无关闭；移动端 `#header-right` 仍优先。**待桌面 E2E**
 - (desktop) 若 web 改走 HTTP 搜索：桥 `search-ai-box-picker` 可保留兜底或后续下线；**仅需回归**弹窗搜索链路
 - (android / ios) `selectGroupBySearch` **不受影响**（本期不做 web 侧选择AI框弹窗；ios 走原生选择）
 - (web) 选择弹窗底栏「已选：xxx」截断：**已提交**（`6796595`）——`AcDialog` footer `footer-left` 占 `flex-1 min-w-0`、`buttonTip` 限 `max-w-32`；`SelectAiBoxDialog` 已选文案 `max-w-full truncate`
@@ -61,10 +64,17 @@
 - (android) **选择页补齐搜索/选择联系人/选择已有群组（编译通过）**：对齐 ios 版式——顶部搜索框（进 `SelectSearchActivity`：本地 DB 搜人+群，全部/群组/人员三 tab）+「选择联系人」（复用通讯录 `ChooseAddressMemberFragment` 单选，返回人）+「选择已有群组」（`SelectGroupActivity`：`GROUP_TYPE<10` 组织群 /`>=10` 外协群两 tab，`DataCenter.getGroupList` 客户端拆分）+「最近聊天」列表。子页均把 `GroupInfo`/`EaseUserInfo` 包成 `Conversation` 复用 `SelectAiAgentAdapter`，选中经 `SelectAiAgentResult` 统一 setResult 回传，主页 `onActivityResult` 汇总透传给 WebView。**待真机 E2E**
 - (android) **选择页后续债**（未挡本轮）：搜索为**本地 DB**（非 web 的 `selectGroupBySearch` HTTP）；群头像回传暂空串；`agentId`/`aiRoleId`/`lastChatAt` 缺省（与 ios 同）；关键词高亮/空态图未做
 - (desktop) **左侧第二项 / AiBrowser tab 列表**：`POST /aiTools/aiToolList` 回参 **`aiId=0`** 为 AI框（`aiName`/`pcLogoJsonStr` 驱动侧栏与 tab 文案图标）；`aiUrl` 空则内嵌 `${APP_AICHAT}/zx/personal` iframe（`getUserCode` 拼参）。**固定排首**，不参与置顶/最近使用/更多菜单。切换 tab → `ai-sider-item` 同步左侧菜单；`pageUrlMap` 首次打开缓存 url，切回不重载。**待 E2E**
-- (ios / web) save 映射已消费 `ownerId`→`belongId`；但 `mapSelectionToAgent` **建会话目标**仍未用 `ownerId`（仍走 `DEFAULT_CHAT` 占位）——与 ios 回传未对齐，待补
+- (ios / web) ~~`mapSelectionToAgent` 建会话仍 DEFAULT_CHAT~~ → **`bd1e06c` 已修**：`belongId` 优先 `ownerId`/`id`/`accountId`/`groupId`，有值则 `chatType`/`targetId` 用真实归属（对齐 `mapFrameItemToAgent`）；缺 id 才回退占位
 
 ## 关键决策记录
 
+- 2026-07-17 `selectAiAgent` / `selectDataRangeScope` 必须长回调（对齐 `chooseAddressBook`）：web `runCode` 内 `this.api.isLongCb=true` + `callInner`；只收 `success`/`error`；移动端勿装 H5 假桥；ios dismiss completion / android `wv.post` 后再灌 JS，避免约 10s 回传延迟
+- 2026-07-17 web PC 个人 AI 头栏：内嵌时四按钮（全屏/设置/开 IM/独立窗）；`belongType=0` 隐藏开 IM；独立窗走 `WindowPostWinMessage` → `/home/{type}/{id}`；移动端插槽覆盖不变
+- 2026-07-17 web 移动端个人 AI 头部（`3c055a6`）：左返回关页；右「新对话」图标 + `side-close` 开选择弹窗；`Chat` 支持 `#header-right` 整替换默认右侧工具；选择弹窗全屏高；History 按 `openCloseMode` 显隐关栏/改「新对话」文案
+- 2026-07-17 web 移动端个人 AI 结构（`bd1e06c`）：基座 Chat 常驻 + 底部弹窗承载 agent 列表与 History；`personal/index` 薄壳等用户数据后再挂 Wrapper
+- 2026-07-17 web 移动端改筛（`16b5835`）：与 PC 同源——先 `saveFilter`（失败仅 warn）再 `loadAgentList`
+- 2026-07-17 web DataRangeBar 已选叠加图标统一为 `data-range-icon`（`62dcd87`），与胶囊视觉对齐
+- 2026-07-17 web 智能体列表副标题（智能体名称行）：`latestMessageBrief.answer` 非空则展示 answer，否则展示 `name`（`agentName` 字段仍保留原名）
 - 2026-07-17 web「数据范围」胶囊仅个人 AI 框（belongType=0）展示；私聊/群不显示
 - 2026-07-17 web 数据范围已选 chip 记忆回显：补展示字段改走 `recentContactList`（人/群名+头像），不用 `batchGetAgent`（只回有 AI 框的智能体字段）
 - 2026-07-17 ios 数据范围搜索：底栏与主页同组件；子页无取消、主按钮文案「完成」；仅「完成」写回父页（返回/清空不 live sync）；已选名本地通讯录/群库补齐；箭头用 chevron 非实心三角
