@@ -98,7 +98,8 @@ ReceiveMessageListener.js          case "aiBoxSendMessage"
 | `apps/desktop/.../layouts/new-aside-menu.vue` | 左侧黄角标；点击 aibrowser 时 emit 切 tab |
 | `apps/desktop/.../views/main.vue` | `onAiBoxBadgeUpdated` 设 `aiBrowserSiderItem` |
 | `apps/desktop/.../views/AiBrowser/index.vue` | iframe `postMessage`；听 `ai-browser-select-sider-item` |
-| `apps/web/.../personal-ai/list/PersonalAiChat.vue` | 收 zx-pc 推送：log + 联调次数角标（验完删） |
+| `apps/web/.../personal-ai/list/PersonalAiChat.vue` | PC：收 zx-pc 推送 log + 联调次数角标（验完删） |
+| `apps/web/.../personal/m/MPersonalAiChatWrapper.vue` | 移动：postMessage + `refreshViewDate` + 顶栏联调次数（验完删） |
 
 ### 2.3 壳 → Web 消息格式（对齐行动中心）
 
@@ -115,9 +116,9 @@ JSON.stringify({
 })
 ```
 
-web（`PersonalAiChat`）已监听（log + 联调推送次数角标）；**刷 list 仍 TODO**。
+web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听（log + 联调推送次数）；**刷 list 仍 TODO**。
 
-移动端应对齐：原生 → WebView 用 **`wnsdk.page.refreshViewDate`**（行动中心 / 呼叫群同款），`extra` 里带同等字段；或向 WebView 注入 / evaluate 等价消息。web 侧最终应能区分 PC `postMessage` 与移动 `refreshViewDate`。
+移动端：原生 → WebView 用 **`wnsdk.page.refreshViewDate`**（行动中心 / 呼叫群同款），`extra` 里带同等字段；`a89a112` 已注册 success 回调并 bump 联调计数（无 type 时也计数便于先通链路）。
 
 ### 2.4 PC 行为摘要
 
@@ -171,7 +172,7 @@ web（`PersonalAiChat`）已监听（log + 联调推送次数角标）；**刷 l
 ```
 
 - **PC**：外层再包 `source: "zx-pc"`（已实现）
-- **移动**：`wnsdk.page.refreshViewDate({ id, name, success })`，在 success 的 `extra` 里带上述 JSON；web 需补监听（目前只听了 zx-pc postMessage）
+- **移动**：`wnsdk.page.refreshViewDate({ id, name, success })`，在 success 的 `extra` 里带上述 JSON；web `MPersonalAiChatWrapper`（`a89a112`）已注册监听 + 联调计数
 
 ### 3.3 挂点速查
 
@@ -180,7 +181,7 @@ web（`PersonalAiChat`）已监听（log + 联调推送次数角标）；**刷 l
 | Desktop | `ReceiveMessageListener.js` → `case "aiBoxSendMessage"` | ✅ |
 | iOS | `AppDelegate+RCIM.m` → `aiBoxSendMessage` → `refreshPersonalAiBadgeWithRCCmd` | ✅ |
 | Android | `RongIM.java` → `aiBoxSendMessage` → `PersonalAiBadgeController` | ✅ |
-| web | `PersonalAiChat.vue` 听 zx-pc；移动 refreshViewDate 待补 | 🚧 仅 PC log |
+| web | PC `PersonalAiChat` + 移动 `MPersonalAiChatWrapper`（含 refreshViewDate） | 🚧 听推送 + 联调次数；刷 list 待做 |
 
 ### 3.4 iOS / Android 实现摘要（2026-07-17）
 
@@ -227,6 +228,7 @@ apps/desktop/src/renderer/views/AiBrowser/index.vue
 apps/desktop/src/renderer/components/layouts/new-aside-menu.vue
 apps/desktop/src/renderer/views/main.vue
 apps/web/src/components/views/personal-ai/list/PersonalAiChat.vue
+apps/web/src/components/views/personal/m/MPersonalAiChatWrapper.vue  # 移动 refreshViewDate + 联调次数
 
 # 契约
 context/contracts/personalAiFrame/getBadgePushInfo.d.ts
@@ -280,6 +282,6 @@ AI框挂点与下列 cmd **同入口、不同 name**。
 | 左侧黄角标（含 0） | ✅ |
 | sider 切回 AI框图标 | ✅ |
 | 点击入口打开 AI框 tab | ✅ |
-| iframe postMessage + web log | ✅ |
+| iframe / 移动 refreshViewDate + web 联调次数 | ✅ |
 | web 刷 list / 清角标 | ⬜ |
 | iOS / Android 推送→角标→缩略（对齐呼叫群） | ✅ 代码落地，待真机 E2E |

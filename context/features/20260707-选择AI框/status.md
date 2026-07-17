@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-17（web tip `95206f5` 已 push：联调推送次数角标；已 pull `452230b` 移动端选择弹窗布局）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-17（web tip `a89a112` 已 push：移动端听推送 + 顶栏联调次数）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,12 +19,12 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：**tip `95206f5` 已 push**——`aiBoxSendMessage` 每次 +1 联调黄角标（验完删）+ 侧栏 `testBadgePush`；已 pull `452230b`（移动端选择弹窗窄列竖向/选中滚动）与 lifeng `1b4e80d`/`259f10c`/`ec79115`。ios：**工作区未提交**——`aiBoxSendMessage` → `getBadgePushInfo` → PersonalAI Cell 黄角标+缩略 + WebView `refreshViewDate`；另有 selectAiAgent dismiss completion 未提交。android：**工作区未提交**——同链路 `PersonalAiBadgeController` + `PersonalAiListCellBinder` 角标/缩略（`compileOnTestDebug` 通过）；另有 selectAiAgent `wv.post` 未提交。desktop 本地 test 打包与本功能无关。移植对照见 `3端AI框角标推送.md`。
+> **本轮 apps 事实**：web `personal-ai-chat`：**tip `a89a112` 已 push**——移动端 `MPersonalAiChatWrapper` 听 `aiBoxSendMessage`（postMessage + `refreshViewDate`）+ 顶栏联调推送次数（常显含 0，验完删）；其上 `95206f5` PC 侧栏联调次数、`452230b` 选择弹窗布局、`ec79115` testBadgePush。ios/android：**工作区未提交**——推送→角标链路已落地（对齐呼叫群）；另有 selectAiAgent 回传延迟修复未提交。desktop 本地 test 打包与本功能无关。移植对照见 `3端AI框角标推送.md`。
 
 ## 待办 / 阻塞
 
-- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web `95206f5` 已听 zx-pc（log + 联调推送次数角标，验完删）。**ios/android 代码已落地（对齐呼叫群）**：融云命中 → `getBadgePushInfo` → 会话列表 AI框 Cell 黄角标（>0）+ `lastAbbreviationInfo` 副标题；打开中 WebView `refreshViewDate`/`refreshDate`；启动补拉。android `compileOnTestDebug` 通过。**待**：真机 E2E；web 刷 list / 点进清角标；web 听移动端 refreshViewDate
-- (web) ~~**模拟角标推送按钮**~~：侧栏刷新旁 `send` → `GET /agentSetBasic/testBadgePush`（`ec79115`）；`95206f5` 刷新右侧联调推送次数角标。**待** PC 联调验壳黄角标 + 验完删调试计数
+- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC `95206f5` 听 zx-pc；**移动端 `a89a112`** `MPersonalAiChatWrapper` 已听 postMessage + `wnsdk.page.refreshViewDate`（联调次数顶栏常显含 0）。**ios/android 代码已落地（对齐呼叫群）**：融云命中 → `getBadgePushInfo` → 会话列表黄角标（>0）+ 副标题；打开中 WebView `refreshViewDate`/`refreshDate`。**待**：真机 E2E；web 刷 list / 点进清角标；验完删调试计数
+- (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数（`95206f5`）；移动顶栏次数（`a89a112`）。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
 - (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
 - (web) ~~**T10 已选 chip 名/头像**~~：记忆 scope 补齐改走 `recentContactList`（`9a1dd2d`）；「数据范围」仅个人 AI 框；已选叠加小图标改固定 `data-range-icon`（`62dcd87`）。**待 PC 弹窗 E2E 回显**
@@ -75,6 +75,7 @@
 - 2026-07-17 移动端 AI框角标对齐呼叫群：`aiBoxSendMessage` → 命中 accountId → HTTP → 会话列表入口黄角标（仅 >0）+ 副标题缩略；打开中 Web `refreshViewDate`；Android 离线忽略，启动/回前台补拉
 - 2026-07-17 web `ec79115`：`PersonalAiChat` 监听 `source===zx-pc && type===aiBoxSendMessage`（本阶段仅 log）；侧栏 `testBadgePush` 联调入口；个人 AI 引导页 `belongType===0` 顶部留白
 - 2026-07-17 web `95206f5`：联调推送次数角标（每收一次 `aiBoxSendMessage` +1，显示刷新右侧，验完删）；已 pull `452230b` 移动端选择弹窗窄列竖向布局
+- 2026-07-17 web `a89a112`：移动端 `MPersonalAiChatWrapper` 听 zx-pc/`aiBoxSendMessage` postMessage + `wnsdk.page.refreshViewDate`；顶栏联调推送次数常显含 0（验完删）
 - 2026-07-17 `selectAiAgent` / `selectDataRangeScope` 必须长回调（对齐 `chooseAddressBook`）：web `runCode` 内 `this.api.isLongCb=true` + `callInner`；只收 `success`/`error`；移动端勿装 H5 假桥；ios dismiss completion / android `wv.post` 后再灌 JS，避免约 10s 回传延迟
 - 2026-07-17 web PC 个人 AI 头栏：内嵌时四按钮（全屏/设置/开 IM/独立窗）；`belongType=0` 隐藏开 IM；独立窗走 `WindowPostWinMessage` → `/home/{type}/{id}`；移动端插槽覆盖不变
 - 2026-07-17 web 移动端个人 AI 头部（`3c055a6`）：左返回关页；右「新对话」图标 + `side-close` 开选择弹窗；`Chat` 支持 `#header-right` 整替换默认右侧工具；选择弹窗全屏高；History 按 `openCloseMode` 显隐关栏/改「新对话」文案
