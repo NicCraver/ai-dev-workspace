@@ -6,10 +6,8 @@ alwaysApply: false
 
 # Android 真机调试
 
-用户说「真机调试 / 装包 / 跑真机」时：
+用户说「真机调试 / 装包 / 跑真机 / zhixin-run-android」时：
 
-1. **默认 flavor = `onTest`**（测试环境 `192.168.10.25`），**不要**默认 `develop`。
-2. 流程：`adb devices` → `./gradlew installOnTestDebug`（或已有最新 APK 则 `adb install -r …/onTest/debug/*.apk`）→ 启动 `com.cnmts.smart_message.test`。
-3. 仅当用户明确说「开发环境 / develop」时才用 `installDevelopDebug`。
-4. 完整步骤见 skill **`zhixin-run-android`**（`.cursor/skills/zhixin-run-android/`）与下文「真机调试流程」。
-5. 若 `INSTALL_FAILED_USER_RESTRICTED`：提醒用户在手机点允许，或开启开发者选项「USB 安装」；APK 已编好时只重跑 `adb install -r`。
+1. **直接执行** `bash .cursor/commands/scripts/zhixin-run-android.sh`（Cursor 指令 `/zhixin-run-android`），不要读 skill、不要自行拼命令。
+2. 默认 flavor = `onTest`；仅用户明确说 develop 时加 `--develop`。
+3. 完整约定见 `context/platforms/android.md`「真机调试流程」。

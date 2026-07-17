@@ -24,24 +24,22 @@
 
 ## 真机调试流程（默认测试环境）
 
-> 可执行流程以 skill **`zhixin-run-android`** 为准（`.cursor/skills/zhixin-run-android/`）。用户说「真机调试」时优先读该 skill。
+> 一键执行：`bash .cursor/commands/scripts/zhixin-run-android.sh`（Cursor 指令 `/zhixin-run-android`）。默认 onTest，自动判断是否需要编译。
 
 1. **JDK**：确认 `java -version` 为 8 或 11（Gradle 6.5 不兼容 17+）。
 2. **设备**：`adb devices -l`，状态须为 `device`（非 `unauthorized`）；手机弹出 USB 调试/安装提示时点允许。
 3. **装包（默认 onTest）**：
    ```bash
-   chmod +x ./gradlew   # 仅首次若 permission denied
-   ./gradlew installOnTestDebug --no-daemon
-   # 若 APK 已是最新构建，可直接：
-   # adb install -r smart_message/build/outputs/apk/onTest/debug/smart_message-onTest-debug_*.apk
+   bash .cursor/commands/scripts/zhixin-run-android.sh
+   # 强制编译：--build | 仅重装：--quick | 开发环境：--develop
    ```
-4. **启动**：
+4. **手动等价命令**（脚本不可用时）：
    ```bash
+   ./gradlew installOnTestDebug --no-daemon
    adb shell am start -n com.cnmts.smart_message.test/com.cnmts.smart_message.activity.AppStartSplashActivity
-   # 或 monkey：adb shell monkey -p com.cnmts.smart_message.test -c android.intent.category.LAUNCHER 1
    ```
 5. **注意**：`develop` / `onTest` / 正式包 **applicationId 不同**，可并存；用户说「真机调试」默认走 **onTest**，除非明确要求 develop。
-6. **小米等机型**：若报 `INSTALL_FAILED_USER_RESTRICTED`，需在手机上点允许 USB 安装（开发者选项里也可开「USB 安装」）；编译已成功时可只重跑 `adb install -r …`。
+6. **小米等机型**：若报 `INSTALL_FAILED_USER_RESTRICTED`，需在手机上点允许 USB 安装（开发者选项里也可开「USB 安装」）；编译已成功时 `bash …/zhixin-run-android.sh --quick` 重试。
 
 > ⚠️ **没有单元测试、没有 lint/checkstyle/detekt**；`lintOptions.abortOnError=false` 实际关掉了 lint；仅 `androidTest` 有默认脚手架。质量靠真机自测。
 

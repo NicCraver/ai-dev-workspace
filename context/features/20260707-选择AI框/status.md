@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-17（android/ios/web 选择数据范围原生多选落地中）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-17（ios 审查项：搜索提交语义/群移除/键盘）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,8 +23,8 @@
 
 ## 待办 / 阻塞
 
-- (ios / web) **选择数据范围原生多选（T10）**：桥 `selectDataRangeScope` + `ZXSelectAiAgentController.selectDataRangeMode`（强制多选 + 最近/群「全部」+ 底栏已选）已接线；web `DataScopeBar` 移动端走原生、PC 仍 H5；回传 scopes → `saveDataRange`。**待真机 E2E**
-- (android) **选择数据范围原生多选（T10，编译通过）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` 多选页（复用选择AI框版式；最近「全部」+ 底栏已选人/群名头像，无智能体）→ 子页 `ChooseAddressMemberFragment` 多选 / `SelectGroupActivity`+`SelectSearchActivity` multi 模式回主页合并 → 回传 `personal-ai:selected-data-range`。**待真机 E2E**
+- (ios / web) **选择数据范围原生多选（T10）**：桥 `selectDataRangeScope` + `ZXSelectAiAgentController.selectDataRangeMode`（强制多选 + 最近/群「全部」+ 底栏已选）已接线；web `DataScopeBar` 移动端走原生、PC 仍 H5；回传 scopes → `saveDataRange`。本轮修：已选弹层 chip **补齐本地 DB 人名**；底栏箭头放大；**搜索页底栏改为 `ZXSelectDataRangeBottomView`（无取消，不再用转发「发送」栏）**。**待真机 E2E**
+- (android) **选择数据范围原生多选（T10，编译通过）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` 多选页（复用选择AI框版式；最近「全部」+ 底栏已选人/群名头像，无智能体）→ 子页 `ChooseAddressMemberFragment` 多选 / `SelectGroupActivity`+`SelectSearchActivity` multi 模式回主页合并 → 回传 `personal-ai:selected-data-range`。搜索/群组多选底栏已与主页对齐（chips + 清空已选 + 确定）；搜索「取消」改为左侧返回图标。**待真机 E2E**
 - (web / desktop) **组织架构进公司**：已按 PC 转发对齐——`getContactTree({isGroup:1})`、公司 `id` 作 corpId、`rootDeptId||id` 作首屏 pid、透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过。**待 E2E**：点企业应直接见部门+人员（不再多一层企业 / 暂无人员）
 - (desktop) ~~待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`~~ → **已按 PC 转发透传**
 - (web) `personal-ai-chat` 已合入本地 `test-202512`（含 saveSelected）；本轮增量 `a7fa5fd` 已提交、**尚未 push**
