@@ -107,6 +107,7 @@ Home「数据范围」胶囊（移动端）调 `wnsdk.aiChat.selectDataRangeScop
 
 ## Changelog
 
+- 2026-07-17 ios/android 数据范围搜索子页：底栏与主页同形态；子页无「取消」、主按钮「完成」；仅完成写回主页（返回不 live sync）；已选名须本地补齐。
 - 2026-07-17 android `selectDataRangeScope`：镜像 selectAiAgent 桥通路（requestCode 239）+ 独立多选页；底栏已选仅人/群名与头像；最近/群「全部」；web 移动端已接线。
 - 2026-07-17 登记 ios `selectDataRangeScope`：入参 `initialScopes`；回传 `personal-ai:selected-data-range` + `scopes[{scopeDataType,scopeDataId,name?,avatar?}]`；复用选择 AI 框页多选 + 最近/群「全部」；web 移动端 `DataScopeBar` 走原生，PC 仍 H5 弹窗。
 - 2026-07-16 android `selectAiAgent` 落地并**真机 E2E 通过**：`aiChat.selectAiAgent` → 独立原生选择页（最近/选择联系人/选择已有群组/搜索 四路单选）→ 回传 `personal-ai:selected-agent`（无真实 agentId 省略；取消 code=-1），与 ios 回传契约一致。

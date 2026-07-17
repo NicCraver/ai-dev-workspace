@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-17（android T10 底栏/搜索 UX + 审查结论）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-17（ios T10 搜索底栏对齐+审查修复；android 底栏/箭头）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,12 +19,12 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：移动端 `DataScopeBar`→`selectDataRangeScope` 已接线（工作区态以各仓为准）；desktop `personal-ai-chat`：**工作区仅 `.env.test` 本地联调**；ios `personal-ai-chat`：**工作区未提交**——选择数据范围原生多选继续打磨；android `personal-ai-chat`：**工作区未提交**——`selectDataRangeScope` 桥 + `SelectDataRangeActivity`（统一底栏：已选弹层/清空/取消/确定；搜索返回黑图标 + `keyboardEnable`）编译通过，**待真机 E2E**。
+> **本轮 apps 事实**：web `personal-ai-chat`：移动端 `DataScopeBar`→`selectDataRangeScope` 已接线；desktop 本地联调略；ios `personal-ai-chat`：**工作区未提交**——数据范围搜索底栏对齐主页（`ZXSelectDataRangeBottomView`，无取消/「完成」提交）、已选人名 DB 补齐、chevron、审查修复（群移除/不 live sync/键盘）；android `personal-ai-chat`：**工作区未提交**——统一 `include_data_range_multi_footer`（搜索/群组隐藏取消）+ pull-down chevron，**待真机 E2E**。
 
 ## 待办 / 阻塞
 
-- (ios / web) **选择数据范围原生多选（T10）**：桥 `selectDataRangeScope` + 原生多选页已接线；web `DataScopeBar` 移动端走原生、PC 仍 H5；回传 scopes → `saveDataRange`。**待真机 E2E**
-- (android) **选择数据范围原生多选（T10，编译通过）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` → 子页联系人多选 / 群组·搜索 `EXTRA_MULTI` 回主页合并 → 回传 `personal-ai:selected-data-range`。底栏已对齐稿：`已选:N个` 点开底部弹层（人/群头像名，可删）+ 清空 + 取消 + 确定(N)；搜索页左侧返回（`back_img_black`）+ 自动聚焦；沉浸态 `keyboardEnable(true)` 让底栏顶键盘上。审查：**单选回传/通讯录/桥其它方法隔离安全**；共享搜索页 UX（返回/自动键盘）会波及 `selectAiAgent` 搜索入口（回传仍正确）。**待真机 E2E**
+- (ios / web) **选择数据范围原生多选（T10）**：桥 `selectDataRangeScope` + 复用选择 AI 框页强制多选已接线；web `DataScopeBar` 移动端走原生、PC 仍 H5；回传 scopes → `saveDataRange`。本轮：搜索页底栏对齐主页（已选/清空/**完成**，无取消；不再用转发「发送」栏）；已选展示名本地 DB 补齐；下拉箭头改 chevron；审查修复——搜索内点选/清空**不 live sync**（仅「完成」写回）、群 tab 从已选移除须清群列表、空 id 用同人判断、键盘中间态底栏贴键盘顶。**待真机 E2E**
+- (android) **选择数据范围原生多选（T10，编译通过）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` → 子页联系人多选 / 群组·搜索 `EXTRA_MULTI` 回主页合并 → 回传 `personal-ai:selected-data-range`。底栏共用 `include_data_range_multi_footer`：`已选：N个` 弹层 + 清空 + 取消 + 确定(N)；**搜索/群组子页隐藏取消**（左侧返回）；箭头 `ic_data_range_pull_down`（对齐 web pull-down）。Bugbot：**无阻断级问题**。**待真机 E2E**
 - (android) **低风险债**：若需 AI 框搜索保持旧交互（右侧取消、不自动弹键盘），应用 `EXTRA_MULTI` 门控返回样式与键盘行为
 - (web / desktop) **组织架构进公司**：已按 PC 转发对齐——`getContactTree({isGroup:1})`、公司 `id` 作 corpId、`rootDeptId||id` 作首屏 pid、透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过。**待 E2E**：点企业应直接见部门+人员（不再多一层企业 / 暂无人员）
 - (desktop) ~~待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`~~ → **已按 PC 转发透传**
@@ -64,7 +64,8 @@
 
 ## 关键决策记录
 
-- 2026-07-17 android 选择数据范围底栏：统一「已选弹层 + 清空 + 取消 + 确定(N)」；搜索返回黑图标 + ImmersionBar `keyboardEnable`；审查结论为低风险（共享搜索页 UX 波及 AI 框搜索入口）
+- 2026-07-17 ios 数据范围搜索：底栏与主页同组件；子页无取消、主按钮文案「完成」；仅「完成」写回父页（返回/清空不 live sync）；已选名本地通讯录/群库补齐；箭头用 chevron 非实心三角
+- 2026-07-17 android 选择数据范围底栏：统一「已选弹层 + 清空 + 取消 + 确定(N)」；搜索/群组隐藏取消；箭头对齐 web pull-down；搜索返回图标 + ImmersionBar `keyboardEnable`
 - 2026-07-17 android 选择数据范围：独立 `SelectDataRangeActivity`（不改 selectAiAgent 单选）；桥名对齐 ios `selectDataRangeScope`；组织架构走通讯录完整多选钻取；确定 0 项 disabled；底栏仅人/群名与头像
 - 2026-07-17 ios 选择数据范围：方案 1——复用选择 AI 框页（最近/联系人/群组/搜索），强制多选；最近+群「全部」；新建桥 `selectDataRangeScope`；不对齐 web OrgPicker 三 tab；android 已对称落地
 - 2026-07-07 范围聚焦 apps/web + apps/desktop，android / ios 本期不动
