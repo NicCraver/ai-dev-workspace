@@ -8,6 +8,8 @@ alwaysApply: false
 
 用户说「真机调试 / 装包 / 跑真机 / zhixin-run-android」时：
 
-1. **直接执行** `bash .cursor/commands/scripts/zhixin-run-android.sh`（Cursor 指令 `/zhixin-run-android`），不要读 skill、不要自行拼命令。
-2. 默认 flavor = `onTest`；仅用户明确说 develop 时加 `--develop`。
-3. 完整约定见 `context/platforms/android.md`「真机调试流程」。
+1. **立即执行**（二选一，同一脚本）：
+   - 工作区在 `apps/android`：`bash .cursor/commands/scripts/zhixin-run-android.sh`
+   - 工作区在编排根：`bash apps/android/.cursor/commands/scripts/zhixin-run-android.sh`
+2. 默认 onTest + Gradle **daemon** 增量编译；勿加 `--no-daemon`。
+3. 仅用户明确说 develop 时加 `--develop`；只重装用 `--quick`。

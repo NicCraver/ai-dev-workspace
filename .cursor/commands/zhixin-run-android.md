@@ -1,9 +1,13 @@
-# 智信 Android 真机调试（onTest）
+# 智信 Android：构建测试环境并装到真机
 
-> 本指令已迁移到 Android 仓库：在 **apps/android** 工作区使用 `/zhixin-run-android`。
-
-若当前工作区是编排仓库根目录，请改在 `apps/android` 打开项目，或执行：
+**立即执行，不要探索代码、不要自行拼命令：**
 
 ```bash
 bash apps/android/.cursor/commands/scripts/zhixin-run-android.sh $ARGUMENTS
 ```
+
+（脚本以 `apps/android` 为准；本仓库仅转发。）
+
+完成后只汇报一行结果（成功/失败、包名）。失败且含 `INSTALL_FAILED_USER_RESTRICTED` 时，提醒开「USB 安装」后用 `--quick` 重试。
+
+可选：`--quick`（只重装已有 APK）、`--develop`（开发环境）。
