@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-17（fix selectAiAgent 回传延迟：web isLongCb runCode + 原生 dismiss/post 后再灌 JS）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-17（android/ios 回传延迟修复代码已落地；android test 包已装真机，待 E2E 打点）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,20 +19,20 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：**tip `3c055a6`（lifeng，已 pull）**——移动端个人 AI 头部改版（返回 / 新对话 / 侧栏入口）；其上已合入 `62dcd87` DataRangeBar 统一 `data-range-icon`、`9a1dd2d` 数据范围 chip/`belongType=0` 门控；更早 lifeng：`bd1e06c` 基座 Chat+弹窗 + `mapSelectionToAgent` 修归属、`16b5835` 移动端改筛对齐 `saveFilter`。desktop 本地联调略；ios `personal-ai-chat`：**`75ac9ab1b` 已提交**——`selectDataRangeScope` + 搜索底栏对齐、已选人名 DB 补齐、chevron、审查修复；android `personal-ai-chat`：**工作区未提交**——统一 `include_data_range_multi_footer` + pull-down chevron，**待真机 E2E**。
+> **本轮 apps 事实**：web `personal-ai-chat`：**tip `3c055a6`（lifeng，已 pull）**——移动端个人 AI 头部改版；其上已合入 `62dcd87`/`9a1dd2d`/`bd1e06c`/`16b5835`；`App.vue` 已对 `selectAiAgent`/`selectDataRangeScope` 强制 `isLongCb`。ios `personal-ai-chat`：**`75ac9ab1b` 已提交** + **工作区未提交**——`ZXSelectAiAgentController` finish/cancel/dataRange 改 dismiss completion 后再回传。android `personal-ai-chat`：**工作区未提交**——`WebloaderControl.onResult` 对 `SELECT_AI_AGENT`/`SELECT_DATA_RANGE_SCOPE` 改 `wv.post` 后再回调；本轮 `installOnTestDebug` 已装真机 `com.cnmts.smart_message.test`。desktop 工作区改动为本地 test 打包（`zhixin-test` appId / arm64 / asarUnpack sqlite3 / leveldown），与本功能矩阵无关。
 
 ## 待办 / 阻塞
 
-- (web / ios / android) **selectAiAgent 回传延迟修复（待真机 E2E）**：web `App.vue` 用 `runCode` 强制 `isLongCb`（对齐 `chooseAddressBook`）；移动端禁止 H5 假桥抢注；ios dismiss completion 后再 `responseHandler`；android `onResult` 后 `wv.post` 再回调。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
+- (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
 - (web) ~~**T10 已选 chip 名/头像**~~：记忆 scope 补齐改走 `recentContactList`（`9a1dd2d`）；「数据范围」仅个人 AI 框；已选叠加小图标改固定 `data-range-icon`（`62dcd87`）。**待 PC 弹窗 E2E 回显**
 - (web) **移动端个人 AI 宿主（lifeng）**：`bd1e06c` 基座 `MPersonalAiChatWrapper`（Chat）+ `SelectAiChatPopup`（列表+History）；`16b5835` 改筛先 `saveFilter` 再 `list`（对齐 PC）；`3c055a6` 头部——左 `back` 关页、右 `StartChatButton`(仅图标)+`side-close` 开弹窗（旧「切换AI框」胶囊注释掉）；`Chat` 新增 `#header-right`（有则替换默认设置/全屏/关闭）；弹窗 `h-100vh`；History `openCloseMode` 控关栏按钮与「新对话」文案。**待真机 E2E / 视觉验收**
 - (ios / web) **选择数据范围原生多选（T10）**：桥 `selectDataRangeScope` + 复用选择 AI 框页强制多选已接线；web `DataScopeBar` 移动端走原生、PC 仍 H5；回传 scopes → `saveDataRange`。本轮：搜索页底栏对齐主页（已选/清空/**完成**，无取消；不再用转发「发送」栏）；已选展示名本地 DB 补齐；下拉箭头改 chevron；审查修复——搜索内点选/清空**不 live sync**（仅「完成」写回）、群 tab 从已选移除须清群列表、空 id 用同人判断、键盘中间态底栏贴键盘顶。**待真机 E2E**
-- (android) **选择数据范围原生多选（T10，编译通过）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` → 子页联系人多选 / 群组·搜索 `EXTRA_MULTI` 回主页合并 → 回传 `personal-ai:selected-data-range`。底栏共用 `include_data_range_multi_footer`：`已选：N个` 弹层 + 清空 + 取消 + 确定(N)；**搜索/群组子页隐藏取消**（左侧返回）；箭头 `ic_data_range_pull_down`（对齐 web pull-down）。Bugbot：**无阻断级问题**。**待真机 E2E**
+- (android) **选择数据范围原生多选（T10，编译通过 + test 包已装机）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` → 子页联系人多选 / 群组·搜索 `EXTRA_MULTI` 回主页合并 → 回传 `personal-ai:selected-data-range`。底栏共用 `include_data_range_multi_footer`；回传同 selectAiAgent 走 `wv.post`。Bugbot：**无阻断级问题**。**待真机 E2E**
 - (android) **低风险债**：若需 AI 框搜索保持旧交互（右侧取消、不自动弹键盘），应用 `EXTRA_MULTI` 门控返回样式与键盘行为
 - (web / desktop) **组织架构进公司**：已按 PC 转发对齐——`getContactTree({isGroup:1})`、公司 `id` 作 corpId、`rootDeptId||id` 作首屏 pid、透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过。**待 E2E**：点企业应直接见部门+人员（不再多一层企业 / 暂无人员）
 - (desktop) ~~待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`~~ → **已按 PC 转发透传**
 - (web) `personal-ai-chat` 已合入本地 `test-202512`（含 saveSelected）；本轮增量 `a7fa5fd` 已提交、**尚未 push**
-- (desktop) T2：**handler 已落地并提交**（`1ca7496e` 含组织进公司参数）；工作区未提交仅 `.env.test`→`localhost:6173`。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
+- (desktop) T2：**handler 已落地并提交**（`1ca7496e` 含组织进公司参数）；工作区未提交为本地联调/test 打包（`.env.test`、`zhixin-test` productName/appId、mac arm64、asarUnpack sqlite3、leveldown↑）。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
 - (多端) T9 待视觉对照蓝湖 4 张主 tab + 搜索 popover 截图验收；**列表顶栏**「选择AI框」胶囊样式已按稿调整（见关键决策）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
 - (web) 待联调确认 Home 对话是否支持「24h 恢复 vs 新建」（`resumeChat` 状态已保留并参与 pane key 重挂载，尚未传入 HomeIndex）
