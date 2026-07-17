@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-17（web tip `4aca44d`：refreshViewDate 必传 microAppId + 校验 type；待 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-17（web tip `4aca44d` 已 push：refreshViewDate 必传 microAppId + 校验 type）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,11 +19,11 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：**tip `4aca44d`（已 commit，待 push——远端 502）**——`refreshViewDate` 必传 `id=1915674367645798402`+`name=AI框`，success 仅匹配本应用且 `type=aiBoxSendMessage` 再 bump；其上 `a89a112` 移动端听推送 + 顶栏联调次数。ios/android：**工作区未提交**——推送→角标含 0 + 统一 microAppId + iOS extra 扁平。desktop 本地 test 打包与本功能无关。移植对照见 `3端AI框角标推送.md`。
+> **本轮 apps 事实**：web `personal-ai-chat`：**tip `4aca44d` 已 push**——`refreshViewDate` 必传 `id=1915674367645798402`+`name=AI框`，success 仅匹配本应用且 `type=aiBoxSendMessage` 再 bump；其上 `a89a112` 移动端听推送 + 顶栏联调次数。ios/android：**工作区未提交**——推送→角标含 0 + 统一 microAppId + iOS extra 扁平。desktop 本地 test 打包与本功能无关。移植对照见 `3端AI框角标推送.md`。
 
 ## 待办 / 阻塞
 
-- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC `95206f5` 听 zx-pc；**移动端 `4aca44d`** `refreshViewDate({id,name})` 必传 microAppId，仅 `extra.type===aiBoxSendMessage` bump（`a89a112` 起顶栏联调次数）。**ios/android 代码已落地**：融云命中 → `getBadgePushInfo` → 会话列表 **黄角标含 0** + 副标题；打开中 WebView `refreshViewDate`/`refreshDate`。**待**：web push（远端曾 502）；真机 E2E；web 刷 list / 点进清角标；验完删调试计数
+- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC `95206f5` 听 zx-pc；**移动端 `4aca44d` 已 push** `refreshViewDate({id,name})` 必传 microAppId，仅 `extra.type===aiBoxSendMessage` bump（`a89a112` 起顶栏联调次数）。**ios/android 代码已落地**：融云命中 → `getBadgePushInfo` → 会话列表 **黄角标含 0** + 副标题；打开中 WebView `refreshViewDate`/`refreshDate`。**待**：真机 E2E；web 刷 list / 点进清角标；验完删调试计数
 - (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数（`95206f5`）；移动顶栏次数（`a89a112`/`4aca44d`）。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
 - (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
