@@ -19,7 +19,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：移动端 `DataScopeBar`→`selectDataRangeScope` 已接线；desktop 本地联调略；ios `personal-ai-chat`：**工作区未提交**——数据范围搜索底栏对齐主页（`ZXSelectDataRangeBottomView`，无取消/「完成」提交）、已选人名 DB 补齐、chevron、审查修复（群移除/不 live sync/键盘）；android `personal-ai-chat`：**工作区未提交**——统一 `include_data_range_multi_footer`（搜索/群组隐藏取消）+ pull-down chevron，**待真机 E2E**。
+> **本轮 apps 事实**：web `personal-ai-chat`：移动端 `DataScopeBar`→`selectDataRangeScope` 已接线；desktop 本地联调略；ios `personal-ai-chat`：**`75ac9ab1b` 已提交**——`selectDataRangeScope` + 搜索底栏对齐（`ZXSelectDataRangeBottomView`，无取消/「完成」提交）、已选人名 DB 补齐、chevron、审查修复；`ZXSelectAiAgentResultTest.m` 仍留工作区勿合；android `personal-ai-chat`：**工作区未提交**——统一 `include_data_range_multi_footer`（搜索/群组隐藏取消）+ pull-down chevron，**待真机 E2E**。
 
 ## 待办 / 阻塞
 
