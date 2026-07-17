@@ -30,7 +30,8 @@ contracts/
 │  ├─ getAgentDataRange.d.ts    # POST /agentSetDataRangeExpand/getAgentDataRange
 │  ├─ shareFileData.d.ts        # POST /agentFileShare/shareFileData
 │  ├─ shareFileDataList.d.ts    # POST /agentFileShare/shareFileDataList
-│  └─ saveAgentSetInfo.d.ts     # POST /agentSetBasic/saveAgentSetInfo
+│  ├─ saveAgentSetInfo.d.ts     # POST /agentSetBasic/saveAgentSetInfo
+│  └─ getBadgePushInfo.d.ts     # POST /agentSetBasic/getBadgePushInfo
 └─ README.md
 ```
 
