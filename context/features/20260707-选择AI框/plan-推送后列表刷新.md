@@ -1,5 +1,7 @@
 # 推送后列表刷新 Implementation Plan
 
+> **状态（2026-07-20）：Tasks 1–5 已完成；代码合入本地 `apps/web` `test-202512`（`27491b2`）。待 PC/真机 E2E 与删调试 UI。**
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Web 收到 `aiBoxSendMessage` 后按规则只刷新数据（AI框列表 / 历史会话 / 当前消息），PC 与移动 `/m/` 共用一套编排，不重挂载对话面板。

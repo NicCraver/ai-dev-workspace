@@ -39,9 +39,35 @@
 
 ## 错误处理策略
 
+桥/HTTP 失败不阻断其它 tab；选中持久化失败走本地 upsert。
+
 - 桥请求超时（iframe postMessage 30s）：reject，搜索 popover 可显示失败重试。
 - 单群详情补取失败：不阻塞整表，该群降级为单头像或无 2×2 拼图。
 - `getDeptUsers` 缺 `corpType` 等曾致空结果：桥与 web 已按 PC 转发透传；若仍 400/空，对照公司节点是否带齐 `corpType/corpAndCorpRelType/labelType`。
+
+## 推送后内容刷新（`aiBoxSendMessage` → Web）
+
+> 规则全文：`推送后列表刷新规则.md`。角标仍由壳 `getBadgePushInfo` 处理，本文只谈内容列表。
+
+**命中前提**：壳/原生仅在当前账号 map 命中且 `sessionIds` **非空**时通知 Web；Web 收到空数组仍 short-circuit（防御）。
+
+**三层与接口**：
+
+| 层 | 刷新条件 | 接口 |
+|----|----------|------|
+| AI框列表 | 有非空 `sessionIds` | `POST /personalAiFrame/list`（沿用当前 filterTypes + exemptAgentIds，不重拉 getFilter） |
+| 历史会话 | 当前打开的 sessionId ∈ 推送集合 | `getSessionList`（soft） |
+| 当前消息 | 同上 | `getMessageList`（按当前 sessionId）；**不用** `getLastSessionMessage` |
+
+**边界 / 失败策略**：
+
+- 只刷数据：不重挂对话面板（不因推送改选中 key / 不整页 reload）。
+- `list` 失败：保留现有列表与当前选中，禁止清空选中导致对话面板被拆掉。
+- `list` 成功：合并本地已有展示字段（头像/智能体名），避免接口空字段冲掉刚选中保留的展示。
+- 历史未挂载（侧栏收起 / 移动弹窗未开）：跳过 History soft 刷；下次打开再拉。
+- 推送刷新路径不改动飞书/WPS 鉴权通用流程。
+
+**双入口**：PC 个人页与移动 `/m/` 个人宿主共用同一套判定编排，仅注入「刷 list / 刷历史 / 刷消息」实现不同。
 
 ## 联调坑（实际接口 ≠ 文档之处）
 
