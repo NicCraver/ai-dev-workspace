@@ -39,7 +39,7 @@
 - (desktop) ~~**AiBrowser 循环打 `aiToolList` + `getAuthCode`**~~：根因 `aiId=0` 被 `!activePageId` 当假值，每次 refresh 重走 select；且每次 `loadList` 都打 getAuthCode；`updateRecentlyUsed→ai_tools_cmd→refresh-ai-link` 连发放大。已修——aiId 统一字符串、`pageUrlMap` 命中跳过 getAuthCode、refresh debounce + in-flight 合并。**待** 重开 PC 验网络不再刷屏
 - (ios) ~~**会话列表刷 `aiToolList` + `updateRecentlyUsed` 死循环**~~：日志含 `Tabbar-定时器` + UITableView visibleCells 警告。根因同族——`getRecentAITable` 无 `isRecent` 时对列表首项（现为 AI框 `aiId=0`）调 `updateRecentlyUsed` → `ai_tools_cmd` → 再拉列表仍无 isRecent。已修：`isPersonalAiTable` 跳过上报；`setAiTable` 同 id/AI框不报；`refreshAIList` debounce。**待** 真机重进会话列表验网络；UITableView 警告应随风暴消失
 - (android) ~~**AI框 `updateRecentlyUsed` 加固**~~：本身不成环（推送 `recentlyUsed` 被丢弃），但 `toUpdateData` 回落首项可能对字符串 `"0"` 误报。已在 `AiToolChatBaseView.saveRecentlyUsed` 对 `"0"` / 空 id 直接 return（与接口回参一致用字符串比）
-- (ios / android) ~~**`aiToolList` 中 `aiId=0`「AI框」不出现在 AI 工具 UI**~~：展示层已滤——ios `displayAITables` + `getRecentAITable` 跳过 `0`；android `getAiToolsForDisplay`（`getAiTools` 同步仍全量）+ 面板入口/刷新/构造兜底。审查补丁：展示空时 ios 关更多/Page 弹层、android `toUpdateData` 关面板 + shortcut 忽略 `recentAi` 的 `"0"`。DB 仍完整落库；会话列表「AI框」入口保留。**待真机 E2E**
+- (ios / android) ~~**`aiToolList` 中 `aiId=0`「AI框」不出现在 AI 工具 UI**~~：展示层已滤；二审通过。ios 另补：`asyncGetAIList` 展示变空时关 Page/更多。android 首轮中风险已修。**待真机 E2E**
 - (desktop) **工作区未提交 = 本地 test 打包**（非功能增量）：`.env.test` 指 localhost、`zhixin-test` 包名、arm64、asarUnpack sqlite3 等；勿当 T2/T9 未完成
 - (多端) T9 待视觉对照蓝湖 4 张主 tab + 搜索 popover 截图验收；**列表顶栏**「选择AI框」胶囊样式已按稿调整（见关键决策）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
