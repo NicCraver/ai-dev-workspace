@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-17（web tip `4aca44d` 已 push：refreshViewDate 必传 microAppId + 校验 type）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（web 规范化推送 `sessionIds`：顶层优先 + Map 回退）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,8 +23,8 @@
 
 ## 待办 / 阻塞
 
-- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC `95206f5` 听 zx-pc；**移动端 `4aca44d` 已 push** `refreshViewDate({id,name})` 必传 microAppId，仅 `extra.type===aiBoxSendMessage` bump（`a89a112` 起顶栏联调次数）。**ios/android 代码已落地**：融云命中 → `getBadgePushInfo` → 会话列表 **黄角标含 0** + 副标题；打开中 WebView `refreshViewDate`/`refreshDate`。**待**：真机 E2E；web 刷 list / 点进清角标；验完删调试计数
-- (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数（`95206f5`）；移动顶栏次数（`a89a112`/`4aca44d`）。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
+- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC/移动已听推送并 **规范化 `sessionIds`**（`aiBoxSendMessageUtils`：顶层优先，否则 `cmdMsg.pushAccountIdSessionIdSetMap[accountId]`）写入 `pushSessionIds` + 调试 payload；原生侧 extra **始终带 `sessionIds` 数组**（可空）。**ios/android 代码已落地**：融云命中 → `getBadgePushInfo` → 黄角标含 0 + 副标题 → WebView 扁平 extra。**待**：真机 E2E；web 按 `sessionIds` 刷 list / 当前会话；点进清角标；验完删调试计数
+- (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数；移动顶栏次数；调试 popover 展示含 `sessionIds` 的规范化 payload。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
 - (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
 - (web) ~~**T10 已选 chip 名/头像**~~：记忆 scope 补齐改走 `recentContactList`（`9a1dd2d`）；「数据范围」仅个人 AI 框；已选叠加小图标改固定 `data-range-icon`（`62dcd87`）。**待 PC 弹窗 E2E 回显**
@@ -71,6 +71,7 @@
 
 ## 关键决策记录
 
+- 2026-07-20 web 融云推送落点：统一解析 `sessionIds`（优先顶层；缺失从 `pushAccountIdSessionIdSetMap[当前 accountId]` 回退；兼容 refreshViewDate 的 `extra`/`result` 嵌套）；PC `PersonalAiChat` / 移动 `MPersonalAiChatWrapper` 写入 `pushSessionIds`；iOS/Android 通知 Web 时 `sessionIds` 恒为数组
 - 2026-07-17 AI框整体角标拉数：`POST /agentSetBasic/getBadgePushInfo`（YApi #14196）；入参仅 `accountId`；回参 `yellowUnreadNumber`（黄标）+ `lastAbbreviationInfo`（缩略，可 null）；与行动中心同模式——推送后 HTTP 拉真数，不用 payload 数字写角标；三端移植对照 `3端AI框角标推送.md`
 - 2026-07-17 审查修复移动端 AI框推送 Web 链路：① web `refreshViewDate` 必须传 `id`+`name`（wnsdk 缺 id 直接失败）；② 三端统一 microAppId=`1915674367645798402`；③ iOS `extra` 改为扁平 payload（与 Android/契约一致，勿双层包裹）
 - 2026-07-17 移动端 AI框角标对齐呼叫群推送链路，展示策略对齐 PC：**接口成功后黄角标含 0**；副标题 `lastAbbreviationInfo`；打开中 Web `refreshViewDate`；Android 离线忽略，启动/回前台补拉
