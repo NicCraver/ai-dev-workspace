@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（ios：停用进页角标深链，避免加载完 closePage）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（ios 合入 release 并 push；android 入口深链+离开补拉未提交；desktop 仍本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,23 +19,23 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web **推送刷列表**已在 `test-202512` 本地 tip `166a962` 显式补回（`personalAiPushRefreshFlow` + PC/移动接线 + adapter；Chat/Home 保留 `saveDataRange`/本地下载）；**待 push**。同源仍在 `personal-ai-chat`。ios/android：融云命中 → 黄角标 **>0 才显示** + 统一 microAppId。**desktop 工作区未提交仍为本地 test 打包**。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**：ios `personal-ai-chat` 已 **merge origin/release** 并 push（`6dfce4940`；冲突仅 `ZXJSAIChatAPI` import，双保留）。ios 另已停用进页自动拼角标深链（`c1ea29ff5`）。android **工作区未提交**：入口深链（`getBadgePushInfo` 有回参才拼 `agentId`/`belongId`/`belongType`）+ `ensureLeaveRefreshHook`（离开个人 AI finishing 补拉角标）。desktop **工作区未提交仍为本地 test 打包**（`.env.test`→localhost、`zhixin-test`、arm64、asarUnpack）。web tip `5184de6`：飞书/WPS 鉴权取消不再 `closePage`。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
-- (ios) **进 AI 框加载完即回会话列表**：角标 `getBadgePushInfo` 回参被拼进 URL 深链 → H5 进页选中对应框 → Chat 飞书/WPS 鉴权取消/失败会 `closePage`。已停用进页自动拼深链（方法保留）。选择页选群回首页问题另案。**待真机 E2E**
-- (web / ios / android) **入口深链**：ios/android 有回参才拼 URL；web ✅ 命中直选 / **未命中 saveSelected→exempt list 再选** / 失败回落个人框。方案 `plan-入口深链saveSelected.md`。「入口参」调试按钮已注释隐藏，需要时解开。**待** 后端回参 + 真机 E2E
+- (ios) ~~**进 AI 框加载完即回会话列表**~~：角标深链进页 → Chat 鉴权取消/失败 `closePage`。已停用进页自动拼深链（`c1ea29ff5`，方法保留）+ web `5184de6` 鉴权取消不再关宿主。选择页选群回首页问题另案。**待真机 E2E**
+- (web / ios / android) **入口深链**：web ✅ 命中直选 / 未命中 saveSelected→exempt list / 失败回落个人框。ios：**进页已停用自动拼**（见上）。android：**工作区未提交**——`PersonalAiListCellBinder.appendBadgeDeepLinkQuery` 有回参才拼。方案 `plan-入口深链saveSelected.md`。「入口参」调试按钮已注释。**待** 后端回参 + 真机 E2E + android 提交
 - (web) ~~**三点菜单「隐藏」图标**~~：由 `pngHide` 改为 SvgIcon `hide`（`assets/svg/hide.svg` 斜眼）
 - (web) ~~**选择 AI 框后侧栏头像/智能体名不刷新**~~：根因——`upsertSelectedAgent` 命中已有项只改 hidden/lastChatAt。已修：upsert 刷新 avatar + 独立 agentName；选中/搜索优先 `agentAvatar`；`preserveAgentDisplayFields` 防 list 空头像/空 name 冲掉本地。**待** PC 弹窗再选同一人/搜索选中 E2E
-- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web ✅ **听推送 + 刷列表**（`personalAiPushRefreshFlow`；有 `sessionIds` → **list + History 必刷**；当前会话命中再刷 Chat；list 失败保态 / `preserveAgentDisplayFields`）。规则见 `推送后列表刷新规则.md`。**ios/android**：黄角标 **>0 才显示**；**从个人 AI 返回补拉 `getBadgePushInfo`**（ios：`viewWillDisappear` 仅 pop/dismiss；android：`ensureLeaveRefreshHook` finishing）。**待**：真机/PC E2E；点进清角标；验完删调试 UI
-- (ios / android) ~~**从个人 AI 返回刷新角标**~~：ios 收紧为仅 `isMovingFromParentViewController`/`isBeingDismissed`；android 新增离开页 hook → `getBadgePushInfo`（无 sessionIds，不推 Web）。**待真机 E2E**
+- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web ✅ **听推送 + 刷列表**（`personalAiPushRefreshFlow`；有 `sessionIds` → **list + History 必刷**；当前会话命中再刷 Chat；list 失败保态 / `preserveAgentDisplayFields`）。规则见 `推送后列表刷新规则.md`。**ios/android**：黄角标 **>0 才显示**；**从个人 AI 返回补拉 `getBadgePushInfo`**（ios ✅ 已提交：`viewWillDisappear` 仅 pop/dismiss；android 🚧 **工作区未提交**：`ensureLeaveRefreshHook` finishing）。**待**：android 提交；真机/PC E2E；点进清角标；验完删调试 UI
+- (ios / android) ~~**从个人 AI 返回刷新角标**~~：ios ✅ 已提交（仅 `isMovingFromParentViewController`/`isBeingDismissed`）；android 代码已写 **未提交**（`PersonalAiBadgeController.ensureLeaveRefreshHook` → `getBadgePushInfo`，无 sessionIds、不推 Web）。**待** android 提交 + 真机 E2E
 - (web) ~~推送只刷 list、History 不刷~~ → **规则已改**（2026-07-20）：中间 History 有 `sessionIds` 必刷；右侧 Chat 看是否命中当前会话
 - (web) ~~**列表项黄色未读角标**~~：`PersonalAiChatAgentItem` 标题旁展示黄角标；样式对齐 shortcut `AcUnread`（`#FA7700`）。数据源：list **`aiUnreadYellowNumber`**（兼容旧名 `unreadCount`）→ adapter `unreadCount`；**≤0 不显示**（列表项有 `top--0.5` 上移）。**待** 点进清零 / E2E
 - (web) ~~**历史会话黄角标**~~：`HistoryCard` 会话名后展示 `history.aiUnreadYellowNumber`（`getSessionList` 透传）；样式同黄标但**不上移**；≤0 不显示。**待** E2E
 - (web) ~~merge-after-revert 丢推送刷新~~ → `test-202512` `166a962` 已从 `personal-ai-chat` 显式检出补回（Chat/Home 定点叠加，保留 test 独有记忆项/下载）
 - (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数；移动顶栏次数；调试 popover 展示含 `sessionIds` 的规范化 payload。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
 - (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方；回参可选 `agentId`/`belongId`/`belongType`（2026-07-20）
-- (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
+- (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（已在 `personal-ai-chat`）；android `onResult` → `wv.post` 再回调（已提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
 - (web) ~~**T10 已选 chip 名/头像**~~：记忆 scope 补齐改走 `recentContactList`（`9a1dd2d`）；「数据范围」仅个人 AI 框；已选叠加小图标改固定 `data-range-icon`（`62dcd87`）。**待 PC 弹窗 E2E 回显**
 - (web) **移动端个人 AI 宿主（lifeng）**：`bd1e06c` 基座 `MPersonalAiChatWrapper`（Chat）+ `SelectAiChatPopup`（列表+History）；`16b5835` 改筛先 `saveFilter` 再 `list`（对齐 PC）；`3c055a6` 头部——左 `back` 关页、右 `StartChatButton`(仅图标)+`side-close` 开弹窗（旧「切换AI框」胶囊注释掉）；`Chat` 新增 `#header-right`（有则替换默认设置/全屏/关闭）；弹窗 `h-100vh`；History `openCloseMode` 控关栏按钮与「新对话」文案。**待真机 E2E / 视觉验收**
 - (ios / web) **选择数据范围原生多选（T10）**：桥 `selectDataRangeScope` + 复用选择 AI 框页强制多选已接线；web `DataScopeBar` 移动端走原生、PC 仍 H5；回传 scopes → `saveDataRange`。本轮：搜索页底栏对齐主页（已选/清空/**完成**，无取消；不再用转发「发送」栏）；已选展示名本地 DB 补齐；下拉箭头改 chevron；审查修复——搜索内点选/清空**不 live sync**（仅「完成」写回）、群 tab 从已选移除须清群列表、空 id 用同人判断、键盘中间态底栏贴键盘顶。**待真机 E2E**
@@ -76,15 +76,18 @@
 - (ios) **个人 AI 宿主页 + 会话入口已合入 `836a25327`**：`ZXPersonalAIChatController`（内嵌 Web，`ZXPersonalAIChatPath=ai-chat/m/personal`）；会话列表合成 `ConversationType_PersonalAI` 置顶 Cell（`ZXPersonalAIChatId`）；入口名称「AI框」，角标一期占位，待 A1/A4 接真数据
 - (ios) **会话入口图标已合入 `836a25327`**：`zx_personal_ai_icon`（@2x/@3x）→ `ConversationType_PersonalAI` 头像
 - (ios) **合入后债（未挡一期验收）**：PersonalAI 副标题 RCIM 短路待接 list 接口；选择页仍转发页拷贝待裁剪；桥重入/dismiss cancel 真机复现再补
-- (android) **会话列表入口 WIP（工作区未提交）**：`PersonalAiListCellBinder` 置顶 Cell + 打开 `ai-chat/m/personal`；入口文案「AI框」；图标 `personal_ai_icon`（hdpi~xxxhdpi，替换 `ai_tool_icon`）。本轮 URL query 补 `accountId`（登录用户 id）
-- (android) **`selectAiAgent` 桥 + 独立原生选择页已落地（工作区未提交，编译通过）**：`api/AiChat.selectAiAgent`（`aiChat` 别名已注册）→ `addPort` + 跨模块 `CoreApiUtil.selectAiAgent`（新 `CoreApiInterface.SelectAiAgent`，`InitCrossModuleApproach` 注册拉起 `SelectAiAgentActivity`）→ `startActivityForResult(238)` → `WebloaderControl.onResult` 新分支读回选中项 → `AutoCallbackEvent.onSelectAiAgent` 组装 `personal-ai:selected-agent` 载荷回传（取消 `onSelectAiAgentCancel` → code=-1）。选择页 `smart_message/personal_ai_select/`（`SelectAiAgentActivity`+`SelectAiAgentAdapter`，复用 `item_friend_content`，最近会话人+群单选，剥离转发发送）。saveSelected/list 仍在 web H5。**待真机 E2E**
-- (android) **选择页补齐搜索/选择联系人/选择已有群组（编译通过）**：对齐 ios 版式——顶部搜索框（进 `SelectSearchActivity`：本地 DB 搜人+群，全部/群组/人员三 tab）+「选择联系人」（复用通讯录 `ChooseAddressMemberFragment` 单选，返回人）+「选择已有群组」（`SelectGroupActivity`：`GROUP_TYPE<10` 组织群 /`>=10` 外协群两 tab，`DataCenter.getGroupList` 客户端拆分）+「最近聊天」列表。子页均把 `GroupInfo`/`EaseUserInfo` 包成 `Conversation` 复用 `SelectAiAgentAdapter`，选中经 `SelectAiAgentResult` 统一 setResult 回传，主页 `onActivityResult` 汇总透传给 WebView。**待真机 E2E**
+- (android) **会话列表入口已提交**（`5bf2586be`）：`PersonalAiListCellBinder` 置顶 Cell + 打开 `ai-chat/m/personal`；入口文案「AI框」；图标 `personal_ai_icon`。URL 已带 `corpId`+`accountId`。**工作区未提交增量**：有角标回参才拼深链 query（见上）
+- (android) **`selectAiAgent` 桥 + 独立原生选择页已提交**（`5bf2586be`）：`api/AiChat.selectAiAgent` → `addPort` + `CoreApiUtil.selectAiAgent` → `SelectAiAgentActivity`(238) → `onResult`/`wv.post` → `personal-ai:selected-agent`。saveSelected/list 仍在 web H5。**待真机 E2E**
+- (android) **选择页补齐搜索/选择联系人/选择已有群组（已提交）**：对齐 ios——搜索（本地 DB）+ 选择联系人 + 选择已有群组（组织/外协）+ 最近聊天。**待真机 E2E**
 - (android) **选择页后续债**（未挡本轮）：搜索为**本地 DB**（非 web 的 `selectGroupBySearch` HTTP）；群头像回传暂空串；`agentId`/`aiRoleId`/`lastChatAt` 缺省（与 ios 同）；关键词高亮/空态图未做
 - (desktop) **左侧第二项 / AiBrowser tab 列表**：`POST /aiTools/aiToolList` 回参 **`aiId=0`** 为 AI框（`aiName`/`pcLogoJsonStr` 驱动侧栏与 tab 文案图标）；`aiUrl` 空则内嵌 `${APP_AICHAT}/zx/personal` iframe（`getUserCode` 拼参）。**固定排首**，不参与置顶/最近使用/更多菜单。切换 tab → `ai-sider-item` 同步左侧菜单；`pageUrlMap` 首次打开缓存 url，切回不重载。**待 E2E**
 - (ios / web) ~~`mapSelectionToAgent` 建会话仍 DEFAULT_CHAT~~ → **`bd1e06c` 已修**：`belongId` 优先 `ownerId`/`id`/`accountId`/`groupId`，有值则 `chatType`/`targetId` 用真实归属（对齐 `mapFrameItemToAgent`）；缺 id 才回退占位
 
 ## 关键决策记录
 
+- 2026-07-20 ios：`origin/release` 已 merge 进 `personal-ai-chat` 并 push（`6dfce4940`）；含绿盾文件预览重构 + `presentKnowledgeAuth`；与个人 AI 桥 import 冲突已双保留
+- 2026-07-20 web `5184de6`：飞书/WPS 知识库鉴权取消/失败 **不再** `closePage`（配合 ios 停用进页深链，避免进页即回会话列表）
+- 2026-07-20 android（**未提交**）：入口深链与离开补拉角标代码已在工作区（`BadgePushInfoRspDTO` 三字段 + `appendBadgeDeepLinkQuery` + `ensureLeaveRefreshHook`）
 - 2026-07-20 History 会话黄角标：`HistoryCard` 读 `getSessionList.aiUnreadYellowNumber`，会话名右侧，**不上移**（与侧栏列表项 `top--0.5` 区分）
 - 2026-07-20 ios/android：从个人 AI 页返回补拉 `getBadgePushInfo`（无 sessionIds → 只刷原生入口角标/缩略，不推 Web）；ios 仅 pop/dismiss；android 仅 APIMainActivity finishing + personal path
 - 2026-07-20 web 列表黄角标：跟 shortcut `AcUnread` 黄标；数据源 list **`aiUnreadYellowNumber`**（兼容 `unreadCount`）；位置在归属名右侧；>0 才显
