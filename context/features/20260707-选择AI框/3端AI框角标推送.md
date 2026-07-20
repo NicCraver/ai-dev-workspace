@@ -219,6 +219,7 @@ web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听�
 | 列表 UI | `ZXConversationListCell` PersonalAI：黄角标 knowNum + 副标题 abbr | `PersonalAiListCellBinder`：LEVEL_SECOND 黄标 + desc |
 | 通知 Web | `ZXPersonalAIChatController` → `refreshViewDate` | 打开中且 `microAppId=AI_FRAME_ID` → `refreshDate` |
 | 启动补拉 | `ZXChatMenuController` 与呼叫群同批 | `ZhiXinFragmentThing` initData / case 121 |
+| 离开个人AI页补拉 | `ZXPersonalAIChatController` viewWillDisappear（仅 pop/dismiss） | `PersonalAiBadgeController.ensureLeaveRefreshHook`（APIMainActivity finishing + personal path） |
 | 离线 | 进 `onReceivedAllCmdMessage` 合并（未单独 filter） | **离线忽略**（与行动中心同） |
 
 角标展示：**ios/android**——`yellowUnreadNumber > 0` 才显示黄角标（**0 不展示**）；desktop 左侧仍可含 0。
