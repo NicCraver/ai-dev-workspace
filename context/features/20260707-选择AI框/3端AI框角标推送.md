@@ -82,7 +82,7 @@ PC iframe `postMessage` 与移动 `refreshViewDate.extra` **相同**，只含三
 
 | 字段 | 说明 |
 |---|---|
-| `yellowUnreadNumber` | 黄色角标数（联调时 **0 也显示**） |
+| `yellowUnreadNumber` | 黄色角标数（**ios/android：>0 才显示角标**；desktop 左侧仍可含 0） |
 | `lastAbbreviationInfo` | 最新缩略（会话列表副标题等；可为 null） |
 
 ### 1.3 模拟推送（联调）
@@ -221,7 +221,7 @@ web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听�
 | 启动补拉 | `ZXChatMenuController` 与呼叫群同批 | `ZhiXinFragmentThing` initData / case 121 |
 | 离线 | 进 `onReceivedAllCmdMessage` 合并（未单独 filter） | **离线忽略**（与行动中心同） |
 
-角标展示：移动端与 PC 对齐——**getBadgePushInfo 成功后展示黄角标，含 0**。
+角标展示：**ios/android**——`yellowUnreadNumber > 0` 才显示黄角标（**0 不展示**）；desktop 左侧仍可含 0。
 
 ### 3.4 内容侧（另线，非本推送必做）
 

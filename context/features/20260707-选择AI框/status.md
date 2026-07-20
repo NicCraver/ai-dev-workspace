@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（web 推送后刷列表已落地 `personalAiPushRefreshFlow`，待 E2E；三点菜单「隐藏」改用 SvgIcon `hide.svg`；ios/android 隐藏 aiId=0 已 push；desktop 仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（ios/android AI框入口黄角标改为 **0 不显示**；Header 标题区按实际右侧图标数预留宽度；web 推送后刷列表已落地，待 E2E；desktop 仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,13 +19,13 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：**tip `4aca44d` 已 push**——`refreshViewDate` 必传 `id=1915674367645798402`+`name=AI框`，success 仅匹配本应用且 `type=aiBoxSendMessage` 再 bump；其上 `a89a112` 移动端听推送 + 顶栏联调次数。ios/android：**工作区未提交**——推送→角标含 0 + 统一 microAppId + iOS extra 扁平。**desktop 工作区未提交仍为本地 test 打包**（`.env.test`→`APP_AICHAT/ACTIONCENTER=localhost:6173`、`zhixin-test` productName/appId、mac arm64、asarUnpack sqlite3、leveldown↑）——**非本功能代码**。移植对照见 `3端AI框角标推送.md`。
+> **本轮 apps 事实**：web `personal-ai-chat`：**tip `4aca44d` 已 push**——`refreshViewDate` 必传 `id=1915674367645798402`+`name=AI框`，success 仅匹配本应用且 `type=aiBoxSendMessage` 再 bump；其上 `a89a112` 移动端听推送 + 顶栏联调次数。ios/android：**工作区未提交**——推送→黄角标 **>0 才显示**（0 隐藏）+ 统一 microAppId + iOS extra 扁平。**desktop 工作区未提交仍为本地 test 打包**（`.env.test`→`APP_AICHAT/ACTIONCENTER=localhost:6173`、`zhixin-test` productName/appId、mac arm64、asarUnpack sqlite3、leveldown↑）——**非本功能代码**。移植对照见 `3端AI框角标推送.md`。
 
 ## 待办 / 阻塞
 
 - (web) ~~**三点菜单「隐藏」图标**~~：由 `pngHide` 改为 SvgIcon `hide`（`assets/svg/hide.svg` 斜眼）
 - (web) ~~**选择 AI 框后侧栏头像不刷新**~~：根因——`upsertSelectedAgent` 命中已有项只改 hidden/lastChatAt；`mapSelectionToAgent` 未优先 `agentAvatar`。已修：upsert 刷新头像/名称 + belongId 兜底匹配；选中/搜索优先 AI 框头像；`preserveAgentAvatars` 防 list 空 avatar 冲掉本地。**待** PC 弹窗再选同一人/搜索选中 E2E
-- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC/移动已听推送并 **规范化 `sessionIds`**（`aiBoxSendMessageUtils`：顶层优先，否则 `cmdMsg.pushAccountIdSessionIdSetMap[accountId]`）写入 `pushSessionIds` + 调试 payload；原生侧 extra **始终带 `sessionIds` 数组**（可空）。**ios/android 代码已落地**：融云命中 → `getBadgePushInfo` → 黄角标含 0 + 副标题 → WebView 扁平 extra。**web 推送后刷列表已落地**（`personal-ai-chat`）：`personalAiPushRefreshFlow.js` 共用编排；PC `PersonalAiChat`→`Home` expose；移动 `MPersonalAiChatWrapper`→`Chat` expose + 弹窗 `historyRefreshNonce`；规则见 `推送后列表刷新规则.md` §6。**待**：真机/PC E2E 手测；点进清角标；验完删调试计数/UI
+- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC/移动已听推送并 **规范化 `sessionIds`**（`aiBoxSendMessageUtils`：顶层优先，否则 `cmdMsg.pushAccountIdSessionIdSetMap[accountId]`）写入 `pushSessionIds` + 调试 payload；原生侧 extra **始终带 `sessionIds` 数组**（可空）。**ios/android**：融云命中 → `getBadgePushInfo` → 黄角标 **>0 才显示**（产品改：0 不展示）+ 副标题 → WebView 扁平 extra。**web 推送后刷列表已落地**（`personal-ai-chat`）：`personalAiPushRefreshFlow.js` 共用编排；PC `PersonalAiChat`→`Home` expose；移动 `MPersonalAiChatWrapper`→`Chat` expose + 弹窗 `historyRefreshNonce`；规则见 `推送后列表刷新规则.md` §6。**待**：真机/PC E2E 手测；点进清角标；验完删调试计数/UI
 - (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数；移动顶栏次数；调试 popover 展示含 `sessionIds` 的规范化 payload。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
 - (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
@@ -59,7 +59,7 @@
 - (web) `POST /personalAiFrame/selectGroupBySearch` **已接入**选择弹窗与侧栏搜索：`searchPicker` 改走 HTTP（`selectGroupBySearchApi` 动态导入，`accountId` 取登录用户），映射 `privateList`/`groupList`；搜索结果 popover 新增「全部/群组/人员」三 tab（全部=群组在前+人员在后）。web 不再调用桥 `searchAiBoxPicker`；**`AiBoxSearchRow` 有 `agentAvatar` 时优先单头像**（群组对齐 `AiBoxRow`，人员同理）
 - (web) 个人 AI 右侧对话面板已改为**组件直渲** `HomeIndex`（`chatType`/`targetId`/`aiRoleId` props + key 重挂载），不再嵌套 `/zx/home/...` iframe；独立 `zx/home` 路由入口仍可用
 - (web) **PC 个人 AI 内嵌对话**：历史侧栏随 **Home 自身 `elWidth`** 在弹窗/双栏间切换（`DRAWER_MAX_WIDTH=700`：`≤700` popup 宽 280px，`>700` 双栏）；首次窄屏默认 popup，变宽自动解除并切双栏；独立首页默认收起
-- (web) **PC 个人 AI 头栏四按钮**：`hideBuiltinCollapseChrome` 下传至 `Chat` → 全屏 / 设置 / 打开智信私聊·群聊（个人框隐藏）/ 打开独立弹窗；无关闭；移动端 `#header-right` 仍优先。**待桌面 E2E**
+- (web) **PC 个人 AI 头栏四按钮**：`hideBuiltinCollapseChrome` 下传至 `Chat` → 全屏 / 设置 / 打开智信私聊·群聊（个人框隐藏）/ 打开独立弹窗；无关闭；移动端 `#header-right` 仍优先。标题 `max-width` 改按实际右侧图标数预留（`rightIconCount`，私聊/群最多 4，不再死写 2/3）。**待桌面 E2E**
 - (desktop) 若 web 改走 HTTP 搜索：桥 `search-ai-box-picker` 可保留兜底或后续下线；**仅需回归**弹窗搜索链路
 - (android / ios) `selectGroupBySearch` **不受影响**（本期不做 web 侧选择AI框弹窗；ios 走原生选择）
 - (web) 选择弹窗底栏「已选：xxx」截断：**已提交**（`6796595`）——`AcDialog` footer `footer-left` 占 `flex-1 min-w-0`、`buttonTip` 限 `max-w-32`；`SelectAiBoxDialog` 已选文案 `max-w-full truncate`
@@ -78,13 +78,15 @@
 
 ## 关键决策记录
 
+- 2026-07-20 产品改：**ios/android** AI框会话入口黄角标 **0 不显示**（仅 `yellowUnreadNumber > 0`）；desktop 左侧仍可含 0（未改）
+
 - 2026-07-20 web 推送内容刷新：**已落地** `personalAiPushRefreshFlow`（PC/移动共用）；空 `sessionIds` 不刷；有则必刷 `list`；当前 `sessionId` 命中再刷 `getSessionList` + `getMessageList`；**不用** `getLastSessionMessage`。详见 `推送后列表刷新规则.md` §6；**待** 真机/PC E2E
 - 2026-07-20 产品确认：移动端 AI 工具快捷栏/Tab/更多列表 **不展示** `aiToolList` 的 `aiId=0`「AI框」（会话列表入口另走）；切 tab 默认选中与快捷图标随最近使用变化逻辑保持。实现：DB 全量同步，读给 UI 时 filter；ios `ZXAIManager.displayAITables` / android `DataCenter.getAiToolsForDisplay`（勿改同步用 `getAiTools`）
 - 2026-07-20 融云命中规则收紧：当前账号在 `pushAccountIdSessionIdSetMap` **且** `sessionIds` 非空才处理；传 Web 仅 `{type,source:"zx-pc",sessionIds}`（去掉 cmdMsg/badge）；启动补拉角标不推 Web。已改 ios/android/desktop
 - 2026-07-20 web 融云推送落点：统一解析 `sessionIds`（优先顶层；缺失从 Map 回退）；PC/移动写入 `pushSessionIds`
 - 2026-07-17 AI框整体角标拉数：`POST /agentSetBasic/getBadgePushInfo`（YApi #14196）；入参仅 `accountId`；回参 `yellowUnreadNumber`（黄标）+ `lastAbbreviationInfo`（缩略，可 null）；与行动中心同模式——推送后 HTTP 拉真数，不用 payload 数字写角标；三端移植对照 `3端AI框角标推送.md`
 - 2026-07-17 审查修复移动端 AI框推送 Web 链路：① web `refreshViewDate` 必须传 `id`+`name`（wnsdk 缺 id 直接失败）；② 三端统一 microAppId=`1915674367645798402`；③ iOS `extra` 改为扁平 payload（与 Android/契约一致，勿双层包裹）
-- 2026-07-17 移动端 AI框角标对齐呼叫群推送链路，展示策略对齐 PC：**接口成功后黄角标含 0**；副标题 `lastAbbreviationInfo`；打开中 Web `refreshViewDate`；Android 离线忽略，启动/回前台补拉
+- 2026-07-17 移动端 AI框角标对齐呼叫群推送链路；副标题 `lastAbbreviationInfo`；打开中 Web `refreshViewDate`；Android 离线忽略，启动/回前台补拉（展示「含 0」已于 2026-07-20 改回 0 不显示）
 - 2026-07-17 web `ec79115`：`PersonalAiChat` 监听 `source===zx-pc && type===aiBoxSendMessage`（本阶段仅 log）；侧栏 `testBadgePush` 联调入口；个人 AI 引导页 `belongType===0` 顶部留白
 - 2026-07-17 web `95206f5`：联调推送次数角标（每收一次 `aiBoxSendMessage` +1，显示刷新右侧，验完删）；已 pull `452230b` 移动端选择弹窗窄列竖向布局
 - 2026-07-17 web `a89a112`：移动端 `MPersonalAiChatWrapper` 听 zx-pc/`aiBoxSendMessage` postMessage + `wnsdk.page.refreshViewDate`；顶栏联调推送次数常显含 0（验完删）
