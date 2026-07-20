@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（文档：推送后列表刷新规则；ios/android 隐藏 aiId=0 已 push；desktop 仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（计划：推送后列表刷新 → `plan-推送后列表刷新.md`；ios/android 隐藏 aiId=0 已 push；desktop 仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -24,7 +24,7 @@
 ## 待办 / 阻塞
 
 - (web) ~~**选择 AI 框后侧栏头像不刷新**~~：根因——`upsertSelectedAgent` 命中已有项只改 hidden/lastChatAt；`mapSelectionToAgent` 未优先 `agentAvatar`。已修：upsert 刷新头像/名称 + belongId 兜底匹配；选中/搜索优先 AI 框头像；`preserveAgentAvatars` 防 list 空 avatar 冲掉本地。**待** PC 弹窗再选同一人/搜索选中 E2E
-- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC/移动已听推送并 **规范化 `sessionIds`**（`aiBoxSendMessageUtils`：顶层优先，否则 `cmdMsg.pushAccountIdSessionIdSetMap[accountId]`）写入 `pushSessionIds` + 调试 payload；原生侧 extra **始终带 `sessionIds` 数组**（可空）。**ios/android 代码已落地**：融云命中 → `getBadgePushInfo` → 黄角标含 0 + 副标题 → WebView 扁平 extra。**内容刷新规则已文档化**见 `推送后列表刷新规则.md`（空 sessionIds 不刷；有则必刷 list；当前 session 命中再刷 getSessionList + getMessageList；不用 getLastSessionMessage）。**待**：web 按该规则落地代码；真机 E2E；点进清角标；验完删调试计数
+- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC/移动已听推送并 **规范化 `sessionIds`**（`aiBoxSendMessageUtils`：顶层优先，否则 `cmdMsg.pushAccountIdSessionIdSetMap[accountId]`）写入 `pushSessionIds` + 调试 payload；原生侧 extra **始终带 `sessionIds` 数组**（可空）。**ios/android 代码已落地**：融云命中 → `getBadgePushInfo` → 黄角标含 0 + 副标题 → WebView 扁平 extra。**内容刷新规则**见 `推送后列表刷新规则.md`；**实施计划**见 `plan-推送后列表刷新.md`（PC + `/m/` 共用 `personalAiPushRefreshFlow`，只刷数据）。**待**：按 plan 落地代码；真机 E2E；点进清角标；验完删调试计数
 - (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数；移动顶栏次数；调试 popover 展示含 `sessionIds` 的规范化 payload。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
 - (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）

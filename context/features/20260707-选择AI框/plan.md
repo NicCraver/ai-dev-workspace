@@ -1,5 +1,7 @@
 # 选择AI框 实施计划
 
+> **增量计划（推送刷列表）**：见同目录 [`plan-推送后列表刷新.md`](./plan-推送后列表刷新.md)（规则：`推送后列表刷新规则.md`）。下文为选择弹窗一期原计划，多数任务已完成。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: 用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实施。步骤用 `- [ ]` 复选框跟踪。
 
 **Goal:** 在 web 端（PC 环境）用 H5 弹窗替代 native 选择 UI，单选一个群/私聊的 AI 框并切换对话（24h 内恢复、超 24h 新建）。
