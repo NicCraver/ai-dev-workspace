@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（ios `9b8ac0ffa` / android `207ad0f76`：AI 工具链隐藏 aiId=0 已 push；desktop 工作区仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（文档：推送后列表刷新规则；ios/android 隐藏 aiId=0 已 push；desktop 仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,7 +23,8 @@
 
 ## 待办 / 阻塞
 
-- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC/移动已听推送并 **规范化 `sessionIds`**（`aiBoxSendMessageUtils`：顶层优先，否则 `cmdMsg.pushAccountIdSessionIdSetMap[accountId]`）写入 `pushSessionIds` + 调试 payload；原生侧 extra **始终带 `sessionIds` 数组**（可空）。**ios/android 代码已落地**：融云命中 → `getBadgePushInfo` → 黄角标含 0 + 副标题 → WebView 扁平 extra。**待**：真机 E2E；web 按 `sessionIds` 刷 list / 当前会话；点进清角标；验完删调试计数
+- (web) ~~**选择 AI 框后侧栏头像不刷新**~~：根因——`upsertSelectedAgent` 命中已有项只改 hidden/lastChatAt；`mapSelectionToAgent` 未优先 `agentAvatar`。已修：upsert 刷新头像/名称 + belongId 兜底匹配；选中/搜索优先 AI 框头像；`preserveAgentAvatars` 防 list 空 avatar 冲掉本地。**待** PC 弹窗再选同一人/搜索选中 E2E
+- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web PC/移动已听推送并 **规范化 `sessionIds`**（`aiBoxSendMessageUtils`：顶层优先，否则 `cmdMsg.pushAccountIdSessionIdSetMap[accountId]`）写入 `pushSessionIds` + 调试 payload；原生侧 extra **始终带 `sessionIds` 数组**（可空）。**ios/android 代码已落地**：融云命中 → `getBadgePushInfo` → 黄角标含 0 + 副标题 → WebView 扁平 extra。**内容刷新规则已文档化**见 `推送后列表刷新规则.md`（空 sessionIds 不刷；有则必刷 list；当前 session 命中再刷 getSessionList + getMessageList；不用 getLastSessionMessage）。**待**：web 按该规则落地代码；真机 E2E；点进清角标；验完删调试计数
 - (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数；移动顶栏次数；调试 popover 展示含 `sessionIds` 的规范化 payload。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
 - (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
@@ -76,6 +77,7 @@
 
 ## 关键决策记录
 
+- 2026-07-20 web 推送内容刷新：空 `sessionIds` 不刷；有则必刷 `list`；当前 `sessionId` 命中再刷 `getSessionList` + `getMessageList`；**不用** `getLastSessionMessage`。详见 `推送后列表刷新规则.md`
 - 2026-07-20 产品确认：移动端 AI 工具快捷栏/Tab/更多列表 **不展示** `aiToolList` 的 `aiId=0`「AI框」（会话列表入口另走）；切 tab 默认选中与快捷图标随最近使用变化逻辑保持。实现：DB 全量同步，读给 UI 时 filter；ios `ZXAIManager.displayAITables` / android `DataCenter.getAiToolsForDisplay`（勿改同步用 `getAiTools`）
 - 2026-07-20 融云命中规则收紧：当前账号在 `pushAccountIdSessionIdSetMap` **且** `sessionIds` 非空才处理；传 Web 仅 `{type,source:"zx-pc",sessionIds}`（去掉 cmdMsg/badge）；启动补拉角标不推 Web。已改 ios/android/desktop
 - 2026-07-20 web 融云推送落点：统一解析 `sessionIds`（优先顶层；缺失从 Map 回退）；PC/移动写入 `pushSessionIds`

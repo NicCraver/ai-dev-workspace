@@ -236,7 +236,7 @@ web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听�
 
 - [ ] 点进 AI框 / 打开入口后是否清角标、何时清
 - [x] web 收到推送后解析并落 `sessionIds`（`aiBoxSendMessageUtils`；顶层 / Map 回退）
-- [ ] web 收到推送后：按 `sessionIds` 刷 `list`、是否拉当前会话消息
+- [ ] web 收到推送后：按 `sessionIds` 刷列表（规则见 `推送后列表刷新规则.md`；代码未落地）
 - [ ] 移动端入口副标题是否展示 `lastAbbreviationInfo`
 - [ ] iOS 离线 cmd：合并 vs 不合并（`filterNames`）
 - [ ] Android 回前台是否补拉 `getBadgePushInfo`
