@@ -57,8 +57,7 @@
 |----|----------|------|
 | AI框列表 | 有非空 `sessionIds` | `POST /personalAiFrame/list`（沿用当前 filterTypes + exemptAgentIds，不重拉 getFilter） |
 | 历史会话 | 有非空 `sessionIds`（必刷） | `getSessionList`（soft） |
-| 当前消息 | 当前打开的 sessionId ∈ 推送集合 | `getMessageList` / `getMessageListBySession` |
-| 当前消息 | 同上 | `getMessageList`（按当前 sessionId）；**不用** `getLastSessionMessage` |
+| 当前消息 | 当前打开的 sessionId ∈ 推送集合 | `getMessageList`（按当前 sessionId）；**不用** `getLastSessionMessage` |
 
 **边界 / 失败策略**：
 
