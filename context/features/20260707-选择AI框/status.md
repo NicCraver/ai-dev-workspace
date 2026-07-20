@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（web 规范化推送 `sessionIds`：顶层优先 + Map 回退）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（三端命中：账号在 map 且 sessionIds 非空；Web 载荷仅 type/source/sessionIds）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -71,7 +71,8 @@
 
 ## 关键决策记录
 
-- 2026-07-20 web 融云推送落点：统一解析 `sessionIds`（优先顶层；缺失从 `pushAccountIdSessionIdSetMap[当前 accountId]` 回退；兼容 refreshViewDate 的 `extra`/`result` 嵌套）；PC `PersonalAiChat` / 移动 `MPersonalAiChatWrapper` 写入 `pushSessionIds`；iOS/Android 通知 Web 时 `sessionIds` 恒为数组
+- 2026-07-20 融云命中规则收紧：当前账号在 `pushAccountIdSessionIdSetMap` **且** `sessionIds` 非空才处理；传 Web 仅 `{type,source:"zx-pc",sessionIds}`（去掉 cmdMsg/badge）；启动补拉角标不推 Web。已改 ios/android/desktop
+- 2026-07-20 web 融云推送落点：统一解析 `sessionIds`（优先顶层；缺失从 Map 回退）；PC/移动写入 `pushSessionIds`
 - 2026-07-17 AI框整体角标拉数：`POST /agentSetBasic/getBadgePushInfo`（YApi #14196）；入参仅 `accountId`；回参 `yellowUnreadNumber`（黄标）+ `lastAbbreviationInfo`（缩略，可 null）；与行动中心同模式——推送后 HTTP 拉真数，不用 payload 数字写角标；三端移植对照 `3端AI框角标推送.md`
 - 2026-07-17 审查修复移动端 AI框推送 Web 链路：① web `refreshViewDate` 必须传 `id`+`name`（wnsdk 缺 id 直接失败）；② 三端统一 microAppId=`1915674367645798402`；③ iOS `extra` 改为扁平 payload（与 Android/契约一致，勿双层包裹）
 - 2026-07-17 移动端 AI框角标对齐呼叫群推送链路，展示策略对齐 PC：**接口成功后黄角标含 0**；副标题 `lastAbbreviationInfo`；打开中 Web `refreshViewDate`；Android 离线忽略，启动/回前台补拉

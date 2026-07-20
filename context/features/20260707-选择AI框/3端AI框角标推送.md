@@ -1,6 +1,6 @@
 # 三端 AI框角标推送（aiBoxSendMessage）
 
-> 最后更新：2026-07-17  
+> 最后更新：2026-07-20  
 > 用途：PC 已联调落地；**写 iOS / Android 时以本文 + PC 代码为准**。  
 > 对照：行动中心同类链路见文末「附录：actionCornerRefresh」。
 
@@ -10,10 +10,10 @@
 
 ```
 融云 RC:CmdMsg name=aiBoxSendMessage
-  → 解析 pushAccountIdSessionIdSetMap，当前 accountId 是否命中
-  → 命中则 POST /agentSetBasic/getBadgePushInfo
-  → 原生/壳：刷入口黄角标（+ PC 左侧菜单图标切回 AI框）
-  → 通知内嵌 personal AI Web：刷 list / 会话（web 目前仅 log）
+  → 解析 pushAccountIdSessionIdSetMap
+  → 当前 accountId 在 map 且 sessionIds 非空 → 命中
+  → 命中则 POST /agentSetBasic/getBadgePushInfo（原生/壳刷黄角标）
+  → 通知内嵌 Web（sessionIds 非空才推）：仅 type + source + sessionIds
 ```
 
 **原则**：角标数字以 HTTP 为准，不要用融云 payload 里的数字直接写 UI。
@@ -40,9 +40,30 @@
 }
 ```
 
-- key = 账号 id（字符串）
-- value = 该账号受影响的 `sessionId` 集合（数组）
-- **仅当当前登录 `accountId` 在 Map 的 key 中**才继续拉角标 / 通知 Web
+例：`{"pushAccountIdSessionIdSetMap":{"1880150187008081921":["2079019710535434241"]}}`  
+→ key=`1880…` 当前登录人；value=`["2079…"]` 即 `sessionIds`。
+
+**命中规则（三端统一）**
+
+1. 当前登录 `accountId` 是 map 的 key  
+2. 且对应 `sessionIds` **非空**  
+
+两者同时满足才拉角标 / 向 Web 推送。仅 key 存在但数组为空 → **不处理**。
+
+### 1.1.1 传给 Web 的载荷（唯一形状）
+
+PC iframe `postMessage` 与移动 `refreshViewDate.extra` **相同**，只含三字段：
+
+```json
+{
+  "type": "aiBoxSendMessage",
+  "source": "zx-pc",
+  "sessionIds": ["2079019710535434241"]
+}
+```
+
+- **不要**再带 `cmdMsg` / `badge`（角标只在原生侧用 HTTP 结果）
+- 启动补拉角标：可更新原生入口，**不**向 Web 推上述消息
 
 ### 1.2 HTTP：`getBadgePushInfo`
 
