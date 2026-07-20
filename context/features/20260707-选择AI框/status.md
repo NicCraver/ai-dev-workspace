@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（web 推送刷列表曾合入 `test-202512` 后已 **revert `e1495a4`**；代码仍在 `personal-ai-chat`；desktop 仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（web `test-202512` `166a962`：显式补回 revert 后丢失的推送刷新；待 push；desktop 仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,14 +19,14 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web **推送刷列表**代码在 `personal-ai-chat`（含 `personalAiPushRefreshFlow` + PC/移动接线）；曾合入 `test-202512`（`27491b2`）后已 **revert 并 push**（`e1495a4`，保留其上 lifeng MR）。ios/android：融云命中 → 黄角标 **>0 才显示** + 统一 microAppId。**desktop 工作区未提交仍为本地 test 打包**。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**：web **推送刷列表**已在 `test-202512` 本地 tip `166a962` 显式补回（`personalAiPushRefreshFlow` + PC/移动接线 + adapter；Chat/Home 保留 `saveDataRange`/本地下载）；**待 push**。同源仍在 `personal-ai-chat`。ios/android：融云命中 → 黄角标 **>0 才显示** + 统一 microAppId。**desktop 工作区未提交仍为本地 test 打包**。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
 - (web) ~~**三点菜单「隐藏」图标**~~：由 `pngHide` 改为 SvgIcon `hide`（`assets/svg/hide.svg` 斜眼）
 - (web) ~~**选择 AI 框后侧栏头像/智能体名不刷新**~~：根因——`upsertSelectedAgent` 命中已有项只改 hidden/lastChatAt。已修：upsert 刷新 avatar + 独立 agentName；选中/搜索优先 `agentAvatar`；`preserveAgentDisplayFields` 防 list 空头像/空 name 冲掉本地。**待** PC 弹窗再选同一人/搜索选中 E2E
-- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web ✅ **听推送 + 刷列表代码在 `personal-ai-chat`**（`personalAiPushRefreshFlow`；情况2刷 `list`；情况3再刷 History + 当前消息；list 失败保态 / `preserveAgentDisplayFields`）。曾合入 `test-202512`（`27491b2`）后已 **revert `e1495a4` 并 push**。规则见 `推送后列表刷新规则.md`。**ios/android**：黄角标 **>0 才显示**。**待**：再合入目标分支；真机/PC E2E；点进清角标；验完删调试 UI
-- (web) ~~`personal-ai-chat` 推送刷列表曾合入 `test-202512`（`27491b2`）~~ → 已 **revert `e1495a4`**（远端已同步）；功能代码仍留在 `personal-ai-chat`
+- (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web ✅ **听推送 + 刷列表**（`personalAiPushRefreshFlow`；情况2刷 `list`；情况3再刷 History + 当前消息；list 失败保态 / `preserveAgentDisplayFields`）。`test-202512` 因 merge-after-revert 丢树后已用 `166a962` 显式补回（**待 push**）。规则见 `推送后列表刷新规则.md`。**ios/android**：黄角标 **>0 才显示**。**待**：push；真机/PC E2E；点进清角标；验完删调试 UI
+- (web) ~~merge-after-revert 丢推送刷新~~ → `test-202512` `166a962` 已从 `personal-ai-chat` 显式检出补回（Chat/Home 定点叠加，保留 test 独有记忆项/下载）
 - (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数；移动顶栏次数；调试 popover 展示含 `sessionIds` 的规范化 payload。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
 - (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
@@ -37,7 +37,7 @@
 - (android) **低风险债**：若需 AI 框搜索保持旧交互（右侧取消、不自动弹键盘），应用 `EXTRA_MULTI` 门控返回样式与键盘行为
 - (web / desktop) **组织架构进公司**：已按 PC 转发对齐——`getContactTree({isGroup:1})`、公司 `id` 作 corpId、`rootDeptId||id` 作首屏 pid、透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过。**待 E2E**：点企业应直接见部门+人员（不再多一层企业 / 暂无人员）
 - (desktop) ~~待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`~~ → **已按 PC 转发透传**
-- (web) ~~`personal-ai-chat` 已合入本地 `test-202512`（含 saveSelected）~~；推送刷列表曾合入后已 **revert `e1495a4`**；功能仍在 `personal-ai-chat`
+- (web) ~~`personal-ai-chat` 已合入本地 `test-202512`（含 saveSelected）~~；推送刷列表丢树已用 `166a962` 补回（待 push）
 - (desktop) T2：**handler 已落地并提交**（`1ca7496e` 含组织进公司参数）；工作区未提交仍为本地联调/test 打包（见上）。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
 - (desktop) ~~**AiBrowser 循环打 `aiToolList` + `getAuthCode`**~~：根因 `aiId=0` 被 `!activePageId` 当假值，每次 refresh 重走 select；且每次 `loadList` 都打 getAuthCode；`updateRecentlyUsed→ai_tools_cmd→refresh-ai-link` 连发放大。已修——aiId 统一字符串、`pageUrlMap` 命中跳过 getAuthCode、refresh debounce + in-flight 合并。**待** 重开 PC 验网络不再刷屏
 - (ios) ~~**会话列表刷 `aiToolList` + `updateRecentlyUsed` 死循环**~~：日志含 `Tabbar-定时器` + UITableView visibleCells 警告。根因同族——`getRecentAITable` 无 `isRecent` 时对列表首项（现为 AI框 `aiId=0`）调 `updateRecentlyUsed` → `ai_tools_cmd` → 再拉列表仍无 isRecent。已修：`isPersonalAiTable` 跳过上报；`setAiTable` 同 id/AI框不报；`refreshAIList` debounce。**待** 真机重进会话列表验网络；UITableView 警告应随风暴消失
