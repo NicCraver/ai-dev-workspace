@@ -87,7 +87,7 @@
 - [x] **Step 1: 增加 `toSaveSelectedItemFromDeepLink`**
 - [x] **Step 2: 单测覆盖**
 - [x] **Step 3: 跑单测** `node …test.mjs`（跟仓库现有命令）
-- [ ] **Step 4: Commit**（web）`feat(personal-ai): 深链字段转 saveSelected 入参`
+- [x] **Step 4: Commit**（web，与 Task2 合并）`feat(personal-ai): 入口深链未命中时 saveSelected 再选中`
 
 ---
 
@@ -99,8 +99,8 @@
 - [x] **Step 1: 把深链解析改成 async**
 - [x] **Step 2: `loadAgentList` 里 `await resolveEntryDeepLink(list)`**
 - [ ] **Step 3: 手测清单（开发机可改 URL query）** — 待真机/本地 URL
-- [ ] **Step 4: Commit** `feat(personal-ai): 入口深链未命中时 saveSelected 再选中`
-- [ ] **Step 5: Push** `origin personal-ai-chat`（仅 web）
+- [x] **Step 4: Commit** `feat(personal-ai): 入口深链未命中时 saveSelected 再选中`
+- [x] **Step 5: Push** `origin personal-ai-chat`（仅 web）`66b94af`
 
 ---
 
@@ -111,9 +111,9 @@
 - Modify: `context/features/20260707-选择AI框/impl-notes.md`（联调后）
 - Modify: 本 plan 勾选
 
-- [ ] **Step 1: status** 待办改为「未命中 → saveSelected → exempt list → 选中；失败回落个人框」；决策记一条  
-- [ ] **Step 2: impl-notes** 补：角标入口自动 save 的落库语义；belongType 0 不 save  
-- [ ] **Step 3: context commit** `docs(选择AI框): 入口深链未命中走 saveSelected 方案`
+- [x] **Step 1: status** 待办改为「未命中 → saveSelected → exempt list → 选中；失败回落个人框」；决策记一条  
+- [x] **Step 2: impl-notes** 补：角标入口自动 save 的落库语义；belongType 0 不 save  
+- [x] **Step 3: context commit** `docs(选择AI框): 入口深链未命中走 saveSelected 方案与实现笔记`
 
 ---
 
