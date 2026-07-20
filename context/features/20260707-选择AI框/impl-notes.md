@@ -56,7 +56,8 @@
 | 层 | 刷新条件 | 接口 |
 |----|----------|------|
 | AI框列表 | 有非空 `sessionIds` | `POST /personalAiFrame/list`（沿用当前 filterTypes + exemptAgentIds，不重拉 getFilter） |
-| 历史会话 | 当前打开的 sessionId ∈ 推送集合 | `getSessionList`（soft） |
+| 历史会话 | 有非空 `sessionIds`（必刷） | `getSessionList`（soft） |
+| 当前消息 | 当前打开的 sessionId ∈ 推送集合 | `getMessageList` / `getMessageListBySession` |
 | 当前消息 | 同上 | `getMessageList`（按当前 sessionId）；**不用** `getLastSessionMessage` |
 
 **边界 / 失败策略**：
@@ -157,7 +158,7 @@
 - **标题** = `belongName`（个人='个人AI框'/群=群名/私聊=对方名）；**副标题** = `name`（AI框名）。
 - `lastChatTime` / `pinTime` 是 `"yyyy-MM-dd HH:mm:ss"` 字符串 → 转毫秒时间戳（解析时把 `-` 换 `/` 规避时区差异）；缺失回 0。
 - 排序沿用既有规则：个人置顶 → 置顶项按置顶时间 → 其余按 `lastChatAt` 倒序。
-- `hasKnowledge`/`unreadCount`/`isPinned`/`isPersonal` 透传；`belongType`/`belongId`/`corpId`/`aiRoleId` 原样保留，供后续会话跳转与置顶/隐藏操作使用。
+- `hasKnowledge`/`aiUnreadYellowNumber`（映射为内部 `unreadCount`，兼容旧名）/`isPinned`/`isPersonal` 透传；`belongType`/`belongId`/`corpId`/`aiRoleId` 原样保留，供后续会话跳转与置顶/隐藏操作使用。
 - `latestMessageBrief`：24h 内最新消息缩略（`null` 表示无）；含 `question`/`answer`/`finishAt`/`sender`，可用于列表副文案或 24h 恢复判定（待 web 接线）。
 - **筛选 UI**：底栏「筛选对话」弹层（宽 200）；`personalChecked` 恒 true（不可取消）；勾选 `1`→近15天、`2`→有知识库；每次 toggle 走 `saveFilter` → `list`（见上「改筛落库」）。
 
