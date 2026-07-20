@@ -315,6 +315,17 @@
 - 当前右侧：开启新对话（仅图标）+ 侧栏入口图标（打开选择弹窗）；旧「切换AI框」文案胶囊已弃用。
 - 选择弹窗默认全屏高；History 按开合模式控制关栏按钮显隐，并将新对话按钮文案收敛为短文案（如「新对话」）。
 
+### 角标入口深链（URL → 打开最近消息 agent）
+
+原生会话列表点「AI框」进 `/m/personal` 时：若 `getBadgePushInfo` 回参带了 `agentId`/`belongId`/`belongType`，则拼进 URL（没回不加）。
+
+**web 时序（仅首次 list）**：
+1. 读 URL query → 首次 `list` 后按 `agentId`（其次 `belongType+belongId`）匹配并选中。
+2. **未命中**且 `belongType∈{1,3}` 且 `belongId` 非空 → 与弹窗确定同编排：`saveSelected` → `exemptAgentIds` push → `list` → 再匹配选中（等于把该 AI 框加入已选并豁免筛选）。
+3. 仍失败 / 不能 save（缺字段、`belongType=0`、接口失败）→ **回落个人 AI 框**（个人框始终在 list，契约 save 也不接受 belongType 0）。
+4. 无 URL 深链：不走 save，选中回落排序首项（通常即个人框）。
+5. one-shot：深链只消费一次，改筛/推送刷 list 不再 save。
+
 ## PC 个人 AI 对话头栏（四按钮）
 
 PC `PersonalAiChat` 内嵌 `Home`（`hideBuiltinCollapseChrome=true`）时，`Chat` 默认头栏右侧改为四按钮（有 `#header-right` 插槽时仍整替换，移动端不受影响）：

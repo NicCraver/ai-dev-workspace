@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（web `test-202512` `166a962`：显式补回 revert 后丢失的推送刷新；待 push；desktop 仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（入口深链：getBadgePushInfo 回参可选 agentId/belongId/belongType → ios/android 拼 /m/personal URL；web list 后按 agentId 选中 +「入口参」调试弹窗）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,12 +23,13 @@
 
 ## 待办 / 阻塞
 
+- (web / ios / android) **入口深链**：ios/android 有回参才拼 URL；web ✅ 命中直选 / **未命中 saveSelected→exempt list 再选** / 失败回落个人框。方案 `plan-入口深链saveSelected.md`。**待** 后端回参 + 真机 E2E；验完删「入口参」调试按钮
 - (web) ~~**三点菜单「隐藏」图标**~~：由 `pngHide` 改为 SvgIcon `hide`（`assets/svg/hide.svg` 斜眼）
 - (web) ~~**选择 AI 框后侧栏头像/智能体名不刷新**~~：根因——`upsertSelectedAgent` 命中已有项只改 hidden/lastChatAt。已修：upsert 刷新 avatar + 独立 agentName；选中/搜索优先 `agentAvatar`；`preserveAgentDisplayFields` 防 list 空头像/空 name 冲掉本地。**待** PC 弹窗再选同一人/搜索选中 E2E
 - (desktop / web / ios / android) **AI框推送 `aiBoxSendMessage`**：desktop ✅ 左侧黄角标（含 0）+ iframe postMessage；web ✅ **听推送 + 刷列表**（`personalAiPushRefreshFlow`；情况2刷 `list`；情况3再刷 History + 当前消息；list 失败保态 / `preserveAgentDisplayFields`）。`test-202512` 因 merge-after-revert 丢树后已用 `166a962` 显式补回（**待 push**）。规则见 `推送后列表刷新规则.md`。**ios/android**：黄角标 **>0 才显示**。**待**：push；真机/PC E2E；点进清角标；验完删调试 UI
 - (web) ~~merge-after-revert 丢推送刷新~~ → `test-202512` `166a962` 已从 `personal-ai-chat` 显式检出补回（Chat/Home 定点叠加，保留 test 独有记忆项/下载）
 - (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数；移动顶栏次数；调试 popover 展示含 `sessionIds` 的规范化 payload。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
-- (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方
+- (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方；回参可选 `agentId`/`belongId`/`belongType`（2026-07-20）
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（工作区未提交）；android `onResult` → `wv.post` 再回调（工作区未提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
 - (web) ~~**T10 已选 chip 名/头像**~~：记忆 scope 补齐改走 `recentContactList`（`9a1dd2d`）；「数据范围」仅个人 AI 框；已选叠加小图标改固定 `data-range-icon`（`62dcd87`）。**待 PC 弹窗 E2E 回显**
 - (web) **移动端个人 AI 宿主（lifeng）**：`bd1e06c` 基座 `MPersonalAiChatWrapper`（Chat）+ `SelectAiChatPopup`（列表+History）；`16b5835` 改筛先 `saveFilter` 再 `list`（对齐 PC）；`3c055a6` 头部——左 `back` 关页、右 `StartChatButton`(仅图标)+`side-close` 开弹窗（旧「切换AI框」胶囊注释掉）；`Chat` 新增 `#header-right`（有则替换默认设置/全屏/关闭）；弹窗 `h-100vh`；History `openCloseMode` 控关栏按钮与「新对话」文案。**待真机 E2E / 视觉验收**
@@ -79,6 +80,8 @@
 
 ## 关键决策记录
 
+- 2026-07-20 入口深链：URL 有参 → list 命中直选；未命中且 belongType 1|3 → `saveSelected`+exempt `list` 再选；失败回落个人 AI 框（始终在列表）。方案 `plan-入口深链saveSelected.md`
+- 2026-07-20 入口深链：`getBadgePushInfo` **回参**可选 `agentId`/`belongId`/`belongType`；ios/android 打开 `/m/personal` **有回参才拼 URL、没回不加**；web 顶栏「入口参」弹窗联调
 - 2026-07-20 web 推送内容刷新：代码在 `personal-ai-chat`；曾合入 `test-202512`（`27491b2`）后 **revert 并 push**（`e1495a4`）。规则见 `推送后列表刷新规则.md`；**待** 再合入目标分支 + E2E
 - 2026-07-20 web 推送内容刷新（实现细节）：共用 `personalAiPushRefreshFlow`；空 `sessionIds` 不刷；有则必刷 `list`；当前 `sessionId` 命中再刷 History + `getMessageList`；**不用** `getLastSessionMessage`；list 失败保态、`preserveAgentDisplayFields`
 - 2026-07-20 产品改：**ios/android** AI框会话入口黄角标 **0 不显示**（仅 `yellowUnreadNumber > 0`）；desktop 左侧仍可含 0（未改）

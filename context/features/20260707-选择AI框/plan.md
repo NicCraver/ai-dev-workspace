@@ -1,6 +1,8 @@
 # 选择AI框 实施计划
 
-> **增量计划（推送刷列表）**：见同目录 [`plan-推送后列表刷新.md`](./plan-推送后列表刷新.md)（规则：`推送后列表刷新规则.md`）。下文为选择弹窗一期原计划，多数任务已完成。
+> **增量计划（推送刷列表）**：见同目录 [`plan-推送后列表刷新.md`](./plan-推送后列表刷新.md)（规则：`推送后列表刷新规则.md`）。  
+> **增量计划（入口深链未命中 saveSelected）**：见 [`plan-入口深链saveSelected.md`](./plan-入口深链saveSelected.md)。  
+> 下文为选择弹窗一期原计划，多数任务已完成。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: 用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实施。步骤用 `- [ ]` 复选框跟踪。
 
