@@ -308,6 +308,6 @@ AI框挂点与下列 cmd **同入口、不同 name**。
 | sider 切回 AI框图标 | ✅ |
 | 点击入口打开 AI框 tab | ✅ |
 | iframe / 移动 refreshViewDate + web 联调次数 | ✅ |
-| web 刷 list | ✅ 已合入本地 `test-202512`（`27491b2`），待 E2E |
+| web 刷 list | ✅ 代码在 `personal-ai-chat`；`test-202512` 已 revert `e1495a4` |
 | web 清角标 | ⬜ |
 | iOS / Android 推送→角标→缩略（对齐呼叫群） | ✅ 代码落地，待真机 E2E |

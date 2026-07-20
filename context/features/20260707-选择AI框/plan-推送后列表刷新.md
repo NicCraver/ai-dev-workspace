@@ -1,6 +1,6 @@
 # 推送后列表刷新 Implementation Plan
 
-> **状态（2026-07-20）：Tasks 1–5 已完成；代码合入本地 `apps/web` `test-202512`（`27491b2`）。待 PC/真机 E2E 与删调试 UI。**
+> **状态（2026-07-20）：Tasks 1–5 已完成于 `personal-ai-chat`；曾合入 `test-202512` 后已 revert（`e1495a4`）。待再合入目标分支 + E2E。**
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
