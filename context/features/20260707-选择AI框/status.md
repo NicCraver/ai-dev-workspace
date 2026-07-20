@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（ios/android：AI 工具链展示层隐藏 aiId=0；desktop 工作区仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（ios `9b8ac0ffa` / android `207ad0f76`：AI 工具链隐藏 aiId=0 已 push；desktop 工作区仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
