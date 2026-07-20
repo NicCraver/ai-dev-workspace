@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（android 加固：aiId 字符串 `"0"` 跳过 updateRecentlyUsed）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（核对：移动端 AI 工具列表仍展示 aiId=0；desktop 工作区仍为本地 test 打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,7 +19,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：web `personal-ai-chat`：**tip `4aca44d` 已 push**——`refreshViewDate` 必传 `id=1915674367645798402`+`name=AI框`，success 仅匹配本应用且 `type=aiBoxSendMessage` 再 bump；其上 `a89a112` 移动端听推送 + 顶栏联调次数。ios/android：**工作区未提交**——推送→角标含 0 + 统一 microAppId + iOS extra 扁平。desktop 本地 test 打包与本功能无关。移植对照见 `3端AI框角标推送.md`。
+> **本轮 apps 事实**：web `personal-ai-chat`：**tip `4aca44d` 已 push**——`refreshViewDate` 必传 `id=1915674367645798402`+`name=AI框`，success 仅匹配本应用且 `type=aiBoxSendMessage` 再 bump；其上 `a89a112` 移动端听推送 + 顶栏联调次数。ios/android：**工作区未提交**——推送→角标含 0 + 统一 microAppId + iOS extra 扁平。**desktop 工作区未提交仍为本地 test 打包**（`.env.test`→`APP_AICHAT/ACTIONCENTER=localhost:6173`、`zhixin-test` productName/appId、mac arm64、asarUnpack sqlite3、leveldown↑）——**非本功能代码**。移植对照见 `3端AI框角标推送.md`。
 
 ## 待办 / 阻塞
 
@@ -35,10 +35,12 @@
 - (web / desktop) **组织架构进公司**：已按 PC 转发对齐——`getContactTree({isGroup:1})`、公司 `id` 作 corpId、`rootDeptId||id` 作首屏 pid、透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过。**待 E2E**：点企业应直接见部门+人员（不再多一层企业 / 暂无人员）
 - (desktop) ~~待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`~~ → **已按 PC 转发透传**
 - (web) `personal-ai-chat` 已合入本地 `test-202512`（含 saveSelected）；本轮增量 `a7fa5fd` 已提交、**尚未 push**
-- (desktop) T2：**handler 已落地并提交**（`1ca7496e` 含组织进公司参数）；工作区未提交为本地联调/test 打包（`.env.test`、`zhixin-test` productName/appId、mac arm64、asarUnpack sqlite3、leveldown↑）。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
+- (desktop) T2：**handler 已落地并提交**（`1ca7496e` 含组织进公司参数）；工作区未提交仍为本地联调/test 打包（见上）。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
 - (desktop) ~~**AiBrowser 循环打 `aiToolList` + `getAuthCode`**~~：根因 `aiId=0` 被 `!activePageId` 当假值，每次 refresh 重走 select；且每次 `loadList` 都打 getAuthCode；`updateRecentlyUsed→ai_tools_cmd→refresh-ai-link` 连发放大。已修——aiId 统一字符串、`pageUrlMap` 命中跳过 getAuthCode、refresh debounce + in-flight 合并。**待** 重开 PC 验网络不再刷屏
 - (ios) ~~**会话列表刷 `aiToolList` + `updateRecentlyUsed` 死循环**~~：日志含 `Tabbar-定时器` + UITableView visibleCells 警告。根因同族——`getRecentAITable` 无 `isRecent` 时对列表首项（现为 AI框 `aiId=0`）调 `updateRecentlyUsed` → `ai_tools_cmd` → 再拉列表仍无 isRecent。已修：`isPersonalAiTable` 跳过上报；`setAiTable` 同 id/AI框不报；`refreshAIList` debounce。**待** 真机重进会话列表验网络；UITableView 警告应随风暴消失
 - (android) ~~**AI框 `updateRecentlyUsed` 加固**~~：本身不成环（推送 `recentlyUsed` 被丢弃），但 `toUpdateData` 回落首项可能对字符串 `"0"` 误报。已在 `AiToolChatBaseView.saveRecentlyUsed` 对 `"0"` / 空 id 直接 return（与接口回参一致用字符串比）
+- (ios / android) **`aiToolList` 中 `aiId=0`「AI框」应不出现在 AI 工具 UI**（会话列表独立入口保留）：已核对——`ZXIMMessageListShortcutView` / `ZXIMAIListPagePopoverView` / Android `AiToolChatBaseView` **仍全量展示**；仅跳过 `updateRecentlyUsed`。切 DeepSeek 等 tab 的选中态 + 快捷入口图标随 `isRecent`/`recent` 变化 **逻辑一致**。**待**：两端展示层 filter `"0"`，且无 recent 时回落跳过 AI框（勿默认选中/打开它）
+- (desktop) **工作区未提交 = 本地 test 打包**（非功能增量）：`.env.test` 指 localhost、`zhixin-test` 包名、arm64、asarUnpack sqlite3 等；勿当 T2/T9 未完成
 - (多端) T9 待视觉对照蓝湖 4 张主 tab + 搜索 popover 截图验收；**列表顶栏**「选择AI框」胶囊样式已按稿调整（见关键决策）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
 - (web) 待联调确认 Home 对话是否支持「24h 恢复 vs 新建」（`resumeChat` 状态已保留并参与 pane key 重挂载，尚未传入 HomeIndex）
@@ -74,6 +76,7 @@
 
 ## 关键决策记录
 
+- 2026-07-20 产品确认：移动端 AI 工具快捷栏/Tab/更多列表 **不展示** `aiToolList` 的 `aiId=0`「AI框」（会话列表入口另走）；切 tab 默认选中与快捷图标随最近使用变化逻辑保持。当前代码未滤展示，仅跳过 recentlyUsed
 - 2026-07-20 融云命中规则收紧：当前账号在 `pushAccountIdSessionIdSetMap` **且** `sessionIds` 非空才处理；传 Web 仅 `{type,source:"zx-pc",sessionIds}`（去掉 cmdMsg/badge）；启动补拉角标不推 Web。已改 ios/android/desktop
 - 2026-07-20 web 融云推送落点：统一解析 `sessionIds`（优先顶层；缺失从 Map 回退）；PC/移动写入 `pushSessionIds`
 - 2026-07-17 AI框整体角标拉数：`POST /agentSetBasic/getBadgePushInfo`（YApi #14196）；入参仅 `accountId`；回参 `yellowUnreadNumber`（黄标）+ `lastAbbreviationInfo`（缩略，可 null）；与行动中心同模式——推送后 HTTP 拉真数，不用 payload 数字写角标；三端移植对照 `3端AI框角标推送.md`
