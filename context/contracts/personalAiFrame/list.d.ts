@@ -10,6 +10,7 @@
  * - 2026-07-14 `exemptAgentIds` 保留为 @unconfirmed（web 选中后豁免用，YApi 文档未列）
  * - 2026-07-14 筛选类型 `PersonalAiFrameFilterType` / `PersonalAiFrameFilterInfo` 迁至 `_shared.d.ts`（与 getFilter 共用）
  * - 2026-07-16 筛选写入亦可走 POST /personalAiFrame/saveFilter；本接口带 filterTypes 时仍会隐式落库（与 saveFilter 等价）
+ * - 2026-07-20 黄角标字段对齐后端实参 `aiUnreadYellowNumber`（兼容旧名 `unreadCount`）
  */
 
 import type { ApiResponse } from '../_common';
@@ -102,7 +103,12 @@ export interface PersonalAiFrameItem {
   /** 最近对话时间（ai_session.updateAt）；格式 yyyy-MM-dd HH:mm:ss */
   lastChatTime?: string;
   /**
-   * 黄色角标数量
+   * 黄色角标数量（后端实参名）
+   * mock: 0
+   */
+  aiUnreadYellowNumber?: number;
+  /**
+   * @deprecated 旧文档名；与 `aiUnreadYellowNumber` 同义，web 映射两者皆可读
    * 直接从 ai_frame_user_setting.unreadCount 读取；mock: 0
    */
   unreadCount?: number;

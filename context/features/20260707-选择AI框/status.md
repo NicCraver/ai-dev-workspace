@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（ios/android：从个人AI返回补拉 getBadgePushInfo）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（ios：停用进页角标深链，避免加载完 closePage）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (ios) **进 AI 框加载完即回会话列表**：角标 `getBadgePushInfo` 回参被拼进 URL 深链 → H5 进页选中对应框 → Chat 飞书/WPS 鉴权取消/失败会 `closePage`。已停用进页自动拼深链（方法保留）。选择页选群回首页问题另案。**待真机 E2E**
 - (web / ios / android) **入口深链**：ios/android 有回参才拼 URL；web ✅ 命中直选 / **未命中 saveSelected→exempt list 再选** / 失败回落个人框。方案 `plan-入口深链saveSelected.md`。「入口参」调试按钮已注释隐藏，需要时解开。**待** 后端回参 + 真机 E2E
 - (web) ~~**三点菜单「隐藏」图标**~~：由 `pngHide` 改为 SvgIcon `hide`（`assets/svg/hide.svg` 斜眼）
 - (web) ~~**选择 AI 框后侧栏头像/智能体名不刷新**~~：根因——`upsertSelectedAgent` 命中已有项只改 hidden/lastChatAt。已修：upsert 刷新 avatar + 独立 agentName；选中/搜索优先 `agentAvatar`；`preserveAgentDisplayFields` 防 list 空头像/空 name 冲掉本地。**待** PC 弹窗再选同一人/搜索选中 E2E
