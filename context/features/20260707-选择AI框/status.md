@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-20（desktop 修 AiBrowser `aiToolList`/`getAuthCode` 循环：aiId=0 假值 + getAuthCode 缓存 + refresh debounce）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-20（ios 亦修 aiToolList/updateRecentlyUsed 死循环：AI框 aiId=0 勿报最近使用）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -37,6 +37,7 @@
 - (web) `personal-ai-chat` 已合入本地 `test-202512`（含 saveSelected）；本轮增量 `a7fa5fd` 已提交、**尚未 push**
 - (desktop) T2：**handler 已落地并提交**（`1ca7496e` 含组织进公司参数）；工作区未提交为本地联调/test 打包（`.env.test`、`zhixin-test` productName/appId、mac arm64、asarUnpack sqlite3、leveldown↑）。T2/T9 **待 E2E** 验证微应用 + AiBrowser iframe 全链路
 - (desktop) ~~**AiBrowser 循环打 `aiToolList` + `getAuthCode`**~~：根因 `aiId=0` 被 `!activePageId` 当假值，每次 refresh 重走 select；且每次 `loadList` 都打 getAuthCode；`updateRecentlyUsed→ai_tools_cmd→refresh-ai-link` 连发放大。已修——aiId 统一字符串、`pageUrlMap` 命中跳过 getAuthCode、refresh debounce + in-flight 合并。**待** 重开 PC 验网络不再刷屏
+- (ios) ~~**会话列表刷 `aiToolList` + `updateRecentlyUsed` 死循环**~~：日志含 `Tabbar-定时器` + UITableView visibleCells 警告。根因同族——`getRecentAITable` 无 `isRecent` 时对列表首项（现为 AI框 `aiId=0`）调 `updateRecentlyUsed` → `ai_tools_cmd` → 再拉列表仍无 isRecent。已修：`isPersonalAiTable` 跳过上报；`setAiTable` 同 id/AI框不报；`refreshAIList` debounce。**待** 真机重进会话列表验网络；UITableView 警告应随风暴消失
 - (多端) T9 待视觉对照蓝湖 4 张主 tab + 搜索 popover 截图验收；**列表顶栏**「选择AI框」胶囊样式已按稿调整（见关键决策）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
 - (web) 待联调确认 Home 对话是否支持「24h 恢复 vs 新建」（`resumeChat` 状态已保留并参与 pane key 重挂载，尚未传入 HomeIndex）

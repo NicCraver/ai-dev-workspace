@@ -240,6 +240,7 @@
 3. **固定首位**：从列表拆出 `aiId=0` 置首，其余保持接口顺序；**不**再客户端注入内置 tab。
 4. **能力屏蔽**：无置顶/取消置顶、无「最近使用」上报、无右键/更多菜单（与 `isSystem` 外链系统项不同，AI框单独判断 `aiId=0`）。
 5. **刷新合并**：`updateRecentlyUsed` 可能触发 `ai_tools_cmd` → `refresh-ai-link` 连发；宿主侧应对 `loadList` 做 **debounce + in-flight 合并**，避免 `aiToolList`/`getAuthCode` 请求风暴。
+6. **移动端同坑（ios）**：会话列表 shortcut 取「最近 AI」时，若列表无 `isRecent` 会对首项调 `updateRecentlyUsed`；AI框排首且永不带 `isRecent` 时形成 `updateRecentlyUsed → ai_tools_cmd → aiToolList` 死循环。规则：**aiId=0 禁止报最近使用**；同 tab 重选也不重复上报；列表刷新通知需 debounce。
 
 ### 左侧菜单与 tab 同步
 
