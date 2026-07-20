@@ -235,10 +235,11 @@
 
 ### 个人 AI框（`aiId=0`）宿主行为
 
-1. **取数**：`aiToolList` 与外链伙伴同一列表；识别 `aiId===0`（字符串比较）。
-2. **打开地址**：`aiUrl` 空 → `${APP_AICHAT}/zx/personal`，有 `corpId` 时先 `getUserCode` 再拼 `userCode`+`corpId`；以 **iframe** 打开（非 webview），走 `personal-ai:bridge-request` 桥（见上「AiBrowser 个人 AI iframe 桥」）。
+1. **取数**：`aiToolList` 与外链伙伴同一列表；识别 `aiId===0`（**必须转成字符串**再存/比；数字 `0` 是假值，`!activePageId` 会每次 refresh 都当「未选中」重走 select）。
+2. **打开地址**：`aiUrl` 空 → `${APP_AICHAT}/zx/personal`，有 `corpId` 时先 `getUserCode` 再拼 `userCode`+`corpId`；以 **iframe** 打开（非 webview），走 `personal-ai:bridge-request` 桥（见上「AiBrowser 个人 AI iframe 桥」）。**`pageUrlMap` 已有 AI框 url 时禁止再打 getAuthCode**（一次性码，重复申请会刷屏且可能导致 iframe 重载）。
 3. **固定首位**：从列表拆出 `aiId=0` 置首，其余保持接口顺序；**不**再客户端注入内置 tab。
 4. **能力屏蔽**：无置顶/取消置顶、无「最近使用」上报、无右键/更多菜单（与 `isSystem` 外链系统项不同，AI框单独判断 `aiId=0`）。
+5. **刷新合并**：`updateRecentlyUsed` 可能触发 `ai_tools_cmd` → `refresh-ai-link` 连发；宿主侧应对 `loadList` 做 **debounce + in-flight 合并**，避免 `aiToolList`/`getAuthCode` 请求风暴。
 
 ### 左侧菜单与 tab 同步
 
