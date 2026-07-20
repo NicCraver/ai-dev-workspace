@@ -462,7 +462,7 @@ git commit -m "feat(personal-ai): 移动端推送后按同一规则刷列表"
 - Modify: `context/features/20260707-选择AI框/status.md`
 - Modify: `context/features/20260707-选择AI框/3端AI框角标推送.md`（勾「刷列表」进度）
 
-- [ ] **Step 1: 规则文档补实现落点**
+- [x] **Step 1: 规则文档补实现落点**
 
 在规则文末「未决」上增加「实现」：
 
@@ -475,11 +475,11 @@ git commit -m "feat(personal-ai): 移动端推送后按同一规则刷列表"
 - 情况 1：三端壳已保证非空才推 Web；编排内空数组仍 short-circuit（防御）
 ```
 
-- [ ] **Step 2: status 待办**
+- [x] **Step 2: status 待办**
 
 将「web 按该规则落地代码」改为已完成（或 🚧→待真机 E2E）；关键决策可指向本 plan 已实施。
 
-- [ ] **Step 3: Commit（context）**
+- [x] **Step 3: Commit（context）**
 
 ```bash
 cd /Users/nic/w/ai-dev-workspace

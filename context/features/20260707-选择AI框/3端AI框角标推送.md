@@ -137,7 +137,7 @@ JSON.stringify({
 })
 ```
 
-web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听（log + 联调推送次数）；**刷 list 仍 TODO**。
+web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听（log + 联调推送次数）；**刷 list 已落地**（`personalAiPushRefreshFlow`，见 `推送后列表刷新规则.md` §6）。
 
 移动端：原生 → WebView 用 **`wnsdk.page.refreshViewDate`**（行动中心 / 呼叫群同款），**id/name 均必填**；`extra` 扁平带 `type/sessionIds/badge`。web `4aca44d` 已按 microAppId 注册，并校验 `extra.type === "aiBoxSendMessage"` 再 bump（联调计数）。
 
@@ -205,7 +205,7 @@ web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听�
 | Desktop | `ReceiveMessageListener.js` → `case "aiBoxSendMessage"` | ✅ |
 | iOS | `AppDelegate+RCIM.m` → `aiBoxSendMessage` → `refreshPersonalAiBadgeWithRCCmd` | ✅ |
 | Android | `RongIM.java` → `aiBoxSendMessage` → `PersonalAiBadgeController` | ✅ |
-| web | PC `PersonalAiChat` + 移动 `MPersonalAiChatWrapper`（含 refreshViewDate） | 🚧 听推送 + 联调次数；刷 list 待做 |
+| web | PC `PersonalAiChat` + 移动 `MPersonalAiChatWrapper`（含 refreshViewDate） | ✅ 听推送 + 刷 list 已落地；联调次数待删；待真机/PC E2E |
 
 ### 3.4 iOS / Android 实现摘要（2026-07-17）
 
@@ -236,7 +236,7 @@ web PC（`PersonalAiChat`）与移动（`MPersonalAiChatWrapper`）均已监听�
 
 - [ ] 点进 AI框 / 打开入口后是否清角标、何时清
 - [x] web 收到推送后解析并落 `sessionIds`（`aiBoxSendMessageUtils`；顶层 / Map 回退）
-- [ ] web 收到推送后：按 `sessionIds` 刷列表（规则见 `推送后列表刷新规则.md`；代码未落地）
+- [x] web 收到推送后：按 `sessionIds` 刷列表（规则见 `推送后列表刷新规则.md`；`personalAiPushRefreshFlow` 已落地，待 E2E）
 - [ ] 移动端入口副标题是否展示 `lastAbbreviationInfo`
 - [ ] iOS 离线 cmd：合并 vs 不合并（`filterNames`）
 - [ ] Android 回前台是否补拉 `getBadgePushInfo`
@@ -308,5 +308,6 @@ AI框挂点与下列 cmd **同入口、不同 name**。
 | sider 切回 AI框图标 | ✅ |
 | 点击入口打开 AI框 tab | ✅ |
 | iframe / 移动 refreshViewDate + web 联调次数 | ✅ |
-| web 刷 list / 清角标 | ⬜ |
+| web 刷 list | ✅ 已落地，待 E2E |
+| web 清角标 | ⬜ |
 | iOS / Android 推送→角标→缩略（对齐呼叫群） | ✅ 代码落地，待真机 E2E |
