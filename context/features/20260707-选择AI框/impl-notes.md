@@ -231,9 +231,9 @@
 
 每次发起对话 SSE（`/aiChatApi/v1/aiChat`，含续聊）时，用当前会话归属 fire-and-forget 调一次 `saveSelected`：
 
-1. 从当前 `belongType` / `belongId` / `agentId` 构造单项（与深链映射同一规则：仅 `belongType∈{1,3}` 且 `belongId` 非空）。
+1. 从当前 `belongType` / `belongId` / `agentId` 构造单项：`belongType∈{0,1,3}` 且 `belongId` 非空（**含个人框 0**；与弹窗/深链选中仅 1|3 不同）。
 2. `POST /personalAiFrame/saveSelected`；**不**跟 `list`、**不**改侧栏。
-3. 个人框（`belongType=0`）/ 缺 accountId / 缺字段 → 跳过。
+3. 缺 accountId / 缺 belongId / 非法 belongType → 跳过。
 4. 失败只记日志，**不阻断**对话发送。
 
 **移植**：对话层在「发 aiChat」出口挂一次即可；勿塞进全局 HTTP 拦截器（避免 list/getFilter 等误触发，也避免 saveSelected 自递归）。
