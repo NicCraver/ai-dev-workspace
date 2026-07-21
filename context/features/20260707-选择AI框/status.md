@@ -25,7 +25,7 @@
 
 - (web) ~~**个人 AI Chat 面板边框/阴影**~~：`hideBuiltinCollapseChrome` 时根节点 `border #E7E7E7` + `shadow 0 0 10px rgba(0,0,0,.1)`（对齐 Home `rounded-2` 卡片）。已 push `117af36`；**待** PC 视觉验收
 - (web / desktop) ~~**原生独立窗：隐藏「打开独立弹窗」+ 设置打不开**~~：`ipcNativeFrame` 下头栏不再显示 open-independent；`WindowPostWinMessage` 改 `ipcRenderer.invoke("open-ai-chat-win")`（对齐 iframe→主窗口 openAiWin）。已 push `117af36`；**待 PC E2E**
-- (web / desktop) ~~**常驻页 version 检测 + 选中恢复**~~：切回 AI框 → `aiBoxCheckVersion` → 对比 `/ai-chat/build_version`；变更静默 `reload`；`sessionStorage` 持久化 `agentId`/`belongId`/`belongType` 刷新后恢复。方案 `plan-version检测与选中恢复.md`。web 已 push `b9fcc47`；desktop 本地 `e6a59d10` 未 push。**待 PC E2E**
+- (web / desktop) ~~**常驻页 version 检测 + 选中恢复**~~：切回 AI框 → `aiBoxCheckVersion` → 对比 `/ai-chat/build_version`；变更静默 `reload`；`sessionStorage` 持久化 `agentId`/`belongId`/`belongType` 刷新后恢复。方案 `plan-version检测与选中恢复.md`。web 已 push `b9fcc47`；desktop 已 push `e6a59d10`。**待 PC E2E**
 - (web) ~~**TimeSelector 状态栏色**~~：移动端打开选时间弹层时 `showStatusColor(#FFFFFF)` 对齐标题栏；关闭/卸载恢复 `#DDE2FF`（Chat Header 顶色）。已 push `577b3ce`
 - (web) ~~**个人 AI Android 顶圆角**~~：`Chat` 在个人 AI（`header-left/right` 插槽或 `hideBuiltinCollapseChrome`）下不加 `rounded-t-4`。已 push `577b3ce`
 - (web) ~~**进 AI 框默认收起历史**~~：`PersonalAiChat` `historySidebarOpen` 初值 `false`，`default-history-sidebar-open=false`；列表仍默认展开，可用悬浮条「展开历史」。已 push `personal-ai-chat` `40f6a64`。**待** PC E2E
