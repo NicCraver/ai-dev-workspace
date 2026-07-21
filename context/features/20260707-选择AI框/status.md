@@ -37,7 +37,7 @@
 - (web) ~~**列表项黄色未读角标**~~：`PersonalAiChatAgentItem` 标题旁展示黄角标；样式对齐 shortcut `AcUnread`（`#FA7700`）。数据源：list **`aiUnreadYellowNumber`**（兼容旧名 `unreadCount`）→ adapter `unreadCount`；**≤0 不显示**（列表项有 `top--0.5` 上移）。**待** 点进清零 / E2E
 - (web) ~~**历史会话黄角标**~~：`HistoryCard` 会话名后展示 `history.aiUnreadYellowNumber`（`getSessionList` 透传）；样式同黄标但**不上移**；≤0 不显示。**待** E2E
 - (web) ~~merge-after-revert 丢推送刷新~~ → `test-202512` `166a962` 已从 `personal-ai-chat` 显式检出补回（Chat/Home 定点叠加，保留 test 独有记忆项/下载）
-- (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数；移动顶栏次数；调试 popover 展示含 `sessionIds` 的规范化 payload。**待** 真机验 refreshViewDate 链路 + 验完删调试 UI
+- (web) ~~**模拟角标推送 / 联调次数**~~：PC 侧栏 `testBadgePush` + 推送次数、移动顶栏次数 **UI 已注释隐藏**（`PersonalAiChatAgentList` / `MPersonalAiChatWrapper`；脚本计数仍保留，需要时解开）。**待** 真机验 refreshViewDate 链路；验完可删脚本
 - (多端) ~~**AI框角标拉数 HTTP 已登记**~~：`POST /agentSetBasic/getBadgePushInfo`；ios/android/desktop 均已有调用方；回参可选 `agentId`/`belongId`/`belongType`（2026-07-20）
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（已在 `personal-ai-chat`）；android `onResult` → `wv.post` 再回调（已提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
 - (web) ~~**T10 已选 chip 名/头像**~~：记忆 scope 补齐改走 `recentContactList`（`9a1dd2d`）；「数据范围」仅个人 AI 框；已选叠加小图标改固定 `data-range-icon`（`62dcd87`）。**待 PC 弹窗 E2E 回显**
