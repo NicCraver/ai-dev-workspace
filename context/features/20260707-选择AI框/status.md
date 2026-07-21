@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（web tip `577b3ce` 已 push：version 检测 + 状态栏/顶圆角）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web tip `117af36` 已 push：原生窗设置 + Chat 卡片描边）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,10 +19,12 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-21）：web tip `577b3ce`（已 push：`b9fcc47` version 检测+选中恢复；`577b3ce` TimeSelector 状态栏 / Android 顶圆角 / 隐藏侧栏模拟推送）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip 本地含 `e6a59d10`（aiBoxCheckVersion；**ahead 未 push**）；**工作区未提交仍为本地 test 打包**。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-21）：web tip `117af36`（已 push：`b9fcc47` version 检测+选中恢复；`577b3ce` TimeSelector 状态栏 / Android 顶圆角；`117af36` 原生独立窗设置 + Chat 边框阴影 / 侧栏 `#E7E7E7`）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip 本地含 `e6a59d10`（aiBoxCheckVersion；**ahead 未 push**）；**工作区未提交仍为本地 test 打包**。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
+- (web) ~~**个人 AI Chat 面板边框/阴影**~~：`hideBuiltinCollapseChrome` 时根节点 `border #E7E7E7` + `shadow 0 0 10px rgba(0,0,0,.1)`（对齐 Home `rounded-2` 卡片）。已 push `117af36`；**待** PC 视觉验收
+- (web / desktop) ~~**原生独立窗：隐藏「打开独立弹窗」+ 设置打不开**~~：`ipcNativeFrame` 下头栏不再显示 open-independent；`WindowPostWinMessage` 改 `ipcRenderer.invoke("open-ai-chat-win")`（对齐 iframe→主窗口 openAiWin）。已 push `117af36`；**待 PC E2E**
 - (web / desktop) ~~**常驻页 version 检测 + 选中恢复**~~：切回 AI框 → `aiBoxCheckVersion` → 对比 `/ai-chat/build_version`；变更静默 `reload`；`sessionStorage` 持久化 `agentId`/`belongId`/`belongType` 刷新后恢复。方案 `plan-version检测与选中恢复.md`。web 已 push `b9fcc47`；desktop 本地 `e6a59d10` 未 push。**待 PC E2E**
 - (web) ~~**TimeSelector 状态栏色**~~：移动端打开选时间弹层时 `showStatusColor(#FFFFFF)` 对齐标题栏；关闭/卸载恢复 `#DDE2FF`（Chat Header 顶色）。已 push `577b3ce`
 - (web) ~~**个人 AI Android 顶圆角**~~：`Chat` 在个人 AI（`header-left/right` 插槽或 `hideBuiltinCollapseChrome`）下不加 `rounded-t-4`。已 push `577b3ce`
@@ -96,6 +98,7 @@
 
 ## 关键决策记录
 
+- 2026-07-21 web：个人 AI **原生独立窗**（`ipcNativeFrame`）头栏隐藏「打开独立弹窗」；设置走 `WindowPostWinMessage` → `open-ai-chat-win`（非 iframe 不能再 `window.open`）
 - 2026-07-21 web：发 `/aiChatApi/v1/aiChat`（含续聊）时顺带 `saveSelected`——**belongType 0|1|3** 均调（个人框也调）；fire-and-forget 不阻断对话；弹窗/深链选中仍仅 1|3；契约 saveSelected.belongType 扩为 `0|1|3`
 - 2026-07-21 web：回滚 `5184de6`——飞书/WPS 鉴权取消/失败 catch 恢复 `handleClose()`（与提交前一致）
 - 2026-07-20 ios：`origin/release` 已 merge 进 `personal-ai-chat` 并 push（`6dfce4940`）；含绿盾文件预览重构 + `presentKnowledgeAuth`；与个人 AI 桥 import 冲突已双保留
