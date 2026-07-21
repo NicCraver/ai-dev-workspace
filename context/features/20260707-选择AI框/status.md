@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（web DataScopeBar 换双人头像图标）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web DataScopeBar 双人剪影改 SVG）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -42,7 +42,7 @@
 - (web) ~~**DataScopeBar 文案**~~：胶囊文案由「数据范围」改为「数据+n」（`n`=`dataRangeScopeList.length`）。已 push `personal-ai-chat` `f9582f4`（同提交含 MultimodalBar 去掉「生成：」）
 - (web) ~~**移动端 AI框顶部电源栏颜色**~~：`MPersonalAiChatWrapper` onMounted 调 `wnsdk.ui.showStatusColor({ statusBgColor: '#DDE2FF' })`（对齐 Header 渐变起点）。已 push `personal-ai-chat` `d9c839e`
 - (web) ~~**筛选对话角标**~~：`PersonalAiChatAgentList` / 移动端 `SelectAiChatPopup`「筛选对话」后 `+n` 含个人AI框恒选（最少 `+1`；勾近15天/知识库再累加）。已 push `personal-ai-chat` `d9c839e`
-- (web) ~~**DataScopeBar 图标**~~：胶囊左侧改 `data-scope-icon.png`（蓝底双人剪影，对齐 DataRangeBar 用完整圆标）。**工作区未提交**
+- (web) ~~**DataScopeBar 图标**~~：`data-range.svg` 改为双人剪影；胶囊仍 `bg-primary` + `SvgIcon name="data-range"`（白剪影）。**工作区未提交**
 - (web) **移动端个人 AI 宿主（lifeng）**：`bd1e06c` 基座 `MPersonalAiChatWrapper`（Chat）+ `SelectAiChatPopup`（列表+History）；`16b5835` 改筛先 `saveFilter` 再 `list`（对齐 PC）；`3c055a6` 头部——左 `back` 关页、右 `StartChatButton`(仅图标)+`side-close` 开弹窗（旧「切换AI框」胶囊注释掉）；`Chat` 新增 `#header-right`（有则替换默认设置/全屏/关闭）；弹窗 `h-100vh`；History `openCloseMode` 控关栏按钮与「新对话」文案。**待真机 E2E / 视觉验收**
 - (ios / web) **选择数据范围原生多选（T10）**：桥 `selectDataRangeScope` + 复用选择 AI 框页强制多选已接线；web `DataScopeBar` 移动端走原生、PC 仍 H5；回传 scopes → `saveDataRange`。本轮：搜索页底栏对齐主页（已选/清空/**完成**，无取消；不再用转发「发送」栏）；已选展示名本地 DB 补齐；下拉箭头改 chevron；审查修复——搜索内点选/清空**不 live sync**（仅「完成」写回）、群 tab 从已选移除须清群列表、空 id 用同人判断、键盘中间态底栏贴键盘顶。**待真机 E2E**
 - (android) **选择数据范围原生多选（T10，编译通过 + test 包已装机）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` → 子页联系人多选 / 群组·搜索 `EXTRA_MULTI` 回主页合并 → 回传 `personal-ai:selected-data-range`。底栏共用 `include_data_range_multi_footer`；回传同 selectAiAgent 走 `wv.post`。Bugbot：**无阻断级问题**。**待真机 E2E**
