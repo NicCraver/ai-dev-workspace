@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (ios) ~~**AI框页背景色**~~：`ZXPersonalAIChatController` `view.backgroundColor` 改为 `#F7F9FE`（对齐 AIChatPopover；底栏安全区露出不再白底）。**工作区未提交**
 - (ios / web) **进 AI 框鉴权取消关页**：ios 已停用进页自动拼深链（`c1ea29ff5`）。web **已回滚** `5184de6`——飞书/WPS 鉴权 catch 恢复 `handleClose()`。选择页选群回首页问题另案。**待真机 E2E**
 - (web / ios / android) **入口深链**：web ✅ 命中直选 / 未命中 saveSelected→exempt list / 失败回落个人框。ios：**进页已停用自动拼**（见上）。android：**工作区未提交**——`PersonalAiListCellBinder.appendBadgeDeepLinkQuery` 有回参才拼。方案 `plan-入口深链saveSelected.md`。「入口参」调试按钮已注释。**待** 后端回参 + 真机 E2E + android 提交
 - (web) ~~**三点菜单「隐藏」图标**~~：由 `pngHide` 改为 SvgIcon `hide`（`assets/svg/hide.svg` 斜眼）
