@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（web tip `117af36` 已 push：原生窗设置 + Chat 卡片描边）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（desktop tip `e6a59d10` 已 push：aiBoxCheckVersion）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,7 +19,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-21）：web tip `117af36`（已 push：`b9fcc47` version 检测+选中恢复；`577b3ce` TimeSelector 状态栏 / Android 顶圆角；`117af36` 原生独立窗设置 + Chat 边框阴影 / 侧栏 `#E7E7E7`）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip 本地含 `e6a59d10`（aiBoxCheckVersion；**ahead 未 push**）；**工作区未提交仍为本地 test 打包**。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-21）：web tip `117af36`（已 push：`b9fcc47` version 检测+选中恢复；`577b3ce` TimeSelector 状态栏 / Android 顶圆角；`117af36` 原生独立窗设置 + Chat 边框阴影 / 侧栏 `#E7E7E7`）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `e6a59d10`（aiBoxCheckVersion；**已 push**）；**工作区未提交仍为本地 test 打包**（`.env.test` localhost / zhixin-test / arm64 等，勿提交）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
