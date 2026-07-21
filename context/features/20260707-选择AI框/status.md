@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（web：侧栏刷新图标移到顶栏右侧）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web：`00acd74` 校正选中/全屏侧栏/转发菜单/刷新位）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,20 +19,20 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-21）：web tip `117af36`（已 push：`b9fcc47` version 检测+选中恢复；`577b3ce` TimeSelector 状态栏 / Android 顶圆角；`117af36` 原生独立窗设置 + Chat 边框阴影 / 侧栏 `#E7E7E7`）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `e6a59d10`（aiBoxCheckVersion；**已 push**）；**工作区未提交仍为本地 test 打包**（`.env.test` localhost / zhixin-test / arm64 等，勿提交）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-21）：web tip `00acd74`（已 push：校正选中/全屏侧栏/个人框转发菜单/刷新图标右侧；此前 `117af36` 原生窗设置+描边；`b9fcc47` version；`577b3ce` 状态栏/顶圆角）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `e6a59d10`（aiBoxCheckVersion；**已 push**）；**工作区未提交仍为本地 test 打包**（`.env.test` localhost / zhixin-test / arm64 等，勿提交）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
-- (web) ~~**侧栏刷新图标位置**~~：`PersonalAiChatAgentList` 顶栏刷新从「选择AI框」旁移到右侧，与收起按钮并排。**工作区未提交**
-- (web) ~~**个人AI框消息菜单隐藏「转发至对话」**~~：`BaseMsgMenuForward` 在 `belongType===0` 时只保留「转发至其他对话」。**工作区未提交**；**待** PC E2E
-- (web) ~~**智能体列表偶发不默认选中**~~：根因——① 深链/sessionStorage 恢复返回 true 时短路首项兜底，但选中可能基于过期 list；② `agentId`/`belongId` 接口 number vs 本地 string 导致 `===` 悬空。已修：`ensureActiveAgentId` + `findAgentAfterSave`（String 比较）+ `mapFrameItemToAgent` 统一 stringify；PC/移动 list 刷新后强制校正。**工作区未提交**；**待** PC E2E
+- (web) ~~**侧栏刷新图标位置**~~：顶栏刷新移到右侧与收起并排。已 push `00acd74`
+- (web) ~~**个人AI框消息菜单隐藏「转发至对话」**~~：`BaseMsgMenuForward` 在 `belongType===0` 时只保留「转发至其他对话」。已 push `00acd74`；**待** PC E2E
+- (web) ~~**智能体列表偶发不默认选中**~~：根因——① 深链/storage 恢复短路首项兜底但选中可能基于过期 list；② number vs string `===` 悬空。已修 `ensureActiveAgentId` + String 比较。已 push `00acd74`；**待** PC E2E
 - (web) ~~**个人 AI Chat 面板边框/阴影**~~：`hideBuiltinCollapseChrome` 时根节点 `border #E7E7E7` + `shadow 0 0 10px rgba(0,0,0,.1)`（对齐 Home `rounded-2` 卡片）。已 push `117af36`；**待** PC 视觉验收
 - (web / desktop) ~~**原生独立窗：隐藏「打开独立弹窗」+ 设置打不开**~~：`ipcNativeFrame` 下头栏不再显示 open-independent；`WindowPostWinMessage` 改 `ipcRenderer.invoke("open-ai-chat-win")`（对齐 iframe→主窗口 openAiWin）。已 push `117af36`；**待 PC E2E**
 - (web / desktop) ~~**常驻页 version 检测 + 选中恢复**~~：切回 AI框 → `aiBoxCheckVersion` → 对比 `/ai-chat/build_version`；变更静默 `reload`；`sessionStorage` 持久化 `agentId`/`belongId`/`belongType` 刷新后恢复。方案 `plan-version检测与选中恢复.md`。web 已 push `b9fcc47`；desktop 已 push `e6a59d10`。**待 PC E2E**
 - (web) ~~**TimeSelector 状态栏色**~~：移动端打开选时间弹层时 `showStatusColor(#FFFFFF)` 对齐标题栏；关闭/卸载恢复 `#DDE2FF`（Chat Header 顶色）。已 push `577b3ce`
 - (web) ~~**个人 AI Android 顶圆角**~~：`Chat` 在个人 AI（`header-left/right` 插槽或 `hideBuiltinCollapseChrome`）下不加 `rounded-t-4`。已 push `577b3ce`
-- (web) ~~**进 AI 框默认：列表展开 / 历史收起**~~：`sidebarVisible=true`，`historySidebarOpen=false`。**工作区未提交**；**待** PC E2E
-- (web) ~~**全屏联动两侧栏**~~：Chat 全屏 → AI 框列表+历史都收起；取消全屏 → AI 框列表展开、历史保持收起。`fullscreen-change` 经 Home/HomeIndex 传到 `PersonalAiChat`。**工作区未提交**；**待** PC E2E
+- (web) ~~**进 AI 框默认：列表展开 / 历史收起**~~：`sidebarVisible=true`，`historySidebarOpen=false`。已 push `00acd74`；**待** PC E2E
+- (web) ~~**全屏联动两侧栏**~~：Chat 全屏 → 两侧栏收起；取消全屏 → 列表展开、历史保持收起。已 push `00acd74`；**待** PC E2E
 - (web) ~~**数据/类型胶囊图标文案**~~：DataScopeBar 用整图 `data-range`；DataRangeBar 文案「类型+n」+ `type` 图标。已 push `eb807c0`。**待** 视觉验收
 - (web) ~~**发 aiChat 顺带 saveSelected**~~：`Chat.connectSSE` 发起 `/aiChatApi/v1/aiChat` 时 fire-and-forget `saveSelected`（`buildSaveSelectedReqFromChatBelongs`；**belongType 0|1|3** 均调；失败不阻断对话）。弹窗/深链选中仍仅 1|3。已 push `personal-ai-chat` `fe2d62b`。**待** E2E
 - (ios) ~~**AI框页背景色**~~：`ZXPersonalAIChatController` `view.backgroundColor` 改为 `#F7F9FE`（对齐 AIChatPopover；底栏安全区露出不再白底）。**工作区未提交**
