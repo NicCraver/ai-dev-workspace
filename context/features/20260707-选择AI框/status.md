@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（android 入口深链+离开补拉角标已提交 `3a1f6d0e5`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（拉取核对：四端 `personal-ai-chat` 远端无新提交；android 本地 ahead `3a1f6d0e5` 未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,7 +19,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**：ios `personal-ai-chat` 已 **merge origin/release** 并 push（`6dfce4940`；冲突仅 `ZXJSAIChatAPI` import，双保留）。ios 另已停用进页自动拼角标深链（`c1ea29ff5`）。android **已提交** `3a1f6d0e5`（入口深链：`getBadgePushInfo` 有回参才拼 `agentId`/`belongId`/`belongType` + `ensureLeaveRefreshHook` 离开个人 AI finishing 补拉角标；ahead origin，未 push）。desktop **工作区未提交仍为本地 test 打包**（`.env.test`→localhost、`zhixin-test`、arm64、asarUnpack）。web：**已回滚** `5184de6`——飞书/WPS 鉴权取消/失败仍 `handleClose()`。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-21 拉取核对）：web / ios / desktop 与 `origin/personal-ai-chat` **已同步**（behind 0）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `11fa888c`；**工作区未提交仍为本地 test 打包**（`.env.test`→localhost、`zhixin-test`、arm64、asarUnpack）。web tip `f4a49db`；此前已回滚 `5184de6`（鉴权失败仍 `handleClose()`）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
