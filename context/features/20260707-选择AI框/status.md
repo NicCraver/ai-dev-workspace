@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（desktop：工作区未提交仍为本地 test 打包，无功能增量；验版拟改页面激活触发）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web：修无 sessionStorage 时 list 后无法默认选中）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,15 +19,16 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-21 收尾核对）：web tip `55ade10`（已 push；干净工作区）。ios tip `fd698a574`（已 push）。android tip 本地 `3a1f6d0e5`（**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `e6a59d10`（aiBoxCheckVersion；**已 push**）；**工作区未提交 = 本地 test 打包**（`.env.test` / `electron-builder.yml` / `package.json`+lock：localhost、zhixin-test、arm64 等，**非功能增量，勿提交**）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-21）：web 工作区未提交——修 `hasActiveSelection(null)` 抛错导致 list 后无法默认选中（先前 tip `55ade10` 已 push）。ios tip `fd698a574`（已 push）。android tip 本地 `3a1f6d0e5`（**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `e6a59d10`（**已 push**）；**工作区未提交 = 本地 test 打包**（勿提交）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
 - (web / desktop) **页面激活验版（拟改触发）**：页面变为可见时拉 `/ai-chat/build_version`（回参含 `build_number` 等），与本地 `JENKINS_BUILD_NUMBER` 对比；不一致则静默强刷，并用既有 `sessionStorage` 三元组恢复选中。现有 `aiBoxCheckVersion`（切 AI框 tab）倾向保留作 PC iframe 兜底（`display:none` 切 tab 时 visibility 不一定触发）。**讨论中，未编码**；复用 `checkAndReloadIfStale` / `writeActiveSelection`
-- (web) ~~**list 后默认选中个人 AI 框**~~：`ensureActiveAgentId` 无有效选中时优先 `isPersonal`/`belongType===0`（不依赖排序首位）；`activeChat` 用 String 比较防悬空。已 push `55ade10`；**待** PC E2E
+- (web) ~~**进页无选中（list 有数据仍「请选择智能体」）**~~：根因——`readActiveSelection()` 返回 `null` 时 `hasActiveSelection(null)` 读 `null.agentId` 抛错，`loadAgentList` catch 后跳过 `syncActiveAgentAfterListLoad`。已修 `hasActiveSelection`/`hasEntryDeepLink` 显式判空；本地已验证默认选中个人 AI 框。**web 未提交**
+- (web) ~~**list 后默认选中个人 AI 框**~~：`ensureActiveAgentId` 无有效选中时优先 `isPersonal`/`belongType===0`（不依赖排序首位）；`activeChat` 用 String 比较防悬空。已 push `55ade10`
 - (web) ~~**侧栏刷新图标位置**~~：顶栏刷新移到右侧与收起并排。已 push `00acd74`
 - (web) ~~**个人AI框消息菜单隐藏「转发至对话」**~~：`BaseMsgMenuForward` 在 `belongType===0` 时只保留「转发至其他对话」。已 push `00acd74`；**待** PC E2E
-- (web) ~~**智能体列表偶发不默认选中**~~：根因——① 深链/storage 恢复短路首项兜底但选中可能基于过期 list；② number vs string `===` 悬空。已修 `ensureActiveAgentId` + String 比较。已 push `00acd74`；**待** PC E2E
+- (web) ~~**智能体列表偶发不默认选中**~~：根因——① 深链/storage 恢复短路首项兜底但选中可能基于过期 list；② number vs string `===` 悬空。已修 `ensureActiveAgentId` + String 比较。已 push `00acd74`；另见上条 null sessionStorage 抛错
 - (web) ~~**个人 AI Chat 面板边框/阴影**~~：`hideBuiltinCollapseChrome` 时根节点 `border #E7E7E7` + `shadow 0 0 10px rgba(0,0,0,.1)`（对齐 Home `rounded-2` 卡片）。已 push `117af36`；**待** PC 视觉验收
 - (web / desktop) ~~**原生独立窗：隐藏「打开独立弹窗」+ 设置打不开**~~：`ipcNativeFrame` 下头栏不再显示 open-independent；`WindowPostWinMessage` 改 `ipcRenderer.invoke("open-ai-chat-win")`（对齐 iframe→主窗口 openAiWin）。已 push `117af36`；**待 PC E2E**
 - (web / desktop) ~~**常驻页 version 检测 + 选中恢复**~~：切回 AI框 → `aiBoxCheckVersion` → 对比 `/ai-chat/build_version`；变更静默 `reload`；`sessionStorage` 持久化 `agentId`/`belongId`/`belongType` 刷新后恢复。方案 `plan-version检测与选中恢复.md`。web 已 push `b9fcc47`；desktop 已 push `e6a59d10`。**待 PC E2E**
