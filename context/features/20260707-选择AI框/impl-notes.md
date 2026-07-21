@@ -445,3 +445,7 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 | 恢复只定位「哪个 AI 框」 | 不强制恢复具体 sessionId；续聊仍走 lastChatAt / 24h |
 | URL 深链与存储同时有 | URL 优先 |
 
+### 联调坑（2026-07-21）
+
+- **无会话存储时默认选中失败**：读选中三元组无值返回 `null` 后，若用 `hasXxx(d = {})` 判断，传入 `null` 时默认参数不生效，读 `null.agentId` 抛错 → list 已写入但选中同步被 catch 跳过，右侧停在「请选择智能体」。`hasActiveSelection` / `hasEntryDeepLink` 须显式 `d == null → false`。
+
