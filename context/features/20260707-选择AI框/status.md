@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（拉取核对：四端 `personal-ai-chat` 远端无新提交；android 本地 ahead `3a1f6d0e5` 未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web：发 aiChat 顺带 saveSelected）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**发 aiChat 顺带 saveSelected**~~：`Chat.connectSSE` 发起 `/aiChatApi/v1/aiChat` 时 fire-and-forget `saveSelected`（`buildSaveSelectedReqFromChatBelongs`；仅 belongType 1|3；失败不阻断对话）。**待** E2E
 - (ios) ~~**AI框页背景色**~~：`ZXPersonalAIChatController` `view.backgroundColor` 改为 `#F7F9FE`（对齐 AIChatPopover；底栏安全区露出不再白底）。**工作区未提交**
 - (ios / web) **进 AI 框鉴权取消关页**：ios 已停用进页自动拼深链（`c1ea29ff5`）。web **已回滚** `5184de6`——飞书/WPS 鉴权 catch 恢复 `handleClose()`。选择页选群回首页问题另案。**待真机 E2E**
 - (web / ios / android) **入口深链**：web ✅ 命中直选 / 未命中 saveSelected→exempt list / 失败回落个人框。ios：**进页已停用自动拼**（见上）。android ✅ 已提交 `3a1f6d0e5`——`PersonalAiListCellBinder.appendBadgeDeepLinkQuery` 有回参才拼。方案 `plan-入口深链saveSelected.md`。「入口参」调试按钮已注释。**待** 后端回参 + 真机 E2E
@@ -86,6 +87,7 @@
 
 ## 关键决策记录
 
+- 2026-07-21 web：发 `/aiChatApi/v1/aiChat`（含续聊）时顺带 `saveSelected`——仅 belongType 1|3；fire-and-forget 不阻断对话；个人框跳过
 - 2026-07-21 web：回滚 `5184de6`——飞书/WPS 鉴权取消/失败 catch 恢复 `handleClose()`（与提交前一致）
 - 2026-07-20 ios：`origin/release` 已 merge 进 `personal-ai-chat` 并 push（`6dfce4940`）；含绿盾文件预览重构 + `presentKnowledgeAuth`；与个人 AI 桥 import 冲突已双保留
 - 2026-07-20 web `5184de6`（已回滚）：飞书/WPS 知识库鉴权取消/失败曾不再 `closePage`；2026-07-21 已恢复 `handleClose()`

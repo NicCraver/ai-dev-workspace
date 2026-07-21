@@ -227,6 +227,17 @@
 
 **移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可。各端勿在 UI 层散写这两步时序。web 已提交（`6796595` + `588d044` 合成 id 过滤）；**真实后端联调尚未验收**（T9 仍 🚧）。
 
+### 发消息时顺带 saveSelected
+
+每次发起对话 SSE（`/aiChatApi/v1/aiChat`，含续聊）时，用当前会话归属 fire-and-forget 调一次 `saveSelected`：
+
+1. 从当前 `belongType` / `belongId` / `agentId` 构造单项（与深链映射同一规则：仅 `belongType∈{1,3}` 且 `belongId` 非空）。
+2. `POST /personalAiFrame/saveSelected`；**不**跟 `list`、**不**改侧栏。
+3. 个人框（`belongType=0`）/ 缺 accountId / 缺字段 → 跳过。
+4. 失败只记日志，**不阻断**对话发送。
+
+**移植**：对话层在「发 aiChat」出口挂一次即可；勿塞进全局 HTTP 拦截器（避免 list/getFilter 等误触发，也避免 saveSelected 自递归）。
+
 ### ios 原生选择 → web 触发 save/list
 
 1. web 调 `wnsdk.aiChat.selectAiAgent`（**必须长回调 `isLongCb`**，对齐 `util.chooseAddressBook`：`runCode` 内 `this.api.isLongCb=true` 再 `callInner`；只收 `success`/`error`，勿 `.then` Promise——长回调打开页即 resolve undefined）。
