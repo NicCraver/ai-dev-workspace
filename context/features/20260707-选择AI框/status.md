@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（web：默认列表展开/历史收起；全屏联动两侧栏）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web：list 选中悬空修复 ensureActiveAgentId）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**智能体列表偶发不默认选中**~~：根因——① 深链/sessionStorage 恢复返回 true 时短路首项兜底，但选中可能基于过期 list；② `agentId`/`belongId` 接口 number vs 本地 string 导致 `===` 悬空。已修：`ensureActiveAgentId` + `findAgentAfterSave`（String 比较）+ `mapFrameItemToAgent` 统一 stringify；PC/移动 list 刷新后强制校正。**工作区未提交**；**待** PC E2E
 - (web) ~~**个人 AI Chat 面板边框/阴影**~~：`hideBuiltinCollapseChrome` 时根节点 `border #E7E7E7` + `shadow 0 0 10px rgba(0,0,0,.1)`（对齐 Home `rounded-2` 卡片）。已 push `117af36`；**待** PC 视觉验收
 - (web / desktop) ~~**原生独立窗：隐藏「打开独立弹窗」+ 设置打不开**~~：`ipcNativeFrame` 下头栏不再显示 open-independent；`WindowPostWinMessage` 改 `ipcRenderer.invoke("open-ai-chat-win")`（对齐 iframe→主窗口 openAiWin）。已 push `117af36`；**待 PC E2E**
 - (web / desktop) ~~**常驻页 version 检测 + 选中恢复**~~：切回 AI框 → `aiBoxCheckVersion` → 对比 `/ai-chat/build_version`；变更静默 `reload`；`sessionStorage` 持久化 `agentId`/`belongId`/`belongType` 刷新后恢复。方案 `plan-version检测与选中恢复.md`。web 已 push `b9fcc47`；desktop 已 push `e6a59d10`。**待 PC E2E**
@@ -99,6 +100,7 @@
 
 ## 关键决策记录
 
+- 2026-07-21 web：list 刷新后**无条件** `ensureActiveAgentId`（以当前可见列表校正；深链/storage 恢复布尔值不再短路首项兜底）；映射层 `agentId`/`belongId` 统一 string，匹配用 String 比较
 - 2026-07-21 web：个人 AI **原生独立窗**（`ipcNativeFrame`）头栏隐藏「打开独立弹窗」；设置走 `WindowPostWinMessage` → `open-ai-chat-win`（非 iframe 不能再 `window.open`）
 - 2026-07-21 web：发 `/aiChatApi/v1/aiChat`（含续聊）时顺带 `saveSelected`——**belongType 0|1|3** 均调（个人框也调）；fire-and-forget 不阻断对话；弹窗/深链选中仍仅 1|3；契约 saveSelected.belongType 扩为 `0|1|3`
 - 2026-07-21 web：回滚 `5184de6`——飞书/WPS 鉴权取消/失败 catch 恢复 `handleClose()`（与提交前一致）
