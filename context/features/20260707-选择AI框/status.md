@@ -24,6 +24,7 @@
 ## 待办 / 阻塞
 
 - (web / desktop) **常驻页 version 检测 + 选中恢复**：切回 AI框 → `aiBoxCheckVersion` → 对比 `/ai-chat/build_version`；变更静默 `reload`；`sessionStorage` 持久化 `agentId`/`belongId`/`belongType` 刷新后恢复。方案 `plan-version检测与选中恢复.md`。⬜ 未开始
+- (web) ~~**TimeSelector 状态栏色**~~：移动端打开选时间弹层时 `showStatusColor(#FFFFFF)` 对齐标题栏；关闭/卸载恢复 `#DDE2FF`（Chat Header 顶色）。**工作区未提交**
 - (web) ~~**个人 AI Android 顶圆角**~~：`Chat` 在个人 AI（`header-left/right` 插槽或 `hideBuiltinCollapseChrome`）下不加 `rounded-t-4`。**工作区未提交**
 - (web) ~~**进 AI 框默认收起历史**~~：`PersonalAiChat` `historySidebarOpen` 初值 `false`，`default-history-sidebar-open=false`；列表仍默认展开，可用悬浮条「展开历史」。已 push `personal-ai-chat` `40f6a64`。**待** PC E2E
 - (web) ~~**数据/类型胶囊图标文案**~~：DataScopeBar 用整图 `data-range`；DataRangeBar 文案「类型+n」+ `type` 图标。已 push `eb807c0`。**待** 视觉验收
