@@ -353,7 +353,7 @@ PC `PersonalAiChat` 内嵌 `Home`（`hideBuiltinCollapseChrome=true`）时，`Ch
 ### PC 独立原生窗（desktop + web）
 
 - **窗**：`create-personal-ai-win` / `open-personal-ai-win`；`frame: true`；注入 `ipcNativeFrame=true`；关则 hide。
-- **布局**：`TheLayout` 在 `ipcNativeFrame` 下隐藏自定义 min/max/close 与顶栏 drag，避免双顶栏。
+- **布局**：`personalAiWin` 注入 `ipcNativeFrame=true` 时，`App.vue` **不套** `TheLayout`（直出 `/personal`，无多标签/自定义窗控）。
 - **深链**：`personalAiEntryDeepLink.js` 读 query；首次 list 匹配（可 `saveSelected`）；`chat-ready` 后 `Home.selectSessionById`。
 - **标题**：打开可用 query `title`；之后随左侧选中项 `title` 写 `document.title`（并 `setTitle` 首开）。
 - **推送**：主窗 iframe `postMessage` 不变；另 `refresh-personal-ai-data` → 独立窗 `runPushRefresh`。
