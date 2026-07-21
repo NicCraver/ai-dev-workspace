@@ -72,7 +72,9 @@
 - (web) `POST /personalAiFrame/selectGroupBySearch` **已接入**选择弹窗与侧栏搜索：`searchPicker` 改走 HTTP（`selectGroupBySearchApi` 动态导入，`accountId` 取登录用户），映射 `privateList`/`groupList`；搜索结果 popover 新增「全部/群组/人员」三 tab（全部=群组在前+人员在后）。web 不再调用桥 `searchAiBoxPicker`；**`AiBoxSearchRow` 有 `agentAvatar` 时优先单头像**（群组对齐 `AiBoxRow`，人员同理）
 - (web) 个人 AI 右侧对话面板已改为**组件直渲** `HomeIndex`（`chatType`/`targetId`/`aiRoleId` props + key 重挂载），不再嵌套 `/zx/home/...` iframe；独立 `zx/home` 路由入口仍可用
 - (web) **PC 个人 AI 内嵌对话**：历史侧栏随 **Home 自身 `elWidth`** 在弹窗/双栏间切换（`DRAWER_MAX_WIDTH=700`：`≤700` popup 宽 280px，`>700` 双栏）；首次窄屏默认 popup，变宽自动解除并切双栏；独立首页默认收起
-- (web) **PC 个人 AI 头栏四按钮**：`hideBuiltinCollapseChrome` 下传至 `Chat` → 全屏 / 设置 / 打开智信私聊·群聊（个人框隐藏）/ 打开独立弹窗；无关闭；移动端 `#header-right` 仍优先。标题 `max-width` 改按实际右侧图标数预留（`rightIconCount`，私聊/群最多 4，不再死写 2/3）。**待桌面 E2E**
+- (web) **PC 个人 AI 头栏四按钮**：`hideBuiltinCollapseChrome` 下传至 `Chat` → 全屏 / 设置 / 打开智信私聊·群聊（个人框隐藏）/ **打开系统原生独立窗**（`WindowPostPersonalAiNativeWin` → `/personal` + `agentId`/`belongId`/`belongType`/`sessionId`/`aiRoleId`/`title`）；无关闭；移动端 `#header-right` 仍优先。**待桌面 E2E**
+- (desktop) **个人 AI 系统原生窗**：单例 `personalAiWin`（`frame:true` + `ipcNativeFrame`）；`create/open-personal-ai-win`；角标推送 `refresh-personal-ai-data` 转发；与无边框 `aiChatWin` 隔离。**待 E2E**
+- (web) **PC `/personal` 深链**：对齐移动端匹配 + `saveSelected`；`sessionId` 在 `chat-ready` 后 `selectSessionById`；`document.title` 随左侧选中 `title` 更新。**待 E2E**
 - (desktop) 若 web 改走 HTTP 搜索：桥 `search-ai-box-picker` 可保留兜底或后续下线；**仅需回归**弹窗搜索链路
 - (android / ios) `selectGroupBySearch` **不受影响**（本期不做 web 侧选择AI框弹窗；ios 走原生选择）
 - (web) 选择弹窗底栏「已选：xxx」截断：**已提交**（`6796595`）——`AcDialog` footer `footer-left` 占 `flex-1 min-w-0`、`buttonTip` 限 `max-w-32`；`SelectAiBoxDialog` 已选文案 `max-w-full truncate`
@@ -91,6 +93,7 @@
 
 ## 关键决策记录
 
+- 2026-07-21 PC「打开独立弹窗」：改为系统标题栏单例窗 `personalAiWin`（`frame:true`），打开完整 `/personal` 深链（含 `sessionId`）；推送 IPC `refresh-personal-ai-data`；设置等仍走无边框 `aiChatWin`。见 `spec-pc独立原生窗.md` / `plan-pc独立原生窗.md`
 - 2026-07-21 web：发 `/aiChatApi/v1/aiChat`（含续聊）时顺带 `saveSelected`——**belongType 0|1|3** 均调（个人框也调）；fire-and-forget 不阻断对话；弹窗/深链选中仍仅 1|3；契约 saveSelected.belongType 扩为 `0|1|3`
 - 2026-07-21 web：回滚 `5184de6`——飞书/WPS 鉴权取消/失败 catch 恢复 `handleClose()`（与提交前一致）
 - 2026-07-20 ios：`origin/release` 已 merge 进 `personal-ai-chat` 并 push（`6dfce4940`）；含绿盾文件预览重构 + `presentKnowledgeAuth`；与个人 AI 桥 import 冲突已双保留

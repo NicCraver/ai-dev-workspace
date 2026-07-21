@@ -346,9 +346,17 @@ PC `PersonalAiChat` 内嵌 `Home`（`hideBuiltinCollapseChrome=true`）时，`Ch
 | 1 | `fullscreen-in` / `fullscreen-out` | 全屏（既有 `handleFullscreen` / `zoomType`） |
 | 2 | `setting` | 设置（`gotoSettingPage`，仍受 `hasSetting`/`canEditAgent`） |
 | 3 | `file-trans-zx` | 打开智信私聊/群聊（`openImChat`）；**`belongType===0` 个人框隐藏**；1→私聊、3→群聊 |
-| 4 | `open-independent` | 打开独立弹窗（`WindowPostWinMessage` → `/home/{belongType}/{belongId}` + `aiRoleId`/`corpId`/`accountId`） |
+| 4 | `open-independent` | 打开 **系统原生独立窗**：`WindowPostPersonalAiNativeWin` → `/personal` + `agentId`/`belongId`/`belongType`/`sessionId`/`aiRoleId`/`title`（勿再走无边框 `aiChatWin` 的 `/home/...`） |
 
-不显示关闭按钮。独立 `zx/home` 入口仍用默认「设置/全屏/关闭」。
+不显示关闭按钮。设置页等其它入口仍用 `WindowPostWinMessage` → 无边框 `aiChatWin`。
+
+### PC 独立原生窗（desktop + web）
+
+- **窗**：`create-personal-ai-win` / `open-personal-ai-win`；`frame: true`；注入 `ipcNativeFrame=true`；关则 hide。
+- **布局**：`TheLayout` 在 `ipcNativeFrame` 下隐藏自定义 min/max/close 与顶栏 drag，避免双顶栏。
+- **深链**：`personalAiEntryDeepLink.js` 读 query；首次 list 匹配（可 `saveSelected`）；`chat-ready` 后 `Home.selectSessionById`。
+- **标题**：打开可用 query `title`；之后随左侧选中项 `title` 写 `document.title`（并 `setTitle` 首开）。
+- **推送**：主窗 iframe `postMessage` 不变；另 `refresh-personal-ai-data` → 独立窗 `runPushRefresh`。
 
 ## Home 对话 · 数据范围 scope（`dataRangeScopeList`）
 
