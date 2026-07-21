@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（ios：`fd698a574` AI框页背景 `#F7F9FE`，已 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（desktop：工作区未提交仍为本地 test 打包，无功能增量；验版拟改页面激活触发）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,10 +19,11 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-21）：web tip `55ade10`（已 push：list 无选中默认个人 AI 框；此前 `00acd74` 校正选中/全屏侧栏/个人框转发菜单/刷新图标右侧；`117af36` 原生窗设置+描边；`b9fcc47` version；`577b3ce` 状态栏/顶圆角）。ios tip `fd698a574`（已 push：AI框页背景 `#F7F9FE`；此前 `6dfce4940` merge release；进页停用自动拼深链 `c1ea29ff5`）。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `e6a59d10`（aiBoxCheckVersion；**已 push**）；**工作区未提交仍为本地 test 打包**（`.env.test` localhost / zhixin-test / arm64 等，勿提交）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-21 收尾核对）：web tip `55ade10`（已 push；干净工作区）。ios tip `fd698a574`（已 push）。android tip 本地 `3a1f6d0e5`（**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `e6a59d10`（aiBoxCheckVersion；**已 push**）；**工作区未提交 = 本地 test 打包**（`.env.test` / `electron-builder.yml` / `package.json`+lock：localhost、zhixin-test、arm64 等，**非功能增量，勿提交**）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
+- (web / desktop) **页面激活验版（拟改触发）**：页面变为可见时拉 `/ai-chat/build_version`（回参含 `build_number` 等），与本地 `JENKINS_BUILD_NUMBER` 对比；不一致则静默强刷，并用既有 `sessionStorage` 三元组恢复选中。现有 `aiBoxCheckVersion`（切 AI框 tab）倾向保留作 PC iframe 兜底（`display:none` 切 tab 时 visibility 不一定触发）。**讨论中，未编码**；复用 `checkAndReloadIfStale` / `writeActiveSelection`
 - (web) ~~**list 后默认选中个人 AI 框**~~：`ensureActiveAgentId` 无有效选中时优先 `isPersonal`/`belongType===0`（不依赖排序首位）；`activeChat` 用 String 比较防悬空。已 push `55ade10`；**待** PC E2E
 - (web) ~~**侧栏刷新图标位置**~~：顶栏刷新移到右侧与收起并排。已 push `00acd74`
 - (web) ~~**个人AI框消息菜单隐藏「转发至对话」**~~：`BaseMsgMenuForward` 在 `belongType===0` 时只保留「转发至其他对话」。已 push `00acd74`；**待** PC E2E
@@ -67,7 +68,7 @@
 - (ios) ~~**会话列表刷 `aiToolList` + `updateRecentlyUsed` 死循环**~~：日志含 `Tabbar-定时器` + UITableView visibleCells 警告。根因同族——`getRecentAITable` 无 `isRecent` 时对列表首项（现为 AI框 `aiId=0`）调 `updateRecentlyUsed` → `ai_tools_cmd` → 再拉列表仍无 isRecent。已修：`isPersonalAiTable` 跳过上报；`setAiTable` 同 id/AI框不报；`refreshAIList` debounce。**待** 真机重进会话列表验网络；UITableView 警告应随风暴消失
 - (android) ~~**AI框 `updateRecentlyUsed` 加固**~~：本身不成环（推送 `recentlyUsed` 被丢弃），但 `toUpdateData` 回落首项可能对字符串 `"0"` 误报。已在 `AiToolChatBaseView.saveRecentlyUsed` 对 `"0"` / 空 id 直接 return（与接口回参一致用字符串比）
 - (ios / android) ~~**`aiToolList` 中 `aiId=0`「AI框」不出现在 AI 工具 UI**~~：展示层已滤；二审通过。ios 另补：`asyncGetAIList` 展示变空时关 Page/更多。android 首轮中风险已修。**待真机 E2E**
-- (desktop) **工作区未提交 = 本地 test 打包**（非功能增量）：`.env.test` 指 localhost、`zhixin-test` 包名、arm64、asarUnpack sqlite3 等；勿当 T2/T9 未完成
+- (desktop) **工作区未提交 = 本地 test 打包**（非功能增量；2026-07-21 再确认）：`.env.test` / `electron-builder.yml` / `package.json`+lock——localhost、zhixin-test、arm64、asarUnpack sqlite3 等；勿当 T2/T9 未完成；**勿提交**
 - (多端) T9 待视觉对照蓝湖 4 张主 tab + 搜索 popover 截图验收；**列表顶栏**「选择AI框」胶囊样式已按稿调整（见关键决策）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
 - (web) 待联调确认 Home 对话是否支持「24h 恢复 vs 新建」（`resumeChat` 状态已保留并参与 pane key 重挂载，尚未传入 HomeIndex）
@@ -103,6 +104,7 @@
 
 ## 关键决策记录
 
+- 2026-07-21 web/desktop（拟）：部署强刷触发拟加 **页面激活**（`visibilitychange` → visible 时拉 `/ai-chat/build_version`，对比 `build_number`，不一致静默 reload + sessionStorage 恢复选中）；PC iframe 切 tab 仍倾向保留 `aiBoxCheckVersion` 兜底。**未编码**
 - 2026-07-21 web：list 无有效选中（空/悬空）时 **默认个人 AI 框**（`ensureActiveAgentId` 优先 belongType 0 / isPersonal，再首项）；深链 / sessionStorage 恢复仍优先
 - 2026-07-21 web：list 刷新后**无条件** `ensureActiveAgentId`（以当前可见列表校正；深链/storage 恢复布尔值不再短路首项兜底）；映射层 `agentId`/`belongId` 统一 string，匹配用 String 比较
 - 2026-07-21 web：个人 AI **原生独立窗**（`ipcNativeFrame`）头栏隐藏「打开独立弹窗」；设置走 `WindowPostWinMessage` → `open-ai-chat-win`（非 iframe 不能再 `window.open`）
