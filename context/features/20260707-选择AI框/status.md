@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（web：进 AI 框默认收起历史侧栏）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web：筛选胶囊「类型+n / 数据+n」+ 新 icon）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,7 +19,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-21 拉取核对）：web / ios / desktop 与 `origin/personal-ai-chat` **已同步**（behind 0）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `11fa888c`；**工作区未提交仍为本地 test 打包**（`.env.test`→localhost、`zhixin-test`、arm64、asarUnpack）。web tip `f4a49db`；此前已回滚 `5184de6`（鉴权失败仍 `handleClose()`）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-21 拉取核对）：web tip `eb807c0`（已 push：默认收起历史 `40f6a64` + 数据/类型胶囊 `eb807c0`）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `11fa888c`；**工作区未提交仍为本地 test 打包**（`.env.test`→localhost、`zhixin-test`、arm64、asarUnpack）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
@@ -41,6 +41,7 @@
 - (web / ios / android) **selectAiAgent 回传延迟修复（代码已落地，待真机 E2E）**：web `App.vue` `runCode` 强制 `isLongCb`；ios dismiss completion 后再 `responseHandler`（已在 `personal-ai-chat`）；android `onResult` → `wv.post` 再回调（已提交，test 包已装机）。看打点 `[选择AI框] wnsdk success 距点击 ms=`（扣思考时间应百毫秒级）
 - (web) ~~**T10 已选 chip 名/头像**~~：记忆 scope 补齐改走 `recentContactList`（`9a1dd2d`）；「数据范围」仅个人 AI 框；已选叠加小图标改固定 `data-range-icon`（`62dcd87`）。**待 PC 弹窗 E2E 回显**
 - (web) ~~**DataScopeBar 文案**~~：胶囊文案由「数据范围」改为「数据+n」（`n`=`dataRangeScopeList.length`）。已 push `personal-ai-chat` `f9582f4`（同提交含 MultimodalBar 去掉「生成：」）
+- (web) ~~**筛选胶囊文案/图标**~~：`DataRangeBar` 文案「数据+n」→「类型+n」，icon `type.svg`；`DataScopeBar` 保持「数据+n」，icon 改完整色 `data-range.svg`（`<img>`，不再 SvgIcon mask）。**工作区未提交**；**待** PC E2E
 - (web) ~~**移动端 AI框顶部电源栏颜色**~~：`MPersonalAiChatWrapper` onMounted 调 `wnsdk.ui.showStatusColor({ statusBgColor: '#DDE2FF' })`（对齐 Header 渐变起点）。已 push `personal-ai-chat` `d9c839e`
 - (web) ~~**筛选对话角标**~~：`PersonalAiChatAgentList` / 移动端 `SelectAiChatPopup`「筛选对话」后 `+n` 含个人AI框恒选（最少 `+1`；勾近15天/知识库再累加）。已 push `personal-ai-chat` `d9c839e`
 - (web) **移动端个人 AI 宿主（lifeng）**：`bd1e06c` 基座 `MPersonalAiChatWrapper`（Chat）+ `SelectAiChatPopup`（列表+History）；`16b5835` 改筛先 `saveFilter` 再 `list`（对齐 PC）；`3c055a6` 头部——左 `back` 关页、右 `StartChatButton`(仅图标)+`side-close` 开弹窗（旧「切换AI框」胶囊注释掉）；`Chat` 新增 `#header-right`（有则替换默认设置/全屏/关闭）；弹窗 `h-100vh`；History `openCloseMode` 控关栏按钮与「新对话」文案。**待真机 E2E / 视觉验收**
