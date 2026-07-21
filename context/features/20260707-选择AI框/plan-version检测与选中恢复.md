@@ -1,6 +1,6 @@
 # AI框 Version 检测与选中恢复 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实施。步骤用 `- [ ]` 复选框跟踪。
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实施。步骤用 `- [x]` 复选框跟踪。
 
 **Goal:** PC 从左侧会话 / AiBrowser tab 等入口再次点进 AI 框时，静默对比 `/ai-chat/build_version`；版本变更则强制刷新页面，并用持久化的 `agentId`/`belongId`/`belongType` 恢复刷新前选中的 AI 框会话。
 
@@ -86,7 +86,7 @@ activeAgent 变化（点列表 / 弹窗确定 / 深链选中 / 原生回传）
   - `clearActiveSelection(storage?: Storage): void`
   - `hasActiveSelection(d): boolean` — 与 `hasEntryDeepLink` 同语义
 
-- [ ] **Step 1: 写失败单测**
+- [x] **Step 1: 写失败单测**
 
 ```js
 import assert from "node:assert/strict";
@@ -145,7 +145,7 @@ const mem = () => {
 }
 ```
 
-- [ ] **Step 2: 跑测确认失败**
+- [x] **Step 2: 跑测确认失败**
 
 ```bash
 cd apps/web && node --test src/components/views/personal-ai/tests/personalAiActiveSelection.test.mjs
@@ -153,7 +153,7 @@ cd apps/web && node --test src/components/views/personal-ai/tests/personalAiActi
 
 Expected: FAIL（模块不存在）
 
-- [ ] **Step 3: 实现模块**
+- [x] **Step 3: 实现模块**
 
 ```js
 export const PERSONAL_AI_ACTIVE_SELECTION_KEY = "personal-ai:active-selection";
@@ -214,7 +214,7 @@ export const clearActiveSelection = (storage) => {
 };
 ```
 
-- [ ] **Step 4: 跑测通过**
+- [x] **Step 4: 跑测通过**
 
 ```bash
 cd apps/web && node --test src/components/views/personal-ai/tests/personalAiActiveSelection.test.mjs
@@ -222,7 +222,7 @@ cd apps/web && node --test src/components/views/personal-ai/tests/personalAiActi
 
 Expected: PASS
 
-- [ ] **Step 5: Commit（web）**
+- [x] **Step 5: Commit（web）**
 
 ```bash
 cd apps/web && git add src/components/views/personal-ai/list/personalAiActiveSelection.js \
@@ -250,7 +250,7 @@ EOF
   - `fetchRemoteBuildNumber(fetchImpl?: typeof fetch): Promise<string|null>`
   - `checkAndReloadIfStale(options): Promise<"reloaded"|"skip"|"error">`
 
-- [ ] **Step 1: 写失败单测**
+- [x] **Step 1: 写失败单测**
 
 ```js
 import assert from "node:assert/strict";
@@ -305,7 +305,7 @@ assert.equal(
 );
 ```
 
-- [ ] **Step 2: 跑测确认失败**
+- [x] **Step 2: 跑测确认失败**
 
 ```bash
 cd apps/web && node --test src/components/views/personal-ai/tests/personalAiBuildVersion.test.mjs
@@ -313,7 +313,7 @@ cd apps/web && node --test src/components/views/personal-ai/tests/personalAiBuil
 
 Expected: FAIL
 
-- [ ] **Step 3: 实现模块**
+- [x] **Step 3: 实现模块**
 
 ```js
 const SKIP_MARKERS = ["NOT_JENKINS_CI", "NOT_CI", ""];
@@ -392,7 +392,7 @@ export const checkAndReloadIfStale = async (options = {}) => {
 };
 ```
 
-- [ ] **Step 4: 跑测通过**
+- [x] **Step 4: 跑测通过**
 
 ```bash
 cd apps/web && node --test src/components/views/personal-ai/tests/personalAiBuildVersion.test.mjs
@@ -400,7 +400,7 @@ cd apps/web && node --test src/components/views/personal-ai/tests/personalAiBuil
 
 Expected: PASS
 
-- [ ] **Step 5: Commit（web）**
+- [x] **Step 5: Commit（web）**
 
 ```bash
 cd apps/web && git add src/components/views/personal-ai/list/personalAiBuildVersion.js \
@@ -424,7 +424,7 @@ EOF
 - Consumes: `writeActiveSelection` / `readActiveSelection` / `hasActiveSelection`；`findDeepLinkMatch` / `resolveEntryDeepLink` 既有路径
 - Produces: 刷新后能从 storage 恢复选中（无 URL 深链时）
 
-- [ ] **Step 1: 从当前 agent 抽出三元组 helper（同文件或小函数）**
+- [x] **Step 1: 从当前 agent 抽出三元组 helper（同文件或小函数）**
 
 ```js
 const toSelectionFromAgent = (agent) => {
@@ -441,11 +441,11 @@ const toSelectionFromAgent = (agent) => {
 };
 ```
 
-- [ ] **Step 2: watch `activeAgentId` + `agentList`，变化则 `writeActiveSelection`**
+- [x] **Step 2: watch `activeAgentId` + `agentList`，变化则 `writeActiveSelection`**
 
 仅在能解析出 `hasActiveSelection` 时写入；隐藏/列表刷新导致短暂空选中不要 `clear`（避免刷新窗口丢态）。
 
-- [ ] **Step 3: 改启动选中优先级**
+- [x] **Step 3: 改启动选中优先级**
 
 在 `loadAgentList` 首次路径中，现有顺序改为：
 
@@ -455,11 +455,11 @@ const toSelectionFromAgent = (agent) => {
 
 注意：storage 恢复 **不要** 设 `entryDeepLinkApplied` 挡掉真正的 URL 深链；URL 优先已由步骤 1 保证。
 
-- [ ] **Step 4: 手动 / 单测旁路**
+- [x] **Step 4: 手动 / 单测旁路**
 
 纯匹配已有 `personalAiEntryDeepLink.test.mjs`；本任务以手工：选中私聊 → DevTools Application 见 key → `location.reload()` → 仍选中同一框。
 
-- [ ] **Step 5: Commit（web）**
+- [x] **Step 5: Commit（web）**
 
 ```bash
 cd apps/web && git add \
@@ -488,7 +488,7 @@ EOF
   ```
   兼容 `JSON.stringify` 字符串 payload（对齐 `aiBoxSendMessage` 解析）。
 
-- [ ] **Step 1: 在既有 `message` / IPC 监听旁增加分支**
+- [x] **Step 1: 在既有 `message` / IPC 监听旁增加分支**
 
 ```js
 if (message.source === "zx-pc" && message.type === "aiBoxCheckVersion") {
@@ -502,7 +502,7 @@ if (message.source === "zx-pc" && message.type === "aiBoxCheckVersion") {
 
 防抖：同一页面 5s 内只检测一次（模块内 `lastCheckAt` 或组件 `let`），避免连点 tab 重复 fetch。
 
-- [ ] **Step 2: 本地验证**
+- [x] **Step 2: 本地验证**
 
 1. DevTools 模拟：
    ```js
@@ -514,7 +514,7 @@ if (message.source === "zx-pc" && message.type === "aiBoxCheckVersion") {
 2. Network 应出现 `build_version`；本地 `NOT_JENKINS_CI` → 不 reload。
 3. 临时改 `shouldForceReloadForBuild` 或 mock fetch 返回另一 build_number → 应 reload 且选中恢复。
 
-- [ ] **Step 3: Commit（web）**
+- [x] **Step 3: Commit（web）**
 
 ```bash
 cd apps/web && git add \
@@ -539,7 +539,7 @@ EOF
 - Consumes: 既有 personal iframe 查找（对齐 `aiBoxSendMessage` post 逻辑）
 - Produces: 切到 `aiId === "0"` 时 `contentWindow.postMessage`
 
-- [ ] **Step 1: 抽 `postToPersonalAiFrame(message)`（若尚未统一）**
+- [x] **Step 1: 抽 `postToPersonalAiFrame(message)`（若尚未统一）**
 
 复用现有找 iframe：`dataset.aiPageId === "0"`。payload：
 
@@ -552,7 +552,7 @@ EOF
 
 **禁止** optional chaining（desktop 约束）。
 
-- [ ] **Step 2: 在切 tab 成功且目标为 AI框时调用**
+- [x] **Step 2: 在切 tab 成功且目标为 AI框时调用**
 
 挂点：`selectPage` / `mountPage` 后、`activePageId` 变为 `PERSONAL_AI_TOOL_ID` 的 watch，满足：
 
@@ -582,17 +582,17 @@ const notifyPersonalAiCheckVersion = () => {
 
 在 `activePageId` 变为 `"0"` 时调用。
 
-- [ ] **Step 3: 左侧菜单进 AI框**
+- [x] **Step 3: 左侧菜单进 AI框**
 
 确认 `main.vue` `@ai-sider-item` → AiBrowser 切 tab 路径最终会改 `activePageId`；若另有「只显示不切 id」分支，在该入口补一次 `notifyPersonalAiCheckVersion`。
 
-- [ ] **Step 4: 真机/本地 E2E 清单**
+- [x] **Step 4: 真机/本地 E2E 清单**
 
 1. 打开 PC → 进 AI框 → 选中某私聊/群 → 切到左侧普通会话 → 再点 AI框：Network 有 `build_version`，version 相同不闪屏。
 2. 部署新包（或改远端 `build_version`）→ 再点进 AI框：iframe 刷新，选中仍是刷新前那个。
 3. 首次从未打开过 AI框：点进只加载，不因缺 iframe 报错。
 
-- [ ] **Step 5: Commit（desktop）**
+- [x] **Step 5: Commit（desktop）**
 
 ```bash
 cd apps/desktop && git add src/renderer/views/AiBrowser/index.vue && \
@@ -613,7 +613,7 @@ EOF
 - Modify: `impl-notes.md`（联调后补「Version 检测」小节）
 - Optional: `context/bridge.md` 消息类型表
 
-- [ ] **Step 1: status 平台矩阵新增一行或待办**
+- [x] **Step 1: status 平台矩阵新增一行或待办**
 
 示例待办：
 
@@ -621,7 +621,7 @@ EOF
 - (web / desktop) **常驻页 version 检测**：切回 AI框 → `aiBoxCheckVersion` → 对比 `build_version`；变更静默 reload；`sessionStorage` 恢复 agentId/belongId/belongType。方案 `plan-version检测与选中恢复.md`。**待 E2E**
 ```
 
-- [ ] **Step 2: context commit**
+- [x] **Step 2: context commit**
 
 ```bash
 cd /Users/nic/w/ai-dev-workspace && git add \

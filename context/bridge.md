@@ -32,6 +32,10 @@
 // AiBrowser iframe 打开 IM（web → AiBrowser，无响应）
 { "type": "personal-ai:open-chat", "payload": { "id": "<belongId>", "type": "group" | "chat", "name"?: "<显示名>", "avatar"?: "", "corpId"?: "", "groupType"?: 0 } }
 // type: "group"=群聊 / 其它（如 "chat"）=私聊；宿主 openConversationById：列表有则选中，无则用 name/avatar 重建会话再打开
+
+// AiBrowser → AI框 iframe：切到 AI框 tab 时通知验版（对象或 JSON 字符串均可）
+{ "source": "zx-pc", "type": "aiBoxCheckVersion" }
+// web 对比 /ai-chat/build_version 与 JENKINS_BUILD_NUMBER；不一致则静默 location.reload()，用 sessionStorage 恢复选中
 ```
 
 ## 方法清单
@@ -107,6 +111,7 @@ Home「数据范围」胶囊（移动端）调 `wnsdk.aiChat.selectDataRangeScop
 
 ## Changelog
 
+- 2026-07-21 AiBrowser → iframe：`aiBoxCheckVersion`（切到 AI框 tab）；web 静默对比 `build_version`，变更则 reload；选中三元组 `sessionStorage` 恢复。
 - 2026-07-17 ios/android 数据范围搜索子页：底栏与主页同形态；子页无「取消」、主按钮「完成」；仅完成写回主页（返回不 live sync）；已选名须本地补齐。
 - 2026-07-17 android `selectDataRangeScope`：镜像 selectAiAgent 桥通路（requestCode 239）+ 独立多选页；底栏已选仅人/群名与头像；最近/群「全部」；web 移动端已接线。
 - 2026-07-17 登记 ios `selectDataRangeScope`：入参 `initialScopes`；回传 `personal-ai:selected-data-range` + `scopes[{scopeDataType,scopeDataId,name?,avatar?}]`；复用选择 AI 框页多选 + 最近/群「全部」；web 移动端 `DataScopeBar` 走原生，PC 仍 H5 弹窗。

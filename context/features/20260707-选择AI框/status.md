@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（已出 `plan-version检测与选中恢复.md`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web/desktop：version 检测 + 选中恢复已落地，待 E2E）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,7 +23,7 @@
 
 ## 待办 / 阻塞
 
-- (web / desktop) **常驻页 version 检测 + 选中恢复**：切回 AI框 → `aiBoxCheckVersion` → 对比 `/ai-chat/build_version`；变更静默 `reload`；`sessionStorage` 持久化 `agentId`/`belongId`/`belongType` 刷新后恢复。方案 `plan-version检测与选中恢复.md`。⬜ 未开始
+- (web / desktop) ~~**常驻页 version 检测 + 选中恢复**~~：切回 AI框 → `aiBoxCheckVersion` → 对比 `/ai-chat/build_version`；变更静默 `reload`；`sessionStorage` 持久化 `agentId`/`belongId`/`belongType` 刷新后恢复。方案 `plan-version检测与选中恢复.md`。**待 PC E2E**
 - (web) ~~**TimeSelector 状态栏色**~~：移动端打开选时间弹层时 `showStatusColor(#FFFFFF)` 对齐标题栏；关闭/卸载恢复 `#DDE2FF`（Chat Header 顶色）。**工作区未提交**
 - (web) ~~**个人 AI Android 顶圆角**~~：`Chat` 在个人 AI（`header-left/right` 插槽或 `hideBuiltinCollapseChrome`）下不加 `rounded-t-4`。**工作区未提交**
 - (web) ~~**进 AI 框默认收起历史**~~：`PersonalAiChat` `historySidebarOpen` 初值 `false`，`default-history-sidebar-open=false`；列表仍默认展开，可用悬浮条「展开历史」。已 push `personal-ai-chat` `40f6a64`。**待** PC E2E
