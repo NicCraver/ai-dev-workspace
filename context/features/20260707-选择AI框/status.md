@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（web：`00acd74` 校正选中/全屏侧栏/转发菜单/刷新位）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web：`55ade10` list 无选中时默认个人 AI 框，已 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,10 +19,11 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-21）：web tip `00acd74`（已 push：校正选中/全屏侧栏/个人框转发菜单/刷新图标右侧；此前 `117af36` 原生窗设置+描边；`b9fcc47` version；`577b3ce` 状态栏/顶圆角）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `e6a59d10`（aiBoxCheckVersion；**已 push**）；**工作区未提交仍为本地 test 打包**（`.env.test` localhost / zhixin-test / arm64 等，勿提交）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-21）：web tip `55ade10`（已 push：list 无选中默认个人 AI 框；此前 `00acd74` 校正选中/全屏侧栏/个人框转发菜单/刷新图标右侧；`117af36` 原生窗设置+描边；`b9fcc47` version；`577b3ce` 状态栏/顶圆角）。ios tip `6dfce4940`（已 merge release；进页停用自动拼深链 `c1ea29ff5`）；**工作区未提交** AI框页背景 `#F7F9FE`。android tip 本地 `3a1f6d0e5`（入口深链有回参才拼 + 离开补拉角标；**ahead 1 未 push**），远端 tip 仍 `24f17fc1e`。desktop tip `e6a59d10`（aiBoxCheckVersion；**已 push**）；**工作区未提交仍为本地 test 打包**（`.env.test` localhost / zhixin-test / arm64 等，勿提交）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
+- (web) ~~**list 后默认选中个人 AI 框**~~：`ensureActiveAgentId` 无有效选中时优先 `isPersonal`/`belongType===0`（不依赖排序首位）；`activeChat` 用 String 比较防悬空。已 push `55ade10`；**待** PC E2E
 - (web) ~~**侧栏刷新图标位置**~~：顶栏刷新移到右侧与收起并排。已 push `00acd74`
 - (web) ~~**个人AI框消息菜单隐藏「转发至对话」**~~：`BaseMsgMenuForward` 在 `belongType===0` 时只保留「转发至其他对话」。已 push `00acd74`；**待** PC E2E
 - (web) ~~**智能体列表偶发不默认选中**~~：根因——① 深链/storage 恢复短路首项兜底但选中可能基于过期 list；② number vs string `===` 悬空。已修 `ensureActiveAgentId` + String 比较。已 push `00acd74`；**待** PC E2E
@@ -102,6 +103,7 @@
 
 ## 关键决策记录
 
+- 2026-07-21 web：list 无有效选中（空/悬空）时 **默认个人 AI 框**（`ensureActiveAgentId` 优先 belongType 0 / isPersonal，再首项）；深链 / sessionStorage 恢复仍优先
 - 2026-07-21 web：list 刷新后**无条件** `ensureActiveAgentId`（以当前可见列表校正；深链/storage 恢复布尔值不再短路首项兜底）；映射层 `agentId`/`belongId` 统一 string，匹配用 String 比较
 - 2026-07-21 web：个人 AI **原生独立窗**（`ipcNativeFrame`）头栏隐藏「打开独立弹窗」；设置走 `WindowPostWinMessage` → `open-ai-chat-win`（非 iframe 不能再 `window.open`）
 - 2026-07-21 web：发 `/aiChatApi/v1/aiChat`（含续聊）时顺带 `saveSelected`——**belongType 0|1|3** 均调（个人框也调）；fire-and-forget 不阻断对话；弹窗/深链选中仍仅 1|3；契约 saveSelected.belongType 扩为 `0|1|3`
