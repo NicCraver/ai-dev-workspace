@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（web DataScopeBar 换新数据图标）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web：进 AI 框默认收起历史侧栏）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**进 AI 框默认收起历史**~~：`PersonalAiChat` `historySidebarOpen` 初值 `false`，`default-history-sidebar-open=false`；列表仍默认展开，可用悬浮条「展开历史」。**工作区未提交**；**待** PC E2E
 - (web) ~~**发 aiChat 顺带 saveSelected**~~：`Chat.connectSSE` 发起 `/aiChatApi/v1/aiChat` 时 fire-and-forget `saveSelected`（`buildSaveSelectedReqFromChatBelongs`；**belongType 0|1|3** 均调；失败不阻断对话）。弹窗/深链选中仍仅 1|3。已 push `personal-ai-chat` `fe2d62b`。**待** E2E
 - (ios) ~~**AI框页背景色**~~：`ZXPersonalAIChatController` `view.backgroundColor` 改为 `#F7F9FE`（对齐 AIChatPopover；底栏安全区露出不再白底）。**工作区未提交**
 - (ios / web) **进 AI 框鉴权取消关页**：ios 已停用进页自动拼深链（`c1ea29ff5`）。web **已回滚** `5184de6`——飞书/WPS 鉴权 catch 恢复 `handleClose()`。选择页选群回首页问题另案。**待真机 E2E**
@@ -70,7 +71,7 @@
 - (web) 侧栏搜索**已对齐选择弹窗**：复用 `AiBoxSearchBox` + `POST /personalAiFrame/selectGroupBySearch`；输入框 `rounded-[14px]` / `border #E7E7E7`；点选结果直达 `applySelection`（等同弹窗「确定」）；主列表不再客户端过滤
 - (web) `POST /personalAiFrame/selectGroupBySearch` **已接入**选择弹窗与侧栏搜索：`searchPicker` 改走 HTTP（`selectGroupBySearchApi` 动态导入，`accountId` 取登录用户），映射 `privateList`/`groupList`；搜索结果 popover 新增「全部/群组/人员」三 tab（全部=群组在前+人员在后）。web 不再调用桥 `searchAiBoxPicker`；**`AiBoxSearchRow` 有 `agentAvatar` 时优先单头像**（群组对齐 `AiBoxRow`，人员同理）
 - (web) 个人 AI 右侧对话面板已改为**组件直渲** `HomeIndex`（`chatType`/`targetId`/`aiRoleId` props + key 重挂载），不再嵌套 `/zx/home/...` iframe；独立 `zx/home` 路由入口仍可用
-- (web) **PC 个人 AI 内嵌对话**：历史侧栏随 **Home 自身 `elWidth`** 在弹窗/双栏间切换（`DRAWER_MAX_WIDTH=700`：`≤700` popup 宽 280px，`>700` 双栏）；首次窄屏默认 popup，变宽自动解除并切双栏；独立首页默认收起
+- (web) **PC 个人 AI 内嵌对话**：历史侧栏随 **Home 自身 `elWidth`** 在弹窗/双栏间切换（`DRAWER_MAX_WIDTH=700`：`≤700` popup 宽 280px，`>700` 双栏）；**进入默认收起**（`historySidebarOpen=false`）；独立首页默认收起
 - (web) **PC 个人 AI 头栏四按钮**：`hideBuiltinCollapseChrome` 下传至 `Chat` → 全屏 / 设置 / 打开智信私聊·群聊（个人框隐藏）/ 打开独立弹窗；无关闭；移动端 `#header-right` 仍优先。标题 `max-width` 改按实际右侧图标数预留（`rightIconCount`，私聊/群最多 4，不再死写 2/3）。**待桌面 E2E**
 - (desktop) 若 web 改走 HTTP 搜索：桥 `search-ai-box-picker` 可保留兜底或后续下线；**仅需回归**弹窗搜索链路
 - (android / ios) `selectGroupBySearch` **不受影响**（本期不做 web 侧选择AI框弹窗；ios 走原生选择）
@@ -177,7 +178,8 @@
 - 2026-07-15 个人 AI 列表：个人框仅「开启新对话」图标（无三点）；私聊/群三点左=新开 AI 框会话、三点内「打开智信私聊/群聊」→ `openImChat`
 - 2026-07-15 选择弹窗搜索 `AiBoxSearchRow`：回参含 `agentAvatar` 时优先展示 AI 框头像（群组与 `AiBoxRow` 一致；人员有则覆盖 `avatar`）；`normalizeSearchGroup/Private` 透传 `agentAvatar`/`accountInfoList`
 - 2026-07-15 侧栏搜索对齐选择弹窗：复用 `AiBoxSearchBox`/`SearchInput`（`rounded-[14px]`、`border #E7E7E7`、placeholder「搜索联系人、智能体」）；HTTP `selectGroupBySearch`；点选即 `applySelection`（跳过弹窗确定）；主列表始终展示完整 list
-- 2026-07-15 PC 个人 AI 默认展开历史：窄屏用 `preferDrawer` 强制 van-popup（280px）；变宽后清掉强制态，按自身 `elWidth` 与 `DRAWER_MAX_WIDTH=700` 在弹窗/双栏间切换
+- 2026-07-21 web：进 AI 框**默认收起**中间历史侧栏（`historySidebarOpen=false` / `defaultHistorySidebarOpen=false`）；列表侧栏仍默认展开；悬浮条「展开历史」可开
+- 2026-07-15 PC 个人 AI 历史侧栏形态：窄屏用 `preferDrawer` 强制 van-popup（280px）；变宽后清掉强制态，按自身 `elWidth` 与 `DRAWER_MAX_WIDTH=700` 在弹窗/双栏间切换（**默认开合**见 2026-07-21）
 - 2026-07-15 `hasDrawer` 窄屏阈值定为 `DRAWER_MAX_WIDTH=700`
 - 2026-07-15 列表开启新对话时序：先选中 AI 框 → 等 `chat-ready`（getChatLastMessages 完成）→ 再 `newChatNonce` 调 `startNewChat`；去掉挂载直开 `openAsNewChat` 避免竞态报错
 - 2026-07-16 desktop AiBrowser：`aiToolList` **`aiId=0`** 为 AI框（去内置 tab）；固定首位；tab 切换 `ai-sider-item` 同步左侧菜单；`pageUrlMap` 保活 iframe/webview（`loadList` 刷新不改已挂载 src）
