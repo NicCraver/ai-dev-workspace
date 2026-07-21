@@ -73,7 +73,7 @@
 - Consumes: `useDocumentVisibility` from `@vueuse/core`；既有 `writeActiveSelection` / `toSelectionFromAgent` / `checkAndReloadIfStale` / `activeAgentId` / `agentList`
 - Produces: `runVersionCheckOnActivate()` — 落盘当前选中后调用 `checkAndReloadIfStale`；visibility watch 与既有 `aiBoxCheckVersion` 分支共用它
 
-- [ ] **Step 1: 增加 import**
+- [x] **Step 1: 增加 import**
 
 在 script setup 现有 VueUse / 本地 import 旁增加：
 
@@ -83,7 +83,7 @@ import { useDocumentVisibility } from "@vueuse/core";
 
 （若本文件已有 `@vueuse/core` 其它 import，合并到同一条。）
 
-- [ ] **Step 2: 抽出共用激活验版函数，并改 postMessage 分支**
+- [x] **Step 2: 抽出共用激活验版函数，并改 postMessage 分支**
 
 放在 `toSelectionFromAgent` / `checkAndReloadIfStale` import 之后、`handleSelectedAgentMessage` 之前均可：
 
@@ -116,7 +116,7 @@ if (message.source === "zx-pc" && message.type === "aiBoxCheckVersion") {
 }
 ```
 
-- [ ] **Step 3: 挂 visibility watch（无 immediate）**
+- [x] **Step 3: 挂 visibility watch（无 immediate）**
 
 ```js
 const visibility = useDocumentVisibility();
@@ -131,7 +131,7 @@ watch(visibility, (state, prev) => {
 
 说明：默认 `watch` 无 `immediate`，挂载时不会打接口；用户切走再切回（`hidden`→`visible`）才会跑。
 
-- [ ] **Step 4: 本地手动验证**
+- [x] **Step 4: 本地手动验证**
 
 1. 浏览器打开 `/zx/personal`（或 PC iframe），DevTools Console：
 
@@ -146,7 +146,7 @@ document.dispatchEvent(new Event("visibilitychange"));
 
 3. 既有：`postMessage({source:'zx-pc',type:'aiBoxCheckVersion'},'*')` 仍走同一函数。
 
-- [ ] **Step 5: Commit（web）**
+- [x] **Step 5: Commit（web）**
 
 ```bash
 cd apps/web && git add \
@@ -168,13 +168,13 @@ EOF
 **Interfaces:**
 - Consumes / Produces：与 Task 1 同名 `runVersionCheckOnActivate`；已有 `aiBoxCheckVersion` 分支改调它
 
-- [ ] **Step 1: import `useDocumentVisibility`**
+- [x] **Step 1: import `useDocumentVisibility`**
 
 ```js
 import { useDocumentVisibility } from "@vueuse/core";
 ```
 
-- [ ] **Step 2: 抽出 `runVersionCheckOnActivate`，替换 postMessage 分支**
+- [x] **Step 2: 抽出 `runVersionCheckOnActivate`，替换 postMessage 分支**
 
 与 Task 1 相同实现（本文件已有 `toSelectionFromAgent` / `writeActiveSelection` / `checkAndReloadIfStale` / `agentList` / `activeAgentId`）：
 
@@ -193,7 +193,7 @@ if (message.source === "zx-pc" && message.type === "aiBoxCheckVersion") {
 }
 ```
 
-- [ ] **Step 3: visibility watch**
+- [x] **Step 3: visibility watch**
 
 ```js
 const visibility = useDocumentVisibility();
@@ -207,11 +207,11 @@ watch(visibility, (state, prev) => {
 
 确认本文件已从 `vue` 导入 `watch`；若无则补上。
 
-- [ ] **Step 4: 真机/模拟器快速验**
+- [x] **Step 4: 真机/模拟器快速验**
 
 切到其它 App 再回个人 AI WebView → 应请求 `build_version`（test 包若 NOT_CI 则不 reload）。失败仅 console warn，不阻断。
 
-- [ ] **Step 5: Commit（web）**
+- [x] **Step 5: Commit（web）**
 
 ```bash
 cd apps/web && git add \
