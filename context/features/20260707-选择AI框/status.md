@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-21（web：筛选胶囊「类型+n / 数据+n」+ 新 icon）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-21（web 已 push `eb807c0`：默认收起历史 + 类型/数据胶囊）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,7 +23,8 @@
 
 ## 待办 / 阻塞
 
-- (web) ~~**进 AI 框默认收起历史**~~：`PersonalAiChat` `historySidebarOpen` 初值 `false`，`default-history-sidebar-open=false`；列表仍默认展开，可用悬浮条「展开历史」。**工作区未提交**；**待** PC E2E
+- (web) ~~**进 AI 框默认收起历史**~~：`PersonalAiChat` `historySidebarOpen` 初值 `false`，`default-history-sidebar-open=false`；列表仍默认展开，可用悬浮条「展开历史」。已 push `personal-ai-chat` `40f6a64`。**待** PC E2E
+- (web) ~~**数据/类型胶囊图标文案**~~：DataScopeBar 用整图 `data-range`；DataRangeBar 文案「类型+n」+ `type` 图标。已 push `eb807c0`。**待** 视觉验收
 - (web) ~~**发 aiChat 顺带 saveSelected**~~：`Chat.connectSSE` 发起 `/aiChatApi/v1/aiChat` 时 fire-and-forget `saveSelected`（`buildSaveSelectedReqFromChatBelongs`；**belongType 0|1|3** 均调；失败不阻断对话）。弹窗/深链选中仍仅 1|3。已 push `personal-ai-chat` `fe2d62b`。**待** E2E
 - (ios) ~~**AI框页背景色**~~：`ZXPersonalAIChatController` `view.backgroundColor` 改为 `#F7F9FE`（对齐 AIChatPopover；底栏安全区露出不再白底）。**工作区未提交**
 - (ios / web) **进 AI 框鉴权取消关页**：ios 已停用进页自动拼深链（`c1ea29ff5`）。web **已回滚** `5184de6`——飞书/WPS 鉴权 catch 恢复 `handleClose()`。选择页选群回首页问题另案。**待真机 E2E**
