@@ -36,6 +36,7 @@
 // AiBrowser → AI框 iframe：切到 AI框 tab 时通知验版（对象或 JSON 字符串均可）
 { "source": "zx-pc", "type": "aiBoxCheckVersion" }
 // web 对比 /ai-chat/build_version 与 JENKINS_BUILD_NUMBER；不一致则静默 location.reload()，用 sessionStorage 恢复选中
+// web 另可通过 `useDocumentVisibility`（hidden→visible）触发同一验版；desktop 的 `aiBoxCheckVersion` 仍建议保留（AiBrowser 内 tab 切换兜底）
 ```
 
 ## 方法清单

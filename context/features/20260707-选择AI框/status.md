@@ -23,7 +23,7 @@
 
 ## 待办 / 阻塞
 
-- (web / desktop) **页面激活验版（拟改触发）**：页面变为可见时拉 `/ai-chat/build_version`（回参含 `build_number` 等），与本地 `JENKINS_BUILD_NUMBER` 对比；不一致则静默强刷，并用既有 `sessionStorage` 三元组恢复选中。现有 `aiBoxCheckVersion`（切 AI框 tab）倾向保留作 PC iframe 兜底（`display:none` 切 tab 时 visibility 不一定触发）。**讨论中，未编码**；复用 `checkAndReloadIfStale` / `writeActiveSelection`
+- (web / desktop) **页面可见验版**：web 用 `useDocumentVisibility`（hidden→visible）拉 `/ai-chat/build_version`，不一致静默 reload + sessionStorage 恢复选中；desktop `aiBoxCheckVersion` 保留作 AiBrowser 内 tab 切换兜底。方案 `plan-页面可见验版.md`。web 已 push `3204201` / `27c09de`。**待 PC E2E**
 - (web) ~~**进页无选中（list 有数据仍「请选择智能体」）**~~：根因——`readActiveSelection()` 返回 `null` 时 `hasActiveSelection(null)` 读 `null.agentId` 抛错，`loadAgentList` catch 后跳过 `syncActiveAgentAfterListLoad`。已修 `hasActiveSelection`/`hasEntryDeepLink` 显式判空；本地已验证默认选中个人 AI 框。**web 未提交**
 - (web) ~~**list 后默认选中个人 AI 框**~~：`ensureActiveAgentId` 无有效选中时优先 `isPersonal`/`belongType===0`（不依赖排序首位）；`activeChat` 用 String 比较防悬空。已 push `55ade10`
 - (web) ~~**侧栏刷新图标位置**~~：顶栏刷新移到右侧与收起并排。已 push `00acd74`
@@ -105,7 +105,7 @@
 
 ## 关键决策记录
 
-- 2026-07-21 web/desktop（拟）：部署强刷触发拟加 **页面激活**（`visibilitychange` → visible 时拉 `/ai-chat/build_version`，对比 `build_number`，不一致静默 reload + sessionStorage 恢复选中）；PC iframe 切 tab 仍倾向保留 `aiBoxCheckVersion` 兜底。**未编码**
+- 2026-07-21 web：部署强刷触发改为页面可见（`useDocumentVisibility`）；只改 web；桌面 postMessage 保留兜底；恢复仍仅 AI 框三元组
 - 2026-07-21 web：list 无有效选中（空/悬空）时 **默认个人 AI 框**（`ensureActiveAgentId` 优先 belongType 0 / isPersonal，再首项）；深链 / sessionStorage 恢复仍优先
 - 2026-07-21 web：list 刷新后**无条件** `ensureActiveAgentId`（以当前可见列表校正；深链/storage 恢复布尔值不再短路首项兜底）；映射层 `agentId`/`belongId` 统一 string，匹配用 String 比较
 - 2026-07-21 web：个人 AI **原生独立窗**（`ipcNativeFrame`）头栏隐藏「打开独立弹窗」；设置走 `WindowPostWinMessage` → `open-ai-chat-win`（非 iframe 不能再 `window.open`）

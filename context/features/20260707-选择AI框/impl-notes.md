@@ -429,6 +429,7 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 
 ### 时序
 
+0. 文档 `visibilityState`：`hidden` → `visible`（`useDocumentVisibility`）→ 与壳 `aiBoxCheckVersion` 同走验版。
 1. 选中任一 AI 框时，把 `agentId` / `belongId` / `belongType` 写入会话级存储（与入口深链同 shape）。
 2. 宿主切回 AI 框页时，向内嵌页发 `source=zx-pc` + `type=aiBoxCheckVersion`。
 3. 内嵌页拉线上 `build_version`，与构建时注入的 build 号对比：
@@ -440,6 +441,7 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 
 | 场景 | 预期 |
 |------|------|
+| AiBrowser 内 tab 切换但 visibility 不变 | 依赖桌面 `aiBoxCheckVersion`；web 侧防抖合并 |
 | 一直停在 AI 框 tab 不切走 | 不触发验版（本期不做轮询） |
 | iframe 尚未创建 | 宿主跳过通知；下次切回再发 |
 | 恢复只定位「哪个 AI 框」 | 不强制恢复具体 sessionId；续聊仍走 lastChatAt / 24h |
