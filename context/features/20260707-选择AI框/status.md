@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（web HomeGuidePage DOM 锚定设置按钮）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（web DataRangeBar 关闭钮去竖线）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**DataRangeBar 关闭钮去竖线**~~：`SelectorClose` 覆写 `before:content-none`（去掉组件自带 `#C9CFD8` 分割线）。**工作区未提交**；**待** PC 视觉验收
 - (web) ~~**HomeGuidePage 对齐个人 AI 头栏设置位**~~：改 DOM 锚定 `data-home-guide-anchor=setting`（不再手算 pr）；个人 AI / 旧三按钮头栏通用。**工作区未提交**；**待** PC 视觉验收（个人框/私聊群/原生独立窗 + 独立 zx/home）
 - (web) ~~**SelectAiChatPopup 左上直角**~~：根容器 `rounded-t-2xl` → `rounded-tr-2xl`（左上直角、右上仍圆）。已 push `9d8b9d6`；**待** 真机视觉验收
 - (web / android / ios) **选择数据范围 · 原生落库（ACK）**：ios/android 打开 `get`、确认 `save`；web 已去掉开页前 flush（`7df0ff5`）。android `be96a5d98` / ios `1c7097221` **已 push**。方案 `plan-数据范围原生落库.md`。**待** 真机 E2E
