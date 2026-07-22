@@ -145,7 +145,7 @@
 
 **时序**：页面挂载 → `getFilter(accountId)` 取筛选记忆 → `list({ accountId, filterTypes, exemptAgentIds })` → 用回参/记忆同步筛选 UI → 映射为内部 agent → 排序渲染。
 - `getFilter` 无记录时 `filterTypes=[]`；失败则 list 传 `null` 由后端沿用记忆。
-- **改筛落库**（底栏「筛选对话」弹层）：勾选变更 → `POST /personalAiFrame/saveFilter({ accountId, filterTypes })` 覆盖写记忆 → `list` 刷新（跳过 getFilter，复用本地 `filterTypes`）。`filterTypes` 取值：`[]` 清空附加筛；`[1]` 近15天；`[2]` 有知识库；`[1,2]` 同时勾选。个人 AI 框恒展示，不参与 `filterTypes`。
+- **改筛落库**（底栏「筛选对话」弹层）：勾选变更 → `POST /personalAiFrame/saveFilter({ accountId, filterTypes })` 覆盖写记忆 → **清空会话内 `exemptAgentIds`** → `list({ filterTypes, exemptAgentIds: [] })` 刷新（跳过 getFilter）。`filterTypes` 取值：`[]` 清空附加筛；`[1]` 近15天；`[2]` 有知识库；`[1,2]` 同时勾选。个人 AI 框恒展示，不参与 `filterTypes`。改筛后不再沿用选中豁免，避免旧豁免项绕过新筛选条件。
 - `saveFilter` 失败不阻断刷新：仍带当前 `filterTypes` 调 `list`（后端 list 可隐式落库兜底）。
 - `accountId` 取当前登录用户 id。
 - 成功 → 用回参 `aiFrameList` 整表替换本地列表；失败 → 清空列表（无 mock 兜底）。
@@ -173,7 +173,7 @@
 
 **初始化**：`getFilter` → 同步本地 `filterTypes` → `list` 带同步后的值拉表。
 
-**改筛**：弹层 toggle → 更新本地 `filterTypes` → `saveFilter` → `list(skipGetFilter)` 刷新列表与 `filterInfo`。
+**改筛**：弹层 toggle → 更新本地 `filterTypes` → `saveFilter` → **`exemptAgentIds = []`** → `list(skipGetFilter, exemptAgentIds:[])` 刷新列表与 `filterInfo`。
 
 **后续刷新**（saveSelected / updateSetting）：只调 `list`，`filterTypes` 复用本地已同步记忆，不再调 saveFilter。
 
@@ -222,7 +222,7 @@
 - 群组 / 组织架构 tab 可能无 `agentId`（桥侧未补齐）→ save 仍可只带 `belongType+belongId`；`exemptAgentIds` 不追加空 id。新项能否出现在筛选列表依赖后端 save 后是否默认可见。
 - **合成 agentId**（前缀 `group:` / `private:`，ios/本地列表兜底）**不得**写入 `saveSelected.agentId` 与 `exemptAgentIds`。
 - 最近联系人（HTTP 补齐后）与搜索结果通常带真实 `agentId`，豁免生效。
-- `exemptAgentIds` 为**会话内累加**（同页多次选择不断 push），非跨刷新持久化。
+- `exemptAgentIds` 为**会话内累加**（同页多次选择不断 push），非跨刷新持久化；**改筛时清空**（list 传 `[]`），不再沿用旧豁免。
 - **与建会话解耦**：save 映射已用 `ownerId`；打开右侧会话目标仍走列表项的 `belongType`/`belongId`（或占位），勿在 save 编排里顺手改 chat 目标。
 
 **移植**：纯映射 + 编排与 HTTP 解耦；调用方注入 `saveSelected` / `fetchList` 两个异步函数即可。各端勿在 UI 层散写这两步时序。web 已提交（`6796595` + `588d044` 合成 id 过滤）；**真实后端联调尚未验收**（T9 仍 🚧）。

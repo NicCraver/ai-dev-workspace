@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（web：无选中态改 AcPageLoading）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（web：改筛清空 exemptAgentIds）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**改筛清空 exemptAgentIds**~~：筛选对话勾选变更后 `exemptAgentIds=[]`，list 传空数组（PC `PersonalAiChat` + 移动 `MPersonalAiChatWrapper`）。已 push `3557fd0`
 - (web) ~~**无选中占位「请选择智能体」**~~：改为 `AcPageLoading`（`PersonalAiChat` / `MPersonalAiChatWrapper` / `SelectAiChatPopup`）。已 push `4f6a824`
 - (web / desktop) **页面可见验版**：**仅 PC** `PersonalAiChat` 用 `useDocumentVisibility`（hidden→visible）拉 `/ai-chat/build_version`，不一致则**当前选中写入 URL query**（`agentId`/`belongId`/`belongType`/`sessionId`）后静默 reload；刷新后 URL 深链 `belongType` 1|3 **一律** `saveSelected`→`list`→选中 AI 框，再 `chat-ready` 按 `sessionId` 选会话（个人框直接匹配）。**不用 sessionStorage**。desktop `aiBoxCheckVersion` 保留作 AiBrowser 内 tab 切换兜底。**移动端不做**。方案 `plan-页面可见验版.md`。**web 未提交 sessionId**；**待 PC E2E**
 - (web) ~~**进页无选中（list 有数据仍「请选择智能体」）**~~：根因——`readActiveSelection()` 返回 `null` 时 `hasActiveSelection(null)` 读 `null.agentId` 抛错，`loadAgentList` catch 后跳过选中同步。已改 URL 恢复并修判空；本地已验证默认选中个人 AI 框
@@ -106,6 +107,7 @@
 
 ## 关键决策记录
 
+- 2026-07-22 web：改筛（筛选对话勾选变更）清空会话内 `exemptAgentIds`，随后 list 传 `[]`；避免旧豁免绕过新筛选
 - 2026-07-22 web：无 `activeChat`/`activeId` 时不再展示「请选择智能体」文案，改用整页 `AcPageLoading`（与 Home/Setting 一致）
 - 2026-07-21 web：部署强刷触发改为页面可见（`useDocumentVisibility`）；**仅 PC**；移动端每次进页重载，不做可见验版；桌面 postMessage 保留兜底；恢复含 AI 框三元组 + sessionId
 - 2026-07-21 web：强刷 URL 增加 `sessionId`；刷新后先恢复 AI 框，再 `chat-ready` → `selectSessionById`
