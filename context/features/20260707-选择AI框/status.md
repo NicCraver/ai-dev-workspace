@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（web 引导锚点 + 胶囊关闭钮已 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（desktop 脏文件复核：仅本地 test 打包，无功能增量）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,7 +19,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-22）：web `987ef61`（**已 push**）——HomeGuidePage DOM 锚定设置位 + DataRangeBar 关闭钮去竖线 + 类型/数据胶囊 `px-1`。另：**数据范围原生落库 ACK**——web `43dc095`/`7df0ff5` / android `be96a5d98` / ios `1c7097221`（均已 push）。desktop tip `3dec824d`（已 push）；工作区脏仍为本地 test 打包（**勿提交**）。对照见 `plan-数据范围原生落库.md`。
+> **本轮 apps 事实**（2026-07-22 晚）：stop hook 检出 desktop 工作区脏——复核仅为本地 test 打包（`.env.test` / `electron-builder.yml` / `package.json`+lock：localhost、zhixin-test、arm64、asarUnpack sqlite3），**无功能 diff**，**勿提交**。功能 tip 仍为 `3dec824d`（已 push）。矩阵 T2/T9 desktop 不变（仍 🚧，待 E2E）。web `987ef61` + 数据范围 ACK（web/android/ios）此前已 push，见下。对照见 `plan-数据范围原生落库.md`。
 
 ## 待办 / 阻塞
 
@@ -86,7 +86,8 @@
 - (ios) ~~**会话列表刷 `aiToolList` + `updateRecentlyUsed` 死循环**~~：日志含 `Tabbar-定时器` + UITableView visibleCells 警告。根因同族——`getRecentAITable` 无 `isRecent` 时对列表首项（现为 AI框 `aiId=0`）调 `updateRecentlyUsed` → `ai_tools_cmd` → 再拉列表仍无 isRecent。已修：`isPersonalAiTable` 跳过上报；`setAiTable` 同 id/AI框不报；`refreshAIList` debounce。**待** 真机重进会话列表验网络；UITableView 警告应随风暴消失
 - (android) ~~**AI框 `updateRecentlyUsed` 加固**~~：本身不成环（推送 `recentlyUsed` 被丢弃），但 `toUpdateData` 回落首项可能对字符串 `"0"` 误报。已在 `AiToolChatBaseView.saveRecentlyUsed` 对 `"0"` / 空 id 直接 return（与接口回参一致用字符串比）
 - (ios / android) ~~**`aiToolList` 中 `aiId=0`「AI框」不出现在 AI 工具 UI**~~：展示层已滤；二审通过。ios 另补：`asyncGetAIList` 展示变空时关 Page/更多。android 首轮中风险已修。**待真机 E2E**
-- (desktop) **工作区未提交 = 本地 test 打包**（非功能增量；2026-07-22 收尾再确认）：`.env.test` / `electron-builder.yml` / `package.json`+lock——localhost、zhixin-test、arm64、asarUnpack sqlite3 等；功能 tip 仍为 `3dec824d`（已 push）；打包配置**勿提交**；本回合无 desktop 功能改动
+- (desktop) **工作区未提交 = 本地 test 打包**（非功能增量；2026-07-22 晚 stop hook 再确认）：`.env.test` / `electron-builder.yml` / `package.json`+lock——localhost、zhixin-test、arm64、asarUnpack sqlite3 等；功能 tip 仍为 `3dec824d`（已 push）；打包配置**勿提交**；本回合无 desktop 功能改动
+- (ios) ~~**aiToolList 隐藏 aiId=0**~~：`9b8ac0ffa` `displayAITables` + 跳过 `updateRecentlyUsed`；空 `aiUrl` **不会**造成死循环（死循环根因是对 AI框误报最近使用→`ai_tools_cmd` 刷列表）。空 URL 若进 WebView 仅加载失败（`getURLForString`→nil，最多 retry 2）；现已从工具链滤掉，不进加载路径
 - (多端) T9 待视觉对照蓝湖 4 张主 tab + 搜索 popover 截图验收；**列表顶栏**「选择AI框」胶囊样式已按稿调整（见关键决策）
 - (desktop) 待联调确认群组 tab `lastChatAt` 来源（groupListApi 不返回，当前填 0，群组不按时间倒序）
 - (web) 待联调确认 Home 对话是否支持「24h 恢复 vs 新建」（`resumeChat` 状态已保留并参与 pane key 重挂载，尚未传入 HomeIndex）
