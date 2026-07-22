@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（web DataRangeBar 关闭钮去竖线）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（web 引导锚点 + 胶囊关闭钮已 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,12 +19,12 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-22）：**数据范围原生落库 ACK**——web `43dc095` + 开页勿先 save `7df0ff5`（**已 push**）/ android `be96a5d98` / ios `1c7097221`（**均已 push** personal-ai-chat）。另 web 定时弹层 `h-[95vh]`（`b287dbd`）；本轮 FloatingDock「展开列表」去掉「列表」文案仅留图标（**已 push**）。desktop tip `3dec824d`（已 push）；工作区脏仍为本地 test 打包（**勿提交**）。对照见 `plan-数据范围原生落库.md`。
+> **本轮 apps 事实**（2026-07-22）：web `987ef61`（**已 push**）——HomeGuidePage DOM 锚定设置位 + DataRangeBar 关闭钮去竖线 + 类型/数据胶囊 `px-1`。另：**数据范围原生落库 ACK**——web `43dc095`/`7df0ff5` / android `be96a5d98` / ios `1c7097221`（均已 push）。desktop tip `3dec824d`（已 push）；工作区脏仍为本地 test 打包（**勿提交**）。对照见 `plan-数据范围原生落库.md`。
 
 ## 待办 / 阻塞
 
-- (web) ~~**DataRangeBar 关闭钮去竖线**~~：`SelectorClose` 覆写 `before:content-none`（去掉组件自带 `#C9CFD8` 分割线）。**工作区未提交**；**待** PC 视觉验收
-- (web) ~~**HomeGuidePage 对齐个人 AI 头栏设置位**~~：改 DOM 锚定 `data-home-guide-anchor=setting`（不再手算 pr）；个人 AI / 旧三按钮头栏通用。**工作区未提交**；**待** PC 视觉验收（个人框/私聊群/原生独立窗 + 独立 zx/home）
+- (web) ~~**DataRangeBar 关闭钮去竖线**~~：`SelectorClose` 覆写 `before:content-none`；间距 `!ml-0 !w-5`（去掉默认 ml-2/w-7 留白）；胶囊 `px-2.5`→`px-1`（DataScopeBar 同步）。已 push `987ef61`；**待** PC 视觉验收
+- (web) ~~**HomeGuidePage 对齐个人 AI 头栏设置位**~~：改 DOM 锚定 `data-home-guide-anchor=setting`（不再手算 pr）；个人 AI / 旧三按钮头栏通用。已 push `987ef61`；**待** PC 视觉验收（个人框/私聊群/原生独立窗 + 独立 zx/home）
 - (web) ~~**SelectAiChatPopup 左上直角**~~：根容器 `rounded-t-2xl` → `rounded-tr-2xl`（左上直角、右上仍圆）。已 push `9d8b9d6`；**待** 真机视觉验收
 - (web / android / ios) **选择数据范围 · 原生落库（ACK）**：ios/android 打开 `get`、确认 `save`；web 已去掉开页前 flush（`7df0ff5`）。android `be96a5d98` / ios `1c7097221` **已 push**。方案 `plan-数据范围原生落库.md`。**待** 真机 E2E
 
