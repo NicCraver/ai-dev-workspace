@@ -106,17 +106,10 @@ PC：仍 `SelectDataRangeDialog` → `onSubmit(scopes)` → 本地 + `saveAgentD
 // code≠0 或 error.msg 含失败信息（勿伪装 ok）
 ```
 
-- [ ] **Step 1: 改 bridge.md**
-
-替换现有 `selectDataRangeScope` 表行与回传小节为上述契约；删除「web 收到后写 conditionMode → saveDataRange（原生不调接口）」表述；Changelog 记 `2026-07-22`：android/ios 原生 get+save，桥 ACK-only。
-
-- [ ] **Step 2: 改 impl-notes 移动端时序**
-
-改为本 plan「目标时序」；android/ios 行改为「原生 getAgentDataRange 返显 + saveDataRange；web 成功后 getAgentDataRange 刷新」；注明 PC 不变。
-
-- [ ] **Step 3: 改 status.md 待办**
-
-把「安卓 WebView 直调 + initialScopes」类待办改写为「数据范围原生落库（ios/android/web）按 plan-数据范围原生落库.md」；列出未完成 E2E。
+- [x] **Step 1: 改 bridge.md**
+- [x] **Step 2: 改 impl-notes 移动端时序**
+- [x] **Step 3: 改 status.md 待办**
+- [x] **Step 4: context 提交**
 
 - [ ] **Step 4: context 提交**
 

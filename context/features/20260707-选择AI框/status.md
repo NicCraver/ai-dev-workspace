@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（SelectAiChatPopup 左上直角）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（数据范围原生落库 ACK 已落地）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,12 +19,12 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-22）：web tip `0987537`（已 push）——安卓选择数据范围回传改 `javascript:dataRangeScopeResultFromAndroid`（空串/code=-1=取消），去掉 visibility + `getSelectDataRangeResult` 拉取。desktop tip `3dec824d`（已 push）；工作区脏仍为本地 test 打包（**勿提交**）。android tip `3b8760ac4` / ios tip `fd698a574`（已 push）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-22）：**数据范围原生落库 ACK**——web `43dc095` / android `be96a5d98` / ios `1c7097221`（均 personal-ai-chat，**未 push**）：开页传 `agentId`；原生 `getAgentDataRange` 返显 + `saveDataRange`；桥只 ACK `{ok:true}`；web 再拉记忆。desktop tip `3dec824d`（已 push）；工作区脏仍为本地 test 打包（**勿提交**）。对照见 `plan-数据范围原生落库.md`。
 
 ## 待办 / 阻塞
 
 - (web) ~~**SelectAiChatPopup 左上直角**~~：根容器 `rounded-t-2xl` → `rounded-tr-2xl`（左上直角、右上仍圆）。**工作区未提交**；**待** 真机视觉验收
-- (web / android / ios) **选择数据范围 · 原生落库（ACK）**：桥不再传大包 `scopes`；原生 `getAgentDataRange` 返显 + `saveDataRange` 落库；成功只 ACK；web 再 `getAgentDataRange` 刷新本地。方案 `plan-数据范围原生落库.md`；**待实施**（含 DTO/MemoryModel 补 `dataRangeScopeList`、ios 对称）
+- (web / android / ios) **选择数据范围 · 原生落库（ACK）**：代码已落地（web `43dc095` / android `be96a5d98` / ios `1c7097221`）；方案 `plan-数据范围原生落库.md`。**待** 真机 E2E（大选量 / 取消 / save 失败 / 开页前 flush 不覆盖时间范围）+ push `personal-ai-chat`
 - (web) ~~**常用语弹层高度**~~：移动端 `quickReplyPopup` 由 `h-screen` 改为 `h-[95vh]`（对齐选择时间 van-popup 95%）；编辑与关闭之间加 `#C9CFD9` 竖线。已 push `24fe98a`；**待** 真机视觉验收
 - (web) ~~**移动端头栏返回/开列表竖线**~~：`MPersonalAiChatWrapper` `#header-left` 返回与 `side-close` 之间加 `#C9CFD9` 竖线（`w-px h-4`）。已 push `16af40b`；**待** 真机视觉验收
 - (web / android) ~~**选择数据范围安卓改 WebView 直调**~~：web `isAndroid` → `window.WebView.selectDataRangeScope`；回传 `javascript:dataRangeScopeResultFromAndroid`。web 已 push `0987537`；**被上条「原生落库」方案取代**（入参改 agentId、回传改 ACK）
