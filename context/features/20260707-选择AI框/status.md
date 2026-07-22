@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（desktop：会话列表智能体回复剥 MD 已 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（web：切 agent 后历史 Dock 按钮消失已修）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**切 agent 后历史 Dock 按钮消失**~~：开历史后切 AI 框，`chatPaneKey` 重挂载 Home；父级 `historySidebarOpen=true` 但受控 watch 无 `immediate`，内部历史未同步打开 → `floatingDockMode` 误判双开返回 `hidden`。已修 `Home.vue` watch `{ immediate: true }`。**工作区未提交**；**待** PC E2E
 - (desktop) ~~**会话列表智能体回复剥 Markdown**~~：`markdownUtils.agentReplyDisplayContent` / `actionCardListSummary`；`message-info` ActionCard 无 title 且 `ga_` 时剥正文 MD、保留「回复@昵称：」。已 push `3dec824d`；**待** PC E2E
 - (web) ~~**改筛清空 exemptAgentIds**~~：筛选对话勾选变更后 `exemptAgentIds=[]`，list 传空数组（PC `PersonalAiChat` + 移动 `MPersonalAiChatWrapper`）。已 push `3557fd0`
 - (web) ~~**无选中占位「请选择智能体」**~~：改为 `AcPageLoading`（`PersonalAiChat` / `MPersonalAiChatWrapper` / `SelectAiChatPopup`）。已 push `4f6a824`
