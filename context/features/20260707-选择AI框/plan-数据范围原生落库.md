@@ -19,7 +19,7 @@
   - save 成功 → `{ type:"personal-ai:selected-data-range", payload:{ ok:true } }`（或等价空成功）
   - save 失败 → `error` / `code≠0`（web toast/warn，**不**拉记忆）
 - **`persist=false`**（如定时任务 `SkillEditFormBody`）：**不走**原生落库；移动端若仍打开原生须改回「回传 scopes、web 不调 save」或强制 H5。本期个人 AI 聊天栏 `persist=true`。
-- **开页前竞态**：`persist=true` 时 web 打开原生前先 `await saveAgentMemory()`（或等价 flush），避免原生按旧记忆覆盖 web 未落库的知识类型/时间。
+- **开页前竞态**：**禁止** web 开原生前 `saveDataRange`（不带 `dataRangeScopeList` 会冲空服务端 scopes）。原生打开只 `getAgentDataRange`，确认才 `saveDataRange`。
 - **确定 0 项**：保持现状——确定按钮 disabled（不可清空后确认）；若产品后续要「清空记忆」另开任务。
 - **分支**：各 app 只 push `personal-ai-chat`；context `docs(选择AI框): ...`。
 - **对照**：实现时只读本 plan + `bridge.md` + 契约 + `impl-notes`「数据范围」节；移植勿大段抄对端 UI 代码。
@@ -30,8 +30,7 @@
 
 ```text
 web DataScopeBar（移动 + persist=true）
-  → await flush saveAgentMemory（当前 dataRangeList/timeType/netSearch/deepThink）
-  → 原生 selectDataRangeScope({ agentId, accountId? })
+  → 原生 selectDataRangeScope({ agentId, accountId? })   // 不开页前 save
        ├─ android: window.WebView.selectDataRangeScope(JSON)
        └─ ios: wnsdk.aiChat.selectDataRangeScope({...})
   → 原生 onCreate/viewDidLoad
@@ -39,18 +38,9 @@ web DataScopeBar（移动 + persist=true）
        → 用 dataRangeScopeList 预勾选；缓存整包记忆草稿（含 dataRangeList 等）
   → 用户多选…
   → 点确定
-       → saveDataRange({
-            accountId, agentId,
-            dataRangeList, timeType, netSearch, deepThink,  // 来自打开时草稿
-            dataRangeScopeList: 当前已选                     // 仅此项变
-          })
+       → saveDataRange({ ...草稿其它字段, dataRangeScopeList: 当前已选 })
        → 成功 → ACK ok → dismiss
-       → 失败 → toast + 不 dismiss 或 dismiss+error（须明确；推荐：留在页可重试，或 dismiss+error）
-  → web 收到 ok
-       → getAgentDataRange({ accountId, agentId })
-       → emit update(dataRangeScopeList) 刷新 conditionMode /「数据+n」
-  → web 收到取消 → 不动
-  → web 收到失败 → console.warn / toast，不动本地
+  → web 收到 ok → getAgentDataRange → emit update(scopes)
 ```
 
 PC：仍 `SelectDataRangeDialog` → `onSubmit(scopes)` → 本地 + `saveAgentDataRange`（不变）。

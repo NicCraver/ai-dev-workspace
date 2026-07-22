@@ -412,7 +412,7 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 
 > 方案见 `plan-数据范围原生落库.md`。桥禁止传大包 `scopes`（解决载荷过大）。
 
-1. web `DataScopeBar`（移动 + `persist=true`）→ 先 flush `saveDataRange`（当前 `dataRangeList`/`timeType`/`netSearch`/`deepThink`，**不带** scopes）→ `selectDataRangeScopeByNative(wnsdk, { agentId, accountId })`。
+1. web `DataScopeBar`（移动 + `persist=true`）→ **直接** `selectDataRangeScopeByNative(wnsdk, { agentId, accountId })`（**禁止**开页前 `saveDataRange`：不带 scopes 的 save 会冲空服务端记忆）。
 2. 原生打开 → `POST /agentSetDataRangeExpand/getAgentDataRange({accountId,agentId})` → 用 `dataRangeScopeList` 预勾，并缓存整包记忆草稿。
 3. 用户确认 → 原生 `saveDataRange`（草稿其它字段 + 新 `dataRangeScopeList`）→ 成功才回传 `{ type:"personal-ai:selected-data-range", payload:{ ok:true } }`；取消 `code=-1`；save 失败 error（勿伪装 ok）。
 4. web 收到 `ok` → `getAgentDataRange` → `emit update(dataRangeScopeList)` 刷新胶囊；**不再**在原生路径调 `saveDataRange`。
