@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（web：Chat Header 标题 max-width 右侧预留调至 mobilePx(118)）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（android：选择数据范围底栏「清空」+ 已选弹层对齐 iOS）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (android) ~~**选择数据范围底栏挤出 / 已选弹层**~~：底栏「清空已选」→「清空」；展开已选对齐 iOS（标题「已选择：N人, M个群」+「确认」、分区「已选择的人/群组」、chip+红减号，半屏 Flexbox）。**工作区未提交**；**待** 真机视觉验收
 - (web) ~~**Chat Header 标题区右侧预留**~~：`Header.vue` max-width 公式 `mobilePx(50)` → `mobilePx(118)`（+40 再 +28，避免长标题挤右侧按钮）。**待** 视觉验收
 - (web) ~~**切 agent 后历史 Dock 按钮消失**~~：开历史后切 AI 框，`chatPaneKey` 重挂载 Home；父级 `historySidebarOpen=true` 但受控 watch 无 `immediate`，内部历史未同步打开 → `floatingDockMode` 误判双开返回 `hidden`。已修 `Home.vue` watch `{ immediate: true }`。已 push `4754b56`；**待** PC E2E
 - (desktop) ~~**会话列表智能体回复剥 Markdown**~~：`markdownUtils.agentReplyDisplayContent` / `actionCardListSummary`；`message-info` ActionCard 无 title 且 `ga_` 时剥正文 MD、保留「回复@昵称：」。已 push `3dec824d`；**待** PC E2E
@@ -64,7 +65,7 @@
 - (web) ~~**筛选对话角标**~~：`PersonalAiChatAgentList` / 移动端 `SelectAiChatPopup`「筛选对话」后 `+n` 含个人AI框恒选（最少 `+1`；勾近15天/知识库再累加）。已 push `personal-ai-chat` `d9c839e`
 - (web) **移动端个人 AI 宿主（lifeng）**：`bd1e06c` 基座 `MPersonalAiChatWrapper`（Chat）+ `SelectAiChatPopup`（列表+History）；`16b5835` 改筛先 `saveFilter` 再 `list`（对齐 PC）；`3c055a6` 头部——左 `back` 关页、右 `StartChatButton`(仅图标)+`side-close` 开弹窗（旧「切换AI框」胶囊注释掉）；`Chat` 新增 `#header-right`（有则替换默认设置/全屏/关闭）；弹窗 `h-100vh`；History `openCloseMode` 控关栏按钮与「新对话」文案。**待真机 E2E / 视觉验收**
 - (ios / web) **选择数据范围原生多选（T10）**：桥 `selectDataRangeScope` + 复用选择 AI 框页强制多选已接线；web `DataScopeBar` 移动端走原生、PC 仍 H5；回传 scopes → `saveDataRange`。本轮：搜索页底栏对齐主页（已选/清空/**完成**，无取消；不再用转发「发送」栏）；已选展示名本地 DB 补齐；下拉箭头改 chevron；审查修复——搜索内点选/清空**不 live sync**（仅「完成」写回）、群 tab 从已选移除须清群列表、空 id 用同人判断、键盘中间态底栏贴键盘顶。**待真机 E2E**
-- (android) **选择数据范围原生多选（T10，编译通过 + test 包已装机）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` → 子页联系人多选 / 群组·搜索 `EXTRA_MULTI` 回主页合并 → 回传 `personal-ai:selected-data-range`。底栏共用 `include_data_range_multi_footer`；回传同 selectAiAgent 走 `wv.post`。Bugbot：**无阻断级问题**。**待真机 E2E**
+- (android) **选择数据范围原生多选（T10，编译通过 + test 包已装机）**：`aiChat.selectDataRangeScope`（requestCode 239）→ `SelectDataRangeActivity` → 子页联系人多选 / 群组·搜索 `EXTRA_MULTI` 回主页合并 → 回传 `personal-ai:selected-data-range`。底栏共用 `include_data_range_multi_footer`（「清空」）；已选弹层对齐 iOS chip 分区。回传同 selectAiAgent 走 `wv.post`。Bugbot：**无阻断级问题**。**待真机 E2E**
 - (android) **低风险债**：若需 AI 框搜索保持旧交互（右侧取消、不自动弹键盘），应用 `EXTRA_MULTI` 门控返回样式与键盘行为
 - (web / desktop) **组织架构进公司**：已按 PC 转发对齐——`getContactTree({isGroup:1})`、公司 `id` 作 corpId、`rootDeptId||id` 作首屏 pid、透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过。**待 E2E**：点企业应直接见部门+人员（不再多一层企业 / 暂无人员）
 - (desktop) ~~待联调确认 `getDeptUsers` 是否必须传 `corpType`/`corpAndCorpRelType`~~ → **已按 PC 转发透传**
