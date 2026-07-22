@@ -19,7 +19,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-22 再确认）：desktop tip `3dec824d`（**已 push**）——会话列表 `ga_` ActionCard 摘要剥 Markdown（对齐 iOS）。工作区脏文件仅本地 test 打包（`.env.test` / `electron-builder.yml` / `package.json`+lock，**勿提交**），无新功能 diff。ios tip `fd698a574`（已 push）。android tip 本地 `3a1f6d0e5`（**ahead 1 未 push**）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-22）：android tip `3b8760ac4`（**已 push**）——选择数据范围底栏「清空」+ 已选弹层对齐 iOS。desktop tip `3dec824d`（已 push）；工作区脏仅为本地 test 打包（**勿提交**）。ios tip `fd698a574`（已 push）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
