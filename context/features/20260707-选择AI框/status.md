@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（web：FloatingDock 双收起态精简）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（web：安卓选择数据范围改 WebView 直调）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web / android) **选择数据范围安卓改 WebView 直调**：web `isAndroid` → `window.WebView.selectDataRangeScope(scopes数组JSON)`；回页后 `getSelectDataRangeResult` 拉结果（空串=取消）。ios 仍 `wnsdk.aiChat.selectDataRangeScope`。web 本地已改、**未提交**；**待**安卓注入同名 JavascriptInterface + 真机 E2E
 - (web) **FloatingDock 双收起态精简**（`mode=both`）：隐藏「选择AI框」入口；「展开历史」仅图标、去掉「历史记录」文案。`PersonalAiFloatingDock.vue` 本地已改；**未提交**；**待** PC 视觉验收
 - (web) ~~**展开/收起对话列表图标**~~：新增独立资源 `collapse-chat-list` / `expand-chat-list`；仅 `PersonalAiChatAgentList` 收起 + FloatingDock「展开列表」使用。全局 `side-close`/`side-open`（历史/设置等）已恢复原样。已 push `aeb6fee`；**待** 视觉验收
 - (web) ~~**Chat Header 标题区右侧预留**~~：`Header.vue` max-width 公式 `mobilePx(50)` → `mobilePx(118)`（+40 再 +28，避免长标题挤右侧按钮）。已 push `aeb6fee`；**待** 视觉验收
