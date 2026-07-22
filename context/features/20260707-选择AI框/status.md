@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（android：选择数据范围底栏/已选弹层已 push `3b8760ac4`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（web：FloatingDock 双收起态精简）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,10 +19,11 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-22）：android tip `3b8760ac4`（**已 push**）——选择数据范围底栏「清空」+ 已选弹层对齐 iOS。desktop tip `3dec824d`（已 push）；工作区脏仅为本地 test 打包（**勿提交**）。ios tip `fd698a574`（已 push）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
+> **本轮 apps 事实**（2026-07-22）：web `PersonalAiFloatingDock` 双收起态（`mode=both`）——注释「选择AI框」按钮；「展开历史」去掉「历史记录」文案（仅图标）。**工作区未提交**。desktop tip `3dec824d`（已 push）；工作区脏仍为本地 test 打包（**勿提交**）。android tip `3b8760ac4` / ios tip `fd698a574`（已 push）。对照见 `3端AI框角标推送.md` / `推送后列表刷新规则.md`。
 
 ## 待办 / 阻塞
 
+- (web) **FloatingDock 双收起态精简**（`mode=both`）：隐藏「选择AI框」入口；「展开历史」仅图标、去掉「历史记录」文案。`PersonalAiFloatingDock.vue` 本地已改；**未提交**；**待** PC 视觉验收
 - (web) ~~**展开/收起对话列表图标**~~：新增独立资源 `collapse-chat-list` / `expand-chat-list`；仅 `PersonalAiChatAgentList` 收起 + FloatingDock「展开列表」使用。全局 `side-close`/`side-open`（历史/设置等）已恢复原样。已 push `aeb6fee`；**待** 视觉验收
 - (web) ~~**Chat Header 标题区右侧预留**~~：`Header.vue` max-width 公式 `mobilePx(50)` → `mobilePx(118)`（+40 再 +28，避免长标题挤右侧按钮）。已 push `aeb6fee`；**待** 视觉验收
 - (android) ~~**选择数据范围底栏挤出 / 已选弹层**~~：底栏「清空已选」→「清空」；展开已选对齐 iOS（标题「已选择：N人, M个群」+「确认」、分区「已选择的人/群组」、chip+红减号，半屏 Flexbox）。已 push `3b8760ac4`；**待** 真机视觉验收
