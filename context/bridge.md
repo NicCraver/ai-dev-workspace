@@ -35,8 +35,9 @@
 
 // AiBrowser → AI框 iframe：切到 AI框 tab 时通知验版（对象或 JSON 字符串均可）
 { "source": "zx-pc", "type": "aiBoxCheckVersion" }
-// web 对比 /ai-chat/build_version 与 JENKINS_BUILD_NUMBER；不一致则静默 location.reload()，用 sessionStorage 恢复选中
-// web 另可通过 `useDocumentVisibility`（hidden→visible）触发同一验版；desktop 的 `aiBoxCheckVersion` 仍建议保留（AiBrowser 内 tab 切换兜底）
+// web 对比 /ai-chat/build_version 与 JENKINS_BUILD_NUMBER；不一致则先把当前选中写入 URL query（agentId/belongId/belongType/sessionId），再静默 location.reload()
+// 刷新后：URL 深链（belongType 1|3）一律 saveSelected → list → 选中 AI 框；chat-ready 后再按 sessionId 选会话；个人框直接匹配；否则默认个人 AI 框
+// PC web 另可通过 `useDocumentVisibility`（hidden→visible）触发同一验版；移动端不做（进页重载）；desktop 的 `aiBoxCheckVersion` 仍建议保留（AiBrowser 内 tab 切换兜底）
 ```
 
 ## 方法清单
@@ -112,7 +113,8 @@ Home「数据范围」胶囊（移动端）调 `wnsdk.aiChat.selectDataRangeScop
 
 ## Changelog
 
-- 2026-07-21 AiBrowser → iframe：`aiBoxCheckVersion`（切到 AI框 tab）；web 静默对比 `build_version`，变更则 reload；选中三元组 `sessionStorage` 恢复。
+- 2026-07-21 强刷选中改 URL：`aiBoxCheckVersion` / visibility 验版变更前 `writeActiveSelectionToUrl`；reload 后 1|3 一律 save→list→选中（不再用 sessionStorage）。
+- 2026-07-21 AiBrowser → iframe：`aiBoxCheckVersion`（切到 AI框 tab）；web 静默对比 `build_version`，变更则 reload。
 - 2026-07-17 ios/android 数据范围搜索子页：底栏与主页同形态；子页无「取消」、主按钮「完成」；仅完成写回主页（返回不 live sync）；已选名须本地补齐。
 - 2026-07-17 android `selectDataRangeScope`：镜像 selectAiAgent 桥通路（requestCode 239）+ 独立多选页；底栏已选仅人/群名与头像；最近/群「全部」；web 移动端已接线。
 - 2026-07-17 登记 ios `selectDataRangeScope`：入参 `initialScopes`；回传 `personal-ai:selected-data-range` + `scopes[{scopeDataType,scopeDataId,name?,avatar?}]`；复用选择 AI 框页多选 + 最近/群「全部」；web 移动端 `DataScopeBar` 走原生，PC 仍 H5 弹窗。

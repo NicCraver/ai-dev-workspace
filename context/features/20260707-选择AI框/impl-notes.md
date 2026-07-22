@@ -429,13 +429,17 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 
 ### 时序
 
-0. 文档 `visibilityState`：`hidden` → `visible`（`useDocumentVisibility`）→ 与壳 `aiBoxCheckVersion` 同走验版。
-1. 选中任一 AI 框时，把 `agentId` / `belongId` / `belongType` 写入会话级存储（与入口深链同 shape）。
-2. 宿主切回 AI 框页时，向内嵌页发 `source=zx-pc` + `type=aiBoxCheckVersion`。
+0. 文档 `visibilityState`：`hidden` → `visible`（`useDocumentVisibility`，**仅 PC PersonalAiChat**）→ 与壳 `aiBoxCheckVersion` 同走验版。移动端每次进页整页重载，不做可见验版。
+1. 验版触发时，把当前选中 `agentId` / `belongId` / `belongType` / **`sessionId`（当前对话）** **写入 URL query**（`history.replaceState`，不新增历史；**不用 sessionStorage**）。无会话时删除 `sessionId` 参数。
+2. 宿主切回 AI 框页时，向内嵌页发 `source=zx-pc` + `type=aiBoxCheckVersion`（与 visibility 共用防抖）。
 3. 内嵌页拉线上 `build_version`，与构建时注入的 build 号对比：
    - 相同，或任一端为本地/非 CI 占位标记 → 不刷新
    - 不同 → 静默整页刷新（不弹确认）；5 秒内重复触发合并为一次
-4. 刷新后拉 list：优先 URL 入口深链选中；否则读会话存储三元组匹配（未命中且私聊/群可走 saveSelected 再匹配）；再否则默认首项（个人 AI 框）。
+4. 刷新后拉 list，按 URL 深链恢复选中：
+   - `belongType` 1|3：**一律** `saveSelected` → `list` → 再匹配选中 AI 框（不因 list 已命中而短路）
+   - 个人框（0）等不可 save：直接匹配
+   - 失败 / 无 URL 参 → 默认个人 AI 框（再否则首项）
+5. AI 框对话面板 `chat-ready` 后：若 URL 有 `sessionId`，调用 `selectSessionById` 选中该会话；失败仅 warn，不阻断（仍可走默认最近会话）。
 
 ### 边界
 
@@ -444,10 +448,10 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 | AiBrowser 内 tab 切换但 visibility 不变 | 依赖桌面 `aiBoxCheckVersion`；web 侧防抖合并 |
 | 一直停在 AI 框 tab 不切走 | 不触发验版（本期不做轮询） |
 | iframe 尚未创建 | 宿主跳过通知；下次切回再发 |
-| 恢复只定位「哪个 AI 框」 | 不强制恢复具体 sessionId；续聊仍走 lastChatAt / 24h |
-| URL 深链与存储同时有 | URL 优先 |
+| 恢复「哪个 AI 框」+「哪条会话」 | URL 三元组恢复 AI 框；`sessionId` 在 chat-ready 后 `selectSessionById`；无/失败则走默认最近会话 |
+| 角标入口深链 | 与强刷同一套 URL 恢复（1\|3 一律先 save；有 sessionId 则再选会话） |
 
 ### 联调坑（2026-07-21）
 
-- **无会话存储时默认选中失败**：读选中三元组无值返回 `null` 后，若用 `hasXxx(d = {})` 判断，传入 `null` 时默认参数不生效，读 `null.agentId` 抛错 → list 已写入但选中同步被 catch 跳过，右侧停在「请选择智能体」。`hasActiveSelection` / `hasEntryDeepLink` 须显式 `d == null → false`。
+- **曾用 sessionStorage**：`readActiveSelection()` 无值返回 `null` 时，若 `hasXxx(d = {})` 默认参数对 null 不生效会抛错，导致 list 后无法默认选中。已改为 URL 恢复，相关判空仍须显式 `d == null → false`（`hasEntryDeepLink`）。
 

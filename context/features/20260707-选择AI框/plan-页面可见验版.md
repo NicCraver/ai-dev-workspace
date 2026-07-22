@@ -1,12 +1,12 @@
 # 页面可见时 build_version 验版 Implementation Plan
-
+·
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实施。步骤用 `- [ ]` 复选框跟踪。
 
-**Goal:** Web 端用 VueUse `useDocumentVisibility`，在页面从隐藏变为可见时拉 `/ai-chat/build_version`，与本地 `JENKINS_BUILD_NUMBER` 对比；不一致则静默强刷，并用已有 `sessionStorage` 三元组恢复选中的 AI 框。
+**Goal:** Web 端用 VueUse `useDocumentVisibility`，在页面从隐藏变为可见时拉 `/ai-chat/build_version`，与本地 `JENKINS_BUILD_NUMBER` 对比；不一致则把当前选中三元组写入 **URL query** 后静默强刷；刷新后按 URL 深链 **一律** `saveSelected` → `list` → 选中（个人框直接匹配）。**不用 sessionStorage**。
 
-**Architecture:** 复用既有 `checkAndReloadIfStale` / `writeActiveSelection` / 启动恢复链路，不新增 HTTP 模块。PC `PersonalAiChat.vue`（及对称的移动端 Wrapper）在 `visibility === 'visible'` 且相对上一态从非 visible 切入时触发验版。desktop 的 `aiBoxCheckVersion` **本期不改、不删**（AiBrowser 内 tab 切换的兜底）；与 visibility 双触发时靠现有 5s 防抖合并。恢复粒度仍为选中三元组（`agentId`/`belongId`/`belongType`），不恢复具体 `sessionId`。
+**Architecture:** 复用既有 `checkAndReloadIfStale` / `writeActiveSelectionToUrl` / 入口深链恢复链路。PC `PersonalAiChat.vue` 在 `visibility === 'visible'` 且相对上一态从非 visible 切入时触发验版。desktop 的 `aiBoxCheckVersion` **本期不改、不删**（AiBrowser 内 tab 切换的兜底）；与 visibility 双触发时靠现有 5s 防抖合并。恢复粒度仍为选中三元组（`agentId`/`belongId`/`belongType`），不恢复具体 `sessionId`。
 
-**Tech Stack:** apps/web Vue 3 + `@vueuse/core` `useDocumentVisibility`；既有 `personalAiBuildVersion.js` / `personalAiActiveSelection.js`。
+**Tech Stack:** apps/web Vue 3 + `@vueuse/core` `useDocumentVisibility`；既有 `personalAiBuildVersion.js` / `personalAiActiveSelection.js`（URL）。
 
 ## Global Constraints
 
