@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**列表「隐藏」菜单图标**~~：`hide.svg` 换成设计稿「隐藏 (1)」；仅 `PersonalAiChatAgentItem` 三点菜单引用。**待** 视觉验收
 - (web) ~~**展开/收起对话列表图标**~~：新增独立资源 `collapse-chat-list` / `expand-chat-list`；仅 `PersonalAiChatAgentList` 收起 + FloatingDock「展开列表」使用。全局 `side-close`/`side-open`（历史/设置等）已恢复原样。已 push `aeb6fee`；**待** 视觉验收
 - (web) ~~**Chat Header 标题区右侧预留**~~：`Header.vue` max-width 公式 `mobilePx(50)` → `mobilePx(118)`（+40 再 +28，避免长标题挤右侧按钮）。已 push `aeb6fee`；**待** 视觉验收
 - (android) ~~**选择数据范围底栏挤出 / 已选弹层**~~：底栏「清空已选」→「清空」；展开已选对齐 iOS（标题「已选择：N人, M个群」+「确认」、分区「已选择的人/群组」、chip+红减号，半屏 Flexbox）。**工作区未提交**；**待** 真机视觉验收
