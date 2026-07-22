@@ -27,7 +27,7 @@
 - (web / android / ios) **选择数据范围 · 原生落库（ACK）**：ios/android 打开 `get`、确认 `save`；web 已去掉开页前 flush（`7df0ff5`）。android `be96a5d98` / ios `1c7097221` **已 push**。方案 `plan-数据范围原生落库.md`。**待** 真机 E2E
 
 - (web) ~~**常用语弹层高度**~~：移动端 `quickReplyPopup` 由 `h-screen` 改为 `h-[95vh]`（对齐选择时间 van-popup 95%）；编辑与关闭之间加 `#C9CFD9` 竖线。已 push `24fe98a`；**待** 真机视觉验收
-- (web) ~~**定时弹层头栏竖线/关闭**~~：`TimingPopup`「添加」与关闭间加 `#C9CFD9` 竖线，关闭改 `w-5 h-5`（`TimingEditPopup` 关闭同尺寸）。已 push `3f87c08`；**待** 真机视觉验收
+- (web) ~~**定时弹层头栏竖线/关闭**~~：`TimingPopup`「添加」与关闭间加 `#C9CFD9` 竖线，关闭改 `w-5 h-5`（`TimingEditPopup` 关闭同尺寸）。已 push `3f87c08`。列表/新建编辑弹层高度 `h-100vh` → `h-[95vh]`（对齐常用语/选择时间）。**工作区未提交**；**待** 真机视觉验收
 - (web) ~~**移动端头栏返回/开列表竖线**~~：`MPersonalAiChatWrapper` `#header-left` 返回与 `side-close` 之间加 `#C9CFD9` 竖线（`w-px h-4`）。已 push `16af40b`；**待** 真机视觉验收
 - (web / android) ~~**选择数据范围安卓改 WebView 直调**~~：web `isAndroid` → `window.WebView.selectDataRangeScope`；回传 `javascript:dataRangeScopeResultFromAndroid`。web 已 push `0987537`；**被上条「原生落库」方案取代**（入参改 agentId、回传改 ACK）
 - (web) ~~**FloatingDock 双收起态精简**~~（`mode=both`）：隐藏「选择AI框」入口；「展开历史」仅图标。已 push `a11d667`；**待** PC 视觉验收
