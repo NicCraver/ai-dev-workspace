@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（android：选择数据范围底栏「清空」+ 已选弹层对齐 iOS）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（web：收起对话列表图标换新 SVG）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**收起对话列表图标**~~：`side-close.svg` 已换成设计稿「收起对话列表」；`PersonalAiChatAgentList` 等沿用 `name="side-close"`。Downloads 另有「展开对话列表」未换 `side-open`。**待** 视觉验收
 - (android) ~~**选择数据范围底栏挤出 / 已选弹层**~~：底栏「清空已选」→「清空」；展开已选对齐 iOS（标题「已选择：N人, M个群」+「确认」、分区「已选择的人/群组」、chip+红减号，半屏 Flexbox）。**工作区未提交**；**待** 真机视觉验收
 - (web) ~~**Chat Header 标题区右侧预留**~~：`Header.vue` max-width 公式 `mobilePx(50)` → `mobilePx(118)`（+40 再 +28，避免长标题挤右侧按钮）。**待** 视觉验收
 - (web) ~~**切 agent 后历史 Dock 按钮消失**~~：开历史后切 AI 框，`chatPaneKey` 重挂载 Home；父级 `historySidebarOpen=true` 但受控 watch 无 `immediate`，内部历史未同步打开 → `floatingDockMode` 误判双开返回 `hidden`。已修 `Home.vue` watch `{ immediate: true }`。已 push `4754b56`；**待** PC E2E
