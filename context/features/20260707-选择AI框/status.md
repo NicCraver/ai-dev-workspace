@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（web 定时弹层 95vh 已 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（web FloatingDock 展开列表仅图标已 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,7 +19,7 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-22）：**数据范围原生落库 ACK**——web `43dc095` + 开页勿先 save `7df0ff5`（**已 push**）/ android `be96a5d98` / ios `1c7097221`（**均已 push** personal-ai-chat）：开页传 `agentId`；原生 `getAgentDataRange` 返显 + `saveDataRange`；桥只 ACK `{ok:true}`；web 再拉记忆。另 web `9d8b9d6` SelectAiChatPopup 左上直角、`3f87c08` 定时弹层竖线；本轮再补定时列表/编辑弹层 `h-[95vh]` + tip/列表字号 `text-3.75`（**已 push**）。desktop tip `3dec824d`（已 push）；工作区脏仍为本地 test 打包（**勿提交**）。对照见 `plan-数据范围原生落库.md`。
+> **本轮 apps 事实**（2026-07-22）：**数据范围原生落库 ACK**——web `43dc095` + 开页勿先 save `7df0ff5`（**已 push**）/ android `be96a5d98` / ios `1c7097221`（**均已 push** personal-ai-chat）。另 web 定时弹层 `h-[95vh]`（`b287dbd`）；本轮 FloatingDock「展开列表」去掉「列表」文案仅留图标（**已 push**）。desktop tip `3dec824d`（已 push）；工作区脏仍为本地 test 打包（**勿提交**）。对照见 `plan-数据范围原生落库.md`。
 
 ## 待办 / 阻塞
 
@@ -30,7 +30,7 @@
 - (web) ~~**定时弹层头栏竖线/关闭**~~：`TimingPopup`「添加」与关闭间加 `#C9CFD9` 竖线，关闭改 `w-5 h-5`（`TimingEditPopup` 关闭同尺寸）。已 push `3f87c08`。列表/新建编辑弹层高度 `h-100vh` → `h-[95vh]` + tip/列表 `text-3.75`（对齐常用语/选择时间）。**已 push**；**待** 真机视觉验收
 - (web) ~~**移动端头栏返回/开列表竖线**~~：`MPersonalAiChatWrapper` `#header-left` 返回与 `side-close` 之间加 `#C9CFD9` 竖线（`w-px h-4`）。已 push `16af40b`；**待** 真机视觉验收
 - (web / android) ~~**选择数据范围安卓改 WebView 直调**~~：web `isAndroid` → `window.WebView.selectDataRangeScope`；回传 `javascript:dataRangeScopeResultFromAndroid`。web 已 push `0987537`；**被上条「原生落库」方案取代**（入参改 agentId、回传改 ACK）
-- (web) ~~**FloatingDock 双收起态精简**~~（`mode=both`）：隐藏「选择AI框」入口；「展开历史」仅图标。已 push `a11d667`；**待** PC 视觉验收
+- (web) ~~**FloatingDock 双收起态精简**~~（`mode=both`）：隐藏「选择AI框」入口；「展开历史」仅图标；「展开列表」亦仅图标（注释「列表」文案）。已 push；**待** PC 视觉验收
 - (web) ~~**展开/收起对话列表图标**~~：新增独立资源 `collapse-chat-list` / `expand-chat-list`；仅 `PersonalAiChatAgentList` 收起 + FloatingDock「展开列表」使用。全局 `side-close`/`side-open`（历史/设置等）已恢复原样。已 push `aeb6fee`；**待** 视觉验收
 - (web) ~~**Chat Header 标题区右侧预留**~~：`Header.vue` max-width 公式 `mobilePx(50)` → `mobilePx(118)`（+40 再 +28，避免长标题挤右侧按钮）。已 push `aeb6fee`；**待** 视觉验收
 - (android) ~~**选择数据范围底栏挤出 / 已选弹层**~~：底栏「清空已选」→「清空」；展开已选对齐 iOS（标题「已选择：N人, M个群」+「确认」、分区「已选择的人/群组」、chip+红减号，半屏 Flexbox）。已 push `3b8760ac4`；**待** 真机视觉验收
