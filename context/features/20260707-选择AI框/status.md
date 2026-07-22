@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（方案：数据范围原生落库 ACK）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（SelectAiChatPopup 左上直角）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**SelectAiChatPopup 左上直角**~~：根容器 `rounded-t-2xl` → `rounded-tr-2xl`（左上直角、右上仍圆）。**工作区未提交**；**待** 真机视觉验收
 - (web / android / ios) **选择数据范围 · 原生落库（ACK）**：桥不再传大包 `scopes`；原生 `getAgentDataRange` 返显 + `saveDataRange` 落库；成功只 ACK；web 再 `getAgentDataRange` 刷新本地。方案 `plan-数据范围原生落库.md`；**待实施**（含 DTO/MemoryModel 补 `dataRangeScopeList`、ios 对称）
 - (web) ~~**常用语弹层高度**~~：移动端 `quickReplyPopup` 由 `h-screen` 改为 `h-[95vh]`（对齐选择时间 van-popup 95%）；编辑与关闭之间加 `#C9CFD9` 竖线。已 push `24fe98a`；**待** 真机视觉验收
 - (web) ~~**移动端头栏返回/开列表竖线**~~：`MPersonalAiChatWrapper` `#header-left` 返回与 `side-close` 之间加 `#C9CFD9` 竖线（`w-px h-4`）。已 push `16af40b`；**待** 真机视觉验收
