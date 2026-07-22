@@ -53,7 +53,7 @@
 | `searchAiBoxPicker` | `search-ai-box-picker` | web→原生 | `{search:string}` | `{users:[{accountId,name,agentName,avatar,ownerType:'private',lastChatAt}], groups:[{id,name,agentName,avatar,accountInfoList?,ownerType:'group',groupType?,lastChatAt}]}` | desktop | 新增（选择AI框搜索） |
 | `openChat` | `openChat` | web→原生 | `{ id:string, type:'group'\|'chat', name?:string, avatar?:string, corpId?:string, groupType?:number }`（`id`=belongId；`type`='group' 群 / 其它私聊；`name`/`avatar` 供列表无会话时重建） | 无（fire-and-forget）；主窗口 `openConversationById`（缺失则 PushDialogue 重建）选中左侧会话 | desktop | 已有（个人 AI 列表「打开私聊/群聊」） |
 | `selectAiAgent` | —（wnsdk `aiChat.selectAiAgent`） | web→原生 | — | 见下「selectAiAgent 回传」 | ios / android | ios 已落地；android 已落地（真机 E2E 通过） |
-| `selectDataRangeScope` | —（wnsdk `aiChat.selectDataRangeScope` / 安卓 `window.WebView.selectDataRangeScope`） | web→原生 | ios：`{ initialScopes?:[{scopeDataType:1\|3, scopeDataId:string}] }`；安卓：scopes 数组 JSON 字符串 | 见下「selectDataRangeScope 回传」 | ios / android | ios 落地中；android 改 WebView 直调中 |
+| `selectDataRangeScope` | —（wnsdk `aiChat.selectDataRangeScope` / 安卓 `window.WebView.selectDataRangeScope`） | web→原生 | `{ initialScopes?:[{scopeDataType:1\|3, scopeDataId:string}] }`（安卓为该对象的 JSON 字符串） | 见下「selectDataRangeScope 回传」 | ios / android | ios 落地中；android 改 WebView 直调中 |
 
 ### `selectAiAgent` 回传（ios → web）
 
@@ -83,7 +83,7 @@
 Home「数据范围」胶囊（移动端）调原生多选：
 
 - **ios**：`wnsdk.aiChat.selectDataRangeScope({ initialScopes, success, error })`（长回调）
-- **android**：`window.WebView.selectDataRangeScope(JSON.stringify(scopes数组))`（对齐 `actionCardTransmit`；入参为 `[{scopeDataType,scopeDataId}]` 数组字符串，勿包一层 `initialScopes`）；回到 WebView 后调 `window.WebView.getSelectDataRangeResult()` 拉结果 JSON（读后清空；空串=取消）
+- **android**：`window.WebView.selectDataRangeScope(JSON.stringify({ initialScopes }))`（对齐 wnsdk 入参形态；`initialScopes` 为 `[{scopeDataType,scopeDataId}]`）；回到 WebView 后调 `window.WebView.getSelectDataRangeResult()` 拉结果 JSON（读后清空；空串=取消）
 
 原生复用选择 AI 框页形态，**强制多选**；最近聊天 / 选择已有群组支持「全部」；底栏展示已选。成功时收到（已解包 / 或 getSelectDataRangeResult 解析值）：
 
@@ -118,7 +118,7 @@ Home「数据范围」胶囊（移动端）调原生多选：
 
 ## Changelog
 
-- 2026-07-22 android 选择数据范围：web 改 `window.WebView.selectDataRangeScope(scopes数组JSON)` + 回页 `getSelectDataRangeResult`；ios 仍 wnsdk。
+- 2026-07-22 android 选择数据范围：web 改 `window.WebView.selectDataRangeScope(JSON.stringify({initialScopes}))` + 回页 `getSelectDataRangeResult`；ios 仍 wnsdk。
 - 2026-07-21 强刷选中改 URL：`aiBoxCheckVersion` / visibility 验版变更前 `writeActiveSelectionToUrl`；reload 后 1|3 一律 save→list→选中（不再用 sessionStorage）。
 - 2026-07-21 AiBrowser → iframe：`aiBoxCheckVersion`（切到 AI框 tab）；web 静默对比 `build_version`，变更则 reload。
 - 2026-07-17 ios/android 数据范围搜索子页：底栏与主页同形态；子页无「取消」、主按钮「完成」；仅完成写回主页（返回不 live sync）；已选名须本地补齐。
