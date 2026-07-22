@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（web：隐藏图标+头栏图标已 push `d289080`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-22（web：列表图标+Header 预留已 push `aeb6fee`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,10 +23,9 @@
 
 ## 待办 / 阻塞
 
-- (web) ~~**列表「隐藏」菜单图标**~~：`hide.svg` 换成设计稿「隐藏 (1)」；仅 `PersonalAiChatAgentItem` 三点菜单引用。已 push `d289080`；**待** 视觉验收
 - (web) ~~**展开/收起对话列表图标**~~：新增独立资源 `collapse-chat-list` / `expand-chat-list`；仅 `PersonalAiChatAgentList` 收起 + FloatingDock「展开列表」使用。全局 `side-close`/`side-open`（历史/设置等）已恢复原样。已 push `aeb6fee`；**待** 视觉验收
 - (web) ~~**Chat Header 标题区右侧预留**~~：`Header.vue` max-width 公式 `mobilePx(50)` → `mobilePx(118)`（+40 再 +28，避免长标题挤右侧按钮）。已 push `aeb6fee`；**待** 视觉验收
-- (android) ~~**选择数据范围底栏挤出 / 已选弹层**~~：底栏「清空已选」→「清空」；展开已选对齐 iOS（标题「已选择：N人, M个群」+「确认」、分区「已选择的人/群组」、chip+红减号，半屏 Flexbox）。**工作区未提交**；**待** 真机视觉验收
+- (android) ~~**选择数据范围底栏挤出 / 已选弹层**~~：底栏「清空已选」→「清空」；展开已选对齐 iOS（标题「已选择：N人, M个群」+「确认」、分区「已选择的人/群组」、chip+红减号，半屏 Flexbox）。已 push `3b8760ac4`；**待** 真机视觉验收
 - (web) ~~**切 agent 后历史 Dock 按钮消失**~~：开历史后切 AI 框，`chatPaneKey` 重挂载 Home；父级 `historySidebarOpen=true` 但受控 watch 无 `immediate`，内部历史未同步打开 → `floatingDockMode` 误判双开返回 `hidden`。已修 `Home.vue` watch `{ immediate: true }`。已 push `4754b56`；**待** PC E2E
 - (desktop) ~~**会话列表智能体回复剥 Markdown**~~：`markdownUtils.agentReplyDisplayContent` / `actionCardListSummary`；`message-info` ActionCard 无 title 且 `ga_` 时剥正文 MD、保留「回复@昵称：」。已 push `3dec824d`；**待** PC E2E
 - (web) ~~**改筛清空 exemptAgentIds**~~：筛选对话勾选变更后 `exemptAgentIds=[]`，list 传空数组（PC `PersonalAiChat` + 移动 `MPersonalAiChatWrapper`）。已 push `3557fd0`
