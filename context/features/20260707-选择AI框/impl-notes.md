@@ -405,14 +405,18 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 | 确定时 0 项 | 确定按钮 disabled |
 | 记忆 scope 的人/群不在 PC 最近/群列表 | 仍保留勾选；`recentContactList` 按 id 补展示字段 |
 | 老壳无桥 | 列表空 + toast；不影响已记忆 scope 的保存/发送 |
-| android | **走原生多选**：`wnsdk.aiChat.selectDataRangeScope` → 独立多选页（不改选择 AI 框单选主链路）→ 回传 `personal-ai:selected-data-range`；最近/群「全部」；底栏「已选：N」点开底部弹层（仅人/群名头像，可删单项）+ 清空 + 取消 + 确定(N=0 disabled)；组织架构=通讯录多选钻取；saveDataRange 在 web |
-| ios | **走原生多选**：`wnsdk.aiChat.selectDataRangeScope` → 复用选择 AI 框页强制多选 → 回传 `personal-ai:selected-data-range`；web `DataScopeBar` 移动端接桥，PC 仍 H5 弹窗 |
+| android | **原生落库**：`WebView.selectDataRangeScope({agentId})` → 独立多选页 → `getAgentDataRange` 返显 → 确认 `saveDataRange` → ACK `{ok:true}`；web 再拉记忆。最近/群「全部」；底栏已选弹层；组织架构=通讯录多选钻取 |
+| ios | **原生落库**：`wnsdk.aiChat.selectDataRangeScope({agentId})` → 复用选择 AI 框页强制多选 → 同 android 时序（get→save→ACK）；web `DataScopeBar` 移动端接桥；PC 仍 H5 弹窗 + web `saveDataRange` |
 
-### 移动端桥时序（android / ios 对称）
+### 移动端桥时序（android / ios 对称 · 原生落库）
 
-1. web `DataScopeBar`（`isMobile`）→ `selectDataRangeScopeByNative(wnsdk, initialScopes)`。
-2. 原生多选页预勾 `initialScopes`，确认回传 `{ type:"personal-ai:selected-data-range", payload:{ scopes:[{scopeDataType,scopeDataId,name?,avatar?}] } }`；取消 `code=-1`。
-3. web 归一化后走与 PC 弹窗相同的 `onSubmit`：本地 `conditionMode` + `saveDataRange`。
+> 方案见 `plan-数据范围原生落库.md`。桥禁止传大包 `scopes`（解决载荷过大）。
+
+1. web `DataScopeBar`（移动 + `persist=true`）→ 先 flush `saveDataRange`（当前 `dataRangeList`/`timeType`/`netSearch`/`deepThink`，**不带** scopes）→ `selectDataRangeScopeByNative(wnsdk, { agentId, accountId })`。
+2. 原生打开 → `POST /agentSetDataRangeExpand/getAgentDataRange({accountId,agentId})` → 用 `dataRangeScopeList` 预勾，并缓存整包记忆草稿。
+3. 用户确认 → 原生 `saveDataRange`（草稿其它字段 + 新 `dataRangeScopeList`）→ 成功才回传 `{ type:"personal-ai:selected-data-range", payload:{ ok:true } }`；取消 `code=-1`；save 失败 error（勿伪装 ok）。
+4. web 收到 `ok` → `getAgentDataRange` → `emit update(dataRangeScopeList)` 刷新胶囊；**不再**在原生路径调 `saveDataRange`。
+5. `persist=false`（定时任务等）**不走**原生落库（强制 H5 或旧 scopes 回传且不写智能体记忆）。
 
 ### 移动端 UI 约定（数据范围）
 
@@ -423,7 +427,7 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 - 软键盘弹出时底栏须贴键盘顶（含键盘高度变化中间态）；宿主沉浸态需打开键盘适配。
 - **跨入口债**：若搜索页被「选择 AI 框」与「选择数据范围」共用，返回图标/自动弹键盘等 UX 会两边生效；多选草稿提交语义仅在数据范围模式启用，单选回传互不串结果。
 
-**联调状态**：web PC 弹窗已贯通（`656ff3a`）；移动端桥+原生页 android/ios/web 已接线；**saveDataRange / aiChat / 真机 E2E 待验收**（T10 🚧）。
+**联调状态**：web PC 弹窗已贯通；移动端改为原生落库 ACK（`plan-数据范围原生落库.md`）实施中；**ios/android/web 真机 E2E 待验收**（T10 🚧）。
 
 ## 常驻页 Version 检测与选中恢复（2026-07-21）
 

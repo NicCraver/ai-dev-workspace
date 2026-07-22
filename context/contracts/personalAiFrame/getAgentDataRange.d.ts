@@ -4,6 +4,8 @@
  * Changelog:
  * - 2026-07-14 新增 POST /agentSetDataRangeExpand/getAgentDataRange
  * - 2026-07-16 dataRangeType 补齐 3-个人 / 4-分享（与 saveDataRange 对齐）
+ * - 2026-07-22 消费方扩至移动端「选择数据范围」原生页（ios/android 打开返显 +
+ *   web ACK 后刷新本地 conditionMode）；入参优先传 agentId+accountId
  */
 
 import type { ApiResponse } from '../_common';

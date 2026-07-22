@@ -53,7 +53,7 @@
 | `searchAiBoxPicker` | `search-ai-box-picker` | web→原生 | `{search:string}` | `{users:[{accountId,name,agentName,avatar,ownerType:'private',lastChatAt}], groups:[{id,name,agentName,avatar,accountInfoList?,ownerType:'group',groupType?,lastChatAt}]}` | desktop | 新增（选择AI框搜索） |
 | `openChat` | `openChat` | web→原生 | `{ id:string, type:'group'\|'chat', name?:string, avatar?:string, corpId?:string, groupType?:number }`（`id`=belongId；`type`='group' 群 / 其它私聊；`name`/`avatar` 供列表无会话时重建） | 无（fire-and-forget）；主窗口 `openConversationById`（缺失则 PushDialogue 重建）选中左侧会话 | desktop | 已有（个人 AI 列表「打开私聊/群聊」） |
 | `selectAiAgent` | —（wnsdk `aiChat.selectAiAgent`） | web→原生 | — | 见下「selectAiAgent 回传」 | ios / android | ios 已落地；android 已落地（真机 E2E 通过） |
-| `selectDataRangeScope` | —（wnsdk `aiChat.selectDataRangeScope` / 安卓 `window.WebView.selectDataRangeScope`） | web→原生 | `{ initialScopes?:[{scopeDataType:1\|3, scopeDataId:string}] }`（安卓为该对象的 JSON 字符串） | 见下「selectDataRangeScope 回传」 | ios / android | ios 落地中；android 改 WebView 直调中 |
+| `selectDataRangeScope` | —（wnsdk `aiChat.selectDataRangeScope` / 安卓 `window.WebView.selectDataRangeScope`） | web→原生 | `{ agentId:string, accountId?:string }`（安卓为该对象的 JSON 字符串；**禁止**传 `initialScopes`） | 见下「selectDataRangeScope 回传」 | ios / android | 原生落库 ACK 改造中（见 plan-数据范围原生落库） |
 
 ### `selectAiAgent` 回传（ios → web）
 
@@ -78,32 +78,27 @@
 
 取消：`code=-1`。web 收到后走 `saveSelected` → `list(exemptAgentIds)`（编排与 PC 弹窗共用）。
 
-### `selectDataRangeScope` 回传（ios → web）
+### `selectDataRangeScope` 回传（ios / android → web）
 
-Home「数据范围」胶囊（移动端）调原生多选：
+Home「数据范围」胶囊（移动端、`persist=true`）调原生多选；**服务端为事实来源**，桥不传大包 scopes：
 
-- **ios**：`wnsdk.aiChat.selectDataRangeScope({ initialScopes, success, error })`（长回调）
-- **android**：`window.WebView.selectDataRangeScope(JSON.stringify({ initialScopes }))` 打开；确定/取消后原生 `loadUrl("javascript:dataRangeScopeResultFromAndroid(...)")` 回传（空串或 `code=-1` 为取消；成功为与下同结构的 JSON 字符串）
+- **ios**：`wnsdk.aiChat.selectDataRangeScope({ agentId, accountId?, success, error })`（长回调）
+- **android**：`window.WebView.selectDataRangeScope(JSON.stringify({ agentId, accountId? }))` 打开；确定/取消后原生 `loadUrl("javascript:dataRangeScopeResultFromAndroid(...)")` 回传
 
-原生复用选择 AI 框页形态，**强制多选**；最近聊天 / 选择已有群组支持「全部」；底栏展示已选。成功时收到（ios：已解包 `success`；android：`dataRangeScopeResultFromAndroid` 入参）：
+原生职责：打开后 `POST /agentSetDataRangeExpand/getAgentDataRange` 用 `dataRangeScopeList` 返显；确认时整包 `saveDataRange`（先读后写，保留其它记忆字段）；**成功才 ACK**。强制多选；最近/群「全部」；底栏已选。
+
+成功回传（ios：`success` 已解包；android：`dataRangeScopeResultFromAndroid` 入参；**禁止**再带 `scopes[]`）：
 
 ```jsonc
 {
   "type": "personal-ai:selected-data-range",
-  "payload": {
-    "scopes": [
-      {
-        "scopeDataType": 1,          // 1=私聊(人)；3=群聊
-        "scopeDataId": "<accountId|groupId>",
-        "name": "<显示名>",          // 可选，展示用
-        "avatar": ""                 // 可选
-      }
-    ]
-  }
+  "payload": { "ok": true }
 }
 ```
 
-取消：`code=-1`。web 收到后写 `conditionMode.dataRangeScopeList` → `saveDataRange`（与 PC `SelectDataRangeDialog` 同源；原生不调接口）。
+取消：`code=-1`（android 亦可空串）。save 失败：`error` / `code≠0`（勿伪装 ok）。
+
+web 收到 `ok` 后自行 `getAgentDataRange` 刷新 `conditionMode.dataRangeScopeList`（**不再**在移动端原生路径调 `saveDataRange`）。PC 仍 H5 弹窗 + web `saveDataRange`。
 
 **统一字段约定**（与 `apps/web/src/components/views/home/personalAiAgentAdapter.js` 对齐）：
 - 人员主键 `accountId`、群主键 `id`、AI 框名 `agentName`、最近对话时间 `lastChatAt`（毫秒时间戳）
@@ -118,7 +113,8 @@ Home「数据范围」胶囊（移动端）调原生多选：
 
 ## Changelog
 
-- 2026-07-22 android 选择数据范围：web 打开走 `WebView.selectDataRangeScope({initialScopes})`；回传改 `javascript:dataRangeScopeResultFromAndroid(...)`（不再 pull `getSelectDataRangeResult`）；ios 仍 wnsdk。
+- 2026-07-22 选择数据范围（ios/android）：入参改 `{agentId,accountId?}`；原生 `getAgentDataRange` 返显 + `saveDataRange` 落库；桥成功只 ACK `{ok:true}`；web 再拉记忆。方案 `plan-数据范围原生落库.md`。
+- 2026-07-22 android 选择数据范围：web 打开走 `WebView.selectDataRangeScope`；回传 `javascript:dataRangeScopeResultFromAndroid(...)`（不再 pull `getSelectDataRangeResult`）；已被上条原生落库方案取代入参/回传形态。
 - 2026-07-21 强刷选中改 URL：`aiBoxCheckVersion` / visibility 验版变更前 `writeActiveSelectionToUrl`；reload 后 1|3 一律 save→list→选中（不再用 sessionStorage）。
 - 2026-07-21 AiBrowser → iframe：`aiBoxCheckVersion`（切到 AI框 tab）；web 静默对比 `build_version`，变更则 reload。
 - 2026-07-17 ios/android 数据范围搜索子页：底栏与主页同形态；子页无「取消」、主按钮「完成」；仅完成写回主页（返回不 live sync）；已选名须本地补齐。
