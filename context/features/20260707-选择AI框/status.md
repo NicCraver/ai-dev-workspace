@@ -23,7 +23,7 @@
 
 ## 待办 / 阻塞
 
-- (web) ~~**移动端头栏返回/开列表竖线**~~：`MPersonalAiChatWrapper` `#header-left` 返回与 `side-close` 之间加 `#E7E7E7` 竖线（`w-px h-4`）。**工作区未提交**；**待** 真机视觉验收
+- (web) ~~**移动端头栏返回/开列表竖线**~~：`MPersonalAiChatWrapper` `#header-left` 返回与 `side-close` 之间加 `#C9CFD9` 竖线（`w-px h-4`）。已 push `16af40b`；**待** 真机视觉验收
 - (web / android) **选择数据范围安卓改 WebView 直调**：web `isAndroid` → `window.WebView.selectDataRangeScope(scopes数组JSON)`；回页后 `getSelectDataRangeResult` 拉结果（空串=取消）。ios 仍 `wnsdk.aiChat.selectDataRangeScope`。web 已 push `a0b8a63`（入参 `{initialScopes}`）；**待**安卓注入同名 JavascriptInterface + 真机 E2E
 - (web) ~~**FloatingDock 双收起态精简**~~（`mode=both`）：隐藏「选择AI框」入口；「展开历史」仅图标。已 push `a11d667`；**待** PC 视觉验收
 - (web) ~~**展开/收起对话列表图标**~~：新增独立资源 `collapse-chat-list` / `expand-chat-list`；仅 `PersonalAiChatAgentList` 收起 + FloatingDock「展开列表」使用。全局 `side-close`/`side-open`（历史/设置等）已恢复原样。已 push `aeb6fee`；**待** 视觉验收
