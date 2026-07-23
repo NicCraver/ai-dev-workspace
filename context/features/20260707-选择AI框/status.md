@@ -24,7 +24,7 @@
 ## 待办 / 阻塞
 
 - (android) ~~**选择数据范围·最近聊天只显示 id / 空名**~~：根因——`SelectDataRangeActivity` 未对齐转发筛选，融云会话本地无 `GroupInfo`/`EaseUserInfo`（退群解散、不可发消息等）仍展示。已在 `DataRangeScopeHelper.acceptRecentConversation` 对齐 `TransmitFriendsFragment`（群需本地未退群、人需可发消息、排除 robot_）；`loadConversationList` 过滤写入；`applyScopesFromMemory` 跳过无效 scope。**工作区未提交**；**待** 提交 + 真机 E2E
-- (ios) ~~**选择数据范围·组织架构最多 9 人**~~：根因——转发硬编码 9 + `BookBottomView` forward 默认 9。已在 `selectDataRangeMode` 跳过组织架构/框架页/搜索结果人数校验，并 `clearMaxCountLimit` 解除底栏钳制（无上限）。普通转发仍 9。另修底栏遮挡：白底 + 有已选时保留第二行名单、列表预留 SS(50)。**工作区未提交**；**待** 提交 + 真机 E2E
+- (ios) ~~**选择数据范围·组织架构最多 9 人**~~：根因——转发硬编码 9 + `BookBottomView` forward 默认 9。已在 `selectDataRangeMode` 跳过组织架构/框架页/搜索结果人数校验，并 `clearMaxCountLimit` 解除底栏钳制（无上限）。普通转发仍 9。底栏改 `bottomBarContainer`（内容 SS(56)+安全区贴底）+ 列表同高预留，防遮挡/底部空洞。**工作区未提交**；**待** 提交 + 真机 E2E
 - (web / desktop) ~~**本轮无功能增量**~~：web 仅本地 `vite.config.js`；desktop 仅本地 test 打包。均**勿提交**
 - (web) ~~**OrgPicker 点面包屑首项「暂无人员」**~~：`goBack(0)` 只打 `pid=rootDeptId||corpId`（如 `corpId=7&pid=7`），缺 `enterCorp` 的空结果回退 `pid=0` + 同名根跳过。已抽 `loadCorpRoot` 共用。**待** PC E2E
 - (web) ~~**DataRangeBar 关闭钮去竖线**~~：`SelectorClose` 覆写 `before:content-none`；间距 `!ml-0 !w-5`（去掉默认 ml-2/w-7 留白）；胶囊 `px-2.5`→`px-1`（DataScopeBar 同步）。已 push `987ef61`；**待** PC 视觉验收
