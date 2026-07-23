@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-22（desktop 脏文件复核：仅本地 test 打包，无功能增量）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-23（OrgPicker 面包屑回根复用 enterCorp 的 pid=0 回退）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,10 +23,11 @@
 
 ## 待办 / 阻塞
 
+- (web) ~~**OrgPicker 点面包屑首项「暂无人员」**~~：`goBack(0)` 只打 `pid=rootDeptId||corpId`（如 `corpId=7&pid=7`），缺 `enterCorp` 的空结果回退 `pid=0` + 同名根跳过。已抽 `loadCorpRoot` 共用。**待** PC E2E
 - (web) ~~**DataRangeBar 关闭钮去竖线**~~：`SelectorClose` 覆写 `before:content-none`；间距 `!ml-0 !w-5`（去掉默认 ml-2/w-7 留白）；胶囊 `px-2.5`→`px-1`（DataScopeBar 同步）。已 push `987ef61`；**待** PC 视觉验收
 - (web) ~~**HomeGuidePage 对齐个人 AI 头栏设置位**~~：改 DOM 锚定 `data-home-guide-anchor=setting`（不再手算 pr）；个人 AI / 旧三按钮头栏通用。已 push `987ef61`；**待** PC 视觉验收（个人框/私聊群/原生独立窗 + 独立 zx/home）
 - (web) ~~**SelectAiChatPopup 左上直角**~~：根容器 `rounded-t-2xl` → `rounded-tr-2xl`（左上直角、右上仍圆）。已 push `9d8b9d6`；**待** 真机视觉验收
-- (web / android / ios) **选择数据范围 · 原生落库（ACK）**：ios/android 打开 `get`、确认 `save`；web 已去掉开页前 flush（`7df0ff5`）。android `be96a5d98` / ios `1c7097221` **已 push**。方案 `plan-数据范围原生落库.md`。**待** 真机 E2E
+- (web / android / ios) **选择数据范围 · 原生落库（ACK）+ 兼容老 iOS**：开页双传 `agentId`+`initialScopes`；回传 `ok`→新 get 刷本地 / `scopes`→老 web save。android `be96a5d98` / ios `1c7097221` 已 push；web 兼容待提交。方案 `plan-数据范围原生落库.md`。**待** 老/新 iOS 真机各验一遍
 
 - (web) ~~**常用语弹层高度**~~：移动端 `quickReplyPopup` 由 `h-screen` 改为 `h-[95vh]`（对齐选择时间 van-popup 95%）；编辑与关闭之间加 `#C9CFD9` 竖线。已 push `24fe98a`；**待** 真机视觉验收
 - (web) ~~**定时弹层头栏竖线/关闭**~~：`TimingPopup`「添加」与关闭间加 `#C9CFD9` 竖线，关闭改 `w-5 h-5`（`TimingEditPopup` 关闭同尺寸）。已 push `3f87c08`。列表/新建编辑弹层高度 `h-100vh` → `h-[95vh]` + tip/列表 `text-3.75`（对齐常用语/选择时间）。**已 push**；**待** 真机视觉验收

@@ -412,11 +412,11 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 
 > 方案见 `plan-数据范围原生落库.md`。桥禁止传大包 `scopes`（解决载荷过大）。
 
-1. web `DataScopeBar`（移动 + `persist=true`）→ **直接** `selectDataRangeScopeByNative(wnsdk, { agentId, accountId })`（**禁止**开页前 `saveDataRange`：不带 scopes 的 save 会冲空服务端记忆）。
-2. 原生打开 → `POST /agentSetDataRangeExpand/getAgentDataRange({accountId,agentId})` → 用 `dataRangeScopeList` 预勾，并缓存整包记忆草稿。
-3. 用户确认 → 原生 `saveDataRange`（草稿其它字段 + 新 `dataRangeScopeList`）→ 成功才回传 `{ type:"personal-ai:selected-data-range", payload:{ ok:true } }`；取消 `code=-1`；save 失败 error（勿伪装 ok）。
-4. web 收到 `ok` → `getAgentDataRange` → `emit update(dataRangeScopeList)` 刷新胶囊；**不再**在原生路径调 `saveDataRange`。
-5. `persist=false`（定时任务等）**不走**原生落库（强制 H5 或旧 scopes 回传且不写智能体记忆）。
+1. web `DataScopeBar`（移动 + `persist=true`）→ `selectDataRangeScopeByNative({ agentId, accountId, initialScopes })`（**禁止**开页前 save）。入参双带：新端用 `agentId`，**已上线老 iOS** 用 `initialScopes`。
+2. **新协议**：原生 `getAgentDataRange` 返显 → 确认 `saveDataRange` → ACK `{ ok:true }` → web 再 `getAgentDataRange` 刷胶囊（web 不 save）。
+3. **老协议（线上 iOS）**：原生用 `initialScopes` 返显 → 回传 `{ scopes:[] }` → web `emit` + `saveDataRange`（与重构前一致）。
+4. web 分流：`payload.ok` → 新；有 `payload.scopes` → 老；取消 `code=-1`。
+5. `persist=false` **不走**原生落库（强制 H5）。
 
 ### 移动端 UI 约定（数据范围）
 

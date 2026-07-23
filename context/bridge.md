@@ -80,25 +80,31 @@
 
 ### `selectDataRangeScope` 回传（ios / android → web）
 
-Home「数据范围」胶囊（移动端、`persist=true`）调原生多选；**服务端为事实来源**，桥不传大包 scopes：
+Home「数据范围」胶囊（移动端、`persist=true`）调原生多选。
 
-- **ios**：`wnsdk.aiChat.selectDataRangeScope({ agentId, accountId?, success, error })`（长回调）
-- **android**：`window.WebView.selectDataRangeScope(JSON.stringify({ agentId, accountId? }))` 打开；确定/取消后原生 `loadUrl("javascript:dataRangeScopeResultFromAndroid(...)")` 回传
+**开页入参（双协议兼容）**：同时传 `agentId`（新）+ `initialScopes`（老 iOS）；各端各取所需。
 
-原生职责：打开后 `POST /agentSetDataRangeExpand/getAgentDataRange` 用 `dataRangeScopeList` 返显；确认时整包 `saveDataRange`（先读后写，保留其它记忆字段）；**成功才 ACK**。强制多选；最近/群「全部」；底栏已选。
+- **ios**：`wnsdk.aiChat.selectDataRangeScope({ agentId, accountId?, initialScopes?, success, error })`（长回调）
+- **android**：`window.WebView.selectDataRangeScope(JSON.stringify({ agentId, accountId?, initialScopes? }))`；回传 `javascript:dataRangeScopeResultFromAndroid(...)`
 
-成功回传（ios：`success` 已解包；android：`dataRangeScopeResultFromAndroid` 入参；**禁止**再带 `scopes[]`）：
+**新协议**（未上线 / 新包）：原生 `getAgentDataRange` 返显 + 确认 `saveDataRange`；成功 ACK：
+
+```jsonc
+{ "type": "personal-ai:selected-data-range", "payload": { "ok": true } }
+```
+
+web 收到 `ok` → `getAgentDataRange` 刷本地（不在此路径 save）。
+
+**老协议**（已上线 iOS）：用 `initialScopes` 返显；成功回传 scopes；web 写本地 + `saveDataRange`：
 
 ```jsonc
 {
   "type": "personal-ai:selected-data-range",
-  "payload": { "ok": true }
+  "payload": { "scopes": [{ "scopeDataType": 1, "scopeDataId": "...", "name?": "", "avatar?": "" }] }
 }
 ```
 
-取消：`code=-1`（android 亦可空串）。save 失败：`error` / `code≠0`（勿伪装 ok）。
-
-web 收到 `ok` 后自行 `getAgentDataRange` 刷新 `conditionMode.dataRangeScopeList`（**不再**在移动端原生路径调 `saveDataRange`）。PC 仍 H5 弹窗 + web `saveDataRange`。
+web 分流：`payload.ok` → 新；有 `payload.scopes` → 老。取消：`code=-1`（android 亦可空串）。PC 仍 H5 + web save。
 
 **统一字段约定**（与 `apps/web/src/components/views/home/personalAiAgentAdapter.js` 对齐）：
 - 人员主键 `accountId`、群主键 `id`、AI 框名 `agentName`、最近对话时间 `lastChatAt`（毫秒时间戳）
@@ -113,6 +119,7 @@ web 收到 `ok` 后自行 `getAgentDataRange` 刷新 `conditionMode.dataRangeSco
 
 ## Changelog
 
+- 2026-07-23 web 兼容老 iOS：开页同时传 `agentId`+`initialScopes`；回传按 `ok`（新）/ `scopes`（老）分流。
 - 2026-07-22 选择数据范围（ios/android）：入参改 `{agentId,accountId?}`；原生 `getAgentDataRange` 返显 + `saveDataRange` 落库；桥成功只 ACK `{ok:true}`；web 再拉记忆。方案 `plan-数据范围原生落库.md`。
 - 2026-07-22 android 选择数据范围：web 打开走 `WebView.selectDataRangeScope`；回传 `javascript:dataRangeScopeResultFromAndroid(...)`（不再 pull `getSelectDataRangeResult`）；已被上条原生落库方案取代入参/回传形态。
 - 2026-07-21 强刷选中改 URL：`aiBoxCheckVersion` / visibility 验版变更前 `writeActiveSelectionToUrl`；reload 后 1|3 一律 save→list→选中（不再用 sessionStorage）。
