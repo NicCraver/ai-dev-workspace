@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-23（复核 apps 脏：android/ios 数据范围修复未提交；web/desktop 仅本地配置）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-23（android 数据范围筛选修复已装 test 包；ios 9 人上限/底栏仍未提交；desktop 仅本地打包）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,13 +19,13 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-23 午）：stop hook 四端脏——**android** 工作区未提交：`DataRangeScopeHelper.acceptRecentConversation/acceptScope` + `SelectDataRangeActivity` 最近聊天/记忆返显过滤（对齐转发；待办已划，**待提交 + 真机 E2E**）；**ios** 工作区未提交：`selectDataRangeMode` 跳过组织架构/框架/搜索 9 人上限 + `BookBottomView.clearMaxCountLimit`/底栏遮挡（待办已划，**待提交 + 真机 E2E**）；**web** 仅 `vite.config.js` 本地代理/尾逗号（`/api` 指 prod），**无功能 diff，勿提交**；**desktop** 仍为本地 test 打包（`.env.test` / `electron-builder.yml` / `package.json`+lock），功能 tip `3dec824d`，**勿提交**。矩阵 T8/T9/T10 移动端与 desktop 仍 🚧。数据范围 ACK 此前已 push（对照 `plan-数据范围原生落库.md`）。
+> **本轮 apps 事实**（2026-07-23 晚）：**android** 工作区未提交——`DataRangeScopeHelper.acceptRecentConversation/acceptScope` + `SelectDataRangeActivity` 最近聊天/记忆返显过滤（对齐转发）；`zhixin-run-android` 已装 `com.cnmts.smart_message.test`，**待** 提交 + 真机 E2E（最近聊天不再空名/裸 id）。**ios** 工作区未提交——`selectDataRangeMode` 跳过组织架构/框架/搜索 9 人上限 + `BookBottomView.clearMaxCountLimit` + `bottomBarContainer` 底栏安全区，**待** 提交 + 真机 E2E。**web** 工作区干净（无功能 diff）。**desktop** 仅本地 test 打包（`.env.test` / `electron-builder.yml` / `package.json`+lock），功能 tip `3dec824d`，**勿提交**。矩阵 T8/T9/T10 移动端与 desktop 仍 🚧。
 
 ## 待办 / 阻塞
 
-- (android) ~~**选择数据范围·最近聊天只显示 id / 空名**~~：根因——`SelectDataRangeActivity` 未对齐转发筛选，融云会话本地无 `GroupInfo`/`EaseUserInfo`（退群解散、不可发消息等）仍展示。已在 `DataRangeScopeHelper.acceptRecentConversation` 对齐 `TransmitFriendsFragment`（群需本地未退群、人需可发消息、排除 robot_）；`loadConversationList` 过滤写入；`applyScopesFromMemory` 跳过无效 scope。**工作区未提交**；**待** 提交 + 真机 E2E
+- (android) ~~**选择数据范围·最近聊天只显示 id / 空名**~~：根因——`SelectDataRangeActivity` 未对齐转发筛选，融云会话本地无 `GroupInfo`/`EaseUserInfo`（退群解散、不可发消息等）仍展示。已在 `DataRangeScopeHelper.acceptRecentConversation` 对齐 `TransmitFriendsFragment`（群需本地未退群、人需可发消息、排除 robot_）；`loadConversationList` 过滤写入；`applyScopesFromMemory` 跳过无效 scope。**工作区未提交**；test 包已装机（`com.cnmts.smart_message.test`）；**待** 提交 + 真机 E2E
 - (ios) ~~**选择数据范围·组织架构最多 9 人**~~：根因——转发硬编码 9 + `BookBottomView` forward 默认 9。已在 `selectDataRangeMode` 跳过组织架构/框架页/搜索结果人数校验，并 `clearMaxCountLimit` 解除底栏钳制（无上限）。普通转发仍 9。底栏改 `bottomBarContainer`（内容 SS(56)+安全区贴底）+ 列表同高预留，防遮挡/底部空洞。**工作区未提交**；**待** 提交 + 真机 E2E
-- (web / desktop) ~~**本轮无功能增量**~~：web 仅本地 `vite.config.js`；desktop 仅本地 test 打包。均**勿提交**
+- (web / desktop) ~~**本轮无功能增量**~~：web 工作区干净；desktop 仅本地 test 打包。均**勿提交**
 - (web) ~~**OrgPicker 点面包屑首项「暂无人员」**~~：`goBack(0)` 只打 `pid=rootDeptId||corpId`（如 `corpId=7&pid=7`），缺 `enterCorp` 的空结果回退 `pid=0` + 同名根跳过。已抽 `loadCorpRoot` 共用。**待** PC E2E
 - (web) ~~**DataRangeBar 关闭钮去竖线**~~：`SelectorClose` 覆写 `before:content-none`；间距 `!ml-0 !w-5`（去掉默认 ml-2/w-7 留白）；胶囊 `px-2.5`→`px-1`（DataScopeBar 同步）。已 push `987ef61`；**待** PC 视觉验收
 - (web) ~~**HomeGuidePage 对齐个人 AI 头栏设置位**~~：改 DOM 锚定 `data-home-guide-anchor=setting`（不再手算 pr）；个人 AI / 旧三按钮头栏通用。已 push `987ef61`；**待** PC 视觉验收（个人框/私聊群/原生独立窗 + 独立 zx/home）
