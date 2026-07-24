@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-24（ios 选择联系人/组织架构复用 ZXSelectDataRangeBottomView）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-24（ios 选择联系人底栏对齐主页高度+上边线）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,7 +23,7 @@
 
 ## 待办 / 阻塞
 
-- (ios) **选择数据范围·子页底栏统一**：`ZXContactCorpController` / `LYGCompanyViewController` / `LYGCompanResultController` 在 `selectDataRangeMode` 下复用 `ZXSelectDataRangeBottomView`（对齐主页+搜索）；`BookBottomView.modelsDidChangeBlock` 同步数量；仅「确定」/`完成` 写回父页，返回/取消不 live sync。组织搜索结果无取消、主按钮「完成」。**工作区未提交**；**待** 真机 E2E（联系人/组织架构底栏视觉与主页一致；确定回写；取消不丢父页原选）
+- (ios) **选择数据范围·子页底栏统一**：`ZXContactCorpController` / `LYGCompanyViewController` / `LYGCompanResultController` 在 `selectDataRangeMode` 下复用 `ZXSelectDataRangeBottomView`（对齐主页+搜索）；`BookBottomView.modelsDidChangeBlock` 同步数量；仅「确定」/`完成` 写回父页，返回/取消不 live sync。组织搜索结果无取消、主按钮「完成」。本轮修：选择联系人底栏改挂 `self.view`（防 pageView 裁切顶线）、高度 SS(56) 对齐主页；组件顶线改 **1pt `#C9CFD9`**。**工作区未提交**；**待** 真机再比主页高度/顶线
 - (android) ~~**选择数据范围·最近聊天只显示 id / 空名**~~：根因——`SelectDataRangeActivity` 未对齐转发筛选，融云会话本地无 `GroupInfo`/`EaseUserInfo`（退群解散、不可发消息等）仍展示。已在 `DataRangeScopeHelper.acceptRecentConversation` 对齐 `TransmitFriendsFragment`（群需本地未退群、人需可发消息、排除 robot_）；`loadConversationList` 过滤写入；`applyScopesFromMemory` 跳过无效 scope。已 push `cf92a6493`；**待** 真机 E2E
 - (ios) ~~**选择数据范围·组织架构最多 9 人**~~：根因——转发硬编码 9 + `BookBottomView` forward 默认 9。已在 `selectDataRangeMode` 跳过组织架构/框架页/搜索结果人数校验，并 `clearMaxCountLimit` 解除底栏钳制（无上限）。普通转发仍 9。底栏改 `bottomBarContainer`（内容 SS(56)+安全区贴底）+ 列表同高预留，防遮挡/底部空洞。**工作区未提交**；**待** 提交 + 真机 E2E
 - (ios) ~~**选择数据范围·选择联系人入口底栏仍显示 /9**~~：根因——`ZXContactCorpController` 的 `bottomMoreView`/`bottomViewSelect` 未调 `clearMaxCountLimit`（钻取页 LYG 已调）。已补；按钮无上限文案 `发送(N)`，隐藏「最多选择9人」。进页预填改 `selectedArray`（主页 BookBottom 已隐藏）。**工作区未提交**；**待** 真机 E2E（入口底栏无 `/9`、可选 >9 人；普通转发仍 `/9`）
