@@ -18,8 +18,8 @@
 | T10 | Home 数据范围 scope（PC H5 多选 / 移动端原生） | 🚧 | 🚧 | 🚧 | — |
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
-> iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-24）：**android** 已 push `cf92a6493`；**待** 真机 E2E。**ios** 工作区未提交——底栏统一 **`SS(64)`**；`BookBottomView` 上边距 **16** + 顶部 `Color_Line` 分隔线；**待** 提交 + 真机视觉验收。**web** 干净。**desktop** 勿提交。矩阵 T8/T9/T10 仍 🚧。
+> iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生 `Picker/` 壳 + `wnsdk.aiChat.selectAiAgent` / `selectDataRangeScope`。
+> **本轮 apps 事实**（2026-07-24）：**ios** `personal-ai-chat` ahead 4（`8e5073d66`..`7b4bd1cf0`）Picker 新壳 Task1–7 已提交，**待真机 E2E**；旧底栏 WIP 仍在工作区未提交。**android** 已 push `cf92a6493` 待真机。**web** 干净。**desktop** 勿提交。矩阵 T8/T9/T10 仍 🚧。
 
 ## 待办 / 阻塞
 
