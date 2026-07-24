@@ -459,3 +459,35 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 
 - **曾用 sessionStorage**：`readActiveSelection()` 无值返回 `null` 时，若 `hasXxx(d = {})` 默认参数对 null 不生效会抛错，导致 list 后无法默认选中。已改为 URL 恢复，相关判空仍须显式 `d == null → false`（`hasEntryDeepLink`）。
 
+
+## iOS 原生选择壳（脱离转发，2026-07-24）
+
+> 设计：`design-ios-picker-rebuild.md`；计划：`plan-ios-picker-rebuild.md`。目录：`SmartMessage/.../ZX_PersonalAi/Picker/`。
+
+### 模式
+
+- **选择 AI 框**：单选，无底栏，任意列表点选 → dismiss + `personal-ai:selected-agent`
+- **选择数据范围**：多选；首页底栏「确定」才 `saveDataRange` + ACK；子页底栏「完成」只写回已选并 pop，不落库
+
+### 页面树
+
+Home（搜索入口 / 选择联系人 / 选择已有群组 / 最近聊天）→ Search（本地 DB 搜人+群）→ Contact（组织|外联企业列表）→ OrgDrill（部门面包屑+人员）→ Group（组织群|外联群）
+
+### 取数（只迁逻辑，不嵌旧 VC）
+
+| 能力 | 来源 |
+|------|------|
+| 最近聊天 | 融云会话列表；群需本地群库有记录 |
+| 搜索人/群 | `ZXDBLogic` 关键词用户 + `ZXGroupLogic` LIKE 群名 |
+| 企业列表 | `ZXRegisterContactLogic` 外联组织接口（type 0/1） |
+| 部门人员 | `API_SubDeptUserPageList`（同 LYG 参数） |
+| 群列表 | `API_ImGroupList` type 0/10 |
+
+### 联调坑
+
+- 新壳 **禁止** 依赖 `ZXForwardOption` / 转发 `BookBottomView`；旧 `ZXSelectAiAgentController` 文件保留未删，桥已切走。
+- 子页 push 时 Root 首页底栏隐藏（nav delegate）；子页自带「完成」底栏。
+- 组织钻取同名根部门自动跳一层（对齐 PC/旧 LYG）。
+- 搜索仍为 **本地 DB**，非 web `selectGroupBySearch` HTTP。
+- 已选弹层暂用 Alert 列表，未做 chip 半屏（后续可对齐旧 EaseSelected）。
+

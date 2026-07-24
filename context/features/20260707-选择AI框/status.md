@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-24（ios Picker 新壳 Task1–3 已提交：桥已切；待真机验最近聊天）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-24（ios Picker 新壳 Task1–7 已提交 `7b4bd1cf0`；待真机全链路）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,7 +23,7 @@
 
 ## 待办 / 阻塞
 
-- (ios) **选择 AI 框 / 数据范围 · 脱离转发重做**：设计+计划已审。ios `personal-ai-chat` 已提交 Task1–3（`8e5073d66`..`7031b9f87`）：`Picker/` Context/Item/BottomBar/Root/Home/SearchBar/RowCell；桥 `selectAiAgent`/`selectDataRangeScope` 已切新壳。最近聊天可用；搜索/联系人/群入口暂 Toast。**待** 真机验首页两 mode；续 Task4+
+- (ios) **选择 AI 框 / 数据范围 · 脱离转发重做**：新壳 `Picker/` Task1–7 已提交（`8e5073d66`..`7b4bd1cf0`）。桥已切；最近/搜索/联系人/组织钻取/群组可用。旧 Controller 文件保留未删。**待** 真机：两 mode 全链路 + 转发回归无回归；验完可删旧入口依赖
 - (android) ~~**选择数据范围·最近聊天只显示 id / 空名**~~：根因——`SelectDataRangeActivity` 未对齐转发筛选，融云会话本地无 `GroupInfo`/`EaseUserInfo`（退群解散、不可发消息等）仍展示。已在 `DataRangeScopeHelper.acceptRecentConversation` 对齐 `TransmitFriendsFragment`（群需本地未退群、人需可发消息、排除 robot_）；`loadConversationList` 过滤写入；`applyScopesFromMemory` 跳过无效 scope。已 push `cf92a6493`；**待** 真机 E2E
 - (ios) ~~**选择数据范围·组织架构最多 9 人**~~：根因——转发硬编码 9 + `BookBottomView` forward 默认 9。已在 `selectDataRangeMode` 跳过组织架构/框架页/搜索结果人数校验，并 `clearMaxCountLimit` 解除底栏钳制（无上限）。普通转发仍 9。底栏改 `bottomBarContainer`（内容 SS(56)+安全区贴底）+ 列表同高预留，防遮挡/底部空洞。**工作区未提交**；**待** 提交 + 真机 E2E
 - (ios) ~~**选择数据范围·选择联系人入口底栏仍显示 /9**~~：根因——`ZXContactCorpController` 的 `bottomMoreView`/`bottomViewSelect` 未调 `clearMaxCountLimit`（钻取页 LYG 已调）。已补；按钮无上限文案 `发送(N)`，隐藏「最多选择9人」。进页预填改 `selectedArray`（主页 BookBottom 已隐藏）。**工作区未提交**；**待** 真机 E2E（入口底栏无 `/9`、可选 >9 人；普通转发仍 `/9`）

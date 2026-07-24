@@ -1,7 +1,7 @@
 # Design：iOS Personal AI 选择壳（脱离转发）
 
 > 日期：2026-07-24  
-> 状态：已审阅通过；实施计划见 [`plan-ios-picker-rebuild.md`](./plan-ios-picker-rebuild.md)  
+> 状态：代码已落地（Task1–7）；待真机 E2E；见 [`plan-ios-picker-rebuild.md`](./plan-ios-picker-rebuild.md)  
 > 范围：仅 iOS；Android 不在本期  
 > 关联：活跃功能 `20260707-选择AI框`；桥 `selectAiAgent` / `selectDataRangeScope`
 
