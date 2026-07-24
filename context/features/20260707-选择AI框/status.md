@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-24（ios 底栏：固定内容区 SS(60) 居中 + 顶部 1pt #C9CFD9 线）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-24（ios 选择联系人/组织架构复用 ZXSelectDataRangeBottomView）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,14 +19,15 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-24）：**android** 已 push `cf92a6493`；**待** 真机 E2E。**ios** 工作区未提交——底栏统一 **`SS(64)`**；`BookBottomView` 上边距 **16** + 顶部 `Color_Line` 分隔线；**待** 提交 + 真机视觉验收。**web** 干净。**desktop** 勿提交。矩阵 T8/T9/T10 仍 🚧。
+> **本轮 apps 事实**（2026-07-24）：**ios** 数据范围子页（选择联系人 / 组织架构 / 组织搜索结果）底栏改复用 `ZXSelectDataRangeBottomView`（已选/清空/取消/确定；仅确定写回）；`BookBottomView` 仅作 models 容器。**工作区未提交**；**待** 真机 E2E。**android** 已 push `cf92a6493`；**web** 干净；**desktop** 勿提交。矩阵 T8/T9/T10 仍 🚧。
 
 ## 待办 / 阻塞
 
+- (ios) **选择数据范围·子页底栏统一**：`ZXContactCorpController` / `LYGCompanyViewController` / `LYGCompanResultController` 在 `selectDataRangeMode` 下复用 `ZXSelectDataRangeBottomView`（对齐主页+搜索）；`BookBottomView.modelsDidChangeBlock` 同步数量；仅「确定」/`完成` 写回父页，返回/取消不 live sync。组织搜索结果无取消、主按钮「完成」。**工作区未提交**；**待** 真机 E2E（联系人/组织架构底栏视觉与主页一致；确定回写；取消不丢父页原选）
 - (android) ~~**选择数据范围·最近聊天只显示 id / 空名**~~：根因——`SelectDataRangeActivity` 未对齐转发筛选，融云会话本地无 `GroupInfo`/`EaseUserInfo`（退群解散、不可发消息等）仍展示。已在 `DataRangeScopeHelper.acceptRecentConversation` 对齐 `TransmitFriendsFragment`（群需本地未退群、人需可发消息、排除 robot_）；`loadConversationList` 过滤写入；`applyScopesFromMemory` 跳过无效 scope。已 push `cf92a6493`；**待** 真机 E2E
 - (ios) ~~**选择数据范围·组织架构最多 9 人**~~：根因——转发硬编码 9 + `BookBottomView` forward 默认 9。已在 `selectDataRangeMode` 跳过组织架构/框架页/搜索结果人数校验，并 `clearMaxCountLimit` 解除底栏钳制（无上限）。普通转发仍 9。底栏改 `bottomBarContainer`（内容 SS(56)+安全区贴底）+ 列表同高预留，防遮挡/底部空洞。**工作区未提交**；**待** 提交 + 真机 E2E
 - (ios) ~~**选择数据范围·选择联系人入口底栏仍显示 /9**~~：根因——`ZXContactCorpController` 的 `bottomMoreView`/`bottomViewSelect` 未调 `clearMaxCountLimit`（钻取页 LYG 已调）。已补；按钮无上限文案 `发送(N)`，隐藏「最多选择9人」。进页预填改 `selectedArray`（主页 BookBottom 已隐藏）。**工作区未提交**；**待** 真机 E2E（入口底栏无 `/9`、可选 >9 人；普通转发仍 `/9`）
-- (ios) ~~**选择数据范围·组织架构底栏与选择联系人不一致**~~：内容区固定 **`SS(60)`** 贴顶，按钮 `centerY`；白底向下延伸安全区（不再把安全区算进居中）；顶部 **1pt `#C9CFD9`** 分隔线。**工作区未提交**；**待** 真机验收
+- (ios) ~~**选择数据范围·组织架构底栏与选择联系人不一致**~~：内容区固定 **`SS(60)`** 贴顶，按钮 `centerY`；白底向下延伸安全区（不再把安全区算进居中）；顶部 **1pt `#C9CFD9`** 分隔线。已被上条「子页底栏统一」取代（改走 `ZXSelectDataRangeBottomView`）。**工作区未提交**
 - (web / desktop) ~~**本轮无功能增量**~~：web 工作区干净；desktop 仅本地 test 打包。均**勿提交**
 - (web) ~~**OrgPicker 点面包屑首项「暂无人员」**~~：`goBack(0)` 只打 `pid=rootDeptId||corpId`（如 `corpId=7&pid=7`），缺 `enterCorp` 的空结果回退 `pid=0` + 同名根跳过。已抽 `loadCorpRoot` 共用。**待** PC E2E
 - (web) ~~**DataRangeBar 关闭钮去竖线**~~：`SelectorClose` 覆写 `before:content-none`；间距 `!ml-0 !w-5`（去掉默认 ml-2/w-7 留白）；胶囊 `px-2.5`→`px-1`（DataScopeBar 同步）。已 push `987ef61`；**待** PC 视觉验收
