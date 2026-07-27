@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-27（ios 清空后仍可确认保存空范围）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-27（ios 已 push personal-ai-chat `81aa08720`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,7 +23,8 @@
 
 ## 待办 / 阻塞
 
-- (ios) **选择 AI 框 / 数据范围 · 脱离转发重做**：新壳 `Picker/` 已落地（Home/Search/Contact/OrgDrill/Group + 桥切换）；列表头像复用 `ZXForwardCell`；布局 header→搜索→列表→底栏。本轮：① 顶栏返回图标；② 选择联系人组织/外联/企业图标；③ 企业头像固定 SS(20)；④ 子页「已选」打开半屏；底栏「清空」；⑤ 子页「确认」改为直接 `confirmDataRangeSave`（少一步回首页，与主页确定同语义；搜索先写回 workingSelected）。**待** 用户本地构建 + 真机视觉验收（本回合未跑 xcodebuild）
+- (ios) **选择 AI 框 / 数据范围 · 脱离转发重做**：新壳 `Picker/` 已落地并 **已 push** `personal-ai-chat` `81aa08720`（含顶栏返回、联系人图标、企业头像 SS(20)、子页已选半屏、子页确认=整体落库、清空后可确认、确定不带数字等）。**待** 真机视觉/E2E 验收
+- (ios) ~~工作区未提交~~：底栏 /9、BookBottomView、组织架构人数等此前债一并进上条提交
 - (android) ~~**选择数据范围·最近聊天只显示 id / 空名**~~：根因——`SelectDataRangeActivity` 未对齐转发筛选，融云会话本地无 `GroupInfo`/`EaseUserInfo`（退群解散、不可发消息等）仍展示。已在 `DataRangeScopeHelper.acceptRecentConversation` 对齐 `TransmitFriendsFragment`（群需本地未退群、人需可发消息、排除 robot_）；`loadConversationList` 过滤写入；`applyScopesFromMemory` 跳过无效 scope。已 push `cf92a6493`；**待** 真机 E2E
 - (ios) ~~**选择数据范围·组织架构最多 9 人**~~：根因——转发硬编码 9 + `BookBottomView` forward 默认 9。已在 `selectDataRangeMode` 跳过组织架构/框架页/搜索结果人数校验，并 `clearMaxCountLimit` 解除底栏钳制（无上限）。普通转发仍 9。底栏改 `bottomBarContainer`（内容 SS(56)+安全区贴底）+ 列表同高预留，防遮挡/底部空洞。**工作区未提交**；**待** 提交 + 真机 E2E
 - (ios) ~~**选择数据范围·选择联系人入口底栏仍显示 /9**~~：根因——`ZXContactCorpController` 的 `bottomMoreView`/`bottomViewSelect` 未调 `clearMaxCountLimit`（钻取页 LYG 已调）。已补；按钮无上限文案 `发送(N)`，隐藏「最多选择9人」。进页预填改 `selectedArray`（主页 BookBottom 已隐藏）。**工作区未提交**；**待** 真机 E2E（入口底栏无 `/9`、可选 >9 人；普通转发仍 `/9`）
