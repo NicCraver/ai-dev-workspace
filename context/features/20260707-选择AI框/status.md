@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-24（ios Picker 编译：`ZXCorpUserTable` 改引 `ZXAccountTable.h`；待真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-27（ios 选择数据范围顶栏「取消」改返回图标）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -18,17 +18,16 @@
 | T10 | Home 数据范围 scope（PC H5 多选 / 移动端原生） | 🚧 | 🚧 | 🚧 | — |
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
-> iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生 `Picker/` 壳 + `wnsdk.aiChat.selectAiAgent` / `selectDataRangeScope`。
-> **本轮 apps 事实**（2026-07-24 晚）：**ios** `personal-ai-chat` ahead 4（`8e5073d66`..`7b4bd1cf0`）Picker 新壳已提交；工作区未提交——① `Picker` Search/OrgDrill 编译修复（`ZXCorpUserTable`→`ZXAccountTable.h`）；② 旧底栏/9 人上限 WIP（BookBottom / LYG / ContactCorp 等，与新壳并行勿混提）。**待** Clean Build + 真机 E2E。**android** 已 push `cf92a6493` 待真机。**web** 干净。**desktop** 仅本地 test 打包，**勿提交**。矩阵 T8/T9/T10 仍 🚧。
+> iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
+> **本轮 apps 事实**（2026-07-24）：**android** 已 push `cf92a6493`；**待** 真机 E2E。**ios** 工作区未提交——底栏统一 **`SS(64)`**；`BookBottomView` 上边距 **16** + 顶部 `Color_Line` 分隔线；**待** 提交 + 真机视觉验收。**web** 干净。**desktop** 勿提交。矩阵 T8/T9/T10 仍 🚧。
 
 ## 待办 / 阻塞
 
-- (ios) **选择 AI 框 / 数据范围 · 脱离转发重做**：新壳 `Picker/` Task1–7 已提交（`8e5073d66`..`7b4bd1cf0`）。桥已切；最近/搜索/联系人/组织钻取/群组可用。旧 Controller 文件保留未删。**待** 真机：两 mode 全链路 + 转发回归无回归；验完可删旧入口依赖
-- (ios) ~~**Picker 链接 Undefined symbol（Search/Contact/Group）**~~：根因——`pbxproj` 已入 Sources，但 Xcode PIF 缓存停在加文件前；`Home` 已引用新类 → 只链不编。清 PIF / Clean Build 后可编。另修：`#import "ZXCorpUserTable.h"` 不存在，类在 `ZXAccountTable.h`（Search 已有 `ZXDBLogic.h` 可删该 import；OrgDrill 改引 `ZXAccountTable.h`）。**工作区未提交**；**待** 真机编过 + E2E
+- (ios) **选择 AI 框 / 数据范围 · 脱离转发重做**：新壳 `Picker/` 已落地（Home/Search/Contact/OrgDrill/Group + 桥切换）；列表头像复用 `ZXForwardCell`；布局 header→搜索→列表→底栏。本轮：顶栏左侧「取消」改 `zx_nav_back` 返回图标（与旧 SelectAiAgent / 转发一致；选择 AI 框同壳一并改）。**待** 用户本地构建 + 真机视觉验收（本回合未跑 xcodebuild）
 - (android) ~~**选择数据范围·最近聊天只显示 id / 空名**~~：根因——`SelectDataRangeActivity` 未对齐转发筛选，融云会话本地无 `GroupInfo`/`EaseUserInfo`（退群解散、不可发消息等）仍展示。已在 `DataRangeScopeHelper.acceptRecentConversation` 对齐 `TransmitFriendsFragment`（群需本地未退群、人需可发消息、排除 robot_）；`loadConversationList` 过滤写入；`applyScopesFromMemory` 跳过无效 scope。已 push `cf92a6493`；**待** 真机 E2E
-- (ios) ~~**选择数据范围·组织架构最多 9 人**~~（旧壳 WIP，新 Picker 不依赖转发上限）：根因——转发硬编码 9 + `BookBottomView` forward 默认 9。已在 `selectDataRangeMode` 跳过组织架构/框架页/搜索结果人数校验，并 `clearMaxCountLimit` 解除底栏钳制（无上限）。普通转发仍 9。底栏改 `bottomBarContainer`（内容 SS(56)+安全区贴底）+ 列表同高预留。**工作区未提交**（勿与 Picker 混提）；**待** 若仍走旧壳则提交 + 真机；新壳验通后可弃
-- (ios) ~~**选择数据范围·选择联系人入口底栏仍显示 /9**~~（旧壳 WIP）：根因——`ZXContactCorpController` 的 `bottomMoreView`/`bottomViewSelect` 未调 `clearMaxCountLimit`。已补。**工作区未提交**；同上
-- (ios) ~~**选择数据范围·组织架构底栏与选择联系人不一致**~~（旧壳 WIP）：内容区固定 **`SS(60)`** 贴顶 + 顶部 **1pt `#C9CFD9`**。**工作区未提交**；同上
+- (ios) ~~**选择数据范围·组织架构最多 9 人**~~：根因——转发硬编码 9 + `BookBottomView` forward 默认 9。已在 `selectDataRangeMode` 跳过组织架构/框架页/搜索结果人数校验，并 `clearMaxCountLimit` 解除底栏钳制（无上限）。普通转发仍 9。底栏改 `bottomBarContainer`（内容 SS(56)+安全区贴底）+ 列表同高预留，防遮挡/底部空洞。**工作区未提交**；**待** 提交 + 真机 E2E
+- (ios) ~~**选择数据范围·选择联系人入口底栏仍显示 /9**~~：根因——`ZXContactCorpController` 的 `bottomMoreView`/`bottomViewSelect` 未调 `clearMaxCountLimit`（钻取页 LYG 已调）。已补；按钮无上限文案 `发送(N)`，隐藏「最多选择9人」。进页预填改 `selectedArray`（主页 BookBottom 已隐藏）。**工作区未提交**；**待** 真机 E2E（入口底栏无 `/9`、可选 >9 人；普通转发仍 `/9`）
+- (ios) ~~**选择数据范围·组织架构底栏与选择联系人不一致**~~：内容区固定 **`SS(60)`** 贴顶，按钮 `centerY`；白底向下延伸安全区（不再把安全区算进居中）；顶部 **1pt `#C9CFD9`** 分隔线。**工作区未提交**；**待** 真机验收
 - (web / desktop) ~~**本轮无功能增量**~~：web 工作区干净；desktop 仅本地 test 打包。均**勿提交**
 - (web) ~~**OrgPicker 点面包屑首项「暂无人员」**~~：`goBack(0)` 只打 `pid=rootDeptId||corpId`（如 `corpId=7&pid=7`），缺 `enterCorp` 的空结果回退 `pid=0` + 同名根跳过。已抽 `loadCorpRoot` 共用。**待** PC E2E
 - (web) ~~**DataRangeBar 关闭钮去竖线**~~：`SelectorClose` 覆写 `before:content-none`；间距 `!ml-0 !w-5`（去掉默认 ml-2/w-7 留白）；胶囊 `px-2.5`→`px-1`（DataScopeBar 同步）。已 push `987ef61`；**待** PC 视觉验收
