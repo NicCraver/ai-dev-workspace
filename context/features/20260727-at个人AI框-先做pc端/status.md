@@ -10,7 +10,7 @@
 | 接口联调 | ⬜ | ⬜ | ⬜ | 🚧 |
 | 自测通过 | ⬜ | ⬜ | ⬜ | ⬜ |
 
-> desktop 说明：页面开发 🚧 = Task 1–8 代码已落地（`personal-ai-chat` 38be1a87..c30b6c96），待真机 E2E；接口联调 🚧 = get/save/aiRobtChat 已接线，待抓包验证；自测 ⬜ = 本 session 未跑 E2E。
+> desktop 说明：页面开发 🚧 = Task 1–8 + 消息个人AI框展示（`msg-list`，`8f2abbb5`/`f4a5121e`）已落地，待真机 E2E；接口联调 🚧 = get/save/aiRobtChat 已接线，待抓包验证；自测 ⬜ = 本 session 未跑 E2E。
 
 ## 待办 / 阻塞
 
@@ -29,6 +29,15 @@
 | 7 | 删 `@` / 清空 / 发送后 | 条立即隐藏 |
 | 8 | 草稿恢复 | 条再现 + 重新 get |
 
+**消息列表 · 个人AI框展示（`plan-msg-personal-ai-tag`，代码已合）**
+
+| # | 步骤 | 期望 |
+|---|------|------|
+| M1 | 含 `extra.personalAccountId` 的消息 | tag「个人AI框」；名/头像来自 `content.user` |
+| M2 | 普通群 AI（无该字段） | tag「群AI框」；菜单仅 @回复 |
+| M3 | 本人个人 AI 消息右键 | 仅 @回复 |
+| M4 | 他人个人 AI 消息右键 | 仅回复（无 @回复） |
+
 **群智能体回归（必做）**
 
 | # | 步骤 | 期望 |
@@ -40,10 +49,11 @@
 
 - (desktop) ⚠️ **须告知测试**：本期动群智能体路径三处（共享判断分流、`aiRobtChat` 补 `agentId`、胶囊「类型+N」），上表 G1–G4 回归通过前勿签收
 - (desktop) 抓包确认 get/save/aiRobtChat 入参后，可将接口联调升为 ✅
+- (desktop) 消息展示增量代码已合 `personal-ai-chat`（`f4a5121e`），待上表 M1–M4 真机点验
 
 ## 关键决策记录
 
-- 2026-07-28 **plan Task 1–8 已落地**（desktop `personal-ai-chat`，9 commits 38be1a87..c30b6c96）；Task 9 文档与回归清单已同步，E2E 待人工
+- 2026-07-28 消息展示：`content.extra.personalAccountId` 有值 → 个人 AI 框；tag「个人AI框」；名/头像用 `content.user.name` / `portrait`；本人只出 @回复，他人只出回复；群 AI（无该字段）不变 —— 见 `plan-msg-personal-ai-tag.md`
 - 2026-07-27 已有智能体 `@` 后再 `@`：列表**不显示**群/个人智能体；仍可 `@人`
 - 2026-07-27 工具栏「@智能体」只插群智能体
 - 2026-07-27 个人 AI 筛选对齐 FilterBar 普通模式；PC 新写 DataScope；勾 1/2/4 才出

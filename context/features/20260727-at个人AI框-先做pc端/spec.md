@@ -1,7 +1,7 @@
 # Spec：at个人AI框（先做 PC）
 
 > 最后更新：2026-07-28  
-> 状态：**PC Task 1–8 已落地（待 E2E）；见 status.md / impl-notes.md**
+> 状态：**PC Task 1–8 + 消息个人AI框展示已落地（待 E2E）；见 status.md / impl-notes.md**
 
 ## 目标
 
@@ -36,7 +36,8 @@
 | 与群 AI 框 / AI 框分析 | 不做互斥或联动处理。筛选态一律由记忆接口（get / save）驱动，极端并发场景本期不考虑 |
 | 群智能体来源 | `POST /api/chat/v1/group/get`：`groupAgentRel` = 群；`groupAgentRels[]` = 个人 |
 | `@` 弹窗列表 | 所有人、群智能体、**仅** `accountId === 当前登录人` 的个人 AI、群成员 |
-| 消息发送人回显 | 按 `agentAccountId` 匹配 → `agentName` / `agentAvatar` |
+| 消息发送人回显 | 按 `agentAccountId` 匹配 → `agentName` / `agentAvatar`；**会话消息**若 `extra.personalAccountId` 有值：tag「个人AI框」，名/头像优先 `content.user.name` / `portrait` |
+| 消息回复菜单 | 个人 AI（有 `personalAccountId`）：本人只「@回复」；他人只「回复」。群 AI（`ga_` 无该字段）：仍只「@回复」 |
 | 只 @ 自己 | `groupAgentRels[].accountId === 当前登录人`（已实测） |
 | Mock | `@` 列表 / 记忆拉取均可走真实接口；本地假数据仅作联调兜底 |
 | 范围 | 本期只 PC |
