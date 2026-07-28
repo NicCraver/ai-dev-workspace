@@ -1,6 +1,6 @@
 # Status：ios端at个人AI框
 
-> 最后更新：2026-07-28（Task 1–8 代码已落地，E2E 手测未完成）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-28（契约补 getAllImDialogue；iOS E2E 仍待手测；android/desktop 脏树非本期）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -32,8 +32,9 @@
 - (ios) ⚠️ **胶囊文案变更**：知识类型胶囊由「数据+N」→「类型+N」（群侧同步）；DataScope 仍「数据+N」——用户可感知，须单独验证
 - (ios) 接口联调：代码已接真实 get/save/aiRobtChat，但 get 返显、save 落库、发送抓包尚未完成确认
 - (ios) DataScope 复用现有 `ZXPersonalAiPickerController`，勿重写 Picker
-- (android) 本回合 `personal_ai_select` Contact/OrgDrill 改动 → 记在 **`20260707-选择AI框`**，非本功能进展
-- (desktop) 本地打包改动不属于本功能；勿提交
+- (contracts) 已新增 `POST /personalAiFrame/getAllImDialogue`（选会话/选智能体全量 IM 列表）；**非本功能 iOS @ 主路径**，Picker/选框若接入另记所属功能
+- (android) 工作区仍有 `personal_ai_select`（Contact/OrgDrill 等）未提交改动 → 归属 **`20260707-选择AI框`**，**不推进本功能矩阵**
+- (desktop) 工作区仍有打包/`.env`/DataScope 等本地改动 → **不属于本功能**；勿当成本期进展提交
 
 ## 关键决策记录
 
@@ -44,3 +45,4 @@
 - 2026-07-28 共享判断对齐 PC：不能只靠 `ga_`；群行为不变、按 `agentKind` 分支
 - 2026-07-28 `plan.md` 已产出（Task 1–9），进入实现环节
 - 2026-07-28 **Task 1–8 实现完成**（模型、`@` 列表、筛选条、get/save、发送、群侧胶囊、回显）；Task 9 文档同步，E2E 待手测
+- 2026-07-28 契约补齐 `getAllImDialogue`；android/desktop 脏树与本期 iOS `@` 无关，矩阵不变

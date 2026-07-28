@@ -20,6 +20,7 @@ contracts/
 │  ├─ saveSelected.d.ts         # POST /personalAiFrame/saveSelected
 │  ├─ selectGroupBySearch.d.ts  # POST /personalAiFrame/selectGroupBySearch
 │  ├─ recentContactList.d.ts    # POST /personalAiFrame/recentContactList
+│  ├─ getAllImDialogue.d.ts     # POST /personalAiFrame/getAllImDialogue
 │  ├─ updateSetting.d.ts        # POST /personalAiFrame/updateSetting
 │  ├─ quickReplyList.d.ts       # POST /quickReply/list
 │  ├─ quickReplySave.d.ts       # POST /quickReply/save
