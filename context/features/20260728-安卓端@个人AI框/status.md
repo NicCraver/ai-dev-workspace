@@ -1,6 +1,6 @@
 # Status：安卓端@个人AI框
 
-> 最后更新：2026-07-28（spec/plan 已就绪，待开发）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-28（本功能开发未开；工作区 apps 脏树已归类，非本期进展）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -30,10 +30,12 @@
 
 ## 待办 / 阻塞
 
-- (android) **开发未开始**：按 `plan.md` Task 1–9 推进
+- (android) **开发未开始**：按 `plan.md` Task 1–9 推进；开项前对照 iOS `impl-notes.md`「联调坑」
 - (android) ⚠️ **群智能体回归**：本期改 `@` 列表与知识类型胶囊「类型+N」，完成后须回归并**告知测试**
 - (android) DataScope：经 `CoreApiUtil` 调现有 `SelectDataRangeActivity`；勿推进「选择AI框」未提交扩展债
-- (ios/desktop) 工作区其他脏树 **不属于本功能**；勿当成本期进展提交
+- (android) 工作区 `personal_ai_select`（Contact/OrgDrill/SelectDataRange 等）脏树 → 归属 **`20260707-选择AI框`**，**不推进本功能矩阵**
+- (ios) 工作区 iOS 脏树为本期外功能 `20260728-ios端at个人AI框` 联调修包（`aiRobtChat`/`saveDataRange`/筛选条 UI）；见该功能 status
+- (desktop) 工作区仍有打包/`.env`/DataScope 等本地改动 → **不属于本功能**；勿当成本期进展提交
 
 ## 关键决策记录
 
@@ -43,3 +45,4 @@
 - 2026-07-28 个人 `agentId`：`group/get` → `groupAgentRels[]` 中 `accountId === 当前登录人`
 - 2026-07-28 共享判断对齐 PC/iOS：不能只靠 `ga_`；群行为不变、按 `agentKind` 分支
 - 2026-07-28 `spec.md` / `plan.md` 已产出（Task 1–9），待实现
+- 2026-07-28 收尾确认：apps 脏树（android 选择器 / ios 联调修包 / desktop 本地）均非本功能实现进展，矩阵保持 ⬜

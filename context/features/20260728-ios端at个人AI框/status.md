@@ -1,6 +1,6 @@
 # Status：ios端at个人AI框
 
-> 最后更新：2026-07-28（契约补 getAllImDialogue；iOS E2E 仍待手测；android/desktop 脏树非本期）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-28（联调修包：aiRobtChat/save 的 dataRangeList、筛选条 UI；E2E 仍待手测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -27,14 +27,13 @@
 
 ## 待办 / 阻塞
 
-- (ios) **E2E 手测**：上表 8 项均未勾选，须逐条真机/模拟器验证并抓包确认 `aiRobtChat` 载荷
+- (ios) **E2E 手测**：上表 8 项均未勾选；须再抓包确认修包后 `aiRobtChat`/`saveDataRange` 的 `dataRangeList`（个人应为 3/4/1/2 透传，禁止空数组覆盖）
 - (ios) ⚠️ **群智能体回归**：本期改动群 `@` 列表与 `ZXAIAgentFilterBar` 胶囊文案（「类型+N」），改完须回归群智能体主流程并**告知测试**
-- (ios) ⚠️ **胶囊文案变更**：知识类型胶囊由「数据+N」→「类型+N」（群侧同步）；DataScope 仍「数据+N」——用户可感知，须单独验证
-- (ios) 接口联调：代码已接真实 get/save/aiRobtChat，但 get 返显、save 落库、发送抓包尚未完成确认
+- (ios) ⚠️ **胶囊文案变更**：知识类型「类型+N」（无前置图标）；DataScope「数据+N」；联网仅图标；时间弹层右对齐——须单独验证
+- (ios) 接口联调：已修 `aiRobtChat` 个人 `dataRangeList` 误压成 0/1/2、`saveDataRange` 空列表覆盖；仍待完整手测勾选
 - (ios) DataScope 复用现有 `ZXPersonalAiPickerController`，勿重写 Picker
-- (contracts) 已新增 `POST /personalAiFrame/getAllImDialogue`（选会话/选智能体全量 IM 列表）；**非本功能 iOS @ 主路径**，Picker/选框若接入另记所属功能
-- (android) 工作区仍有 `personal_ai_select`（Contact/OrgDrill 等）未提交改动 → 归属 **`20260707-选择AI框`**，**不推进本功能矩阵**
-- (desktop) 工作区仍有打包/`.env`/DataScope 等本地改动 → **不属于本功能**；勿当成本期进展提交
+- (contracts) 已新增 `POST /personalAiFrame/getAllImDialogue`；**非本功能 iOS @ 主路径**
+- (android/desktop) 工作区其他脏树 → 分属 `20260728-安卓端@个人AI框` 归类说明 / 本地改动，**不推进本功能矩阵**
 
 ## 关键决策记录
 
@@ -46,3 +45,4 @@
 - 2026-07-28 `plan.md` 已产出（Task 1–9），进入实现环节
 - 2026-07-28 **Task 1–8 实现完成**（模型、`@` 列表、筛选条、get/save、发送、群侧胶囊、回显）；Task 9 文档同步，E2E 待手测
 - 2026-07-28 契约补齐 `getAllImDialogue`；android/desktop 脏树与本期 iOS `@` 无关，矩阵不变
+- 2026-07-28 联调修包：个人 `aiRobtChat.dataRangeList` 须原样透传（含 3/4）；群侧仍补齐 0/1/2；`saveDataRange` 禁止用空 `dataRangeList` 覆盖；筛选条 UI 收敛为「类型+N / 数据+N / 时间 / 联网图标」
