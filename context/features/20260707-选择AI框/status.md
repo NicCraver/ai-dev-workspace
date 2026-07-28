@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-27（ios 已 push personal-ai-chat `81aa08720`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-28（android：Contact+OrgDrill 对齐 iOS，compileOnTestDebug ✅；待真机 E2E / 提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -19,10 +19,11 @@
 
 > 实现顺序建议：T1（契约）→ T2（desktop）与 T3-T8（web，先用 mock 并行）→ T9（联调）。
 > iOS 不走 web H5 弹窗（T3–T7 仍为 —），走原生选择页 + `wnsdk.aiChat.selectAiAgent` 回传。
-> **本轮 apps 事实**（2026-07-24）：**android** 已 push `cf92a6493`；**待** 真机 E2E。**ios** 工作区未提交——底栏统一 **`SS(64)`**；`BookBottomView` 上边距 **16** + 顶部 `Color_Line` 分隔线；**待** 提交 + 真机视觉验收。**web** 干净。**desktop** 勿提交。矩阵 T8/T9/T10 仍 🚧。
+> **本轮 apps 事实**（2026-07-28）：**android** 选择壳对齐 iOS——`SelectContactActivity` + `SelectOrgDrillActivity`，去掉 `ChooseAddressMemberFragment`；`compileOnTestDebugJavaWithJavac` ✅；**工作区未提交**；**待** 真机 E2E。**ios** 新壳已 push `81aa08720`。矩阵 T8/T9/T10 仍 🚧。
 
 ## 待办 / 阻塞
 
+- (android) **选择壳对齐 iOS（本轮）**：新建 Contact（组织|外联企业）+ OrgDrill（面包屑+部门/人员+同名根跳过）；分区头/搜索文案统一；子页「完成」可写回空选。桥不变。见 `design-android-picker-align.md` / impl-notes「Android 原生选择壳」。**待** 真机 E2E + 提交 `personal-ai-chat`
 - (ios) **选择 AI 框 / 数据范围 · 脱离转发重做**：新壳 `Picker/` 已落地并 **已 push** `personal-ai-chat` `81aa08720`（含顶栏返回、联系人图标、企业头像 SS(20)、子页已选半屏、子页确认=整体落库、清空后可确认、确定不带数字等）。**待** 真机视觉/E2E 验收
 - (ios) ~~工作区未提交~~：底栏 /9、BookBottomView、组织架构人数等此前债一并进上条提交
 - (android) ~~**选择数据范围·最近聊天只显示 id / 空名**~~：根因——`SelectDataRangeActivity` 未对齐转发筛选，融云会话本地无 `GroupInfo`/`EaseUserInfo`（退群解散、不可发消息等）仍展示。已在 `DataRangeScopeHelper.acceptRecentConversation` 对齐 `TransmitFriendsFragment`（群需本地未退群、人需可发消息、排除 robot_）；`loadConversationList` 过滤写入；`applyScopesFromMemory` 跳过无效 scope。已 push `cf92a6493`；**待** 真机 E2E

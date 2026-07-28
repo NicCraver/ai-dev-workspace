@@ -499,3 +499,30 @@ Home（搜索入口 / 选择联系人 / 选择已有群组 / 最近聊天）→ 
 - 首页「已选」仍走 `EaseSelectedUserController` 半屏；子页「已选」按钮暂未展开半屏。
 - **待** 本地 xcodebuild + 真机 E2E（开发回合按用户要求未跑中间构建）。
 
+## Android 原生选择壳（对齐 iOS，2026-07-28）
+
+> 仍为独立包 `personal_ai_select/`（两入口 Activity + `EXTRA_MULTI`，不合并成单 Activity）。桥协议不变。不改普通转发。
+
+### 模式（与 iOS Mode 表一致）
+
+- **选择 AI 框**：单选，无底栏；最近 / 搜索 / 联系人 / 群 **点选即** `setResult` finish
+- **选择数据范围**：首页底栏「确定」才 `saveDataRange` + ACK；子页底栏隐藏取消、确认文案「完成」、写回已选后 finish（不落库）；清空后子页「完成」仍可点（允许写回空选）
+
+### 页面树
+
+Home（AiAgent / DataRange）→ Search（本地 DB）→ Contact（组织|外联企业列表）→ OrgDrill（面包屑+部门/人员）→ Group（组织群|外联群）
+
+### 相对旧实现的变化
+
+- **选择联系人**不再嵌通讯录 Fragment；改为企业列表 + 组织钻取（对齐 iOS Contact / OrgDrill）
+- 企业列表：创建群同接口 `getCreateOrPlusGroupOutsource`（type 0=组织 / 1=外联）
+- 部门人员：通讯录同接口 `getOrganization`（`sub_dept_user_pagelistV3`）；同名根部门自动跳一层
+- 分区头统一 `#F5F6F7` / 12sp / `#8F959E`（最近聊天、我加入的、部门、人员）
+- 搜索入口文案「搜索联系人、智能体」（icon + placeholder，去掉 emoji）
+
+### 联调坑
+
+- `corpAndCorpRelType` 可能是枚举名（`CURRENT`/`UP_CORP`/…）或数字串；进钻取前归一成数字再调部门人员接口
+- 搜索仍为 **本地 DB**，非 web `selectGroupBySearch` HTTP
+- **待** 真机 E2E（组织/外联进公司见人、数据范围子页完成不落库、首页确定 ACK）
+
