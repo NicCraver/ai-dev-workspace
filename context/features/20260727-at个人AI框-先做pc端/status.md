@@ -50,6 +50,7 @@
 - (desktop) ⚠️ **须告知测试**：本期动群智能体路径三处（共享判断分流、`aiRobtChat` 补 `agentId`、胶囊「类型+N」），上表 G1–G4 回归通过前勿签收
 - (desktop) 抓包确认 get/save/aiRobtChat 入参后，可将接口联调升为 ✅
 - (desktop) 消息展示增量代码已合 `personal-ai-chat`（`f4a5121e`），待上表 M1–M4 真机点验
+- (desktop) 2026-07-28 修：`@` 列表智能体偶发成对重复（`initList` 并发 splice）→ 序号守卫 + 原子写回 + id|kind 去重；复测：切群后立刻 `@`，群/个人各只应出现一次
 
 ## 关键决策记录
 
