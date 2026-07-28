@@ -1,7 +1,7 @@
 # Spec：at个人AI框（先做 PC）
 
-> 最后更新：2026-07-27  
-> 状态：**文档迭代中，暂不开发**
+> 最后更新：2026-07-28  
+> 状态：**PC Task 1–8 已落地（待 E2E）；见 status.md / impl-notes.md**
 
 ## 目标
 
@@ -40,7 +40,7 @@
 | 只 @ 自己 | `groupAgentRels[].accountId === 当前登录人`（已实测） |
 | Mock | `@` 列表 / 记忆拉取均可走真实接口；本地假数据仅作联调兜底 |
 | 范围 | 本期只 PC |
-| 节奏 | 先维护本文档；**先不开发** |
+| 节奏 | 规格 + 计划已就绪；按 `plan.md` 开发 PC |
 
 ## 共享代码改造点（PC · 必须逐项分支）
 
@@ -110,7 +110,7 @@ flowchart TD
   SEND{发送} --> HAS_REPLY{有 IM 回复条?}
   HAS_REPLY -->|是| REF[agentChatData.referUuid = 消息UId]
   HAS_REPLY -->|否| NOREF[referUuid 空]
-  REF --> PAYLOAD{{待补：个人AI vs 群<br/>agentChatData 差异}}
+  REF --> PAYLOAD[已决：群/个人均传 agentId<br/>个人额外带 dataRangeScopeList]
   NOREF --> PAYLOAD
   PAYLOAD --> OUT[发 IM + 旁路 AI]
 ```
@@ -127,7 +127,7 @@ flowchart TD
   ACT -->|清空输入 / 发送成功| CLR
 
   ACT -->|切到其他会话| SWITCH[按会话隔离<br/>AgentMemoryBar key=会话id]
-  SWITCH --> DRAFT{{待补：草稿是否恢复筛选态}}
+  SWITCH --> DRAFT[已决：草稿只恢复条可见性<br/>筛选靠 get 再拉]
 
   ACT -->|已有群智能体时再选个人AI<br/>或反过来| BLOCK[拦截：不可换绑<br/>需先删现有智能体 @]
 ```
@@ -177,10 +177,10 @@ flowchart TD
 - [x] 胶囊文案：知识类型改「类型+N」，DataScope 保持「数据+N」；群侧同步改
 - [x] DataScope 选择数量上限：无上限
 - [x] 产品：群里 `@` 自己的个人 AI，回复对群内其他人**可见**
-- [ ] 取消 `@` / 清空输入后：筛选条是否立即隐藏；草稿恢复是否带回筛选态
+- [x] 取消 `@` / 清空 / 发送成功：筛选条**立即隐藏**；草稿恢复**带回可见性**，筛选内容靠 `getAgentDataRange` 再拉（不嵌草稿）——见 plan Plan Defaults
 - [x] DataScope 选人/群弹窗数据源：复用 PC 转发弹窗那套（详见 `context/platforms/desktop-forward-dialog.md`）——最近联系人走 `GetConversationSort.all`、群走 `groupListApi`、搜索走 `getAccountSearchByUserName` + `getGroupBySearch`、组织架构走 `getDeptUserPagelist`；选择模型 `{type, id, key}`，映射到 `scopeDataType`（私聊 1 / 群聊 3）+ `scopeDataId`
-- [ ] `groupAgentRels` 的获取时序与刷新时机（进群、群资料变更、个人 AI 新建/删除后）
-- [ ] 错误路径：`getAgentDataRange` 失败时筛选条显示什么；`saveDataRange` 失败是否提示；高频改动是否需防抖/串行
+- [x] `groupAgentRels` 时机：与群智能体同路，`initList` → `groupInfoApi`；切会话清空缓存列表重拉；本期不做个人 AI 新建/删除实时推送
+- [x] 错误路径：对齐群——get/save 失败仅 `console.log`、不 toast；本期不加防抖
 
 ## 参考路径
 

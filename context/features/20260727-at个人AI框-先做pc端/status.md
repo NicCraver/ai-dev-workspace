@@ -6,16 +6,44 @@
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| 页面开发（mock） | ⬜ | ⬜ | ⬜ | ⬜ |
-| 接口联调 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 页面开发（mock） | ⬜ | ⬜ | ⬜ | 🚧 |
+| 接口联调 | ⬜ | ⬜ | ⬜ | 🚧 |
 | 自测通过 | ⬜ | ⬜ | ⬜ | ⬜ |
 
+> desktop 说明：页面开发 🚧 = Task 1–8 代码已落地（`personal-ai-chat` 38be1a87..c30b6c96），待真机 E2E；接口联调 🚧 = get/save/aiRobtChat 已接线，待抓包验证；自测 ⬜ = 本 session 未跑 E2E。
+
 ## 待办 / 阻塞
-- (desktop) 文档迭代中，暂不开发
-- (desktop) 待补：草稿恢复是否带回筛选态；`groupAgentRels` 刷新时机；get/save 失败的错误路径
-- (desktop) ⚠️ 本期会动群智能体路径三处（共享判断分流、`aiRobtChat` 补 `agentId`、胶囊文案改「类型+N」），改完须回归群智能体主流程并告知测试
+
+### 人工 E2E（Task 9，desktop）
+
+**个人 AI**
+
+| # | 步骤 | 期望 |
+|---|------|------|
+| 1 | 群聊 `@` 列表 | 有个人 AI（自己的） |
+| 2 | 选个人 AI | 出现个人筛选条；get 用 accountId+agentId |
+| 3 | 改类型/时间/联网/DataScope | 每次 save 全量含 scope |
+| 4 | 发送 | IM 成功后 aiRobtChat 含 agentId + scope |
+| 5 | 回复 + `@` 个人 AI | referUuid 有值；回复群内可见 |
+| 6 | 再 `@` | 列表无智能体，可 `@人` |
+| 7 | 删 `@` / 清空 / 发送后 | 条立即隐藏 |
+| 8 | 草稿恢复 | 条再现 + 重新 get |
+
+**群智能体回归（必做）**
+
+| # | 步骤 | 期望 |
+|---|------|------|
+| G1 | `@` 群 / 工具栏 `@智能体` | 现网 AgentMemoryBar |
+| G2 | 改筛选 → 发送 | AI 回复正常；aiRobtChat **现含 agentId** |
+| G3 | 胶囊 | 「类型+N」 |
+| G4 | 草稿含群 `@` | 条恢复；行为同改前 |
+
+- (desktop) ⚠️ **须告知测试**：本期动群智能体路径三处（共享判断分流、`aiRobtChat` 补 `agentId`、胶囊「类型+N」），上表 G1–G4 回归通过前勿签收
+- (desktop) 抓包确认 get/save/aiRobtChat 入参后，可将接口联调升为 ✅
 
 ## 关键决策记录
+
+- 2026-07-28 **plan Task 1–8 已落地**（desktop `personal-ai-chat`，9 commits 38be1a87..c30b6c96）；Task 9 文档与回归清单已同步，E2E 待人工
 - 2026-07-27 已有智能体 `@` 后再 `@`：列表**不显示**群/个人智能体；仍可 `@人`
 - 2026-07-27 工具栏「@智能体」只插群智能体
 - 2026-07-27 个人 AI 筛选对齐 FilterBar 普通模式；PC 新写 DataScope；勾 1/2/4 才出
@@ -30,3 +58,5 @@
 - 2026-07-28 PC 为全新实现，web 只作 UI/选择交互参考，不移植其组件与判断逻辑
 - 2026-07-28 DataScope 显示条件：PC 组件只在 @ 个人 AI 时挂载，故内部只判「勾选含 1/2/4」；web 的 `belongType===0` 是其共用组件所需，PC 不搬
 - 2026-07-28 契约已存 `POST /v1/aiRobtChat`（`agentChatData` 旁路）；见 `context/contracts/personalAiFrame/aiRobtChat.d.ts`
+- 2026-07-28 开项默认：取消/清空立即藏条；草稿只恢复可见性再 get；`groupAgentRels` 随 `initList`；get/save 失败仅打日志（见 plan Plan Defaults）
+- 2026-07-28 `plan.md` 已产出（Task 1–9），进入实现环节
