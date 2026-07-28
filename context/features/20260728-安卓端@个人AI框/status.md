@@ -27,6 +27,7 @@
 | 7 | 群条胶囊「类型+N」 | ✅ | `cd919f70d` |
 | 8 | 消息发送人回显 + 个人AI框 tag/菜单 | ✅ | `add2f7719` |
 | 9 | E2E 与文档收尾 | 🚧 | 构建已过；手测未做 |
+| 复核 | 与 PC/iOS 对齐性审查 + 修正 | ✅ | `f86bd2b38` |
 
 ## E2E 验收清单（待手测 · 需真机）
 
@@ -60,6 +61,7 @@
 
 ## 关键决策记录
 
+- 2026-07-28 **对齐性复核（对 PC/iOS spec 逐条）**，改 5 处：① 个人路径 `aiRoleId` 由现网值改固定 `"1"`（群不动）；② `@` 列表个人项补本地缓存兜底（个人项按「群id_归属人id」+ belongType 0 落库，新增 `AgentDisplayKeyUtil`）；③ 联网胶囊只留图标；④ 时间弹层改右对齐；⑤ 互斥判据 `contains("ga_")` → `startsWith`、个人项加 `groupAgentType != 3` 过滤 —— `f86bd2b38`
 - 2026-07-28 **Task 1–8 实现完成**并推送：模型、`@` 列表、分流、独立筛选条、get/save+DataScope、发送载荷、群胶囊文案、消息 tag/菜单；`assembleOnTestDebug` 通过
 - 2026-07-28 **本端补充坑**（已写入 impl-notes）：大输入区为第二条对称链路；DataScope 复用 web 同一 requestCode 须按发起方消费；`groupAgentRels` 随群信息落库供 `@` 列表与回显
 - 2026-07-28 切换活跃功能：`ACTIVE` 由 `20260728-ios端at个人AI框` 改为本功能
