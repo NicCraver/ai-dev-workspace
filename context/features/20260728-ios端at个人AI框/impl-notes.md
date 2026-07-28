@@ -93,7 +93,10 @@
 | get 失败 | 条保持空/默认；仅日志，不 toast |
 | save 失败 | 仅日志，不 toast；不加防抖 |
 | 工具栏「@智能体」 | 只插群智能体 |
-| 消息发送人回显 | 按 `agentAccountId` 匹配 → `agentName` / `agentAvatar` |
+| 消息发送人回显 | 按 `agentAccountId` 匹配 → `agentName` / `agentAvatar`（兜底） |
+| 会话消息身份 | `extra.personalAccountId` 有值 → 个人 AI 框；否则 `ga_` 仍为群 AI |
+| 个人 AI 消息展示 | tag「个人AI框」；名/头像优先消息体 `content.user.name` / `portrait`（`extra` 可能是 JSON 字符串须 parse） |
+| 个人 AI 回复菜单 | 本人：只「@回复」；他人：只「回复」。群 AI：只「@回复」 |
 | 个人 AI 回复 | 群内其他人可见（非私密） |
 
 ## 错误处理策略

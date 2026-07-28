@@ -35,6 +35,8 @@
 | 回复可见性 | 个人 AI 回复**群内其他人可见** |
 | 与群 AI 框 / AI 框分析 | 不做互斥或联动 |
 | `@` 弹窗列表 | 所有人、群智能体、**仅**自己的个人 AI、群成员 |
+| 消息身份 / 展示 | `extra.personalAccountId` 有值 → 个人 AI 框；tag「个人AI框」；名/头像优先 `content.user.name` / `portrait`（`extra` 可能为 JSON 字符串须 parse）。详见 `plan-msg-personal-ai-tag.md` |
+| 消息回复菜单 | 个人 AI：本人只「@回复」；他人只「回复」。群 AI（`ga_` 无该字段）：仍只「@回复」 |
 | 范围 | 本期只 **Android** |
 | 错误路径 | get/save 失败仅打日志、不 toast（对齐群） |
 | 工程约定 | 少改存量巨型类；新逻辑进功能包；宿主薄挂钩；只 push `personal-ai-chat` |
@@ -108,6 +110,7 @@ flowchart TD
 | 个人筛选 get/save | — | 另起：`accountId + agentId`；独立状态存放，勿改群 `belongId/belongType` 调用 |
 | `ConversationLargeInputView` | 同样挂群条 | 与普通输入区对称：按 kind 挂个人条 |
 | DataScope | — | start `SelectDataRangeActivity`；确认后筛选条再 get |
+| 消息 Cell / 长按菜单 | `ga_` 一律群 AI 展示与菜单 | 按 `extra.personalAccountId` 区分个人/群；见 `plan-msg-personal-ai-tag.md` |
 
 ## 本期不做
 

@@ -15,7 +15,14 @@
 
 ## 边界情况
 
-（待实现。）
+| 场景 | 预期行为 |
+|------|----------|
+| 会话消息身份 | `extra.personalAccountId` 有值 → 个人 AI 框；否则 `ga_` 仍为群 AI |
+| 个人 AI 消息展示 | tag「个人AI框」；名/头像优先 `content.user.name` / `portrait`（`extra` 可能是 JSON 字符串须 parse） |
+| 个人 AI 回复菜单 | 本人：只「@回复」；他人：只「回复」。群 AI：只「@回复」 |
+| 消息发送人回显兜底 | 无 `content.user` 时再按 `agentAccountId` 匹配 `groupAgentRels` / 群 rel |
+
+其余产品边界对齐 iOS/PC impl-notes（互斥、工具栏只插群、回复可见性等）。
 
 ## 错误处理策略
 

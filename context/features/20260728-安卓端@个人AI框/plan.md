@@ -408,16 +408,20 @@ git -C apps/android commit -am "fix(群智能体): 知识类型胶囊改为类�
 
 ### Task 8: (android) 消息发送人回显（个人 AI）
 
+> **增量**：身份 tag / `content.user` 优先 / 回复菜单分流见 **`plan-msg-personal-ai-tag.md`**（对齐 PC 2026-07-28）。本 Task 的 map 匹配作兜底。
+
 **Files:**
 - 检索 `agentAccountId` / `ga_` 头像昵称回显处（会话列表 summary、消息 Cell Provider 等）
 - 用 `groupAgentRels` 按 `agentAccountId` 匹配 `agentName` / `agentAvatar`
+- 另按 `plan-msg-personal-ai-tag.md` 改 tag / 菜单
 
 - [ ] **Step 1: 回显补个人 rel 查找**（无匹配再走群 `groupAgentRel`）
-- [ ] **Step 2: 手测个人 AI 回复气泡头像昵称**
-- [ ] **Step 3: Commit**
+- [ ] **Step 2: 按 plan-msg 完成 tag + content.user + 菜单分流**
+- [ ] **Step 3: 手测**（M1–M4，见 status）
+- [ ] **Step 4: Commit**
 
 ```bash
-git -C apps/android commit -am "feat(个人AI): 消息回显匹配 groupAgentRels"
+git -C apps/android commit -am "feat(个人AI): 消息个人AI框标签头像与回复菜单"
 ```
 
 ---

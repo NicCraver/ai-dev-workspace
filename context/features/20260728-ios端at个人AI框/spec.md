@@ -35,6 +35,8 @@
 | 回复可见性 | 个人 AI 回复**群内其他人可见** |
 | 与群 AI 框 / AI 框分析 | 不做互斥或联动 |
 | `@` 弹窗列表 | 所有人、群智能体、**仅**自己的个人 AI、群成员 |
+| 消息身份 / 展示 | `extra.personalAccountId` 有值 → 个人 AI 框；tag「个人AI框」；名/头像优先 `content.user.name` / `portrait`（`extra` 可能为 JSON 字符串须 parse）。详见 `plan-msg-personal-ai-tag.md` |
+| 消息回复菜单 | 个人 AI：本人只「@回复」；他人只「回复」。群 AI（`ga_` 无该字段）：仍只「@回复」 |
 | 范围 | 本期只 **iOS** |
 | 错误路径 | get/save 失败仅打日志、不 toast（对齐群） |
 
@@ -103,6 +105,7 @@ flowchart TD
 | `aiRobtChat` 组包（SendMessage） | 群路径需核对 `agentId` | **两边都补 `agentId`**；个人额外 `dataRangeScopeList`；`aiRoleId` 维持 `'1'` |
 | `ZXAIAgentFilterBar` 知识类型文案 | 或为「数据+N」 | 改「类型+N」（群侧同步，需告知测试） |
 | 个人筛选 get/save | — | 另起：`accountId + agentId`；独立状态存放，勿改群 `belongId/belongType` 调用 |
+| 消息 Cell / 长按菜单 | `ga_` 一律「群AI框」+ 群菜单 | 按 `extra.personalAccountId` 区分个人/群；见 `plan-msg-personal-ai-tag.md` |
 
 ## 本期不做
 
