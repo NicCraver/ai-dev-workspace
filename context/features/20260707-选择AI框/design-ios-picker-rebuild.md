@@ -1,9 +1,11 @@
 # Design：iOS Personal AI 选择壳（脱离转发）
 
 > 日期：2026-07-24  
-> 状态：代码已落地（Task1–7）；待真机 E2E；见 [`plan-ios-picker-rebuild.md`](./plan-ios-picker-rebuild.md)  
+> 状态：实施中（代码已落 `Picker/`，待本地构建/真机）  
+> 实施补充（2026-07-24）：列表头像/行样式复用 `ZXForwardCell`；搜索复用 `ZXSearchHeaderView`；页布局统一「导航 header → 搜索 → 列表 → 底栏」；开发过程不跑中间 build。  
 > 范围：仅 iOS；Android 不在本期  
-> 关联：活跃功能 `20260707-选择AI框`；桥 `selectAiAgent` / `selectDataRangeScope`
+> 关联：活跃功能 `20260707-选择AI框`；桥 `selectAiAgent` / `selectDataRangeScope`  
+> 计划：[`plan-ios-picker-rebuild.md`](./plan-ios-picker-rebuild.md)
 
 ## 1. 背景与目标
 

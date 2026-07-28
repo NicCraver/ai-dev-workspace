@@ -2,6 +2,9 @@
  * 契约：个人AI框域 · 知识范围获取
  * POST /agentSetDataRangeExpand/getAgentDataRange
  * Changelog:
+ * - 2026-07-27 个人 AI 实测：dataRangeList 为 3/4/1/2（无 0）；默认全选；
+ *   dataRangeScopeList 可为 null；timeInfoList type 2–20；knowledgeNeedAuthList 可空；
+ *   入参个人 AI 场景优先 accountId+agentId
  * - 2026-07-14 新增 POST /agentSetDataRangeExpand/getAgentDataRange
  * - 2026-07-16 dataRangeType 补齐 3-个人 / 4-分享（与 saveDataRange 对齐）
  * - 2026-07-22 消费方扩至移动端「选择数据范围」原生页（ios/android 打开返显 +
@@ -40,7 +43,8 @@ export interface PersonalAiFrameAgentDataRangeItem {
   iconBgColor?: string;
   /**
    * 智能体数据范围标记
-   * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享
+   * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享（现网文案「群聊、私聊知识」）
+   * 个人 AI 实测回参常见 1/2/3/4，可能不含 0
    */
   dataRangeType?: number;
   /** 0-未选中；1-选中 */
@@ -91,8 +95,8 @@ export interface PersonalAiFrameGetAgentDataRangeData {
   deepThink?: number;
   /** 选择知识库时需要进行授权的集合 */
   knowledgeNeedAuthList?: PersonalAiFrameKnowledgeNeedAuthItem[];
-  /** 数据范围（私聊/群聊对象） */
-  dataRangeScopeList?: PersonalAiFrameAgentDataRangeScopeItem[];
+  /** 数据范围（私聊/群聊对象）；个人 AI 实测可为 null，前端当 [] */
+  dataRangeScopeList?: PersonalAiFrameAgentDataRangeScopeItem[] | null;
 }
 
 /** POST /agentSetDataRangeExpand/getAgentDataRange 完整回参 */

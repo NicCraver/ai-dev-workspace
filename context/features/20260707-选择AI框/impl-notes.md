@@ -463,11 +463,18 @@ Home 输入区 FilterBar 在**个人 AI 框**（`belongType=0`）且**知识范�
 ## iOS 原生选择壳（脱离转发，2026-07-24）
 
 > 设计：`design-ios-picker-rebuild.md`；计划：`plan-ios-picker-rebuild.md`。目录：`SmartMessage/.../ZX_PersonalAi/Picker/`。
+> 桥：`ZXJSAIChatAPI` 的 `selectAiAgent` / `selectDataRangeScope` 已 present `ZXPersonalAiPickerController`。
 
 ### 模式
 
 - **选择 AI 框**：单选，无底栏，任意列表点选 → dismiss + `personal-ai:selected-agent`
-- **选择数据范围**：多选；首页底栏「确定」才 `saveDataRange` + ACK；子页底栏「完成」只写回已选并 pop，不落库
+- **选择数据范围**：多选；首页底栏「确定」才 `saveDataRange` + ACK；子页底栏「完成」只 pop 回首页（已选已实时写 Root），不落库
+
+### UI 约定
+
+- 页结构统一：**导航 header → 搜索 → 列表 → 底栏（仅数据范围）**
+- 人/群列表行复用 **`ZXForwardCell`**（头像逻辑与转发一致：私聊 AvatarClient/URL，群拼接头像）
+- 搜索入口复用 **`ZXSearchHeaderView`**（首页同款）
 
 ### 页面树
 
@@ -486,8 +493,9 @@ Home（搜索入口 / 选择联系人 / 选择已有群组 / 最近聊天）→ 
 ### 联调坑
 
 - 新壳 **禁止** 依赖 `ZXForwardOption` / 转发 `BookBottomView`；旧 `ZXSelectAiAgentController` 文件保留未删，桥已切走。
-- 子页 push 时 Root 首页底栏隐藏（nav delegate）；子页自带「完成」底栏。
+- 列表头像刻意复用 `ZXForwardCell`（UI 组件级复用，非业务依赖转发页）。
 - 组织钻取同名根部门自动跳一层（对齐 PC/旧 LYG）。
 - 搜索仍为 **本地 DB**，非 web `selectGroupBySearch` HTTP。
-- 已选弹层暂用 Alert 列表，未做 chip 半屏（后续可对齐旧 EaseSelected）。
+- 首页「已选」仍走 `EaseSelectedUserController` 半屏；子页「已选」按钮暂未展开半屏。
+- **待** 本地 xcodebuild + 真机 E2E（开发回合按用户要求未跑中间构建）。
 

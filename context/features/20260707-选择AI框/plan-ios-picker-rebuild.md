@@ -18,7 +18,7 @@
 - **回传**：AI 框用 `ZXSelectAiAgentResult.messagePayload`；数据范围用 `ZXSelectAiAgentResult.dataRangeAckPayload`（成功后）。
 - **UI 准绳**：搜索框/搜索页/底栏对齐现数据范围首页（`ZXSearchHeaderView` 视觉 + `ZXSelectDataRangeBottomView`）。
 - **工程**：新文件必须加入 Xcode target（`zhixinApp` / Test / Prod 相关 SmartMessage 源）；提交只 push `personal-ai-chat`。
-- **验证**：**禁止** Agent 跑 `xcodebuild` / 模拟器安装；由用户真机编译验证。任务结束以代码+工程引用就绪为准，在 report/ledger 注明「待真机」。
+- **验证**：每任务结束至少 `xcodebuild ... zhixinAppTest ... build` 通过；关键路径补真机 E2E。
 - **注释**：中文。
 
 ## File Structure
