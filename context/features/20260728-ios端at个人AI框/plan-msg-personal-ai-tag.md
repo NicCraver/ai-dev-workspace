@@ -31,28 +31,28 @@
 
 ### Task 1: 解析工具
 
-- [ ] `parseMsgExtra` / `personalAccountId` / `isPersonalAiMsg`（字符串 extra 须 JSON parse）
-- [ ] Commit：`feat(个人AI): 消息 extra.personalAccountId 解析`
+- [x] `parseMsgExtra` / `personalAccountId` / `isPersonalAiMsg`（字符串 extra 须 JSON parse）
+- [x] Commit：`feat(个人AI): 消息 extra.personalAccountId 解析`
 
 ### Task 2: 身份 tag
 
-- [ ] `ga_` 消息：`isPersonalAiMsg ? @"个人AI框" : @"群AI框"`
-- [ ] Commit：`feat(个人AI): 消息身份标签区分个人与群`
+- [x] `ga_` 消息：`isPersonalAiMsg ? @"个人AI框" : @"群AI框"`
+- [x] Commit：`feat(个人AI): 消息身份标签区分个人与群`
 
 ### Task 3: 名字 + 头像
 
-- [ ] 个人 AI：优先 `content.user` 的 name / portrait
-- [ ] Commit：`feat(个人AI): 消息名头像优先 content.user`
+- [x] 个人 AI：优先 `content.user` 的 name / portrait
+- [x] Commit：`feat(个人AI): 消息名头像优先 content.user`
 
 ### Task 4: 回复菜单分流
 
-- [ ] 本人个人 → 仅 @回复；他人个人 → 仅回复；群 AI 不变
-- [ ] Commit：`feat(个人AI): 消息回复菜单按本人他人分流`
+- [x] 本人个人 → 仅 @回复；他人个人 → 仅回复；群 AI 不变
+- [x] Commit：`feat(个人AI): 消息回复菜单按本人他人分流`
 
 ### Task 5: 文档
 
-- [ ] status 补 M1–M4 E2E；impl-notes 边界已含则勾选
-- [ ] context commit：`docs(ios端at个人AI框): 消息个人AI框展示与回复菜单`
+- [x] status 补 M1–M4 E2E；impl-notes 边界已含则勾选
+- [x] context commit：`docs(ios端at个人AI框): 消息个人AI框展示与回复菜单`
 
 ## 约束
 

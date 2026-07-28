@@ -25,7 +25,7 @@
 - [ ] 取消/清空/发送成功立即藏条
 - [ ] `xcodebuild` zhixinAppTest 通过
 
-**消息列表 · 个人AI框展示（`plan-msg-personal-ai-tag`，待做）**
+**消息列表 · 个人AI框展示（`plan-msg-personal-ai-tag`，代码已合，待手测）**
 
 | # | 步骤 | 期望 |
 |---|------|------|
@@ -36,7 +36,7 @@
 
 ## 待办 / 阻塞
 
-- (ios) **增量待做**：消息个人AI框展示/回复菜单 → `plan-msg-personal-ai-tag.md`（对齐 PC）
+- (ios) **消息展示增量已合** `personal-ai-chat`：`ZXIMCellLogic` + `UIImageView+Avatar`；待上表 M1–M4 真机点验
 - (ios) **E2E 手测**：上表 8 项均未勾选；须再抓包确认修包后 `aiRobtChat`/`saveDataRange` 的 `dataRangeList`（个人应为 3/4/1/2 透传，禁止空数组覆盖）
 - (ios) ⚠️ **群智能体回归**：本期改动群 `@` 列表与 `ZXAIAgentFilterBar` 胶囊文案（「类型+N」），改完须回归群智能体主流程并**告知测试**
 - (ios) ⚠️ **胶囊文案变更**：知识类型「类型+N」（无前置图标）；DataScope「数据+N」；联网仅图标；时间弹层右对齐——须单独验证
@@ -47,6 +47,7 @@
 
 ## 关键决策记录
 
+- 2026-07-28 **增量已实现**：消息 `extra.personalAccountId` →「个人AI框」+ `content.user` 名头像；本人只 @回复、他人只回复；群 AI 不变 —— `ZXIMCellLogic` / Avatar
 - 2026-07-28 **增量**：消息 `extra.personalAccountId` →「个人AI框」+ `content.user` 名头像；本人只 @回复、他人只回复；群 AI 不变 —— 见 `plan-msg-personal-ai-tag.md`（对齐 PC）
 - 2026-07-28 产品目标与 PC 一致：群聊支持 `@个人AI框`；产品规则整表继承 PC spec
 - 2026-07-28 实现路径：独立个人 AI 筛选条 + `agentKind` 分流（不与 `ZXAIAgentFilterBar` 共用实例）
