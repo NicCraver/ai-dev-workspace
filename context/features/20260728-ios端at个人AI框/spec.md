@@ -1,0 +1,146 @@
+# Spec：ios端at个人AI框
+
+> 最后更新：2026-07-28  
+> 状态：**计划已出（见 plan.md），可开发**  
+> 产品目标与 PC 功能一致；本期只做 **iOS**。PC 已决见 `context/features/20260727-at个人AI框-先做pc端/spec.md`。
+
+## 目标
+
+群聊输入框可 `@个人AI框`；选定后在输入区上方展示**独立**筛选条（知识类型 + DataScope + 时间 + 联网）；发送旁路 `POST /v1/aiRobtChat`，载荷与 PC 对齐。
+
+## 已决
+
+| 项 | 结论 |
+|----|------|
+| 场景 | **只做群聊** `@`；私聊不在本功能范围 |
+| 产品对齐 | **整表继承** PC `spec.md` 已决（互斥、列表、工具栏、回复+@、记忆、胶囊文案、可见性等） |
+| 实现路径 | 独立个人 AI 筛选条 + `agentKind` 分流挂载（不与群 `ZXAIAgentFilterBar` 共用实例/状态） |
+| 互斥 | 群智能体与个人 AI 同时只能 `@` 一个；合计最多一个 |
+| 不可重复 | 已有智能体 `@` 后再输 `@`：列表**不显示**群/个人智能体；仍可 `@人` |
+| 工具栏「@智能体」 | **只插群智能体**（现网不变） |
+| 回复 + `@` | **需要**：回复后可再 `@` 群或个人 AI；发送带 `referUuid` |
+| 类型区分 | **不能只靠 `ga_`（`ZXAgentFlag`）**——个人 AI 的 accountId 同样 `ga_` 开头。判别：`groupAgentType` 群=`3` / 个人=`0`；插入 `@` 时在 at 模型带 `agentKind: group \| personal`，后续分支只认该字段 |
+| agentId 来源（个人） | `group/get` → `groupAgentRels[]` 中 **`accountId === 当前登录人`** 的对象，取其 `agentId` |
+| 筛选 UI（个人 AI） | **独立组件**；构成：知识类型 + DataScope + 时间 + 联网；深思**无 UI**，按 get 回参透传 save |
+| DataScope 显示条件 | 个人条只在 `@` 个人 AI 时挂载；组件内判勾选含 `1` / `2` / `4` 任一 |
+| DataScope 空态 | `dataRangeScopeList: null` → `[]`；胶囊「数据+0」 |
+| DataScope 选择上限 | **无上限** |
+| DataScope 交互 | **直接 present** 现有 `ZXPersonalAiPickerController`（`ZXPersonalAiPickerModeSelectDataRange`），传入 `agentId`；与 web `DataScopeBar` 同源（web 经 bridge 调同一套原生） |
+| DataScope 落库协议 | 对齐 web 新协议：Picker 内 get 返显 + 确认 save；成功后筛选条再 get 刷本地 |
+| 胶囊文案 | 知识类型 **「类型+N」**（群 `ZXAIAgentFilterBar` **同步改**）；DataScope 保持「数据+N」 |
+| getAgentDataRange（个人） | 入参 **`accountId` + `agentId`**；另起方法，勿改群路径的 `belongId` / `belongType` / `aiRoleId` 参数 |
+| 筛选记忆逻辑 | 与群智能体一致：条出现时 get；改类型/时间/联网/DataScope 即 save；个人 AI **每次全量**（含 `dataRangeScopeList`） |
+| 取消/清空 | 删除智能体 `@` / 清空 / 发送成功 → **立即隐藏**对应筛选条；草稿只恢复可见性，内容再 get |
+| 发送载荷 | `POST /v1/aiRobtChat`：`agentId` **群和个人都必传**；`aiRoleId` 两边仍 `'1'`；`dataRangeScopeList` **仅个人**带 |
+| 回复可见性 | 个人 AI 回复**群内其他人可见** |
+| 与群 AI 框 / AI 框分析 | 不做互斥或联动 |
+| `@` 弹窗列表 | 所有人、群智能体、**仅**自己的个人 AI、群成员 |
+| 范围 | 本期只 **iOS** |
+| 错误路径 | get/save 失败仅打日志、不 toast（对齐群） |
+
+## 用户流程
+
+### 总览：入口 → 选中 → 筛选 → 发送
+
+```mermaid
+flowchart TD
+  START([群聊输入区]) --> ENTRY{用户动作}
+
+  ENTRY -->|回复消息| REPLY[显示回复条]
+  REPLY --> ENTRY
+
+  ENTRY -->|工具栏「@智能体」| BTN{已有智能体 @?}
+  BTN -->|是| BTN_SKIP[不插入]
+  BTN -->|否| BTN_GA[只插群智能体]
+  BTN_GA --> BAR_GA[显示 ZXAIAgentFilterBar]
+
+  ENTRY -->|输入 @| AT{已有智能体 @?}
+  AT -->|是| LIST_PEOPLE[列表仅所有人/群成员]
+  AT -->|否| LIST_FULL[完整列表]
+
+  LIST_FULL --> L1[所有人]
+  LIST_FULL --> L2[群智能体 groupAgentRel]
+  LIST_FULL --> L3[自己的个人 AI<br/>accountId 匹配]
+  LIST_FULL --> L4[群成员…]
+
+  L2 --> FLOW_GA[群智能体流程]
+  FLOW_GA --> BAR_GA
+  L3 --> FLOW_PA[插入个人 AI @<br/>agentKind=personal]
+  FLOW_PA --> BAR_PA[显示个人 AI 筛选条]
+  BAR_PA --> FETCH["getAgentDataRange<br/>accountId + agentId"]
+  FETCH --> RENDER{勾选含 1/2/4?}
+  RENDER -->|是| SCOPE[显示 DataScope 胶囊]
+  RENDER -->|否| NOSCOPE[隐藏 DataScope]
+  SCOPE -->|点胶囊| PICKER[ZXPersonalAiPickerController<br/>SelectDataRange]
+  PICKER -->|ACK 后| REGET[再 get 刷本地]
+  NOSCOPE --> TWEAK[调类型/时间/联网 → save]
+  REGET --> TWEAK
+  BAR_GA --> SEND
+  TWEAK --> SEND
+
+  SEND{发送} --> PAYLOAD[IM + aiRobtChat 旁路]
+```
+
+### 取消 / 切换
+
+```mermaid
+flowchart TD
+  S([输入区已有智能体 @]) --> ACT{用户动作}
+  ACT -->|删除智能体 @ / 清空 / 发送成功| HIDE[隐藏对应筛选条]
+  ACT -->|切会话| ISO[按会话隔离；草稿只恢复可见性再 get]
+  ACT -->|已有群再选个人或反过来| BLOCK[拦截：先删现有智能体 @]
+```
+
+## 共享代码改造点（iOS · 必须逐项分支）
+
+> 现网唯一智能体判据是 `userId hasPrefix:ZXAgentFlag`（`ga_`），个人 AI 同前缀。目标是**群智能体行为不变**，共享点按 `agentKind` 分流。
+
+| 区域 | 现状 | 改造要求 |
+|------|------|----------|
+| `zx_hasAtAgentInInput` / `zx_shouldShowAgentFilterBar` / `zx_shouldTriggerAgentChat` | 只认 `ga_` | 拆成群 / 个人；分别驱动群条与个人条 |
+| `@` 列表构建（ChatAt） | 按 `ga_` 展示智能体 | 注入 `groupAgentRels` 中自己的个人 AI；带 `agentKind`；已有智能体时两类都不进候选 |
+| at 模型 / 发送收集 | 无 kind | 保留 `agentKind`；组 `agentChatData` 时分支 |
+| `aiRobtChat` 组包（SendMessage） | 群路径需核对 `agentId` | **两边都补 `agentId`**；个人额外 `dataRangeScopeList`；`aiRoleId` 维持 `'1'` |
+| `ZXAIAgentFilterBar` 知识类型文案 | 或为「数据+N」 | 改「类型+N」（群侧同步，需告知测试） |
+| 个人筛选 get/save | — | 另起：`accountId + agentId`；独立状态存放，勿改群 `belongId/belongType` 调用 |
+
+## 本期不做
+
+- web / android / desktop
+- 私聊 `@` 个人 AI
+- 深思独立 UI
+- 改 bridge 协议或重写 `ZXPersonalAiPickerController` 核心（挂载所需的最小接线除外）
+- 与「群 AI 框 / AI 框分析」互斥联动
+- 个人 AI 新建/删除实时推送（`groupAgentRels` 随群 info 拉取即可）
+
+## 依赖
+
+- 契约：`context/contracts/personalAiFrame/getAgentDataRange.d.ts`
+- 契约：`context/contracts/personalAiFrame/saveDataRange.d.ts`
+- 契约：`context/contracts/personalAiFrame/groupGet.groupAgentRels.d.ts`
+- 契约：`context/contracts/personalAiFrame/aiRobtChat.d.ts`
+- 桥（对照，本期原生直调 Picker，不经 bridge）：`context/bridge.md` · `selectDataRangeScope`
+- 现网：`ZXRCIMBaseChatController+AgentFilter`、`ZXAIAgentFilterBar`、`ZX_PersonalAi/Picker`、`ZXAIAgentManager`
+- 产品对照：`context/features/20260727-at个人AI框-先做pc端/spec.md`
+
+## 各端差异点
+
+| 差异点 | web | android | ios | desktop |
+|--------|-----|---------|-----|---------|
+| 本期范围 | — | — | **做** | 另功能已规划/进行中 |
+| DataScope UI | 移动端调原生 Picker；PC 用 H5 弹窗 | 原生页 | **直接 present 已有 Picker** | PC 自研转发式弹窗 |
+| 筛选条 | FilterBar（H5） | — | 新建独立条，参考群 FilterBar | 独立 personal 条 |
+
+## 实测回参（个人 AI · 与 PC 同源，2026-07-27）
+
+| 字段 | 实测 |
+|------|------|
+| `agentId` | 有值；与 `groupAgentRels[].agentId` 一致 |
+| `dataRangeList` | 4 项：`3/4/1/2`；均 `choose=1`；无 `0` 内置库 |
+| `dataRangeScopeList` | 可为 `null` → 前端 `[]` |
+| `timeType` | 默认 `7`（近一周） |
+| `netSearch` / `deepThink` | `0` / `0` |
+
+## 待用户确认
+
+- [x] 本 spec 终审通过；`plan.md` 已产出
