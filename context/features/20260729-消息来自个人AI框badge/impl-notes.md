@@ -6,7 +6,7 @@
 
 | | 昵称旁 tag | 气泡下 badge（本功能） |
 |--|-----------|----------------------|
-| 文案 | `个人AI框` / `群AI框` | `来自{nickName}的个人AI框` |
+| 文案 | `个人AI框` / `群AI框` | `来自{nickName}个人AI框` |
 | 名字来源 | 发送人展示名（常为 `content.user.name`） | **归属人** `personalAccountId` → 用户缓存 nickName |
 | 判据 | `personalAccountId` 有值 → 个人 | 同左 + 昵称已解析 |
 
@@ -26,7 +26,7 @@ if local.displayName → 用它
 else → 请求人员详情(id) → 写缓存 → 刷新该消息行
 同一 id 并发只拉一次
 展示名优先「昵称/全名」字段，不用 content.user.name（那是 AI 展示名）
-文案 = "来自" + displayName + "的个人AI框"
+文案 = "来自" + displayName + "个人AI框"
 ```
 
 ## 布局
@@ -37,7 +37,7 @@ else → 请求人员详情(id) → 写缓存 → 刷新该消息行
 气泡
 → 表情 / 快捷操作（若有）
 → 「N条回复」/ 已读统计（若有）
-→ 「来自xxx的个人AI框」badge
+→ 「来自xxx个人AI框」badge
 → 底部操作按钮（若有）
 ```
 
