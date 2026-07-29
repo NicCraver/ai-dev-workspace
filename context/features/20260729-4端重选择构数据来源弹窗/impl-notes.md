@@ -7,7 +7,7 @@
 
 ### 选中集合是单一真源
 
-一个 key 集合，`key = "<scopeDataType>_<scopeDataId>"`（私聊 1、群聊 3）。四处视图（全部 / 组织群 / 外联群 / 组织架构）共享它，勾选实时互通。PC/web 上「组织群」「外联群」是两个独立 tab，各带「全选行 + 列表」；不是合在一个「群聊」tab 里分两段。
+一个 key 集合，`key = "<scopeDataType>_<scopeDataId>"`（私聊 1、群聊 3）。三处顶层视图（全部 / 群组 / 组织架构）共享它，勾选实时互通。PC/web 上「群组」是顶层 tab，其内部再以**子 tab**切换「组织群 / 外联群」两个分区（参考转发弹窗的 tab 结构，子 tab 不占顶层），每个子 tab 内「全选行 + 列表」。
 
 - 初值来自 `getAgentDataRange` 回参的 `dataRangeScopeList`；
 - **忽略 `getAllImDialogue` 回参的 `selected` 字段**——它来自 `ai_frame_user_setting`，是个人 AI 框「列表」的选中态，与本弹窗无关；
