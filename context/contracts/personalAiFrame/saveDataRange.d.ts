@@ -45,12 +45,18 @@ export interface PersonalAiFrameSaveDataRangeReq {
   dataRangeScopeList?: PersonalAiFrameDataRangeScope[];
   /**
    * 人员和群勾选全部：1-勾选了全部；0-未勾选全部
-   * 前端按「选中数 === 候选全量数」推断，不由 getAgentDataRange 回参提供
+   * 前端按弹窗勾选推断；getAgentDataRange 回参在 @unconfirmed 字段落地后也会回传此值用于 restore
    */
   groupAndAccountSelectAll?: PersonalAiFrameSelectAllFlag;
-  /** 组织群勾选全部：1-勾选了全部；0-未勾选全部（组织群 = groupInfo.type 缺省或 < 10） */
+  /**
+   * 组织群勾选全部：1-勾选了全部；0-未勾选全部（组织群 = groupInfo.type 缺省或 < 10）
+   * 前端按弹窗勾选推断；getAgentDataRange 回参在 @unconfirmed 字段落地后也会回传此值用于 restore
+   */
   organizationGroupSelectAll?: PersonalAiFrameSelectAllFlag;
-  /** 外联群勾选全部：1-勾选了全部；0-未勾选全部（外联群 = groupInfo.type >= 10） */
+  /**
+   * 外联群勾选全部：1-勾选了全部；0-未勾选全部（外联群 = groupInfo.type >= 10）
+   * 前端按弹窗勾选推断；getAgentDataRange 回参在 @unconfirmed 字段落地后也会回传此值用于 restore
+   */
   outreachGroupSelectAll?: PersonalAiFrameSelectAllFlag;
 }
 
