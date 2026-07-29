@@ -35,6 +35,7 @@
 - [ ] `@` 个人 → 独立筛选条；DataScope 条件与 `SelectDataRangeActivity` 正常；改筛选会 save
 - [ ] 发送后 AI 回复群内可见；请求含 `agentId` + `dataRangeScopeList`（个人 `dataRangeList` 须含 3/4）
 - [ ] 回复消息后再 `@` 个人 AI，`referUuid` 有值
+- [ ] **@回复本人个人 AI 消息** → 出**个人**筛选条；`aiRobtChat.agentId`=个人（非群）——见 PC spec「已知缺陷」
 - [ ] 群智能体主流程回归：`@` → 改筛选 → 发送 → 回复；胶囊为「类型+N」
 - [ ] 互斥：不能同时 `@` 群+个人；已有后再 `@` 不出智能体
 - [ ] 取消/清空/发送成功立即藏条；**大输入区**同样成立
@@ -50,6 +51,9 @@
 | M4 | 他人个人 AI 消息长按 | 仅回复（无 @回复） |
 
 ## 待办 / 阻塞
+
+- (android) ✅ **已修**：@回复本人个人 AI 写 `agentKind`/`agentId`（`RongExtension.fillReferAtAgentIdentity`）。待真机复测。
+- (android) **消息展示增量已合** `personal-ai-chat`：`PersonalAiMsgHelper` + 菜单；待手测 M 项
 
 - (android) **真机联调进行中**（设备 `cbaf94cf` 已连）：`@` 个人 AI 发送**无回复**已定位并修复——`RichEditText` 两处 span→MentionBlock 转换（发送 `getAllRichSpansDataWhenSendMsg`、草稿 `getAllRichSpansData`）没带 `agentKind`/`agentId`，导致发送时个人 mention 被当群、DTO 为空、`aiRobtChat` 根本没发。日志实证：`send anyAgent=true personal=false agentId=null dtoNull=true`。**待复现验证**
 - (三端) ⚠️ **个人 AI 回复无流式效果**：三端流式判据一致——消息须为 `RC:ReferenceMsg` 且 `extra.fromType == 1` 才轮询 `aiRobtMessageById`（android `UIMessage:117`、desktop `msg-list.vue:429`）。群 AI 正常、个人不流式 → **指向后端下发的个人回复消息类型/extra 不符**；已加临时日志 `AgentMsgDebug` 取实证后反馈后端

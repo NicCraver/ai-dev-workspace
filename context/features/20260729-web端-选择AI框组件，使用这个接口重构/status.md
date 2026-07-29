@@ -1,17 +1,17 @@
 # Status：web 端「选择 AI 框」组件用 getAllImDialogue 重构
 
-> 最后更新：2026-07-29（web 代码已提交；**真机抓包/自测未做**；desktop 脏树已核对为别功能）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（已抓包定位空列表并修复；修复后 UI 待复测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 契约 Changelog（selectModel:1 消费方）· plan Task 1 | ✅ | — | — | — |
-| 纯逻辑模型 + 单测 · plan Task 2 | ✅ 7/7 | — | — | — |
+| 纯逻辑模型 + 单测 · plan Task 2 | ✅ 8/8 | — | — | — |
 | 搜索改前端本地过滤 · plan Task 3 | ✅ | — | — | — |
 | SelectAiBoxDialog 换数据源 + 藏群子 tab · plan Task 4 | ✅ | — | — | — |
 | OrgPicker prop（藏外联 / 要求 agent）· plan Task 5 | ✅ | — | — | — |
-| 接口联调（抓包）· plan Task 6 | 🚧 待手测 | — | — | — |
+| 接口联调（抓包）· plan Task 6 | 🚧 已确认 agent 字段为空，修复后待复测 | — | — | — |
 | 自测通过 · plan Task 6 | ⬜ | — | — | — |
 
 > **本轮范围：只做 web PC「选择 AI 框」**。android / ios / desktop 不在本期；数据来源弹窗（`selectModel: 0`）不改行为。
@@ -27,7 +27,8 @@
 ## 待办 / 阻塞
 
 - (desktop) 工作区未提交改动（`personal-ai-data-scope-dialog` / `data-scope-list-item` / `data-scope-model`：数据来源弹窗 UI 对齐 web、列表行 60 高/圆头像/agentName 副标题/搜索图标）→ 归属 **`20260729-4端重选择构数据来源弹窗`**，**不推进本功能矩阵**（desktop 列保持 —）。
-- (web) ⏳ **真机抓包未做**：开窗仅一次 `getAllImDialogue` 且 `selectModel:1`；搜索零 `selectGroupBySearch`；组织架构无外联条；无 agent 人员不展示；确定开聊正常。
+- (web) ✅ 抓包确认 `getAllImDialogue(selectModel:1)` 返回会话，但 agent 字段可能全 null；已改为先 `batchGetAgent` 补齐、再过滤。
+- (web) ⏳ 修复后复测：已有 AI 框项正常展示；搜索零 `selectGroupBySearch`；无 agent 人员不展示；确定开聊正常。
 - (web) ⏳ 回归：数据来源弹窗仍可外联；定时发送/列表等其它 `AiBoxSearchBox` 入口仍走 HTTP 搜索。
 - (web) 兼容点：`candidates` 未传时搜索保持旧 API，避免误伤 `PersonalAiChatAgentList` / `SendTargetPickerDialog` / `SelectAiChatPopup`。
 
@@ -41,3 +42,4 @@
 - 2026-07-29 新建 `aiBoxPickerModel.js`，不复用 `dataScopeModel`
 - 2026-07-29 打开弹窗仍每次未选中；忽略回参 `selected`
 - 2026-07-29 搜索 `candidates === null` 走旧 HTTP；传数组走本地过滤（兼容其它入口）
+- 2026-07-29 联调纠正：`getAllImDialogue(selectModel:1)` 不保证返回 agent 字段；归一化保留候选，`batchGetAgent` 补齐后再过滤

@@ -1,7 +1,7 @@
 # Spec：ios端at个人AI框
 
-> 最后更新：2026-07-28  
-> 状态：**计划已出（见 plan.md），可开发**  
+> 最后更新：2026-07-29  
+> 状态：**计划已出（见 plan.md），可开发**；已知「@回复个人 AI 误走群」待修（对齐 PC spec）  
 > 产品目标与 PC 功能一致；本期只做 **iOS**。PC 已决见 `context/features/20260727-at个人AI框-先做pc端/spec.md`。
 
 ## 目标
@@ -18,7 +18,7 @@
 | 互斥 | 群智能体与个人 AI 同时只能 `@` 一个；合计最多一个 |
 | 不可重复 | 已有智能体 `@` 后再输 `@`：列表**不显示**群/个人智能体；仍可 `@人` |
 | 工具栏「@智能体」 | **只插群智能体**（现网不变） |
-| 回复 + `@` | **需要**：回复后可再 `@` 群或个人 AI；发送带 `referUuid` |
+| 回复 + `@` | **需要**：回复后可再 `@` 群或个人 AI；发送带 `referUuid`。**@回复 本人个人 AI 消息须写入 `agentKind=personal` + `agentId`**（禁止只带 ga_ id，否则兜底成群）——对齐 PC spec 2026-07-29 |
 | 类型区分 | **不能只靠 `ga_`（`ZXAgentFlag`）**——个人 AI 的 accountId 同样 `ga_` 开头。判别：`groupAgentType` 群=`3` / 个人=`0`；插入 `@` 时在 at 模型带 `agentKind: group \| personal`，后续分支只认该字段 |
 | agentId 来源（个人） | `group/get` → `groupAgentRels[]` 中 **`accountId === 当前登录人`** 的对象，取其 `agentId` |
 | 筛选 UI（个人 AI） | **独立组件**；构成：知识类型 + DataScope + 时间 + 联网；深思**无 UI**，按 get 回参透传 save |
@@ -106,6 +106,7 @@ flowchart TD
 | `ZXAIAgentFilterBar` 知识类型文案 | 或为「数据+N」 | 改「类型+N」（群侧同步，需告知测试） |
 | 个人筛选 get/save | — | 另起：`accountId + agentId`；独立状态存放，勿改群 `belongId/belongType` 调用 |
 | 消息 Cell / 长按菜单 | `ga_` 一律「群AI框」+ 群菜单 | 按 `extra.personalAccountId` 区分个人/群；见 `plan-msg-personal-ai-tag.md` |
+| **`addReplyAtUser:`** | **@回复建 at 模型无 agentKind** | **按消息身份设 kind+agentId**；个人 AI → personal 条。见 PC `spec.md`「已知缺陷」 |
 
 ## 本期不做
 

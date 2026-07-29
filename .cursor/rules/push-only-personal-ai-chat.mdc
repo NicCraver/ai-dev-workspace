@@ -17,3 +17,14 @@ alwaysApply: true
 ## 反例（已发生过，禁止再犯）
 
 - 在 `test-202512` 修完丢树后直接 `git push origin test-202512` —— **违规**。应只保证代码在 `personal-ai-chat` 完整并 push 该分支。
+
+## PC 端（apps/desktop）提交禁忌
+
+提交 desktop 时 **禁止** stage / commit 以下本地调试文件（已误提交过，勿再犯）：
+
+- `.env.test`
+- `electron-builder.yml`
+- `package.json`
+- `package-lock.json`
+
+只提交业务源码与单测；上述文件有本地改动时先还原或确保未 stage。

@@ -93,6 +93,7 @@
 | 会话消息身份 | `extra.personalAccountId` 有值 → 个人 AI 框；否则 `ga_` 仍为群 AI |
 | 个人 AI 消息展示 | tag「个人AI框」；名/头像优先消息体 `content.user.name` / `portrait`（`extra` 可能是 JSON 字符串须 parse） |
 | 个人 AI 回复菜单 | 本人：只「@回复」；他人：只「回复」。群 AI：只「@回复」 |
+| **@回复 写入 mention** | 本人个人 AI 消息：`agentKind=personal` + `agentId`（`groupAgentRels`）；群 AI：`agentKind=group`。**禁止**只写 ga_ id——无 kind 会兜底成群 |
 | 个人 AI 回复 | 群内其他人可见（非私密） |
 
 ## 错误处理策略
@@ -107,6 +108,7 @@
 3. **aiRobtChat.agentId**：后端确认群与个人均必传；群路径本期新增补传（现网原先未传），须抓包验证。
 4. **dataRangeScopeList null**：get 回参可为 null，save/发送须显式传 `[]` 或当前列表，避免后端按覆盖语义清空已选。
 5. **`@` 列表智能体偶发重复**：切群触发的列表刷新与输入 `@` 触发的刷新可能并发；若各自在共享列表上追加智能体，会成对出现（群/个人各两遍）。须用请求序号丢弃过期结果，并一次性写回列表；智能体按 `id+agentKind` 去重。
+6. **@回复个人 AI 误走群（2026-07-29）**：菜单已按 `personalAccountId` 分流，但插入 `@` 时曾未写 `agentKind`；「无 kind + ga_ → 群」兜底。**已修**：PC `buildReplyAtMention`；Android `fillReferAtAgentIdentity` + 五参 `AtNameSpan`；iOS `addReplyAtUser:`。
 
 ## 与 bridge 的交互
 

@@ -18,7 +18,7 @@ PC Web 的「选择 AI 框」弹窗（`SelectAiBoxDialog`）当前取数链路�
 
 **成功标准**：
 
-1. 打开弹窗只发一次 `getAllImDialogue({ accountId, selectModel: 1 })`（组织架构钻取除外）；切顶层 tab、打字搜索**零**额外会话列表请求。
+1. 打开弹窗发一次 `getAllImDialogue({ accountId, selectModel: 1 })`，再用一次 `batchGetAgent` 补齐智能体字段（组织架构钻取除外）；切顶层 tab、打字搜索**零**额外请求。
 2. 「最近联系人」文案改为「全部」，展示有 `agentId` 的人 + 组织群（后端原序）。
 3. 「群组」只展示组织群；子 tab 仅剩一项时整条隐藏。
 4. 搜索保留 popover +「全部 / 群组 / 人员」，本地过滤；会话名与智能体名均可搜、均可高亮。
@@ -28,7 +28,7 @@ PC Web 的「选择 AI 框」弹窗（`SelectAiBoxDialog`）当前取数链路�
 
 1. 用户打开「选择 AI 框」弹窗。
 2. 弹窗以 `accountId`（登录用户 id）调用 `getAllImDialogue`，`selectModel: 1`；结果缓存于弹窗生命周期。
-3. 前端归一化 → 丢弃无 `targetId` / 无 `agentId` 的项 → 派生：
+3. 前端归一化 → 丢弃无 `targetId` 的项 → 按人/群 id 调 `batchGetAgent` 补齐 → 丢弃补齐后仍无 `agentId` 的项 → 派生：
    - **全部**：剩余全量（人 + 群，含外联群是否进入「全部」见下方决策）；
    - **群组**：仅组织群（`groupInfo.type < 10` 或缺失）。
 4. 用户在「全部 / 群组 / 组织架构」间切换单选；或在右上角搜索框输入，popover 对缓存做本地过滤后选择。
@@ -68,7 +68,7 @@ PC Web 的「选择 AI 框」弹窗（`SelectAiBoxDialog`）当前取数链路�
 | 搜索「群组」是否含外联 | **含**（与全部同源缓存；仅按 `ownerType==='group'` 分 tab）。列表「群组」顶层 tab 仍只组织群 |
 | 打开时是否用 `selected` 预勾 | **否**，保持每次未选中 |
 | `accountId` 来源 | `user.value?.id`（与 `selectGroupBySearchApi` 一致） |
-| 与 `dataScopeModel` 关系 | **新建** `aiBoxPickerModel.js`，不复用数据来源归一化（私聊也要带齐 agent 字段；且强制 `agentId` 过滤） |
+| 与 `dataScopeModel` 关系 | **新建** `aiBoxPickerModel.js`，不复用数据来源归一化（先保留待 batch 补齐项，补齐后再强制 `agentId` 过滤） |
 
 ## 各端差异点
 
@@ -79,17 +79,17 @@ PC Web 的「选择 AI 框」弹窗（`SelectAiBoxDialog`）当前取数链路�
 
 ## 数据与状态模型
 
-**取数**：开弹窗一次 `getAllImDialogue({ accountId, selectModel: 1 })`，存内存；关闭可清空。
+**取数**：开弹窗一次 `getAllImDialogue({ accountId, selectModel: 1 })`，再按 `targetId` 调 `batchGetAgent` 补齐；过滤后的列表存内存，关闭可清空。
 
 **归一化行（供 `AiBoxRow` / 搜索行）**：
 
 - `id` = `targetId`（字符串）
 - `ownerType` = `type===3` → `group`，否则 `private`
 - `name` = `targetName`（展示层空则兜底 id）
-- `agentId` / `aiRoleId` / `agentName` / `agentAvatar` 直接取回参（缺省 null）
+- `agentId` / `aiRoleId` / `agentName` / `agentAvatar` 先取回参；为空时由 `batchGetAgent` 补齐
 - 私聊头像：`privateInfo.avatar`；群拼合：`groupInfo.accountInfoList` 前 4
 - `isOutreach` = 群且 `groupInfo.type >= 10`
-- **丢弃**：无 `targetId`、无 `agentId`（空串/null 均丢）
+- **丢弃**：归一化阶段丢无 `targetId`；batch 补齐后丢无 `agentId`（空串/null 均丢）
 
 **搜索过滤**：对 `name`、`agentName` 做忽略大小写子串匹配；任一命中即保留。结果分 tab：全部 = 群在前人员在后（保持现 `AiBoxSearchPanel` 顺序约定）；群组/人员为子集。
 

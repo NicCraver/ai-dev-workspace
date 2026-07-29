@@ -68,6 +68,17 @@
 **单测归置**：单测集中到该功能的 `tests/` 子目录（web=`tests/`，其它端按各自测试目录惯例），不与源码同级散放。
 判据：只被本功能引用的文件 → 放功能目录；被 2+ 功能引用 → 上提公共层。移动后同步更新引用方 import。
 
+## PC 端提交禁忌（apps/desktop）
+
+提交 / push `apps/desktop` 时，**禁止**把本地调试用的环境与构建配置带进分支（已发生过误提交，勿再犯）：
+
+- `.env.test`
+- `electron-builder.yml`
+- `package.json`
+- `package-lock.json`
+
+这些文件可本地改（localhost、`-test` 包名、arm64、leveldown 等），但 **`git add` / commit 一律排除**；功能相关只提交业务源码与单测。若工作区里它们有改动，提交前用 `git restore` / `git checkout --` 还原，或确认未 stage。
+
 ## 各仓库内部约定
 
 每个 app 仓库根目录有自己的 CLAUDE.md（构建、测试、lint 命令与代码规范），进入该仓库工作时以它为准。

@@ -1,6 +1,6 @@
 # Status：at个人AI框-先做pc端
 
-> 最后更新：2026-07-28 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -9,6 +9,7 @@
 | 页面开发（mock） | ⬜ | ⬜ | ⬜ | 🚧 |
 | 接口联调 | ⬜ | ⬜ | ⬜ | 🚧 |
 | 自测通过 | ⬜ | ⬜ | ⬜ | ⬜ |
+| **@回复个人 AI 误走群**（spec 已知缺陷） | — | ✅ 已修 | ✅ 已修 | ✅ 已修 |
 
 > desktop 说明：页面开发 🚧 = Task 1–8 + 消息个人AI框展示（`msg-list`，`8f2abbb5`/`f4a5121e`）已落地，待真机 E2E；接口联调 🚧 = get/save/aiRobtChat 已接线，待抓包验证；自测 ⬜ = 本 session 未跑 E2E。
 
@@ -25,6 +26,7 @@
 | 3 | 改类型/时间/联网/DataScope | 每次 save 全量含 scope |
 | 4 | 发送 | IM 成功后 aiRobtChat 含 agentId + scope |
 | 5 | 回复 + `@` 个人 AI | referUuid 有值；回复群内可见 |
+| 5b | **@回复本人个人 AI 消息** | **出个人筛选条**；aiRobtChat.agentId=个人（非群） |
 | 6 | 再 `@` | 列表无智能体，可 `@人` |
 | 7 | 删 `@` / 清空 / 发送后 | 条立即隐藏 |
 | 8 | 草稿恢复 | 条再现 + 重新 get |
@@ -46,14 +48,17 @@
 | G2 | 改筛选 → 发送 | AI 回复正常；aiRobtChat **现含 agentId** |
 | G3 | 胶囊 | 「类型+N」 |
 | G4 | 草稿含群 `@` | 条恢复；行为同改前 |
+| G5 | **@回复群 AI 消息** | 仍走群条（修 5b 时回归） |
 
-- (desktop) ⚠️ **须告知测试**：本期动群智能体路径三处（共享判断分流、`aiRobtChat` 补 `agentId`、胶囊「类型+N」），上表 G1–G4 回归通过前勿签收
+- (desktop/android/ios) ✅ **已修**：@回复本人个人 AI 写入 `agentKind=personal` + `agentId`（PC `buildReplyAtMention`；Android `fillReferAtAgentIdentity`；iOS `addReplyAtUser:`）。待真机复测 5b / G5。
+- (desktop) ⚠️ **须告知测试**：本期动群智能体路径三处（共享判断分流、`aiRobtChat` 补 `agentId`、胶囊「类型+N」），上表 G1–G5 回归通过前勿签收
 - (desktop) 抓包确认 get/save/aiRobtChat 入参后，可将接口联调升为 ✅
 - (desktop) 消息展示增量代码已合 `personal-ai-chat`（`f4a5121e`），待上表 M1–M4 真机点验
 - (desktop) 2026-07-28 修：`@` 列表智能体偶发成对重复（`initList` 并发 splice）→ 序号守卫 + 原子写回 + id|kind 去重；复测：切群后立刻 `@`，群/个人各只应出现一次
 
 ## 关键决策记录
 
+- 2026-07-29 **@回复须带 agentKind**：本人个人 AI → `personal`+`agentId`；群 AI → `group`。三端均已修（PC/Android/iOS）——见 spec「已知缺陷」
 - 2026-07-28 消息展示：`content.extra.personalAccountId` 有值 → 个人 AI 框；tag「个人AI框」；名/头像用 `content.user.name` / `portrait`；本人只出 @回复，他人只出回复；群 AI（无该字段）不变 —— 见 `plan-msg-personal-ai-tag.md`
 - 2026-07-27 已有智能体 `@` 后再 `@`：列表**不显示**群/个人智能体；仍可 `@人`
 - 2026-07-27 工具栏「@智能体」只插群智能体

@@ -344,11 +344,15 @@ PC `PersonalAiChat` 内嵌 `Home`（`hideBuiltinCollapseChrome=true`）时，`Ch
 | 顺序 | 图标 | 行为 |
 |------|------|------|
 | 1 | `fullscreen-in` / `fullscreen-out` | 全屏（既有 `handleFullscreen` / `zoomType`） |
-| 2 | `setting` | 设置（`gotoSettingPage`，仍受 `hasSetting`/`canEditAgent`） |
+| 2 | `setting` | 设置（`gotoSettingPage` / `handleGotoSetting`，仍受 `hasSetting`/`canEditAgent`） |
 | 3 | `file-trans-zx` | 打开智信私聊/群聊（`openImChat`）；**`belongType===0` 个人框隐藏**；1→私聊、3→群聊 |
 | 4 | `open-independent` | 打开 **系统原生独立窗**：`WindowPostPersonalAiNativeWin` → **`/zx/personal`** + `agentId`/`belongId`/`belongType`/`sessionId`/`aiRoleId`/`title`（desktop 侧 `loadURL`，勿走主应用 `/personal` 空页） |
 
 不显示关闭按钮。设置页等其它入口仍用 `WindowPostWinMessage` → 无边框 `aiChatWin`。
+
+**联调坑（2026-07-29）**：`HomeGuidePage` 全屏遮罩（`z-2000`）盖住真设置按钮，假图标原先无点击 → 点「设置」进不了 `gotoSettingPage`。已改为点击高亮设置/文案条 → 关引导并 `click` 真实锚点。
+
+**联调坑（2026-07-29·提示）**：个人 AI 在 AiBrowser iframe 内时，`checkAgentInEdit` 有占用只 `postMessage(showSettingMsgBox)`，宿主无 `ai-frame-view-container` 接 ClashDialog；且原先本地 `showFailToast`(vant) 在 PC 不可见。已改为本地 `showToastError`（PC=ElMessage），iframe 仍顺带 postMessage。
 
 ### PC 独立原生窗（desktop + web）
 

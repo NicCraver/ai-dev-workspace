@@ -20,6 +20,7 @@
 - [ ] `@` 个人 → 独立筛选条；DataScope 条件与 Picker 正常；改筛选会 save
 - [ ] 发送后 AI 回复群内可见；请求含 `agentId` + `dataRangeScopeList`
 - [ ] 回复消息后再 `@` 个人 AI，`referUuid` 有值
+- [ ] **@回复本人个人 AI 消息** → 出**个人**筛选条；`aiRobtChat.agentId`=个人（非群）——见 PC spec「已知缺陷」
 - [ ] 群智能体主流程回归：`@` → 改筛选 → 发送 → 回复；胶囊为「类型+N」
 - [ ] 互斥：不能同时 `@` 群+个人；已有后再 `@` 不出智能体
 - [ ] 取消/清空/发送成功立即藏条
@@ -36,6 +37,7 @@
 
 ## 待办 / 阻塞
 
+- (ios) ✅ **已修**：@回复本人个人 AI 写 `agentKind`/`agentId`（`addReplyAtUser:`）。待真机复测。
 - (ios) **消息展示增量已合** `personal-ai-chat`：`ZXIMCellLogic` + `UIImageView+Avatar`；待上表 M1–M4 真机点验
 - (ios) **E2E 手测**：上表 8 项均未勾选；须再抓包确认修包后 `aiRobtChat`/`saveDataRange` 的 `dataRangeList`（个人应为 3/4/1/2 透传，禁止空数组覆盖）
 - (ios) ⚠️ **群智能体回归**：本期改动群 `@` 列表与 `ZXAIAgentFilterBar` 胶囊文案（「类型+N」），改完须回归群智能体主流程并**告知测试**

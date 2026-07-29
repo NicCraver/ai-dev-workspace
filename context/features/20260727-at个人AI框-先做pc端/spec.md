@@ -1,7 +1,7 @@
 # Spec：at个人AI框（先做 PC）
 
-> 最后更新：2026-07-28  
-> 状态：**PC Task 1–8 + 消息个人AI框展示已落地（待 E2E）；见 status.md / impl-notes.md**
+> 最后更新：2026-07-29  
+> 状态：**PC Task 1–8 + 消息个人AI框展示已落地；已知「@回复个人 AI 误走群智能体」三端同因待修；见 status.md / impl-notes.md**
 
 ## 目标
 
@@ -16,6 +16,7 @@
 | 不可重复 | 同一条输入里智能体（群或个人）合计最多一个；**已有智能体 `@` 后再输 `@`：候选人列表中不显示群智能体/个人 AI**（仍显示所有人、群成员，可继续 `@人`） |
 | 工具栏「@智能体」 | **只插群智能体**（现网行为不变）；不插个人 AI |
 | 回复 + `@` | **需要**：右键回复后，可再 `@` 群智能体或个人 AI；发送时带 `referUuid`（对齐现网群智能体） |
+| **@回复 必须带 agentKind**（2026-07-29） | 对本人个人 AI 消息点「@回复」时，写入输入区的 `@` **必须**带 `agentKind: 'personal'` + 对应 `agentId`（取自 `groupAgentRels[]`）；对群 AI 消息「@回复」须带 `agentKind: 'group'`（或显式写 group，勿靠兜底）。**禁止**只推 `{ id: ga_…, name }`——现网「无 agentKind + ga_ → 群」兜底会把个人 AI 误判成群智能体，导致出群筛选条、旁路 `aiRobtChat` 走群 `agentId`。判定依据：被回复消息 `extra.personalAccountId` 有值且等于当前登录人 → personal；`ga_` 且无该字段 → group |
 | 落点 | 输入区上方筛选条位置同现网。群智能体**主流程不变**，但有两处必须一起动：① 共享判断点改造（见下节）；② `aiRobtChat` 补传 `agentId`（群也要传）。另胶囊文案统一改「类型+N」 |
 | 隔离约束 | 个人 AI 逻辑与群智能体**分支隔离**：共享点一律按 `agentKind` 走两条分支，不允许在群分支里夹带个人 AI 的字段或请求 |
 | 类型区分 | **不能只靠 `ga_` 前缀**——个人 AI 的 `agentAccountId` 同样是 `ga_` 开头。判别位取 `groupAgentType`：群=`3`（`groupAgentRel`）；个人=`0`（`groupAgentRels`）。插入 `@` 时在 `aSomeOneList` 项上带 `agentKind: 'group' \| 'personal'`，后续所有分支只认这个字段 |
@@ -37,7 +38,7 @@
 | 群智能体来源 | `POST /api/chat/v1/group/get`：`groupAgentRel` = 群；`groupAgentRels[]` = 个人 |
 | `@` 弹窗列表 | 所有人、群智能体、**仅** `accountId === 当前登录人` 的个人 AI、群成员 |
 | 消息发送人回显 | 按 `agentAccountId` 匹配 → `agentName` / `agentAvatar`；**会话消息**若 `extra.personalAccountId` 有值：tag「个人AI框」，名/头像优先 `content.user.name` / `portrait` |
-| 消息回复菜单 | 个人 AI（有 `personalAccountId`）：本人只「@回复」；他人只「回复」。群 AI（`ga_` 无该字段）：仍只「@回复」 |
+| 消息回复菜单 | 个人 AI（有 `personalAccountId`）：本人只「@回复」；他人只「回复」。群 AI（`ga_` 无该字段）：仍只「@回复」。**菜单分流已做；插入 `@` 时的 agentKind 见上条（当前有 bug，见下「已知缺陷」）** |
 | 只 @ 自己 | `groupAgentRels[].accountId === 当前登录人`（已实测） |
 | Mock | `@` 列表 / 记忆拉取均可走真实接口；本地假数据仅作联调兜底 |
 | 范围 | 本期只 PC |
@@ -54,6 +55,7 @@
 | `send-box.vue` | 475 | `hasAgentMention` 用 `ga_` 前缀判断 | 拆成 `hasGroupAgentMention` / `hasPersonalAgentMention`，均按 `agentKind` |
 | `send-box.vue` | 526 / 1017 | 直接写 `$parent.agentMemoryBarVisible` | 分别驱动群筛选条 / 个人 AI 筛选条两个可见性 |
 | `send-box.vue` | 563 / 982 | 草稿恢复按 `ga_` 前缀过滤 | 恢复时保留 `agentKind`；草稿里没有该字段的旧数据按群兜底 |
+| `send-box.vue` | **621–625** | **`replyAt` 只 `push({ id, name })`，无 `agentKind`/`agentId`** | **按被回复消息身份补全**：本人个人 AI → `{ id, name, agentKind: 'personal', agentId }`；群 AI → `{ …, agentKind: 'group' }`。三端同构缺陷，见「已知缺陷」 |
 | `send-box.vue` | 761 | `peopleList` 里按 `ga_` 挑智能体 | 按 `agentKind` 区分；已有智能体时两类都不进候选 |
 | `send-box.vue` | 1415 | `atUserList` 的 `isAgent` 判断 | 个人 AI 同样按智能体规则取 `atUserName`，勿走真人分支 |
 | `send-box.vue` | 1442 | 收集 `_agentIds` 并组 `agentChatData`，无 `agentId`、`aiRoleId` 写死 `'1'` | **两条分支都补 `agentId`**（群取 `$parent.agentMemoryAgentId`，个人取 `groupAgentRels[].agentId`）；`aiRoleId` 维持 `'1'`；个人分支额外带 `dataRangeScopeList` |
@@ -70,8 +72,14 @@
 flowchart TD
   START([群聊输入区]) --> ENTRY{用户动作}
 
-  ENTRY -->|右键回复| REPLY[显示 IM 回复条<br/>msg-refer]
-  REPLY --> ENTRY
+  ENTRY -->|右键 @回复| REPLY[显示 IM 回复条<br/>并插入 @ mention]
+  REPLY --> KIND{被回复消息身份?}
+  KIND -->|extra.personalAccountId=本人| AT_PA["@ 写入 agentKind=personal + agentId"]
+  KIND -->|ga_ 无该字段| AT_GA["@ 写入 agentKind=group"]
+  AT_PA --> BAR_PA
+  AT_GA --> BAR_GA
+  ENTRY -->|右键普通回复| REPLY_PLAIN[仅回复条 · 不插智能体 @]
+  REPLY_PLAIN --> ENTRY
 
   ENTRY -->|点工具栏「@智能体」| BTN{输入区已有智能体 @?}
   BTN -->|是| BTN_SKIP[不插入 / 无操作]
@@ -133,12 +141,26 @@ flowchart TD
   ACT -->|已有群智能体时再选个人AI<br/>或反过来| BLOCK[拦截：不可换绑<br/>需先删现有智能体 @]
 ```
 
+## 已知缺陷（2026-07-29 · 三端同因）
+
+**复现**：群聊 `@个人AI` → 个人 AI 回复 → 对该回复点「@回复」→ 曾误出**群**智能体筛选条 / 旁路群 `agentId`。
+
+**根因**：`@回复` 插入 mention 时只带了发送人 `ga_` id / 名，**未写 `agentKind` / `agentId`**；「无 agentKind + ga_ → 群」兜底误判。
+
+| 端 | 插入点 | 状态 |
+|----|--------|------|
+| desktop | `send-box.vue` · `buildReplyAtMention` | ✅ 已修（2026-07-29） |
+| android | `RongExtension.fillReferAtAgentIdentity` + `insertOrDeleteReferHead` 五参 AtNameSpan | ✅ 已修（2026-07-29） |
+| ios | `addReplyAtUser:` 写 `agentKind`/`agentId` | ✅ 已修（2026-07-29） |
+
+**验收**：@回复本人个人 AI → 个人筛选条 + get(`accountId`+`agentId`)；发送 `aiRobtChat.agentId`=个人；@回复群 AI 仍走群路径。
+
 ## 本期不做
 
-- 移动端
+- 移动端（**例外**：上节「已知缺陷」为跨端同因，安卓 / iOS 须按同一已决修；产品对齐见各自 feature 的 spec）
 - 像素级复用 web 组件（PC 自实现，只对齐能力与交互）
 - `MsgRangeBar` / `MailSelector`（与现网 `@` 群智能体一致）
-- 改动或回归 `@` 群智能体现有逻辑
+- 改动或回归 `@` 群智能体现有逻辑（修 @回复 agentKind 时须回归群 @回复）
 
 ## 依赖
 
@@ -182,6 +204,7 @@ flowchart TD
 - [x] DataScope 选人/群弹窗数据源：复用 PC 转发弹窗那套（详见 `context/platforms/desktop-forward-dialog.md`）——最近联系人走 `GetConversationSort.all`、群走 `groupListApi`、搜索走 `getAccountSearchByUserName` + `getGroupBySearch`、组织架构走 `getDeptUserPagelist`；选择模型 `{type, id, key}`，映射到 `scopeDataType`（私聊 1 / 群聊 3）+ `scopeDataId`
 - [x] `groupAgentRels` 时机：与群智能体同路，`initList` → `groupInfoApi`；切会话清空缓存列表重拉；本期不做个人 AI 新建/删除实时推送
 - [x] 错误路径：对齐群——get/save 失败仅 `console.log`、不 toast；本期不加防抖
+- [x] **@回复 写入 agentKind**：本人个人 AI 消息 → `personal` + `agentId`；群 AI → `group`（2026-07-29 已决；代码待修）
 
 ## 参考路径
 
@@ -191,3 +214,6 @@ flowchart TD
 - PC 记忆条：`apps/desktop/src/renderer/components/chitchat/sendbox/agent-memory-bar.vue`
 - PC 挂载：`apps/desktop/.../chitchat/chat-box.vue`
 - PC `@` 列表：`apps/desktop/.../sendbox/send-box.vue`
+- PC `@回复` 插入：`apps/desktop/.../sendbox/send-box.vue` · `replyMsgObj` watcher
+- Android `@回复` 插入：`RichEditText.insertOrDeleteReferHead` ← `RongExtension.toReference`
+- iOS `@回复` 插入：`ZXRCIMBaseChatController.addReplyAtUser:`

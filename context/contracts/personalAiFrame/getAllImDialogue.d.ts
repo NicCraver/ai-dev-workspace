@@ -4,8 +4,10 @@
  * 用途：① 个人 AI 框选会话 / 选智能体时拉取全部 IM 会话列表；
  *       ② 四端「选择数据来源」弹窗的候选清单（全量人 + 群，一次拉取、弹窗内存缓存）
  * Changelog:
+ * - 2026-07-29 联调确认：selectModel=1 仍可能返回 agentId/agentName/agentAvatar 全为 null。
+ *   「选择 AI 框」消费方须先按 targetId 调 batchGetAgent 补齐，再过滤无 agentId 的项。
  * - 2026-07-29 新增消费方：web「选择 AI 框」弹窗（selectModel 传 1）。
- *   前端再过滤无 agentId 的项；忽略 selected 字段作为弹窗选中态。
+ *   忽略 selected 字段作为弹窗选中态。
  * - 2026-07-29 新增消费方：四端「选择数据来源」弹窗（selectModel 传 0）。
  *   注意：本接口的 selected 字段来自 ai_frame_user_setting，是个人 AI 框「列表」的选中态，
  *   与 DataScope 无关；弹窗已选态一律以 getAgentDataRange 的 dataRangeScopeList 为准。

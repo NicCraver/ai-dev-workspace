@@ -33,11 +33,16 @@
 { "type": "personal-ai:open-chat", "payload": { "id": "<belongId>", "type": "group" | "chat", "name"?: "<显示名>", "avatar"?: "", "corpId"?: "", "groupType"?: 0 } }
 // type: "group"=群聊 / 其它（如 "chat"）=私聊；宿主 openConversationById：列表有则选中，无则用 name/avatar 重建会话再打开
 
-// AiBrowser → AI框 iframe：切到 AI框 tab 时通知验版（对象或 JSON 字符串均可）
+// AiBrowser → AI框 iframe：切到 AI框 tab 时通知验版 + 激活（对象或 JSON 字符串均可）
 { "source": "zx-pc", "type": "aiBoxCheckVersion" }
-// web 对比 /ai-chat/build_version 与 JENKINS_BUILD_NUMBER；不一致则先把当前选中写入 URL query（agentId/belongId/belongType/sessionId），再静默 location.reload()
+// web：pageActive=true；冲延后消息刷新；getLastSessionMessage 只更新记忆栏；再对比 /ai-chat/build_version
+// 与 JENKINS_BUILD_NUMBER；不一致则先把当前选中写入 URL query（agentId/belongId/belongType/sessionId），再静默 location.reload()
 // 刷新后：URL 深链（belongType 1|3）一律 saveSelected → list → 选中 AI 框；chat-ready 后再按 sessionId 选会话；个人框直接匹配；否则默认个人 AI 框
-// PC web 另可通过 `useDocumentVisibility`（hidden→visible）触发同一验版；移动端不做（进页重载）；desktop 的 `aiBoxCheckVersion` 仍建议保留（AiBrowser 内 tab 切换兜底）
+// PC web 另可通过 `useDocumentVisibility`（hidden→visible）触发同一激活/验版（须 shellActive 仍为 true）；移动端不做
+
+// AiBrowser → AI框 iframe：切离个人 AI tab / 关闭面板
+{ "source": "zx-pc", "type": "aiBoxDeactivate" }
+// web：shellActive=false；之后推送命中当前会话只记 pending，不立刻刷 Chat 消息（list/History 仍刷）
 ```
 
 ## 方法清单
@@ -121,6 +126,7 @@ web 分流：`payload.ok` → 新；有 `payload.scopes` → 老。取消：`cod
 
 - 2026-07-23 web 兼容老 iOS：开页同时传 `agentId`+`initialScopes`；回传按 `ok`（新）/ `scopes`（老）分流。
 - 2026-07-22 选择数据范围（ios/android）：入参改 `{agentId,accountId?}`；原生 `getAgentDataRange` 返显 + `saveDataRange` 落库；桥成功只 ACK `{ok:true}`；web 再拉记忆。方案 `plan-数据范围原生落库.md`。
+- 2026-07-29 AiBrowser → iframe：新增 `aiBoxDeactivate`（切离个人 AI / 关面板）；`aiBoxCheckVersion` 兼作激活（冲延后消息 + 只刷记忆 + 验版）。web `pageActive = docVisible && shellActive`。
 - 2026-07-22 android 选择数据范围：web 打开走 `WebView.selectDataRangeScope`；回传 `javascript:dataRangeScopeResultFromAndroid(...)`（不再 pull `getSelectDataRangeResult`）；已被上条原生落库方案取代入参/回传形态。
 - 2026-07-21 强刷选中改 URL：`aiBoxCheckVersion` / visibility 验版变更前 `writeActiveSelectionToUrl`；reload 后 1|3 一律 save→list→选中（不再用 sessionStorage）。
 - 2026-07-21 AiBrowser → iframe：`aiBoxCheckVersion`（切到 AI框 tab）；web 静默对比 `build_version`，变更则 reload。

@@ -47,6 +47,7 @@ npm run build:clean
 - 工具链整体偏老（Vue 2 / webpack 4 / ESLint 4 / babel 6-7），新 IDE 插件可能不兼容；`postinstall` 会自动 `lint:fix`，拉代码后留意工作区 diff。
 - **禁用 ES2020 语法**（可选链 `?.`、空值合并 `??`）：webpack4/babel6-7 目标运行时不转译，用 `&&` 兜底（如 `(x && x.y) || []`、`data && data.type`）。渲染层 `.vue`/`.js`、preload `static/plugin/webview.js` 均适用。（web 端 apps/web 可用 `?.`——跑在 webview 现代 Chromium。）
 - `electron-builder.yml` 已在 .gitignore，但仓库内仍存在，**Windows 签名证书密码明文**（`certificatePassword`）——勿外泄，勿重新提交该文件。
+- **提交禁忌（必守）**：`.env.test` / `electron-builder.yml` / `package.json` / `package-lock.json` 只允许本地调试改动（localhost、`-test` 包名、arm64、leveldown 等），**禁止 `git add` / commit / push**；功能提交只带业务源码与单测。误 stage 了先 `git restore --staged` 再还原文件。
 - 多窗口 + `@electron/remote` + IPC 交错，窗口生命周期/单例/关闭逻辑易出竞态（`src/main/index.js` 的 `closeWin`/`gologin`/`realQuit` 等）。
 - 渲染层三套 UI 库（element-ui/ant-design-vue/iview）混用，体积大、风格不统一，新功能尽量沿用同域既有库。
 
