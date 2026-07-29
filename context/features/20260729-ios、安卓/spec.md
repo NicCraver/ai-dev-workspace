@@ -11,7 +11,7 @@
 1. `@` 候选人列表只出现可 @ 的机器人（不可 @ 的直接不展示）。
 2. 机器人消息：可 @ → 显示「@回复」；不可 @ → 只显示普通「回复」（不藏「回复」）。
 3. 机器人数据仍来自 `POST /api/chat/v1/group/get` 的 `groupRobots[]`（不新开接口）。
-4. 本期只改 **android + ios**；web / desktop 不动。
+4. 本期只做 **ios**（安卓不需要本改动，已撤回）；web / desktop 不动。
 
 ## 可 @ 判定（唯一规则）
 
@@ -76,8 +76,8 @@ canAtRobot(robot) =
 | 接口 | 字段 | 说明 |
 |------|------|------|
 | `POST /api/chat/v1/group/get` | `data.groupRobots[]` | 既有；确认为本功能机器人唯一来源 |
-| 同上 | `groupRobots[].chatRobotType` | 既有；两端模型已有 |
-| 同上 | `groupRobots[].hasCallBackAddress` | **新增消费**；两端模型目前缺失，需解析落库 |
+| 同上 | `groupRobots[].chatRobotType` | 既有；ios 模型已有 |
+| 同上 | `groupRobots[].hasCallBackAddress` | **新增消费**；ios 模型已补 |
 
 契约文件：新建或扩展 `context/contracts/` 下 `group/get` 机器人片段（可与现有 `groupGet.groupAgentRels.d.ts` 并列，如 `groupGet.groupRobots.d.ts`）。
 
