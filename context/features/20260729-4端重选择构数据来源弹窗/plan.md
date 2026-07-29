@@ -18,7 +18,7 @@
 - 列表**按后端返回顺序**渲染，前端不排序。
 - 外联群判据：`groupInfo.type >= 10`；缺省或 `< 10` 为组织群。
 - `saveDataRange` 的 `dataRangeScopeList` **必须传全量明细**，不得用空列表覆盖。
-- 搜索为纯前端：对 `targetName` 做忽略大小写的子串匹配，全局搜人+群，**不发网络请求**。
+- 搜索为纯前端 **popover**：对会话名 + 智能体名做忽略大小写子串匹配，全局搜人+群，**不发网络请求**；主列表不随关键字过滤；表头全选始终按未过滤全量。
 - 不改 `selectDataRangeScope` 桥协议（入参 `{agentId, accountId?}`、成功只 ACK `{ok:true}`）。
 
 ---
