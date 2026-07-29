@@ -1,6 +1,6 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（spec + plan 已产出；尚无代码改动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（本功能尚无实现；apps 脏树已归类，非本期进展）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -22,7 +22,9 @@
 - (全端) 契约 `saveDataRange.d.ts` 需补 `groupAndAccountSelectAll` / `organizationGroupSelectAll` / `outreachGroupSelectAll`（0/1，非必填）+ Changelog；`getAllImDialogue.d.ts` 与 YApi 零 diff，只补「新增消费方」一行
 - (desktop) 待改造 `personal-ai-data-scope-dialog.vue`（945 行，唯一消费方 `personal-ai-memory-bar.vue`，无外部回归面），改造时顺带拆分取数与选中集合
 - (全端) 抓包待确认 4 项：`getAllImDialogue` 返回顺序是否稳定、组织群的 `groupInfo.type` 实际取值、后端在 `selectAll=1` 时补录新增群的时机、全量数据量级（决定是否需虚拟列表）
-- (说明) 本仓库 `apps/android`、`apps/ios`、`apps/desktop` 工作区的既有本地改动属前序功能（`20260728-安卓端@个人AI框` 等），**不属于本功能**
+- (ios) 工作区脏树（筛选条 UI / `aiRobtChat`·`saveDataRange` dataRangeList / `@` 高亮 / 时间弹窗宽度）→ 归属 **`20260728-ios端at个人AI框`**，**不推进本功能矩阵**
+- (android) 工作区脏树（ConversationFragment / RichEditText / UIMessage 等）→ 归属前序 `@个人AI框` 相关，**不推进本功能矩阵**
+- (说明) 本功能矩阵保持全 ⬜；开项从 desktop Task 1/2 开始
 
 ## 关键决策记录
 
@@ -37,3 +39,4 @@
 - 2026-07-29 **保存**：`dataRangeScopeList` 照传全量明细 + 三个标记，不得空列表覆盖
 - 2026-07-29 **落地策略**：desktop 先跑通并抓包 → 沉淀 impl-notes → 其余三端照 notes 移植（不读源端代码）
 - 2026-07-29 切换活跃功能：`ACTIVE` 由 `20260728-安卓端@个人AI框` 改为本功能（原功能真机 E2E 未完，见其 status）
+- 2026-07-29 收尾确认：apps/android、apps/ios 脏树均非本功能实现，矩阵保持 ⬜
