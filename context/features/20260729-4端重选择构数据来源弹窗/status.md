@@ -1,6 +1,6 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（ios 已 commit/push `890905ae3`；真机 E2E 待）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（ios `890905ae3`；web 脏树已 push `f3913ef`（推送延后/占用弹窗，非本功能）；真机 E2E 待）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -44,7 +44,8 @@
 | 弹窗改造（取数 / 本地搜索 / tab「全部」/ emit `{scopes,flags}`） | `90607f2` |
 | save 链路全量化 + 三标记三态 | `3ceada40` |
 | 整枝审查修复（双 emit / SSE / 移动端 ACK flags） | `7f209c6` |
-| 搜索改 AiBoxSearchBox popover + 主列表不过滤 | 未提交 |
+| 搜索改 AiBoxSearchBox popover + 主列表不过滤 | `2ad2f15` |
+| （同分支旁路）推送延后激活 + SettingEditClashDialog | `f3913ef` |
 
 ## android / ios（分支 `personal-ai-chat`）
 
