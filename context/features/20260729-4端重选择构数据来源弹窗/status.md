@@ -1,20 +1,20 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（web/desktop 搜索 UI 对齐发送目标：popover 本地搜；**真机手测未做**；android/ios 未开工）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（android/ios 原生页代码完成；四端均待真机手测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 契约更新 · plan Task 1 | ✅（共用） | ✅（共用） | ✅（共用） | ✅（共用） |
-| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ⬜ | ⬜ | ✅ 18/18 |
-| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ⬜ | ⬜ | ✅ |
-| 搜索 UI 对齐发送目标（popover）· plan Task 11 | ✅ | — | — | ✅ |
-| 接口联调（抓包验证）· plan Task 6 | 🚧 待手测 | ⬜ | ⬜ | 🚧 待手测 |
+| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ✅ 17/17 | ✅（无单测基建，ZXDataScopeModel） | ✅ 18/18 |
+| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ✅ 代码完成 | ✅ 代码完成 | ✅ |
+| 搜索 UI 对齐发送目标（popover）· plan Task 11 | ✅ | —（独立搜索页本地过滤） | —（独立搜索页本地过滤） | ✅ |
+| 接口联调（抓包验证）· plan Task 6 | 🚧 待手测 | 🚧 待真机 | 🚧 待真机 | 🚧 待手测 |
 | 自测通过 · plan Task 10 | ⬜ | ⬜ | ⬜ | ⬜ |
 
-> **已完成**：desktop、web（含搜索 popover）。**未开工**：android、ios（走原生页 + 桥，见 impl-notes）。
-> web 只改 PC 分支弹窗；移动端 web 走 `selectDataRangeScope` 桥打开 ios/android 原生页，原生两端改完即自动一致。
+> **代码完成**：desktop、web、android、ios。**真机/E2E 未做**。
+> web 只改 PC 分支弹窗；移动端 web 走 `selectDataRangeScope` 桥打开 ios/android 原生页。
 
 ## desktop 提交（分支 `personal-ai-chat`）
 
@@ -45,13 +45,21 @@
 | 整枝审查修复（双 emit 竞态 / SSE 体污染 / 移动端 ACK flags 陈旧） | `7f209c6` |
 | 搜索改 AiBoxSearchBox popover（candidates 本地）+ 主列表不过滤 | 未提交 |
 
+## android / ios（分支 `personal-ai-chat`，**未 commit**）
+
+| 端 | 内容 |
+|----|------|
+| android | `DataScopeModel` + 17 单测；`getAllImDialogue` 网络层；`SelectDataRangeActivity` 改候选/门闩/三态；Group/Search multi 本地过滤；段头「全部」 |
+| ios | `ZXDataScopeModel`；`API_GetAllImDialogue` + Manager；`ZXSelectAiAgentController` dataRange 模式改候选/门闩/三态/允许清空；群列表/搜索复用 dialogue 缓存 |
+
 ## 待办 / 阻塞
 
 - (desktop/web) ⏳ **真机手测未做**（含新搜索 popover：零接口、勾选互通、表头全选仍按全量）。
+- (android/ios) ⏳ **真机自测未做**：打开页只发 2 请求、本地搜零接口、全选联动、save 三标记、桥 ACK 后胶囊刷新；android 单测 17/17、ios x86_64 模拟器 BUILD SUCCEEDED。
+- (android/ios) ⏳ 群头像：接口前 4 URL 拼合未完全对齐 PC（android 暂取首 URL / 退回本地拼图；ios 仍本地拼图）。
 - (全端) ❌ **后端待实现**：`getAgentDataRange` 回参补三个全选标记（契约已加并标 `@unconfirmed`）。
 - (全端) ⏳ 抓包待确认 4 项：返回顺序、`groupInfo.type`、selectAll 补录时机、量级。
 - (全端) ⏳ **最脆假设待验证**：私聊 `targetId` 是否等于组织架构 `accountId`。
-- (android/ios) **本功能未开工**，走原生页 + `selectDataRangeScope` 桥。
 
 ## 关键决策补充（搜索 UI · 2026-07-29）
 
@@ -60,3 +68,4 @@
 - 主列表不随关键字过滤，只更新勾选态；表头全选与上报三标记均按未过滤全量
 - web：`selectedKeys` 对搜面板适配为 `ownerType:id`；内部集合仍 `1_id` / `3_id`
 - desktop：新建 `data-scope-search-box.vue`，不改全局 `search-box.vue` HTTP 行为；已选 chip 补头像
+- 移动端：保持纵向独立搜索页，但候选改为主页缓存的 `getAllImDialogue` 全量本地过滤（非 DB / 非融云列表）

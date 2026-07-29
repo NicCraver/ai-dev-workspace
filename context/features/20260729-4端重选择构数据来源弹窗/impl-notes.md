@@ -117,3 +117,15 @@ outreachGroupSelectAll     = 外联群分区全部在选中集合里 ? 1 : 0
 PC 端无。
 
 移动端 web 的「数据范围」胶囊经 `selectDataRangeScope` 桥打开 ios/android 的**原生页**（原生页自己 `getAgentDataRange` 返显 + `saveDataRange` 落库，成功只 ACK `{ok:true}`，web 收到后再 get 刷新）。因此 ios/android 改完原生页，移动端 web 自动一致，web 仓库只需改 PC 分支弹窗。协议本期不变，详见 `context/bridge.md`。
+
+## 移动端落地补充（2026-07-29）
+
+android / ios 原生页已按上文核心模型改造（代码完成，真机未测）：
+
+- 候选：`getAllImDialogue({accountId, selectModel:0})`，页生命周期内一次；主页与群/搜索子页共享内存缓存，子页不再单独拉列表接口。
+- 段头「最近聊天」→「全部」；群页仍按组织群/外联群分区（判据同 `splitGroups`）。
+- 搜索：独立搜索页，对缓存全量做本地子串过滤，零网络。
+- 三态 / 门闩：与 PC 一致；筛选条其它 save 路径不传三标记（保持未知省略）。
+- 用户主动清空全部来源：允许 save 空 `dataRangeScopeList`（前提是 restore 成功）；与「restore 失败禁止 save」不冲突。
+- 选中集合 key 统一为 `"1_id"` / `"3_id"`（android 旧 `private:id`/`group:id` 仅在本流程内已切换）。
+- 群头像：契约要求接口前 4 人 URL 拼合；两端短期仍部分依赖本地拼图能力，视觉可能与 PC 有差，真机确认后再补。
