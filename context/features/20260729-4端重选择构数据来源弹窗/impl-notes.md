@@ -130,3 +130,4 @@ android / ios 原生页已按上文核心模型改造（代码完成，真机未
 - 选中集合 key 统一为 `"1_id"` / `"3_id"`（android 旧 `private:id`/`group:id` 仅在本流程内已切换）。
 - 群头像：契约要求接口前 4 人 URL 拼合；两端短期仍部分依赖本地拼图能力，视觉可能与 PC 有差，真机确认后再补。
 - **iOS 入口坑（2026-07-29）**：桥 `selectDataRangeScope` 打开的是 `ZXPersonalAiPickerController`（`Picker/`），不是旧的 `ZXSelectAiAgentController`。改造必须落在 Picker；只改 SelectAiAgent 在真机抓包看不到 `getAllImDialogue`。
+- **iOS 打开卡死（2026-07-29）**：候选改为全量后，旧的 `syncDataSourceFlags` / `applyInitialScopes` 对 dataSource×selected 做嵌套扫描，再叠加每条 `enrichContactDisplayName` 同步查库，主线程 O(n²) 卡死。已改为 `selectedKeySet` O(1) 判定，返显只记 key、候选到位后再映射，禁止批量扫库。
