@@ -2,6 +2,12 @@
  * 契约：个人AI框域 · 知识范围获取
  * POST /agentSetDataRangeExpand/getAgentDataRange
  * Changelog:
+ * - 2026-07-29 @unconfirmed 回参新增三个全选标记 groupAndAccountSelectAll /
+ *   organizationGroupSelectAll / outreachGroupSelectAll（0/1，与 saveDataRange 入参对称）。
+ *   起因：这三个标记表达「用户勾了全选」的意图，只由「选择数据来源」弹窗产出；而 saveDataRange
+ *   是全量 save（改时间/联网/知识类型都会触发）。若 get 不回传，重启或换会话后前端标记回落 0，
+ *   用户随手改个联网就会把后端已存的全选意图静默清零。**后端尚未实现，待联调确认**；
+ *   未返回时前端不得按 0 上报，应从 saveDataRange 载荷中省略这三个 key。
  * - 2026-07-27 个人 AI 实测：dataRangeList 为 3/4/1/2（无 0）；默认全选；
  *   dataRangeScopeList 可为 null；timeInfoList type 2–20；knowledgeNeedAuthList 可空；
  *   入参个人 AI 场景优先 accountId+agentId
@@ -12,6 +18,7 @@
  */
 
 import type { ApiResponse } from '../_common';
+import type { PersonalAiFrameSelectAllFlag } from './saveDataRange';
 
 /** POST /agentSetDataRangeExpand/getAgentDataRange 入参 */
 export interface PersonalAiFrameGetAgentDataRangeReq {
@@ -97,6 +104,16 @@ export interface PersonalAiFrameGetAgentDataRangeData {
   knowledgeNeedAuthList?: PersonalAiFrameKnowledgeNeedAuthItem[];
   /** 数据范围（私聊/群聊对象）；个人 AI 实测可为 null，前端当 [] */
   dataRangeScopeList?: PersonalAiFrameAgentDataRangeScopeItem[] | null;
+  /**
+   * @unconfirmed 人员和群勾选全部：1-勾选了全部；0-未勾选全部
+   * 与 saveDataRange 入参同名字段对称，供前端 restore 全选意图。
+   * 后端未实现时为 undefined —— 此时前端不得按 0 上报，应从 save 载荷省略这三个 key
+   */
+  groupAndAccountSelectAll?: PersonalAiFrameSelectAllFlag;
+  /** @unconfirmed 组织群勾选全部：1-勾选了全部；0-未勾选全部（组织群 = groupInfo.type 缺省或 < 10） */
+  organizationGroupSelectAll?: PersonalAiFrameSelectAllFlag;
+  /** @unconfirmed 外联群勾选全部：1-勾选了全部；0-未勾选全部（外联群 = groupInfo.type >= 10） */
+  outreachGroupSelectAll?: PersonalAiFrameSelectAllFlag;
 }
 
 /** POST /agentSetDataRangeExpand/getAgentDataRange 完整回参 */
