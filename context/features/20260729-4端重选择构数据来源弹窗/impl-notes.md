@@ -1,7 +1,7 @@
 # Impl Notes：4端重构「选择数据来源」弹窗
 
 > 平台无关的实现笔记，是其他端移植的唯一逻辑依据。描述"逻辑"不描述"代码"。
-> 最后更新：2026-07-29（PC 端代码完成 + 经过 3 轮代码审查；**真机抓包未做**，标 ⏳ 的结论待补）
+> 最后更新：2026-07-29（四端代码完成；android/ios 未 commit；ios 桥入口与全量勾选性能坑已补；真机 E2E 未完）
 
 ## 核心模型（四端必须逐条一致）
 
@@ -120,7 +120,7 @@ PC 端无。
 
 ## 移动端落地补充（2026-07-29）
 
-android / ios 原生页已按上文核心模型改造（代码完成，真机未测）：
+android / ios 原生页已按上文核心模型改造（代码完成，apps 未 commit；真机 E2E 未完）：
 
 - 候选：`getAllImDialogue({accountId, selectModel:0})`，页生命周期内一次；主页与群/搜索子页共享内存缓存，子页不再单独拉列表接口。
 - 段头「最近聊天」→「全部」；群页仍按组织群/外联群分区（判据同 `splitGroups`）。
@@ -129,8 +129,8 @@ android / ios 原生页已按上文核心模型改造（代码完成，真机未
 - 用户主动清空全部来源：允许 save 空 `dataRangeScopeList`（前提是 restore 成功）；与「restore 失败禁止 save」不冲突。
 - 选中集合 key 统一为 `"1_id"` / `"3_id"`（android 旧 `private:id`/`group:id` 仅在本流程内已切换）。
 - 群头像：契约要求接口前 4 人 URL 拼合；两端短期仍部分依赖本地拼图能力，视觉可能与 PC 有差，真机确认后再补。
-- **iOS 入口坑（2026-07-29）**：桥 `selectDataRangeScope` 打开的是 `ZXPersonalAiPickerController`（`Picker/`），不是旧的 `ZXSelectAiAgentController`。改造必须落在 Picker；只改 SelectAiAgent 在真机抓包看不到 `getAllImDialogue`。
-- **iOS 打开卡死（2026-07-29）**：候选改为全量后，旧的 `syncDataSourceFlags` / `applyInitialScopes` 对 dataSource×selected 做嵌套扫描，再叠加每条 `enrichContactDisplayName` 同步查库，主线程 O(n²) 卡死。已改为 `selectedKeySet` O(1) 判定，返显只记 key、候选到位后再映射，禁止批量扫库。
+- **iOS 入口坑**：桥 `selectDataRangeScope` 打开的是选择壳首页（Picker），不是旧的「选择 AI 框」多选页。改造必须落在桥真正打开的页；改错入口则抓包看不到 `getAllImDialogue`。
+- **全量列表性能**：候选上千条时，勾选态判定必须用 key 集合 O(1)；禁止「列表 × 已选」嵌套扫描，禁止返显阶段对每条已选同步查本地通讯录。否则接口一返回主线程会卡死。两千条级打开可接受后，剩余风险主要在整表刷新与群头像拼合，不在勾选算法。
 
 ## 量级与性能（约 2000 条，评估 · 2026-07-29）
 
