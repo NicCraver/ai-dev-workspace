@@ -1,15 +1,16 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（spec 已产出并提交 `ce99dcf`；plan 待写；尚无代码改动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（spec + plan 已产出；尚无代码改动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| 契约更新（saveDataRange 三字段） | ⬜（共用） | ⬜（共用） | ⬜（共用） | ⬜（共用） |
-| 弹窗/页改造（换数据源 + 前端搜索 + 全选） | ⬜ | ⬜ | ⬜ | ⬜ |
-| 接口联调（抓包验证） | ⬜ | ⬜ | ⬜ | ⬜ |
-| 自测通过 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 契约更新（saveDataRange 三字段）· plan Task 1 | ⬜（共用） | ⬜（共用） | ⬜（共用） | ⬜（共用） |
+| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 弹窗/页改造（换数据源 + 前端搜索 + 全选）· plan Task 2/4/5/7/8/9 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 接口联调（抓包验证）· plan Task 6 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 自测通过 · plan Task 10 | ⬜ | ⬜ | ⬜ | ⬜ |
 
 > 落地顺序：**desktop 先行**（改造 + 抓包 + 沉淀 impl-notes）→ web / ios / android 照 impl-notes 复制。
 >
@@ -17,7 +18,7 @@
 
 ## 待办 / 阻塞
 
-- (全端) spec 待用户复核；plan.md 尚未产出
+- (全端) spec 与 plan 已产出（plan 共 10 个任务）；Task 6（desktop 联调 + impl-notes）是 Task 7/8/9 的前置，**未完成前不要开其他三端**
 - (全端) 契约 `saveDataRange.d.ts` 需补 `groupAndAccountSelectAll` / `organizationGroupSelectAll` / `outreachGroupSelectAll`（0/1，非必填）+ Changelog；`getAllImDialogue.d.ts` 与 YApi 零 diff，只补「新增消费方」一行
 - (desktop) 待改造 `personal-ai-data-scope-dialog.vue`（945 行，唯一消费方 `personal-ai-memory-bar.vue`，无外部回归面），改造时顺带拆分取数与选中集合
 - (全端) 抓包待确认 4 项：`getAllImDialogue` 返回顺序是否稳定、组织群的 `groupInfo.type` 实际取值、后端在 `selectAll=1` 时补录新增群的时机、全量数据量级（决定是否需虚拟列表）
