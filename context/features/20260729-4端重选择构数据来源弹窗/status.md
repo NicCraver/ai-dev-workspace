@@ -58,7 +58,8 @@
 - (desktop/web) ⏳ **真机手测未做**（含搜索 popover：零接口、勾选互通、表头全选仍按全量）。
 - (android) ⏳ **真机自测 + commit/push**：打开只发 2 请求、本地搜、全选联动、三标记、桥 ACK 后胶囊刷新。
 - (ios) ⏳ **真机自测**：打开只发 getAgentDataRange + getAllImDialogue；段头「全部」；群/搜索零额外列表请求；全选联动；save 三标记或未知省略；桥 ACK 与 `@` 筛选条再 get；然后 commit/push。
-- (android/ios) ⏳ 群头像：接口前 4 URL 拼合未完全对齐 PC（ios 暂用首个非空 URL）。
+- (android) ✅ 群头像：接口前 4 URL 拼 2×2（无 URL 退本地拼图）；待真机看列表/已选弹层。
+- (ios) ⏳ 群头像：仍可能用首个非空 URL / 本地拼图，未完全对齐 PC。
 - (ios) ⏳ 两千条级：整表 `reloadData` 仍可能顿挫；若体感差再拆。
 - (全端) ❌ **后端待实现**：`getAgentDataRange` 回参三个全选标记（契约 `@unconfirmed`）。
 - (全端) ⏳ 抓包待确认：返回顺序、`groupInfo.type`、selectAll 补录时机、量级；私聊 `targetId` === 组织架构 `accountId`。
