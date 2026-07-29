@@ -1,18 +1,19 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（desktop 代码完成并过 3 轮审查；**真机手测未做**；本轮只做 PC；ios 脏树归前序功能，**不推进本矩阵**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（desktop + web 代码完成过审；**真机手测未做**；android/ios 未开工）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 契约更新 · plan Task 1 | ✅（共用） | ✅（共用） | ✅（共用） | ✅（共用） |
-| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ⬜ | ⬜ | ⬜ | ✅ 17/17 |
-| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ⬜ | ⬜ | ⬜ | ✅ |
-| 接口联调（抓包验证）· plan Task 6 | ⬜ | ⬜ | ⬜ | 🚧 待手测 |
+| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ⬜ | ⬜ | ✅ 18/18 |
+| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ⬜ | ⬜ | ✅ |
+| 接口联调（抓包验证）· plan Task 6 | 🚧 待手测 | ⬜ | ⬜ | 🚧 待手测 |
 | 自测通过 · plan Task 10 | ⬜ | ⬜ | ⬜ | ⬜ |
 
-> **本轮范围（2026-07-29 用户决定）：只做 PC（desktop）**。web / android / ios 三端推后，待 desktop 手测跑通、impl-notes 定稿后再开。
+> **已完成**：desktop、web。**未开工**：android、ios（走原生页 + 桥，见 impl-notes）。
+> web 只改 PC 分支弹窗；移动端 web 走 `selectDataRangeScope` 桥打开 ios/android 原生页，原生两端改完即自动一致。
 >
 > web 只改 PC 分支弹窗；移动端 web 走 `selectDataRangeScope` 桥打开 ios/android 原生页，原生两端改完即自动一致，web 移动端分支不动。
 
@@ -30,17 +31,30 @@
 | 整枝审查修复第一轮（8 条） | `32ec5214` |
 | 整枝审查修复第二轮（5 条） | `6d936f8e`…`206eb1ad` |
 | 三态 null 链路修复 | `ddb2feec` |
+| UI 微调（标题关闭对齐 / 群组等宽子 tab / 表头「全部」） | 未提交 |
+| UI 打磨（列表行对齐 AiBoxRow：60 高/圆头像/双行/搜索图标） | 未提交 |
 
-契约提交（context 仓库）：`cf5b9b4`（saveDataRange 三字段）+ 本次 `getAgentDataRange` 三字段。
+契约提交（context 仓库）：`cf5b9b4`（saveDataRange 三字段）+ 本次 `getAgentDataRange` 三字段 + `67e67bc`（saveDataRange 注释与 getAgentDataRange @unconfirmed 同步）。
+
+## web 提交（分支 `personal-ai-chat`，BASE `a9a6d3e`）
+
+| 内容 | 提交 |
+|------|------|
+| service `getAllImDialogue` + 纯逻辑模型 + 18 条 node:test | `aef593a2` |
+| 弹窗改造（取数 / 本地搜索 / tab「全部」/ emit `{scopes,flags}`） | `90607f2` |
+| save 链路全量化 + 三标记三态（conditionMode/Chat/DataScopeBar/FilterBar/ChatInput） | `3ceada40` |
+| 整枝审查修复（双 emit 竞态 / SSE 体污染 / 移动端 ACK flags 陈旧） | `7f209c6` |
 
 ## 待办 / 阻塞
 
 - (desktop) ⏳ **真机手测未做**，这是 plan Task 6 的主体，也是其余三端移植的前置。手测清单见下。
+- (desktop) ⏳ UI 微调待提交：modal 标题/关闭对齐；群组子 tab 等宽满宽；表头「全部」；列表行对齐参考稿（行高 60、圆形拼合头像、agentName 副标题、搜索放大镜）。
 - (全端) ❌ **后端待实现**：`getAgentDataRange` 回参补三个全选标记（契约已加并标 `@unconfirmed`）。未实现期间前端按「未知态省略上报」兜底，不会清零后端意图，但也**无法在 restore 后还原全选态**。
 - (全端) ⏳ 抓包待确认 4 项：`getAllImDialogue` 返回顺序是否稳定、组织群 `groupInfo.type` 实际取值、后端在 `selectAll=1` 时补录新增群的时机、回参数组量级（是否需虚拟列表）。
 - (全端) ⏳ **最脆假设待验证**：`getAllImDialogue` 私聊项的 `targetId` 是否等于组织架构里的 `accountId`。不等则同一人产生两个 key，重复上报 + 返显错位。
 - (desktop) 代码审查遗留 Minor（手测时一并看）：`fetchPersonalAiMemorySettings` 触发面被放大（`mounted`/`activated`/切路由/切会话都会拉），若与飞行中的 save 撞上可能出现 UI 回跳；`initRange` 在草稿含 `replyMsgObj` 时提前 return 不走 sync，该路径下筛选条保持隐藏且不拉设置（既有缺陷）。
-- (web/android/ios) **本功能未开工**，等 desktop 手测结论与 impl-notes 定稿后再移植。
+- (android/ios) **本功能未开工**，走原生页 + `selectDataRangeScope` 桥，等 impl-notes 定稿后移植。web 移动端分支不动（原生页改完自动一致）。
+- (web) ⏳ 代码完成过审，**真机手测未做**，清单见下。
 - (ios) 工作区未提交改动（筛选条时间弹层右对齐/加宽、个人 `dataRangeList` 透传、save 空列表门闩、类型「类型+N」、联网仅图标）→ 归属 **`20260728-ios端at个人AI框`**，**不推进本功能矩阵**（ios 列保持 ⬜）。
 
 ## desktop 手测清单（plan Task 6）
@@ -84,3 +98,33 @@
 - 2026-07-29 **落地策略**：desktop 先跑通并抓包 → 沉淀 impl-notes → 其余三端照 notes 移植
 - 2026-07-29 切换活跃功能：`ACTIVE` 由 `20260728-安卓端@个人AI框` 改为本功能（原功能真机 E2E 未完，见其 status）
 - 2026-07-29 收尾确认：`apps/ios` 脏树属前序 `@个人AI框` 联调修补，本功能 ios 矩阵保持 ⬜
+
+## web 手测清单
+
+**必须抓包**
+- [ ] PC 弹窗选人/群点确定 → 立刻切时间触发 save，抓 `saveDataRange` 体：`dataRangeScopeList` 与三 `selectAllFlags` 都是新值（验证双 emit 竞态已修）
+- [ ] 抓 SSE 请求体（普通发送 + 重新生成各一次）：确认**不含** `selectAllFlags`；其余字段（dataRangeList/dataRangeScopeList/netSearch/deepThink/attachmentList/timeType）齐全
+- [ ] PC 设全选 → 切移动端原生改数据范围（新协议 ACK）→ 回 PC 切时间触发 save：三 `selectAllFlags` key **物理不存在**
+- [ ] 同上走老 iOS（legacy 数组）路径：三 key 同样省略
+- [ ] 打开弹窗只发 `getAgentDataRange` + `getAllImDialogue` 两个请求；切 tab、搜索**零请求**
+
+**交互**
+- [ ] 弹窗「全部」勾满 → 表头实心勾；去群组取消一个组织群 → 「全部」与组织群表头同时变半选
+- [ ] 搜索关键字 → 勾满可见项 → 表头显**全选**（非半选），点表头能全部取消
+- [ ] 搜索态点表头全选 → 清空搜索 → 确定 → 上报三标记按**全量**真实勾选
+- [ ] 组织架构勾的人与「全部」同一人勾选态互通（OrgPicker 旧 key `"private:id"` 与候选新 key `"1_id"` 经 `selectedKeysForOrg` 互通）
+- [ ] 候选清单加载中/失败时表头全选行不显示；失败时确定回传 `flags: null`，save 不带三 key
+- [ ] 设置页（`SkillEditFormBody` persist=false）数据范围弹窗正常工作、不写 agent 记忆
+
+**回归**
+- [ ] 群智能体（`@群AI`）主流程不受影响：`saveAgentMemory` 不带 `dataRangeScopeList`（群路径）的行为未变
+- [ ] 定时任务（persist=false）数据范围弹窗正常
+
+## 关键决策补充（web）
+
+- 2026-07-29 **web save 双路径全量化**：web 两条分散 save（`DataScopeBar.onSubmit` 改数据范围 / `Chat.saveAgentMemory` 改时间·联网·深思）都打同一 endpoint；按用户决定都改全量 + 三态。`changeConditionMode` 的 snapshot 不含 `dataRangeScopeList`/`selectAllFlags`，故改数据范围只走 DataScopeBar 自 save，两路径不重叠
+- 2026-07-29 **web 三态链路**：弹窗 `flags:null`（取数失败/加载中）→ DataScopeBar（兼容数组/对象入参）→ `emit('update-flags')` → ChatInput → conditionMode.selectAllFlags=null → 两条 save 的 `if(flags)` 守卫使三 key 物理省略
+- 2026-07-29 **web 双 emit 竞态坑**（整枝审查发现）：DataScopeBar 同步连发 `update`+`update-flags`，Vue 3 事件回调内 props 不刷新，若 `updateSelectAllFlags` 用 `{...props.conditionMode}` 会用旧 `dataRangeScopeList` 覆盖新值。修法：只传增量字段（changeConditionMode 内部浅合并）
+- 2026-07-29 **SSE 体污染坑**：`...conditionMode.value` 会把 `selectAllFlags` 带进 AI 请求体，拼 SSE 入参时须解构剥离
+- 2026-07-29 **移动端 ACK flags 陈旧坑**：`applyNativeAckResult` 须 `emit('update-flags', null)`，否则 PC 缓存的陈旧 flags 会在切回 PC 改时间时覆盖原生刚存的值
+- 2026-07-29 web 端 key 格式沿用 model 的 `"<scopeDataType>_<scopeDataId>"`（如 `1_u1`），不学 desktop 旧式；OrgPicker 内部旧 key `"private:id"` 经 `selectedKeysForOrg` computed 适配，不改 OrgPicker

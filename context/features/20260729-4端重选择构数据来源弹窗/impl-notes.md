@@ -96,7 +96,12 @@ outreachGroupSelectAll     = 外联群分区全部在选中集合里 ? 1 : 0
 |---|------|----------|----------------|
 | 1 | `getAgentDataRange` 回参**不带**三个全选标记 | 前端 restore 后无法还原「全选意图」，而 `saveDataRange` 是全量 save，会把后端已存意图清零 | ✅ 已在 `getAgentDataRange.d.ts` 加三个字段并标 `@unconfirmed`，**后端待实现**。未返回期间前端按「未知态省略上报」兜底 |
 | 2 | `getAllImDialogue` 的 `selected` 字段容易被误用 | 它来自 `ai_frame_user_setting`，是个人 AI 框列表的选中态，不是 DataScope 的 | ✅ 契约 Changelog 已注明 |
-| 3 | PC 上真正构造 `saveDataRange` 载荷的不是筛选条组件 | 载荷在更上层的会话容器里用**显式字段枚举**拼装，新增字段不会自动透传，必须在那一层也加一次 | — （PC 特有，其他端注意自查自己的载荷组装点在哪） |
+| 3 | PC 上真正构造 `saveDataRange` 载荷的不是筛选条组件 | 载荷在更上层的会话容器里用**显式字段枚举**拼装，新增字段不会自动透传，必须在那一层也加一次 | — （desktop 特有，其他端注意自查自己的载荷组装点在哪） |
+| 4 | web 端 save 是**两条分散路径**（与 desktop 一条全量不同） | `DataScopeBar.onSubmit`（改数据范围，自己 save）与 `Chat.saveAgentMemory`（改时间/联网/深思，不带 `dataRangeScopeList`）。两条都打到同一 endpoint。`changeConditionMode` 的 save 触发 snapshot **不含** `dataRangeScopeList`/`selectAllFlags`，故改数据范围只走 DataScopeBar 自 save，两路径不重叠 | — （web 特有；按用户决定两条都改全量+三态，不重构触发链路） |
+| 5 | web Vue 3 双 emit 竞态 | `DataScopeBar.onSubmit` 同步连发 `update`+`update-flags`，事件回调内 props 不刷新。若 `updateSelectAllFlags` 用 `{...props.conditionMode}` 会用旧 `dataRangeScopeList` 覆盖刚写的新值。**修法：只传增量字段**（`changeConditionMode` 内部已浅合并）。android/ios 无此问题（非响应式 props 透传） | — （web 特有） |
+| 6 | web SSE 请求体污染 | `...conditionMode.value` 会把 `selectAllFlags` 带进 AI 接口请求体。拼 SSE 入参时须解构剥离 `selectAllFlags` | — （web 特有） |
+| 7 | web 移动端 ACK 后 PC flags 陈旧 | 移动端原生页改数据范围（新协议 ACK）后，`applyNativeAckResult` 须 `emit('update-flags', null)`，否则 PC 缓存的陈旧 `selectAllFlags` 会在切回 PC 改时间时覆盖原生刚存的值 | — （web 特有） |
+| 8 | web key 格式 | web 沿用模型的 `"<scopeDataType>_<scopeDataId>"`（如 `1_u1`）。`OrgPicker` 内部旧 key `"private:id"` 经 `selectedKeysForOrg` computed 适配，不改 OrgPicker | — （web 特有） |
 
 ⏳ **待抓包确认（4 项，PC 手测时补）**：
 1. `getAllImDialogue` 回参顺序是否稳定（是否已按 `activeTime` 倒序）；
