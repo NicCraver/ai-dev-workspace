@@ -1,20 +1,21 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（android/ios 改造落地；ios 已接到真桥入口 Picker 并修全量 O(n²) 卡死；四端真机 E2E 仍待）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（ios 按方案 A 重做落地：ZXDataScopeModel + getAllImDialogue + Picker 改造；未 commit；真机 E2E 待）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 契约更新 · plan Task 1 | ✅（共用） | ✅（共用） | ✅（共用） | ✅（共用） |
-| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ✅ 17/17 | ✅（无单测基建，ZXDataScopeModel） | ✅ 18/18 |
-| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ✅ 代码完成（未 commit） | ✅ 代码完成（未 commit；入口=Picker） | ✅ |
+| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ✅ 17/17 | ✅ ZXDataScopeModel（无单测基建） | ✅ 18/18 |
+| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ✅ 代码完成（未 commit） | 🚧 代码已重做（未 commit；待真机） | ✅ |
 | 搜索 UI 对齐发送目标（popover）· plan Task 11 | ✅ | —（独立搜索页本地过滤） | —（独立搜索页本地过滤） | ✅ |
-| 接口联调（抓包验证）· plan Task 6 | 🚧 待手测 | 🚧 待真机 | 🚧 接口已通；卡死已修待复测 | 🚧 待手测 |
+| 接口联调（抓包验证）· plan Task 6 | 🚧 待手测 | 🚧 待真机 | 🚧 待真机复测 | 🚧 待手测 |
 | 自测通过 · plan Task 10 | ⬜ | ⬜ | ⬜ | ⬜ |
 
-> **代码完成**：desktop、web、android、ios。**apps 侧 android/ios 改动尚未 commit/push**。
-> web 只改 PC 分支弹窗；移动端 web 走 `selectDataRangeScope` 桥打开原生页。
+> **ios**：前序一版用户不满意已撤回；本轮以当前已提交 Picker 为起点按方案 A 重做。
+> 两入口共用 `ZXPersonalAiPickerController`：① 桥 `selectDataRangeScope`；② 群聊 `@` 个人筛选条 `zx_presentPersonalAiDataScopePicker`。
+> web 只改 PC 分支弹窗；移动端 web 走桥打开原生页。
 
 ## desktop 提交（分支 `personal-ai-chat`）
 
@@ -50,16 +51,15 @@
 | 端 | 内容 |
 |----|------|
 | android | `DataScopeModel` + 17 单测；`getAllImDialogue`；`SelectDataRangeActivity` 候选/门闩/三态；Group/Search multi 本地过滤；段头「全部」 |
-| ios | `ZXDataScopeModel`；Manager `getAllImDialogue`；**真入口 `ZXPersonalAiPickerController`**（非 SelectAiAgent）；Group/Search 复用缓存；`selectedKeySet` 修全量 O(n²) 打开卡死；三态 save + restore 门闩 |
+| ios（本轮重做） | `ZXDataScopeModel`；Manager `getAllImDialogue` + save 三标记；Picker「全部」+ `selectedKeySet`；Group/Search 复用缓存本地过滤；restore 门闩 + 三态；两入口未改接线 |
 
 ## 待办 / 阻塞
 
 - (desktop/web) ⏳ **真机手测未做**（含搜索 popover：零接口、勾选互通、表头全选仍按全量）。
 - (android) ⏳ **真机自测 + commit/push**：打开只发 2 请求、本地搜、全选联动、三标记、桥 ACK 后胶囊刷新。
-- (android) ✅ 已选弹层 id/无头像：记忆返显后用候选清单+本地通讯录回填 name/avatar；列表人头像走本地绑定（2026-07-29 已装机待复测）。
-- (ios) ⏳ **复测打开页**（卡死修复后）：列表可交互、全选/滚动两千级体感、save 三标记、桥 ACK；然后 commit/push。
-- (android/ios) ⏳ 群头像：接口前 4 URL 拼合未完全对齐 PC。
-- (ios) ⏳ 两千条级：整表 `reloadData` + 群头像本地拼图仍可能顿挫；若体感差再拆后台归一化 / 优先接口头像 URL。
+- (ios) ⏳ **真机自测**：打开只发 getAgentDataRange + getAllImDialogue；段头「全部」；群/搜索零额外列表请求；全选联动；save 三标记或未知省略；桥 ACK 与 `@` 筛选条再 get；然后 commit/push。
+- (android/ios) ⏳ 群头像：接口前 4 URL 拼合未完全对齐 PC（ios 暂用首个非空 URL）。
+- (ios) ⏳ 两千条级：整表 `reloadData` 仍可能顿挫；若体感差再拆。
 - (全端) ❌ **后端待实现**：`getAgentDataRange` 回参三个全选标记（契约 `@unconfirmed`）。
 - (全端) ⏳ 抓包待确认：返回顺序、`groupInfo.type`、selectAll 补录时机、量级；私聊 `targetId` === 组织架构 `accountId`。
 
@@ -72,3 +72,6 @@
 ### iOS 入口与性能 · 2026-07-29
 - 桥 `selectDataRangeScope` → `ZXPersonalAiPickerController`（`Picker/`），不是 `ZXSelectAiAgentController`
 - 全量候选后勾选态必须用 key 集合 O(1)，禁止 dataSource×selected 嵌套扫描 + 批量同步查库
+
+### iOS 重做 · 2026-07-29
+- 用户撤回前序 ios 改造；本轮方案 A：抽出 `ZXDataScopeModel` + 原地改 Picker；两入口接线不动
