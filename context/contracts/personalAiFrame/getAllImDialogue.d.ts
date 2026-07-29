@@ -1,8 +1,12 @@
 /**
  * 契约：个人AI框域 · 获取所有IM会话
  * POST /personalAiFrame/getAllImDialogue
- * 用途：个人 AI 框选会话 / 选智能体时拉取全部 IM 会话列表（含选中态与群 AI 框信息）
+ * 用途：① 个人 AI 框选会话 / 选智能体时拉取全部 IM 会话列表；
+ *       ② 四端「选择数据来源」弹窗的候选清单（全量人 + 群，一次拉取、弹窗内存缓存）
  * Changelog:
+ * - 2026-07-29 新增消费方：四端「选择数据来源」弹窗（selectModel 传 0）。
+ *   注意：本接口的 selected 字段来自 ai_frame_user_setting，是个人 AI 框「列表」的选中态，
+ *   与 DataScope 无关；弹窗已选态一律以 getAgentDataRange 的 dataRangeScopeList 为准。
  * - 2026-07-28 新增 POST /personalAiFrame/getAllImDialogue
  */
 

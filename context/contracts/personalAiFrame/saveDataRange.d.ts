@@ -2,6 +2,10 @@
  * 契约：个人AI框域 · 知识范围记忆
  * POST /agentSetDataRangeExpand/saveDataRange
  * Changelog:
+ * - 2026-07-29 对齐 YApi（2026-07-28 更新）：新增 groupAndAccountSelectAll /
+ *   organizationGroupSelectAll / outreachGroupSelectAll 三个全选标记（0/1，非必填）。
+ *   语义：表达「用户勾了全选」的意图，后端据此在新增群时自动把新群补进 dataRangeScopeList。
+ *   前端仍需照传全量 dataRangeScopeList 明细，不得用空列表覆盖。
  * - 2026-07-14 新增 POST /agentSetDataRangeExpand/saveDataRange
  * - 2026-07-16 对齐 YApi：dataRangeType 明确 0–4（含 3-个人 / 4-分享）；
  *   dataRangeScopeList 子项 scopeDataType / scopeDataId 必填；字段注释补全
@@ -12,6 +16,9 @@ import type {
   PersonalAiFrameDataRangeChoose,
   PersonalAiFrameDataRangeScope,
 } from './_shared';
+
+/** 全选标记：1-勾选了全部；0-未勾选全部 */
+export type PersonalAiFrameSelectAllFlag = 0 | 1;
 
 /** POST /agentSetDataRangeExpand/saveDataRange 入参 */
 export interface PersonalAiFrameSaveDataRangeReq {
@@ -36,6 +43,15 @@ export interface PersonalAiFrameSaveDataRangeReq {
    * 子项必填：scopeDataType（1-私聊；3-群聊）、scopeDataId（私聊=人员 id；群聊=群组 id）
    */
   dataRangeScopeList?: PersonalAiFrameDataRangeScope[];
+  /**
+   * 人员和群勾选全部：1-勾选了全部；0-未勾选全部
+   * 前端按「选中数 === 候选全量数」推断，不由 getAgentDataRange 回参提供
+   */
+  groupAndAccountSelectAll?: PersonalAiFrameSelectAllFlag;
+  /** 组织群勾选全部：1-勾选了全部；0-未勾选全部（组织群 = groupInfo.type 缺省或 < 10） */
+  organizationGroupSelectAll?: PersonalAiFrameSelectAllFlag;
+  /** 外联群勾选全部：1-勾选了全部；0-未勾选全部（外联群 = groupInfo.type >= 10） */
+  outreachGroupSelectAll?: PersonalAiFrameSelectAllFlag;
 }
 
 /** POST /agentSetDataRangeExpand/saveDataRange 业务 data（成功时无业务字段） */
