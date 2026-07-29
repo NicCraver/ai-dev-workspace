@@ -129,3 +129,4 @@ android / ios 原生页已按上文核心模型改造（代码完成，真机未
 - 用户主动清空全部来源：允许 save 空 `dataRangeScopeList`（前提是 restore 成功）；与「restore 失败禁止 save」不冲突。
 - 选中集合 key 统一为 `"1_id"` / `"3_id"`（android 旧 `private:id`/`group:id` 仅在本流程内已切换）。
 - 群头像：契约要求接口前 4 人 URL 拼合；两端短期仍部分依赖本地拼图能力，视觉可能与 PC 有差，真机确认后再补。
+- **iOS 入口坑（2026-07-29）**：桥 `selectDataRangeScope` 打开的是 `ZXPersonalAiPickerController`（`Picker/`），不是旧的 `ZXSelectAiAgentController`。改造必须落在 Picker；只改 SelectAiAgent 在真机抓包看不到 `getAllImDialogue`。
