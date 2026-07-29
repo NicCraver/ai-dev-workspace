@@ -1358,3 +1358,20 @@ cd /Users/nic/w/ai-dev-workspace
 git add context/features/20260729-4端重选择构数据来源弹窗/
 git commit -m "docs(4端重构选择数据来源弹窗): 四端 E2E 结论与收尾"
 ```
+
+---
+
+### Task 11: web/desktop 搜索 UI 对齐发送目标（popover 本地搜）
+
+**Goal:** 「选择数据范围」顶栏搜索改为 popover；本地过滤、零接口；主列表不随关键字过滤。
+
+**Files:**
+- Modify: `apps/web/.../SelectDataRangeDialog.vue`
+- Modify: `apps/desktop/.../personal-ai-data-scope-dialog.vue`
+- Create: `apps/desktop/.../personal-ai-data-scope/data-scope-search-box.vue`
+- Modify: feature `spec.md` / `impl-notes.md` / `status.md`
+
+- [x] Step 1: 决策确认（popover + 全量候选 + 主列表不过滤）
+- [x] Step 2: web 换 `AiBoxSearchBox`（`candidates` + `multi`），去掉主列表 `filterByKeyword`
+- [x] Step 3: desktop 新增本地搜索 popover 组件并对齐 footer chip 头像
+- [x] Step 4: 更新 impl-notes / status 并 context commit
