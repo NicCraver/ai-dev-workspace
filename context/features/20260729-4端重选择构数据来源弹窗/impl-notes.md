@@ -131,3 +131,18 @@ android / ios 原生页已按上文核心模型改造（代码完成，真机未
 - 群头像：契约要求接口前 4 人 URL 拼合；两端短期仍部分依赖本地拼图能力，视觉可能与 PC 有差，真机确认后再补。
 - **iOS 入口坑（2026-07-29）**：桥 `selectDataRangeScope` 打开的是 `ZXPersonalAiPickerController`（`Picker/`），不是旧的 `ZXSelectAiAgentController`。改造必须落在 Picker；只改 SelectAiAgent 在真机抓包看不到 `getAllImDialogue`。
 - **iOS 打开卡死（2026-07-29）**：候选改为全量后，旧的 `syncDataSourceFlags` / `applyInitialScopes` 对 dataSource×selected 做嵌套扫描，再叠加每条 `enrichContactDisplayName` 同步查库，主线程 O(n²) 卡死。已改为 `selectedKeySet` O(1) 判定，返显只记 key、候选到位后再映射，禁止批量扫库。
+
+## 量级与性能（约 2000 条，评估 · 2026-07-29）
+
+本期仍一次拉全量、不做分页。粗评：
+
+| 环节 | 约 2k 条 |
+|------|----------|
+| 取数 + 归一化 | 通常可接受（几十～一两百 ms 量级，视 payload / 群成员列表而定） |
+| 内存 | 一般可接受（数 MB～十余 MB 量级） |
+| 列表滚动 | 原生列表有复用，通常可滚动；PC/web 为整表渲染、无虚拟列表，首屏挂载更易卡顿 |
+| 本地搜索 | O(n) 子串，可忽略 |
+| 全选 / 派生三标记 | O(n)；原生若整表刷新勾选态可能顿一下 |
+| 底栏已选展示 | 若选满全量，chip/列表未虚拟化会变重 |
+
+结论：~2k 对原生大致可撑；PC/web 更脆。现网若常到此量级，优先给 PC/web 加虚拟列表，再视情况优化原生全选刷新。最终仍以抓包确认的实际条数为准。
