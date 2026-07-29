@@ -61,7 +61,8 @@
 
 ## 关键决策记录
 
-- 2026-07-28 **对齐性复核（对 PC/iOS spec 逐条）**，改 5 处：① 个人路径 `aiRoleId` 由现网值改固定 `"1"`（群不动）；② `@` 列表个人项补本地缓存兜底（个人项按「群id_归属人id」+ belongType 0 落库，新增 `AgentDisplayKeyUtil`）；③ 联网胶囊只留图标；④ 时间弹层改右对齐；⑤ 互斥判据 `contains("ga_")` → `startsWith`、个人项加 `groupAgentType != 3` 过滤 —— `f86bd2b38`
+- 2026-07-29 **`aiRoleId` 三端统一固定 `"1"`**（群+个人都传，后端靠 `agentId` 判身份）；个人项过滤收紧为 `groupAgentType == 0`，群位置的 rel 不加类型校验（缺省 0 会误杀现网数据）—— `630ff1295`；⚠️ 群路径载荷变更，须回归群智能体主流程
+- 2026-07-28 **对齐性复核（对 PC/iOS spec 逐条）**，改 5 处：① 个人路径 `aiRoleId` 由现网值改固定 `"1"`（后于 07-29 扩到群）；② `@` 列表个人项补本地缓存兜底（个人项按「群id_归属人id」+ belongType 0 落库，新增 `AgentDisplayKeyUtil`）；③ 联网胶囊只留图标；④ 时间弹层改右对齐；⑤ 互斥判据 `contains("ga_")` → `startsWith`、个人项加 `groupAgentType != 3` 过滤 —— `f86bd2b38`
 - 2026-07-28 **Task 1–8 实现完成**并推送：模型、`@` 列表、分流、独立筛选条、get/save+DataScope、发送载荷、群胶囊文案、消息 tag/菜单；`assembleOnTestDebug` 通过
 - 2026-07-28 **本端补充坑**（已写入 impl-notes）：大输入区为第二条对称链路；DataScope 复用 web 同一 requestCode 须按发起方消费；`groupAgentRels` 随群信息落库供 `@` 列表与回显
 - 2026-07-28 切换活跃功能：`ACTIVE` 由 `20260728-ios端at个人AI框` 改为本功能
