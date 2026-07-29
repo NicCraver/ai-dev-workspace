@@ -1,20 +1,20 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（android/ios 原生页代码完成；四端均待真机手测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（android/ios 代码在工作区未 commit；真机仅做过 onTest 重装排查；四端 E2E/抓包未完成）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 契约更新 · plan Task 1 | ✅（共用） | ✅（共用） | ✅（共用） | ✅（共用） |
-| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ✅ 17/17 | ✅（无单测基建，ZXDataScopeModel） | ✅ 18/18 |
-| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ✅ 代码完成 | ✅ 代码完成 | ✅ |
+| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ✅ 17/17（工作区） | ✅ ZXDataScopeModel（无单测基建） | ✅ 18/18 |
+| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | 🚧 代码完成·未 commit | 🚧 代码完成·未 commit | ✅ |
 | 搜索 UI 对齐发送目标（popover）· plan Task 11 | ✅ | —（独立搜索页本地过滤） | —（独立搜索页本地过滤） | ✅ |
 | 接口联调（抓包验证）· plan Task 6 | 🚧 待手测 | 🚧 待真机 | 🚧 待真机 | 🚧 待手测 |
 | 自测通过 · plan Task 10 | ⬜ | ⬜ | ⬜ | ⬜ |
 
-> **代码完成**：desktop、web、android、ios。**真机/E2E 未做**。
-> web 只改 PC 分支弹窗；移动端 web 走 `selectDataRangeScope` 桥打开 ios/android 原生页。
+> **代码状态**：desktop/web 主体已在分支；android/ios DataScope 改造在工作区 **未 commit**。**真机/E2E 未验收**。
+> web 只改 PC 分支弹窗；移动端 web 走 `selectDataRangeScope` 桥打开原生页。
 
 ## desktop 提交（分支 `personal-ai-chat`）
 
@@ -45,21 +45,23 @@
 | 整枝审查修复（双 emit 竞态 / SSE 体污染 / 移动端 ACK flags 陈旧） | `7f209c6` |
 | 搜索改 AiBoxSearchBox popover（candidates 本地）+ 主列表不过滤 | 未提交 |
 
-## android / ios（分支 `personal-ai-chat`，**未 commit**）
+## android / ios（分支 `personal-ai-chat`，**工作区未 commit**）
 
 | 端 | 内容 |
 |----|------|
-| android | `DataScopeModel` + 17 单测；`getAllImDialogue` 网络层；`SelectDataRangeActivity` 改候选/门闩/三态；Group/Search multi 本地过滤；段头「全部」 |
-| ios | `ZXDataScopeModel`；`API_GetAllImDialogue` + Manager；`ZXSelectAiAgentController` dataRange 模式改候选/门闩/三态/允许清空；群列表/搜索复用 dialogue 缓存 |
+| android | `DataScopeModel` + 17 单测；`getAllImDialogue`；SelectDataRange 候选/门闩/三态；Group/Search multi 本地过滤；段头「全部」。顺带：群智能体筛选条 `checkedRangeList` 空指针防护、资料卡本地回退 `isEmpty` 写反修复、badge LayoutParams 安全转型。**SCHEMA 保持 73（按用户要求不改）**。已 onTest 重装，@ 闪退仍待用户确认。 |
+| ios | `ZXDataScopeModel`；`API_GetAllImDialogue`；dataRange/`Picker` 路径候选与三态；群/搜本地过滤。入口须改 `ZXPersonalAiPickerController`（见 impl-notes）。 |
 
 ## 待办 / 阻塞
 
-- (desktop/web) ⏳ **真机手测未做**（含新搜索 popover：零接口、勾选互通、表头全选仍按全量）。
-- (android/ios) ⏳ **真机自测未做**：打开页只发 2 请求、本地搜零接口、全选联动、save 三标记、桥 ACK 后胶囊刷新；android 单测 17/17、ios x86_64 模拟器 BUILD SUCCEEDED。
-- (android/ios) ⏳ 群头像：接口前 4 URL 拼合未完全对齐 PC（android 暂取首 URL / 退回本地拼图；ios 仍本地拼图）。
-- (全端) ❌ **后端待实现**：`getAgentDataRange` 回参补三个全选标记（契约已加并标 `@unconfirmed`）。
-- (全端) ⏳ 抓包待确认 4 项：返回顺序、`groupInfo.type`、selectAll 补录时机、量级。
-- (全端) ⏳ **最脆假设待验证**：私聊 `targetId` 是否等于组织架构 `accountId`。
+- (desktop/web) ⏳ **真机手测未做**（含搜索 popover：零接口、勾选互通、表头全选仍按全量）。
+- (android/ios) ⏳ **真机自测 / commit 未做**：打开页只发 2 请求、本地搜、全选联动、save 三标记、桥 ACK 后胶囊刷新；android 已重装 onTest，完整 DataScope E2E 未跑通确认。
+- (android) ⏳ `@` 智能体闪退：用户反馈后重装验证中；已修资料卡/群条空指针防护，**根因栈未抓到**，需用户复现后对照 logcat。
+- (android/ios) ⏳ 群头像：接口前 4 URL 拼合未完全对齐 PC。
+- (全端) ❌ **后端待实现**：`getAgentDataRange` 回参三全选标记（`@unconfirmed`）。
+- (全端) ⏳ 抓包 4 项：返回顺序、`groupInfo.type`、selectAll 补录时机、**量级（2k 性能见 impl-notes）**。
+- (全端) ⏳ **最脆假设**：私聊 `targetId` ≡ 组织架构 `accountId`。
+- (web/desktop) ⏳ 若现网常到 ~2k 条：优先虚拟列表；android 全选可改 DiffUtil（见 impl-notes）。
 
 ## 关键决策补充（搜索 UI · 2026-07-29）
 
