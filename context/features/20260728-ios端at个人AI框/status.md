@@ -1,6 +1,6 @@
 # Status：ios端at个人AI框
 
-> 最后更新：2026-07-29（联调修包续：@ 高亮、时间弹窗加宽；E2E 仍待手测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（联调修包续·未提交：save 空列表门闩 + 条内状态回写 + 时间弹层 Right 对齐；E2E 仍待手测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -41,6 +41,7 @@
 - (ios) ⚠️ **群智能体回归**：本期改动群 `@` 列表与 `ZXAIAgentFilterBar` 胶囊文案（「类型+N」），改完须回归群智能体主流程并**告知测试**
 - (ios) ⚠️ **胶囊文案变更**：知识类型「类型+N」（无前置图标）；DataScope「数据+N」；联网仅图标；时间弹层右对齐——须单独验证
 - (ios) 接口联调：已修 `aiRobtChat` 个人 `dataRangeList` 误压成 0/1/2、`saveDataRange` 空列表覆盖、个人 `@` 发送后 `atUserList` 漏写导致不高亮；仍待完整手测勾选
+- (ios) **未提交脏树（工作区）**：`saveDataRange` 前从筛选条回写现场状态；`dataRangeList` 为空则跳过 save；个人路径 `dataRangeParamsFromPersonalList` 透传；类型胶囊「类型+N」/联网仅图标；时间弹层 Right 对齐（个人宽 225、群侧 245）——须装包后抓包确认再提交
 - (ios) 筛选条 UI：时间弹层右对齐并右偏；个人时间宽 225、群智能体时间宽 245（「近一年」）
 - (ios) DataScope 复用现有 `ZXPersonalAiPickerController`，勿重写 Picker
 - (contracts) 已新增 `POST /personalAiFrame/getAllImDialogue`；**非本功能 iOS @ 主路径**

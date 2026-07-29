@@ -1,6 +1,6 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（desktop 代码完成并过 3 轮审查；**真机手测未做**；本轮只做 PC，其余三端推后）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（desktop 代码完成并过 3 轮审查；**真机手测未做**；本轮只做 PC；ios 脏树归前序功能，**不推进本矩阵**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -39,7 +39,8 @@
 - (全端) ⏳ 抓包待确认 4 项：`getAllImDialogue` 返回顺序是否稳定、组织群 `groupInfo.type` 实际取值、后端在 `selectAll=1` 时补录新增群的时机、回参数组量级（是否需虚拟列表）。
 - (全端) ⏳ **最脆假设待验证**：`getAllImDialogue` 私聊项的 `targetId` 是否等于组织架构里的 `accountId`。不等则同一人产生两个 key，重复上报 + 返显错位。
 - (desktop) 代码审查遗留 Minor（手测时一并看）：`fetchPersonalAiMemorySettings` 触发面被放大（`mounted`/`activated`/切路由/切会话都会拉），若与飞行中的 save 撞上可能出现 UI 回跳；`initRange` 在草稿含 `replyMsgObj` 时提前 return 不走 sync，该路径下筛选条保持隐藏且不拉设置（既有缺陷）。
-- (web/android/ios) 未开工，等 desktop 手测结论与 impl-notes 定稿。
+- (web/android/ios) **本功能未开工**，等 desktop 手测结论与 impl-notes 定稿后再移植。
+- (ios) 工作区未提交改动（筛选条时间弹层右对齐/加宽、个人 `dataRangeList` 透传、save 空列表门闩、类型「类型+N」、联网仅图标）→ 归属 **`20260728-ios端at个人AI框`**，**不推进本功能矩阵**（ios 列保持 ⬜）。
 
 ## desktop 手测清单（plan Task 6）
 
@@ -81,3 +82,4 @@
 - 2026-07-29 **保存**：`dataRangeScopeList` 照传全量明细，不得空列表覆盖
 - 2026-07-29 **落地策略**：desktop 先跑通并抓包 → 沉淀 impl-notes → 其余三端照 notes 移植
 - 2026-07-29 切换活跃功能：`ACTIVE` 由 `20260728-安卓端@个人AI框` 改为本功能（原功能真机 E2E 未完，见其 status）
+- 2026-07-29 收尾确认：`apps/ios` 脏树属前序 `@个人AI框` 联调修补，本功能 ios 矩阵保持 ⬜
