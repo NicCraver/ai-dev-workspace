@@ -14,9 +14,11 @@
 ## 待办 / 阻塞
 
 - (web / desktop) ⏳ PC E2E：切到会话/deepseek → 推送 → **左侧角标保持**、web 不刷接口；切回 AI框后才 list/History/消息 + 记忆。
+- (desktop) ✅ 根因：启动预创建的隐藏 `personalAiWin` 每次推送都 `refresh-personal-ai-data`，后台刷会话清未读 → 角标一闪。已改为：隐藏不转发、show 再 flush；创建时不再 loadURL。
 
 ## 关键决策记录
 
+- 2026-07-29 desktop：隐藏 `personalAiWin` 不发 `refresh-personal-ai-data`；创建窗不再预 load `/zx/personal`（避免后台页清未读）
 - 2026-07-29 ~~只延后 Chat~~ → **改：不可见时整次推送延后**（list/History/消息都不刷），否则后台刷会清未读、角标一闪
 - 2026-07-29 desktop：面板不可见或非个人 AI tab **不向 iframe post**，sessionIds 本地 deferred，切回再 flush
 - 2026-07-29 激活记忆 = getLastSessionMessage 只回写记忆栏
