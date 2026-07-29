@@ -51,12 +51,12 @@ canAtRobot(robot) =
 ### 本期做
 
 - 契约：登记 `group/get` → `groupRobots[]` 的 `chatRobotType`、`hasCallBackAddress`
-- Android：解析并持久化 `hasCallBackAddress`；`GroupAtFragment` 过滤；消息菜单「@回复」按规则
 - iOS：模型补字段；`@` 列表过滤；消息菜单「@回复」按规则
-- 两端共用同一判定语义（各端一个小 helper 即可）
+- 判定语义与契约注释一致
 
 ### 本期不做
 
+- **android**（已明确不需要；代码已撤回）
 - web / desktop
 - 改群设置页「群机器人」列表（仍展示全部机器人，含不可 @ 的）
 - 改群智能体 / 个人 AI 的 `@` 与 `@回复` 逻辑
@@ -66,10 +66,10 @@ canAtRobot(robot) =
 
 | 差异点 | web | android | ios | desktop |
 |--------|-----|---------|-----|---------|
-| 本期实现 | — | ✅ | ✅ | — |
-| 机器人缓存 | — | GreenDao `GroupRobot` | `ZXGroupModel.groupRobots` | — |
-| @ 列表入口 | — | `GroupAtFragment` | `ZXATContactContainerView` | — |
-| @回复 菜单 | — | `RongMessageItemLongClickActionManager` | `ZXIMCellLogic getMessageMenuItems` 等 | — |
+| 本期实现 | — | —（已撤回） | ✅ | — |
+| 机器人缓存 | — | — | `ZXGroupModel.groupRobots` | — |
+| @ 列表入口 | — | — | `ZXATContactContainerView` | — |
+| @回复 菜单 | — | — | `ZXIMCellLogic getMessageMenuItems` 等 | — |
 
 ## 依赖的接口
 
@@ -105,7 +105,7 @@ group/get
 ## 关键决策记录
 
 - 2026-07-29 不可 @ → 菜单只藏「@回复」，保留「回复」
-- 2026-07-29 本期只做 android + ios
+- 2026-07-29 **安卓不需要本改动，已撤回**；本期只做 ios
 - 2026-07-29 不可 @ 机器人在 @ 列表直接不展示
 - 2026-07-29 采用客户端本地判定（方案 1），不依赖后端过滤列表
 - 2026-07-29 数据来源确认：`group/get.groupRobots`
