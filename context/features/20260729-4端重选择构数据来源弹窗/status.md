@@ -1,6 +1,6 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（ios 按方案 A 重做落地：ZXDataScopeModel + getAllImDialogue + Picker 改造；未 commit；真机 E2E 待）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（ios 已 commit/push `890905ae3`；真机 E2E 待）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -8,7 +8,7 @@
 |------|-----|---------|-----|---------|
 | 契约更新 · plan Task 1 | ✅（共用） | ✅（共用） | ✅（共用） | ✅（共用） |
 | 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ✅ 17/17 | ✅ ZXDataScopeModel（无单测基建） | ✅ 18/18 |
-| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ✅ 代码完成（未 commit） | 🚧 代码已重做（未 commit；待真机） | ✅ |
+| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ✅ 代码完成（未 commit） | ✅ 已 push（待真机） | ✅ |
 | 搜索 UI 对齐发送目标（popover）· plan Task 11 | ✅ | —（独立搜索页本地过滤） | —（独立搜索页本地过滤） | ✅ |
 | 接口联调（抓包验证）· plan Task 6 | 🚧 待手测 | 🚧 待真机 | 🚧 待真机复测 | 🚧 待手测 |
 | 自测通过 · plan Task 10 | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -46,18 +46,18 @@
 | 整枝审查修复（双 emit / SSE / 移动端 ACK flags） | `7f209c6` |
 | 搜索改 AiBoxSearchBox popover + 主列表不过滤 | 未提交 |
 
-## android / ios（分支 `personal-ai-chat`，**未 commit**）
+## android / ios（分支 `personal-ai-chat`）
 
-| 端 | 内容 |
-|----|------|
-| android | `DataScopeModel` + 17 单测；`getAllImDialogue`；`SelectDataRangeActivity` 候选/门闩/三态；Group/Search multi 本地过滤；段头「全部」 |
-| ios（本轮重做） | `ZXDataScopeModel`；Manager `getAllImDialogue` + save 三标记；Picker「全部」+ `selectedKeySet`；Group/Search 复用缓存本地过滤；restore 门闩 + 三态；两入口未改接线 |
+| 端 | 内容 | 提交 |
+|----|------|------|
+| android（**未 commit**） | `DataScopeModel` + 17 单测；`getAllImDialogue`；`SelectDataRangeActivity` 候选/门闩/三态；Group/Search multi 本地过滤；段头「全部」 | — |
+| ios（本轮重做，已 push） | `ZXDataScopeModel`；Manager `getAllImDialogue` + save 三标记；Picker「全部」+ `selectedKeySet`；Group/Search 复用缓存；restore 门闩 + 三态；P1：搜索 cancel delay、restoreEpoch/dirty 防冲选、群页 ready 后补载 | `890905ae3` |
 
 ## 待办 / 阻塞
 
 - (desktop/web) ⏳ **真机手测未做**（含搜索 popover：零接口、勾选互通、表头全选仍按全量）。
 - (android) ⏳ **真机自测 + commit/push**：打开只发 2 请求、本地搜、全选联动、三标记、桥 ACK 后胶囊刷新。
-- (ios) ⏳ **真机自测**：打开只发 getAgentDataRange + getAllImDialogue；段头「全部」；群/搜索零额外列表请求；全选联动；save 三标记或未知省略；桥 ACK 与 `@` 筛选条再 get；然后 commit/push。
+- (ios) ⏳ **真机自测**（代码已 push）：打开只发 2 请求；段头「全部」；群/搜索零额外列表请求；全选联动；迟到 restore 不冲选；过早进群页后列表能补出；搜索返回不崩；save 三标记；桥 ACK / `@` 再 get。
 - (android) ✅ 群头像：接口前 4 URL 拼 2×2（无 URL 退本地拼图）；待真机看列表/已选弹层。
 - (ios) ⏳ 群头像：仍可能用首个非空 URL / 本地拼图，未完全对齐 PC。
 - (ios) ⏳ 两千条级：整表 `reloadData` 仍可能顿挫；若体感差再拆。
@@ -76,3 +76,8 @@
 
 ### iOS 重做 · 2026-07-29
 - 用户撤回前序 ios 改造；本轮方案 A：抽出 `ZXDataScopeModel` + 原地改 Picker；两入口接线不动
+
+### iOS P1（审查）· 2026-07-29
+- 搜索页：`viewWillDisappear` / `dealloc` / 回车搜前 `cancelPreviousPerformRequestsWithTarget`
+- restore：`restoreEpoch` 丢弃过期回调；`selectionDirtyByUser` 为真时只保留 memory、不 `applyInitialScopes`
+- 群页：`onSel` / `viewWillAppear` 在 dialogue ready 且本地空时 `loadGroupsFromDialogueCache`
