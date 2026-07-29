@@ -51,7 +51,10 @@
 
 ## 待办 / 阻塞
 
-- (android) **E2E 手测阻塞**：当前无 adb 设备（`adb devices` 空），上表 7 项 + M1–M4 需真机；装包 `bash .cursor/commands/scripts/zhixin-run-android.sh`
+- (android) **真机联调进行中**（设备 `cbaf94cf` 已连）：`@` 个人 AI 发送**无回复**已定位并修复——`RichEditText` 两处 span→MentionBlock 转换（发送 `getAllRichSpansDataWhenSendMsg`、草稿 `getAllRichSpansData`）没带 `agentKind`/`agentId`，导致发送时个人 mention 被当群、DTO 为空、`aiRobtChat` 根本没发。日志实证：`send anyAgent=true personal=false agentId=null dtoNull=true`。**待复现验证**
+- (三端) ⚠️ **个人 AI 回复无流式效果**：三端流式判据一致——消息须为 `RC:ReferenceMsg` 且 `extra.fromType == 1` 才轮询 `aiRobtMessageById`（android `UIMessage:117`、desktop `msg-list.vue:429`）。群 AI 正常、个人不流式 → **指向后端下发的个人回复消息类型/extra 不符**；已加临时日志 `AgentMsgDebug` 取实证后反馈后端
+- (android) **临时联调日志待移除**：`AiRobtChatDebug`（`ConversationFragmentParent` / `ConversationFragment`）、`AgentMsgDebug`（`UIMessage`），均标了 TODO
+- (android) E2E 清单其余项仍未勾；装包 `./gradlew installOnTestDebug`
 - (android) **抓包确认**：`aiRobtChat` 个人分支 `dataRangeList` 原样透传 3/4/1/2（勿被群侧 0/1/2 序列化污染）；`saveDataRange` 不得用空列表覆盖
 - (android) ⚠️ **群智能体回归**：本期改了 `@` 列表与知识类型胶囊「类型+N」，须回归群主流程并**告知测试**
 - (android) 大输入区（`ConversationLargeInputView`）为第二条链路，手测须单独覆盖「大输入内 `@` 个人 AI 发送」
