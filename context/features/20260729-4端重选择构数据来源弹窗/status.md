@@ -1,6 +1,6 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（ios `890905ae3`；web `f3913ef`；desktop 推送延后 `b8c632b2`；真机 E2E 待）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（四端代码均已 push personal-ai-chat；android `55f22b5c9`；真机 E2E 待）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -8,7 +8,7 @@
 |------|-----|---------|-----|---------|
 | 契约更新 · plan Task 1 | ✅（共用） | ✅（共用） | ✅（共用） | ✅（共用） |
 | 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ✅ 17/17 | ✅ ZXDataScopeModel（无单测基建） | ✅ 18/18 |
-| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ✅ 代码完成（未 commit） | ✅ 已 push（待真机） | ✅ |
+| 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ✅ 已 push（待真机） | ✅ 已 push（待真机） | ✅ |
 | 搜索 UI 对齐发送目标（popover）· plan Task 11 | ✅ | —（独立搜索页本地过滤） | —（独立搜索页本地过滤） | ✅ |
 | 接口联调（抓包验证）· plan Task 6 | 🚧 待手测 | 🚧 待真机 | 🚧 待真机复测 | 🚧 待手测 |
 | 自测通过 · plan Task 10 | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -52,13 +52,13 @@
 
 | 端 | 内容 | 提交 |
 |----|------|------|
-| android（**未 commit**） | `DataScopeModel` + 17 单测；`getAllImDialogue`；`SelectDataRangeActivity` 候选/门闩/三态；Group/Search multi 本地过滤；段头「全部」 | — |
+| android（已 push） | `DataScopeModel` + 17 单测；`getAllImDialogue`；`SelectDataRangeActivity` 候选/门闩/三态；Group/Search multi 本地过滤；段头「全部」；群头像前 4 URL 拼合 | `55f22b5c9` |
 | ios（本轮重做，已 push） | `ZXDataScopeModel`；Manager `getAllImDialogue` + save 三标记；Picker「全部」+ `selectedKeySet`；Group/Search 复用缓存；restore 门闩 + 三态；P1：搜索 cancel delay、restoreEpoch/dirty 防冲选、群页 ready 后补载 | `890905ae3` |
 
 ## 待办 / 阻塞
 
 - (desktop/web) ⏳ **真机手测未做**（含搜索 popover：零接口、勾选互通、表头全选仍按全量）。
-- (android) ⏳ **真机自测 + commit/push**：打开只发 2 请求、本地搜、全选联动、三标记、桥 ACK 后胶囊刷新。
+- (android) ⏳ **真机自测**（代码已 push）：打开只发 2 请求、本地搜、全选联动、三标记、桥 ACK 后胶囊刷新。
 - (ios) ⏳ **真机自测**（代码已 push）：打开只发 2 请求；段头「全部」；群/搜索零额外列表请求；全选联动；迟到 restore 不冲选；过早进群页后列表能补出；搜索返回不崩；save 三标记；桥 ACK / `@` 再 get。
 - (android) ✅ 群头像：接口前 4 URL 拼 2×2（无 URL 退本地拼图）；待真机看列表/已选弹层。
 - (ios) ⏳ 群头像：仍可能用首个非空 URL / 本地拼图，未完全对齐 PC。
