@@ -20,3 +20,4 @@
 - 2026-07-29 对齐 PC：`MsgPersonalAiRow`；名字按 `personalAccountId` 查人，不用 `content.user.name`
 - 2026-07-29 与昵称旁 identity tag 并存
 - 2026-07-29 昵称未就绪不展示空 badge
+- 2026-07-29 **布局**：badge 在「N条回复」**下方**（气泡 → 表情 → N条回复 → 来源 badge）
