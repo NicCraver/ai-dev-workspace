@@ -1,6 +1,6 @@
 # Status：web 端「选择 AI 框」组件用 getAllImDialogue 重构
 
-> 最后更新：2026-07-29（web 代码已提交；**真机抓包/自测未做**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-29（web 代码已提交；**真机抓包/自测未做**；desktop 脏树已核对为别功能）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,6 +26,7 @@
 
 ## 待办 / 阻塞
 
+- (desktop) 工作区未提交改动（`personal-ai-data-scope-dialog` / `data-scope-list-item` / `data-scope-model`：数据来源弹窗 UI 对齐 web、列表行 60 高/圆头像/agentName 副标题/搜索图标）→ 归属 **`20260729-4端重选择构数据来源弹窗`**，**不推进本功能矩阵**（desktop 列保持 —）。
 - (web) ⏳ **真机抓包未做**：开窗仅一次 `getAllImDialogue` 且 `selectModel:1`；搜索零 `selectGroupBySearch`；组织架构无外联条；无 agent 人员不展示；确定开聊正常。
 - (web) ⏳ 回归：数据来源弹窗仍可外联；定时发送/列表等其它 `AiBoxSearchBox` 入口仍走 HTTP 搜索。
 - (web) 兼容点：`candidates` 未传时搜索保持旧 API，避免误伤 `PersonalAiChatAgentList` / `SendTargetPickerDialog` / `SelectAiChatPopup`。
