@@ -87,10 +87,22 @@ isSelf = personalId === 当前登录用户 id
 
 合并路径仍只保留：`richList`（若有）+ 上表三字段；其它 extra 键继续丢弃。
 
+### 合并详情列表也要渲染 badge（对齐 PC winbox）
+
+不仅打包保留字段，打开「聊天记录」详情时，每条子消息气泡下同样展示来源/详情 pill（判定与会话列表一致）。
+
+读写约定：
+
+| 写入 | 读取 |
+|------|------|
+| 文本 content 同时带 `extra` 与 `baseExtra`（同为裁剪后的 JSON 字符串） | 优先 `baseExtra`，空则回落 `extra` |
+| 若某端把 extra 写成 JSON **对象** | 读侧应 `JSON.stringify` 成字符串，**禁止清空** |
+
 ## 联调坑
 
 - 后端须下发 **数字** `1`；若发字符串 `"1"`，三端均不显示（产品已决严格相等）。
 - extra 可能是 JSON 字符串，须先 parse 再读字段。
 - `dealForExtraInfo.*Str` 形态可能是 JSON 数组字符串或逗号分隔，两端都要兼容。
 - **安卓**：badge 左右对齐须用 `MessageDirection.SEND`，不能用 `rightIconView == VISIBLE`——连续自己消息头像是 `INVISIBLE`，会误判居左。
-- **合并转发**：若仍走「仅 richList」的逐条裁剪函数，合并详情里 badge 会丢；须用合并专用组装（安卓/iOS 已分叉）。
+- **合并转发**：若仍走「仅 richList」的逐条裁剪函数，合并详情里 badge 会丢；须用合并专用组装。
+- **合并详情**：安卓须在 `CombineAdapter` 挂 badge（会话列表 binder 复用）；iOS 走既有 `ZXIMChatCell`，但建模型时须读到 `baseExtra`/`extra`。
