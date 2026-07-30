@@ -1,6 +1,6 @@
 # Status：定时任务消息 · 气泡下来源 badge
 
-> 最后更新：2026-07-30（PC 旁路：仅 @ 群/个人智能体不发群已读回执请求，未 commit）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-30（PC 已 pull 详情 badge；旁路回执仍未 commit）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -9,6 +9,7 @@
 | spec / plan / status 初始化 | ✅（共用） | ✅（共用） | ✅（共用） | ✅（共用） |
 | 个人 badge + `fixTaskMessage===1` 门闩 · plan Task 1/2/3 | — | ✅ 已 push | ✅ 已 push | ✅ 已 push |
 | 群 AI badge「来自群AI框」· plan Task 1/2/3 | — | ✅ 已 push | ✅ 已 push | ✅ 已 push |
+| 自己消息详情 badge（触发名+循环时间） | — | ⬜ | ⬜ | ✅ 已 push（`ff400773`） |
 | impl-notes 补全 · plan Task 4 | ✅（共用） | ✅ | ✅ | ✅ |
 | 自测通过 | — | ⬜ 待真机 | ⬜ 待真机 | ⬜ 待手测 |
 
@@ -18,16 +19,16 @@
 
 | 端 | 提交 |
 |----|------|
-| desktop | `8444e7c3`（间距）· `2cb02be3`（功能）；旁路回执门闩 **未 commit**（`messageService` / `storeModule`） |
+| desktop | `ff400773`（详情 badge）· `8444e7c3`（间距）· `2cb02be3`（功能）；旁路回执门闩 **未 commit**（`messageService` / `storeModule` / `msg-list`） |
 | android | `02cef0fdc` |
 | ios | `5f3167a13` |
 
 ## 待办 / 阻塞
 
-- (desktop) ⏳ 手测 badge：个人/群 × 定时/非定时；`"1"` 不显示；tag 不变。
-- (desktop) ⏳ 旁路：仅 @ 群/个人智能体（`ga_`）不发群已读回执请求（对齐 iOS `messageHasReadReceiptUsers`）；代码已改未 commit / 未手测。@ 真人、@所有人应仍发回执。会话级 `readMessage`（进会话清未读）未改。
-- (android / ios) ⏳ 真机同表（badge）。
-- (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`。
+- (desktop) ⏳ 手测 badge：个人/群 × 定时/非定时；`"1"` 不显示；tag 不变；自己消息右侧详情 badge（触发名+循环时间）。
+- (desktop) ⏳ 旁路：仅 @ 群/个人智能体（`ga_`）不发群已读回执请求（对齐 iOS）；另含进会话跳过 `ga_`/`robot_` 发件人回执风暴。代码已改未 commit / 未手测。@ 真人、@所有人应仍发回执。
+- (android / ios) ⏳ 真机同表（来源 badge）；详情 badge 未移植。
+- (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`；`dealForExtraInfo` 字段形态与文档一致。
 
 ## 关键决策记录
 
@@ -38,3 +39,4 @@
 - 2026-07-30 各端现有个人 badge 挂载点扩展，不做独立组件大迁
 - 2026-07-30 PC badge 与上方内容间距 `mt-1.5`（6px），略紧于气泡与表情区
 - 2026-07-30 PC：群聊已读回执请求仅当 @所有人或 atUserList 含真人；仅 robot_/ga_ 不请求（对齐 iOS）
+- 2026-07-30 PC：自己的个人 AI 定时消息，来源 badge 右侧再展示「触发名 + 循环时间」（读 `extra.dealForExtraInfo`）；他人/群不展示
