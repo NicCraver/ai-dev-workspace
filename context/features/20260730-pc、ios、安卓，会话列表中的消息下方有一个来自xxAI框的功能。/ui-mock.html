@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>定时任务消息 · 来源 badge UI 示意</title>
+  <style>
+    :root {
+      --bg: #f5f7f9;
+      --bubble: #fff;
+      --text: #1f2a33;
+      --muted: #8a97a3;
+      --tag: #e8f3ff;
+      --tag-text: #2f6fed;
+      --pill: #ebeff2;
+      --line: #e3e8ed;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 16px 48px;
+    }
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      gap: 16px;
+      max-width: 720px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .card h2 {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+    .card .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .msg {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7eb6ff, #4d8dff);
+      flex-shrink: 0;
+    }
+    .avatar.group {
+      background: linear-gradient(135deg, #9ad9b0, #4caf7a);
+    }
+    .col { min-width: 0; flex: 1; }
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .name {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .id-tag {
+      font-size: 10px;
+      line-height: 1;
+      padding: 3px 6px;
+      border-radius: 4px;
+      background: var(--tag);
+      color: var(--tag-text);
+      white-space: nowrap;
+    }
+    .bubble {
+      display: inline-block;
+      max-width: 85%;
+      background: var(--bubble);
+      border: 1px solid var(--line);
+      border-radius: 0 10px 10px 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    /* 气泡下方中间层：表情 / N条回复 —— badge 在它们之下 */
+    .below-bubble {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .emoji-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      background: #f0f3f6;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .reply-row {
+      font-size: 12px;
+      color: #2f6fed;
+    }
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 0 8px;
+      height: 20px;
+      font-size: 12px;
+      color: #667787;
+      background: var(--pill);
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .source-pill.changed {
+      outline: 2px solid #2f6fed;
+      outline-offset: 2px;
+    }
+    .stack-label {
+      font-size: 11px;
+      color: #2f6fed;
+      margin-top: 2px;
+    }
+    .none {
+      font-size: 12px;
+      color: #c0c8d0;
+      font-style: italic;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      background: #eef2f5;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .legend {
+      max-width: 720px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <h1>会话消息 · 定时任务来源 badge（只改 badge，不改 tag）</h1>
+  <p class="sub">
+    门闩：<code>content.extra.fixTaskMessage === 1</code>（数字 1）。只改气泡下 badge；昵称旁 tag 不动。<br />
+    布局顺序：气泡 → 表情 →「N条回复」→ <strong>来源 badge（最下方）</strong>。蓝框为本期变化点。
+  </p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>① 个人 AI · 定时任务</h2>
+      <p class="hint"><code>personalAccountId</code> 有值 · <code>fixTaskMessage === 1</code></p>
+      <div class="msg">
+        <div class="avatar" aria-hidden="true"></div>
+        <div class="col">
+          <div class="meta">
+            <span class="name">小智助手</span>
+            <span class="id-tag">个人AI框</span>
+          </div>
+          <div class="bubble">今天下午 3 点的站会纪要已整理好，请查收。</div>
+          <div class="below-bubble">
+            <div class="emoji-row">👍 2 · 😄 1</div>
+            <div class="reply-row">3条回复</div>
+            <div class="source-pill changed">来自张三个人AI框</div>
+            <div class="stack-label">↑ badge 在表情 / N条回复下面</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>② 个人 AI · 非定时任务</h2>
+      <p class="hint"><code>personalAccountId</code> 有值 · <code>fixTaskMessage</code> ≠ 1</p>
+      <div class="msg">
+        <div class="avatar" aria-hidden="true"></div>
+        <div class="col">
+          <div class="meta">
+            <span class="name">小智助手</span>
+            <span class="id-tag">个人AI框</span>
+          </div>
+          <div class="bubble">你好，我是个人 AI，有什么可以帮你？</div>
+          <div class="below-bubble">
+            <div class="emoji-row">👍 1</div>
+            <div class="reply-row">1条回复</div>
+            <div class="none">（无来源 badge）</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>③ 群 AI · 定时发到群</h2>
+      <p class="hint">群 AI 消息 · <code>fixTaskMessage === 1</code></p>
+      <div class="msg">
+        <div class="avatar group" aria-hidden="true"></div>
+        <div class="col">
+          <div class="meta">
+            <span class="name">项目群智能体</span>
+            <span class="id-tag">群AI框</span>
+          </div>
+          <div class="bubble">【日报提醒】请各位在 18:00 前更新今日进展。</div>
+          <div class="below-bubble">
+            <div class="emoji-row">✅ 3</div>
+            <div class="reply-row">2条回复</div>
+            <div class="source-pill changed">来自群AI框</div>
+            <div class="stack-label">↑ badge 在表情 / N条回复下面</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>④ 群 AI · 非定时任务</h2>
+      <p class="hint">群 AI 消息 · <code>fixTaskMessage</code> ≠ 1</p>
+      <div class="msg">
+        <div class="avatar group" aria-hidden="true"></div>
+        <div class="col">
+          <div class="meta">
+            <span class="name">项目群智能体</span>
+            <span class="id-tag">群AI框</span>
+          </div>
+          <div class="bubble">收到，已帮你查完本周任务列表。</div>
+          <div class="below-bubble">
+            <div class="reply-row">1条回复</div>
+            <div class="none">（无「来自群AI框」badge）</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <p class="legend">
+    布局对齐现有个人 AI badge：气泡 → 表情 →「N条回复」→ 来源 badge（禁止插在「N条回复」上方）。<br />
+    · 个人定时：「来自{nick}个人AI框」　· 群定时：「来自群AI框」　· 非定时：无 badge；tag 一律照旧
+  </p>
+</body>
+</html>
