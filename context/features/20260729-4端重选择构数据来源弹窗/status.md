@@ -1,15 +1,16 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-29（四端代码均已 push personal-ai-chat；android `55f22b5c9`；真机 E2E 待）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-30（安卓 leave 后缀已 push `22507f131`；私聊 leave=1 展示名后缀「（已离职）」；PC 列表人头像 + 不展示智能体名；web 外联 tab key 修复）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 契约更新 · plan Task 1 | ✅（共用） | ✅（共用） | ✅（共用） | ✅（共用） |
-| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 18/18 | ✅ 17/17 | ✅ ZXDataScopeModel（无单测基建） | ✅ 18/18 |
+| 纯逻辑模型 + 单测 · plan Task 3/7/8/9 | ✅ 19/19 | ✅ 18/18 | ✅ ZXDataScopeModel（无单测基建） | ✅ 19/19 |
 | 弹窗/页改造 · plan Task 2/4/5/7/8/9 | ✅ | ✅ 已 push（待真机） | ✅ 已 push（待真机） | ✅ |
 | 搜索 UI 对齐发送目标（popover）· plan Task 11 | ✅ | —（独立搜索页本地过滤） | —（独立搜索页本地过滤） | ✅ |
+| 私聊 leave=1 名字后缀「（已离职）」 | ✅ 本地未 commit | ✅ `22507f131` 已 push | ✅ 本地未 commit | ✅ 本地未 commit |
 | 接口联调（抓包验证）· plan Task 6 | 🚧 待手测 | 🚧 待真机 | 🚧 待真机复测 | 🚧 待手测 |
 | 自测通过 · plan Task 10 | ⬜ | ⬜ | ⬜ | ⬜ |
 
@@ -57,20 +58,29 @@
 
 ## 待办 / 阻塞
 
-- (desktop/web) ⏳ **真机手测未做**（含搜索 popover：零接口、勾选互通、表头全选仍按全量）。
-- (android) ⏳ **真机自测**（代码已 push）：打开只发 2 请求、本地搜、全选联动、三标记、桥 ACK 后胶囊刷新。
-- (ios) ⏳ **真机自测**（代码已 push）：打开只发 2 请求；段头「全部」；群/搜索零额外列表请求；全选联动；迟到 restore 不冲选；过早进群页后列表能补出；搜索返回不崩；save 三标记；桥 ACK / `@` 再 get。
+- (四端) ✅ **私聊 leave=1**：`normalize` 后 `name` 后缀 `（已离职）`（列表/搜索/chip 同源）；本地未 commit / push。
+- (web) ✅ **外联群子 tab 空列表**：`GROUP_TABS` key `outsource` 与 `splitGroups.outreach` 错位；已改为 `outreach`（本地未 commit）。手测：`groupInfo.type>=10`（如「智信运营测试群」）应出现在「群组→外联群」。
+- (desktop/web) ✅ **列表展示对齐 spec**：人用 `privateInfo.avatar`；群用成员前 4 拼图（不用 `agentAvatar`）；**不展示智能体名**（列表/搜索/组织架构）。desktop + web 本地未 commit。
+- (desktop/android/ios) ✅ 外联分流本来就对：`isOutreach = groupInfo.type >= 10` + 外联分区消费 `outreach`。
+- (desktop/web) ⏳ **真机手测未做**（含搜索 popover：零接口、勾选互通、表头全选仍按全量；web 外联子 tab 回归；人头像/无智能体名；离职后缀）。
+- (android) ⏳ **真机自测**（含离职后缀）：打开只发 2 请求、本地搜、全选联动、三标记、桥 ACK 后胶囊刷新。
+- (ios) ⏳ **真机自测**（含离职后缀）：打开只发 2 请求；段头「全部」；群/搜索零额外列表请求；全选联动；迟到 restore 不冲选；过早进群页后列表能补出；搜索返回不崩；save 三标记；桥 ACK / `@` 再 get。
 - (android) ✅ 群头像：接口前 4 URL 拼 2×2（无 URL 退本地拼图）；待真机看列表/已选弹层。
 - (ios) ⏳ 群头像：仍可能用首个非空 URL / 本地拼图，未完全对齐 PC。
 - (ios) ⏳ 两千条级：整表 `reloadData` 仍可能顿挫；若体感差再拆。
 - (全端) ❌ **后端待实现**：`getAgentDataRange` 回参三个全选标记（契约 `@unconfirmed`）。
-- (全端) ⏳ 抓包待确认：返回顺序、`groupInfo.type`、selectAll 补录时机、量级；私聊 `targetId` === 组织架构 `accountId`。
+- (全端) ⏳ 抓包待确认：返回顺序、selectAll 补录时机、量级；私聊 `targetId` === 组织架构 `accountId`。（`groupInfo.type>=10`=外联群：web 空列表已归因于 UI key，模型判据已验证）
 
 ## 关键决策补充
 
-### 搜索 UI · 2026-07-29
-- PC：顶栏 popover 本地搜；主列表不过滤；三标记按未过滤全量
-- 移动端：独立搜索页，对 `getAllImDialogue` 缓存本地过滤
+### 列表展示 · 离职后缀 · 2026-07-30
+- 私聊 `Number(privateInfo.leave) === 1` → 展示名 = `targetName` + `（已离职）`（模型层 normalize，四端一致）
+- `leave` 缺省 / 0 / 非 1：不加后缀；群聊不处理
+
+### 列表展示 · 2026-07-30
+- 人：`privateInfo.avatar`（联系人头像，不是智能体头像）
+- 群：`accountInfoList` 前 4 人拼图（不用 `agentAvatar`）
+- **不展示智能体名称**（与「选择 AI 框」区分；搜索也不按智能体名匹配）
 
 ### iOS 入口与性能 · 2026-07-29
 - 桥 `selectDataRangeScope` → `ZXPersonalAiPickerController`（`Picker/`），不是 `ZXSelectAiAgentController`

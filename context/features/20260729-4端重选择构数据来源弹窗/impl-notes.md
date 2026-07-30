@@ -1,7 +1,7 @@
 # Impl Notes：4端重构「选择数据来源」弹窗
 
 > 平台无关的实现笔记，是其他端移植的唯一逻辑依据。描述"逻辑"不描述"代码"。
-> 最后更新：2026-07-29（ios 按方案 A 重做：ZXDataScopeModel + getAllImDialogue；android 代码完成未 commit；真机 E2E 未完）
+> 最后更新：2026-07-30（ios 按方案 A 重做：ZXDataScopeModel + getAllImDialogue；android 代码完成未 commit；真机 E2E 未完；leave=1 后缀）
 
 ## 核心模型（四端必须逐条一致）
 
@@ -24,7 +24,8 @@
 - `isGroup` = `type === 3`；非 3 一律按私聊处理；
 - `isOutreach` = 群 且 `groupInfo.type >= 10`；缺省或 `< 10` 为组织群；
 - 人头像 = `privateInfo.avatar`；群头像 = `groupInfo.accountInfoList` 前 4 人的 `avatar`；
-- `name` = `targetName`，可能为空 → **在展示层兜底为 id**，不要在模型层兜底（模型层行为被单测锁定，四端一致）。
+- `name` = `targetName`，可能为空 → **在展示层兜底为 id**，不要在模型层兜底（模型层行为被单测锁定，四端一致）；
+- **离职后缀**：私聊且 `Number(privateInfo.leave) === 1` 时，模型层在 `name` 后追加 `（已离职）`（列表 / 搜索 / 已选 chip 同源）；群聊不处理；`leave` 缺省或非 1 不加。
 
 ### 三个全选标记是派生值
 
@@ -80,6 +81,7 @@ outreachGroupSelectAll     = 外联群分区全部在选中集合里 ? 1 : 0
 | 组织架构勾的人不在候选清单 | 进选中集合、进 save 明细、不参与三个标记判定；底栏名称回退到本地通讯录/群缓存 |
 | 某分区为空 | 该分区标记为 0；表头点击无副作用 |
 | 人无头像 / 群成员列表为空 | 显示默认头像，不能出现裂图；群头像格子不足 4 个时排版仍要正常 |
+| 列表行展示 | **人**：联系人头像（`privateInfo.avatar`），**不**用智能体头像；**群**：成员前 4 拼图，**不**用 `agentAvatar`；**不展示智能体名称**（与「选择 AI 框」区分） |
 | `targetName` 缺失 | 列表行显示 id 兜底，不能是空行 |
 | restore 未成功就触发 save | **必须拦住**——否则会用空 `dataRangeScopeList` 覆盖后端已存明细。需要一道「成功 restore 后才允许 save」的门闩 |
 | 切会话（前后两个会话都有 `@个人AI`） | 门闩必须被关掉、且新会话的设置必须被重新拉取。⚠️ PC 上这里有个陷阱：靠「筛选条可见性 false→true」的响应式回调来做重置是**不可靠**的——同一次更新批次内先置 false 再置回 true，前后值相同，回调根本不执行。要在切会话的事件里**直接同步**关闸并重新取数 |
@@ -103,6 +105,7 @@ outreachGroupSelectAll     = 外联群分区全部在选中集合里 ? 1 : 0
 | 6 | web SSE 请求体污染 | `...conditionMode.value` 会把 `selectAllFlags` 带进 AI 接口请求体。拼 SSE 入参时须解构剥离 `selectAllFlags` | — （web 特有） |
 | 7 | web 移动端 ACK 后 PC flags 陈旧 | 移动端原生页改数据范围（新协议 ACK）后，`applyNativeAckResult` 须 `emit('update-flags', null)`，否则 PC 缓存的陈旧 `selectAllFlags` 会在切回 PC 改时间时覆盖原生刚存的值 | — （web 特有） |
 | 8 | web key 格式 | web 沿用模型的 `"<scopeDataType>_<scopeDataId>"`（如 `1_u1`）。`OrgPicker` 内部旧 key `"private:id"` 经 `selectedKeysForOrg` computed 适配，不改 OrgPicker | — （web 特有） |
+| 9 | web「群组→外联群」空列表 | `GROUP_TABS` 用了 OrgPicker 风格 key `outsource`，但 `splitGroups` 返回字段是 `outreach`；`currentList = partitions[groupType]` 取不到外联分区，`groupInfo.type>=10` 的群只出现在「全部」、外联子 tab 恒空。**修法：子 tab key 改为 `outreach`**（与 desktop/android/ios 一致） | — （web 特有；2026-07-30 已修） |
 
 ⏳ **待抓包确认（4 项，PC 手测时补）**：
 1. `getAllImDialogue` 回参顺序是否稳定（是否已按 `activeTime` 倒序）；

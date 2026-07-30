@@ -4,8 +4,13 @@
  * 用途：① 个人 AI 框选会话 / 选智能体时拉取全部 IM 会话列表；
  *       ② 四端「选择数据来源」弹窗的候选清单（全量人 + 群，一次拉取、弹窗内存缓存）
  * Changelog:
- * - 2026-07-29 联调确认：selectModel=1 仍可能返回 agentId/agentName/agentAvatar 全为 null。
- *   「选择 AI 框」消费方须先按 targetId 调 batchGetAgent 补齐，再过滤无 agentId 的项。
+ * - 2026-07-30 「选择 AI 框」web：**不再** `agentItemsOnly` 过滤无 agentId；列表/侧栏搜展示全量归一化项。
+ * - 2026-07-30 「选择数据来源」与「选择 AI 框」：私聊 `privateInfo.leave === 1` 时展示名后缀 `（已离职）`
+ *   （web 分别在 dataScopeModel / aiBoxPickerModel normalize；搜索/列表同源）。
+ * - 2026-07-30 选择 AI 框不再调 batchGetAgent：直接信 getAllImDialogue(selectModel=1)
+ *   回参 agent 字段（曾一度用 agentItemsOnly 滤无 agentId，现已取消过滤）。
+ * - 2026-07-29 联调确认：selectModel=1 曾可能返回 agentId/agentName/agentAvatar 全为 null；
+ *   现消费方不再二次 batchGetAgent，且展示层不过滤无 agentId。
  * - 2026-07-29 新增消费方：web「选择 AI 框」弹窗（selectModel 传 1）。
  *   忽略 selected 字段作为弹窗选中态。
  * - 2026-07-29 新增消费方：四端「选择数据来源」弹窗（selectModel 传 0）。

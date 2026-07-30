@@ -19,7 +19,7 @@
 - (ios) ⏳ **真机自测未做**：type≠1 可 @；type=1+hasCallBack=1 可 @；type=1 无回调不在 `@` 列表且消息无「@回复」仅「回复」；群设置机器人列表仍全量；群/个人 AI 菜单不变。
 - (全端) ⏳ 抓包确认 `groupRobots[].hasCallBackAddress` 字段名与取值。
 - (android) ✅ 已撤回本功能代码；`SCHEMA_VERSION` 升至 **75**（无 `hasCallBackAddress` 列），避免本机曾升到 74 后降级闪退。
-- (web / 旁路) ✅ 个人 AI 头栏设置：引导遮罩挡点击已修；占用提示改为本地 `showToastError`（AiBrowser 无 ClashDialog / vant toast PC 不可见）。
+- (web / 旁路) ✅ 个人 AI 头栏设置占用：web 自弹 `SettingEditClashDialog`（对齐 PC ClashDialog）。
 
 ## 关键决策记录
 

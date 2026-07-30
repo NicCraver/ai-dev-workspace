@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-28（android：Contact+OrgDrill 对齐 iOS，compileOnTestDebug ✅；待真机 E2E / 提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-30（web：不过滤无 agentId + leave 后缀 + 群拼图/默认全部/停 batchGetAgent；未 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,9 @@
 
 ## 待办 / 阻塞
 
+- (web) ✅ **选择AI框不过滤无 agentId**：弹窗 `normalize` 全量展示；OrgPicker 去掉 `require-agent`；侧栏 focus 搜同源。本地未 commit。
+- (web) ✅ **选择AI框私聊 leave=1**：`aiBoxPickerModel.normalize` 后缀 `（已离职）`（弹窗列表/搜索 + 侧栏 focus 搜同源）；本地未 commit。
+- (web) ~~**选择AI框群头像 / 默认 tab / 停用 batchGetAgent**~~：群行 `accountInfoList` 拼图；打开默认「全部」；弹窗/OrgPicker/`fetchGroups` **不再**调 `batchGetAgent`（曾一度 `agentItemsOnly`，现已取消）。侧栏搜索：focus 拉 `getAllImDialogue` 后前端滤。代码已写**未 commit**；**待** PC E2E
 - (android) **选择壳对齐 iOS（本轮）**：新建 Contact（组织|外联企业）+ OrgDrill（面包屑+部门/人员+同名根跳过）；分区头/搜索文案统一；子页「完成」可写回空选。桥不变。见 `design-android-picker-align.md` / impl-notes「Android 原生选择壳」。**待** 真机 E2E + 提交 `personal-ai-chat`
 - (ios) **选择 AI 框 / 数据范围 · 脱离转发重做**：新壳 `Picker/` 已落地并 **已 push** `personal-ai-chat` `81aa08720`（含顶栏返回、联系人图标、企业头像 SS(20)、子页已选半屏、子页确认=整体落库、清空后可确认、确定不带数字等）。**待** 真机视觉/E2E 验收
 - (ios) ~~工作区未提交~~：底栏 /9、BookBottomView、组织架构人数等此前债一并进上条提交
@@ -105,12 +108,12 @@
 - (web) `POST /personalAiFrame/recentContactList` **已接入**选择弹窗最近联系人：`fetchRecent` 桥取数排序后批量补齐 `agentName`（及 agentId/aiRoleId/agentVersionId）；失败沿用桥侧名称；desktop 仍只负责 `getRecentContacts`
 - (web) **筛选记忆**：`getFilter` → 再 `list(filterTypes)` 初始化 **已接线**；底栏「筛选对话」弹层（个人恒勾 / 近15天=1 / 知识库=2）改筛即调 list **已接线**；选中勾 `filter-checkbox-on` 已换实心蓝勾、弹层宽 `200`（原 220）
 - (android / ios / desktop) `getFilter` **不受影响**（尚无调用方；改筛仍走 list）
-- (web) `POST /personalAiFrame/batchGetAgent` **已接入**选择弹窗：**群组 tab** `getMyGroups` 后 `groupIds` 批量补齐 `agentId/agentAvatar/agentName`（`AiBoxRow` 有 `agentAvatar` 时单头像+上群名下 agentName）；**组织架构人员** 每层 `getDeptUsers` 后 `accountIds` 补齐，选中项带 agent 字段。**待联调** Map 无 key 时兜底展示
+- (web) `POST /personalAiFrame/batchGetAgent` **已接入**选择弹窗：**群组 tab** `getMyGroups` 后 `groupIds` 批量补齐 `agentId/agentAvatar/agentName`（列表行群头像见上条「群头像/默认 tab」——有成员拼图）；**组织架构人员** 每层 `getDeptUsers` 后 `accountIds` 补齐，选中项带 agent 字段。**待联调** Map 无 key 时兜底展示
 - (web) 列表项**私聊/群会话已接真实归属**（`chatType=belongType`、`targetId=belongId`）；**个人AI框(belongType 0) 已改用真实 belongType/belongId**（不再 DEFAULT_CHAT 占位）；`HomeIndex` type 0 分支已有（`belongName=个人AI框`）
 - (web) **列表项 UI**：三点左侧图标 = **开启新对话**（`new-chat` → `Chat.startNewChat`；个人框仅此图标无三点）；私聊/群三点菜单：置顶/隐藏/**打开智信私聊|群聊**（`open-private` → `openImChat`）；个人框固定置顶角标
 - (web) **三点菜单置顶/隐藏已接线**（`updateSetting` → 从 `exemptAgentIds` 移除该 agentId → `list` 刷新）；编排 `personalAiUpdateSettingFlow`；合成 agentId 跳过接口走本地兜底；**跳转智信已接线**（`openImChat` → 主窗口 `openConversationById`）；**开启新对话已接线**（先选中 → `chat-ready` → `newChatNonce` → `startNewChat`；弹窗历史会收起）；**待 E2E**
 - (web) 侧栏搜索**已对齐选择弹窗**：复用 `AiBoxSearchBox` + `POST /personalAiFrame/selectGroupBySearch`；输入框 `rounded-[14px]` / `border #E7E7E7`；点选结果直达 `applySelection`（等同弹窗「确定」）；主列表不再客户端过滤
-- (web) `POST /personalAiFrame/selectGroupBySearch` **已接入**选择弹窗与侧栏搜索：`searchPicker` 改走 HTTP（`selectGroupBySearchApi` 动态导入，`accountId` 取登录用户），映射 `privateList`/`groupList`；搜索结果 popover 新增「全部/群组/人员」三 tab（全部=群组在前+人员在后）。web 不再调用桥 `searchAiBoxPicker`；**`AiBoxSearchRow` 有 `agentAvatar` 时优先单头像**（群组对齐 `AiBoxRow`，人员同理）
+- (web) `POST /personalAiFrame/selectGroupBySearch` **已接入**选择弹窗与侧栏搜索：`searchPicker` 改走 HTTP（`selectGroupBySearchApi` 动态导入，`accountId` 取登录用户），映射 `privateList`/`groupList`；搜索结果 popover 新增「全部/群组/人员」三 tab（全部=群组在前+人员在后）。web 不再调用桥 `searchAiBoxPicker`；**`AiBoxSearchRow` 群头像与 `AiBoxRow` 同优先级**（先 `accountInfoList` 拼图）
 - (web) 个人 AI 右侧对话面板已改为**组件直渲** `HomeIndex`（`chatType`/`targetId`/`aiRoleId` props + key 重挂载），不再嵌套 `/zx/home/...` iframe；独立 `zx/home` 路由入口仍可用
 - (web) **PC 个人 AI 内嵌对话**：历史侧栏随 **Home 自身 `elWidth`** 在弹窗/双栏间切换（`DRAWER_MAX_WIDTH=700`：`≤700` popup 宽 280px，`>700` 双栏）；**进入默认列表展开、历史收起**；独立首页默认收起
 - (web) **PC 个人 AI 头栏四按钮**：`hideBuiltinCollapseChrome` 下传至 `Chat` → 全屏 / 设置 / 打开智信私聊·群聊（个人框隐藏）/ 打开独立弹窗；无关闭；移动端 `#header-right` 仍优先。标题 `max-width` 改按实际右侧图标数预留（`rightIconCount`，私聊/群最多 4，不再死写 2/3）。**待桌面 E2E**
@@ -220,12 +223,16 @@
 - 2026-07-14 个人 AI 框：list 接口回传（belongType=0）；固定置顶排序+角标；会话跳转改用 `chatType=belongType`/`targetId=belongId`（修复选中后右侧错渲第二项）；列表项 UI 对齐稿：常显打开私聊+更多，更多菜单三项（打开私聊仅 UI）
 - 2026-07-14 `getFilter` 对齐 YApi #14169：初始化只读拉取（入参仅 `accountId`）；YApi Body 误列的 `filterTypes` 写入语义不采纳，改筛仍走 list
 - 2026-07-14 新增公共契约 `POST /personalAiFrame/batchGetAgent`（YApi #14187）：`groupIds`+`accountIds` → `groupMap`/`accountMap`；不限创建人（次日选择弹窗已接入，见下）
-- 2026-07-15 选择弹窗群组/组织架构接入 `batchGetAgent`：群 `groupIds`、人 `accountIds`；群组行优先 `agentAvatar`；组织选中带 `agentId` 等
+- 2026-07-15 选择弹窗群组/组织架构接入 `batchGetAgent`：群 `groupIds`、人 `accountIds`；组织选中带 `agentId` 等
+- 2026-07-30 web 选择AI框：**停用 batchGetAgent**；只展示 `getAllImDialogue`/`getDeptUsers` 已带回 `agentId` 的项
+- 2026-07-30 web 选择AI框：**人头像用 `privateInfo.avatar`**（搜索/组织同理用联系人头像），不用 `agentAvatar`
+- 2026-07-30 web 侧栏搜索：focus 拉 `getAllImDialogue(selectModel:1)`，候选本地关键字过滤（不再 `selectGroupBySearch`）
+- 2026-07-30 web 选择AI框群头像：**有 `accountInfoList` 优先 2×2 拼图**（对齐选择数据来源）；无成员才回退 `agentAvatar`；打开弹窗默认「全部」tab
 - 2026-07-15 组织架构进公司对齐 PC 转发：`getContactTree({isGroup:1})`；`corpId=节点id`；首屏 `pid=rootDeptId||id`；透传 `corpType/corpAndCorpRelType/labelType`；同名根部门自动跳过；OrgPicker 公司层勿裸传 `pid:'0'`
 - 2026-07-15 web `a7fa5fd` + desktop `1ca7496e` 已提交（筛选/updateSetting/batchGetAgent/组织进公司）；两边均未 push；desktop 本地仍可改 `.env.test` 指 localhost
 - 2026-07-15 web 侧栏列表加载：`loadAgentList` 期间 `listLoading` + `v-loading` 转圈（含初始拉取与改筛刷新）
 - 2026-07-15 个人 AI 列表：个人框仅「开启新对话」图标（无三点）；私聊/群三点左=新开 AI 框会话、三点内「打开智信私聊/群聊」→ `openImChat`
-- 2026-07-15 选择弹窗搜索 `AiBoxSearchRow`：回参含 `agentAvatar` 时优先展示 AI 框头像（群组与 `AiBoxRow` 一致；人员有则覆盖 `avatar`）；`normalizeSearchGroup/Private` 透传 `agentAvatar`/`accountInfoList`
+- 2026-07-15 选择弹窗搜索 `AiBoxSearchRow`：群组与 `AiBoxRow` 同优先级（先拼图后 agentAvatar）；人员有 `agentAvatar` 仍覆盖 `avatar`；`normalizeSearchGroup/Private` 透传 `agentAvatar`/`accountInfoList`
 - 2026-07-15 侧栏搜索对齐选择弹窗：复用 `AiBoxSearchBox`/`SearchInput`（`rounded-[14px]`、`border #E7E7E7`、placeholder「搜索联系人、智能体」）；HTTP `selectGroupBySearch`；点选即 `applySelection`（跳过弹窗确定）；主列表始终展示完整 list
 - 2026-07-21 web：进 AI 框**默认列表展开、历史收起**；Chat 全屏收两侧栏，取消全屏只展开 AI 框列表、历史保持收起
 - 2026-07-15 PC 个人 AI 历史侧栏形态：窄屏用 `preferDrawer` 强制 van-popup（280px）；变宽后清掉强制态，按自身 `elWidth` 与 `DRAWER_MAX_WIDTH=700` 在弹窗/双栏间切换（**默认开合**见 2026-07-21）

@@ -106,3 +106,7 @@ isSelf = personalId === 当前登录用户 id
 - **安卓**：badge 左右对齐须用 `MessageDirection.SEND`，不能用 `rightIconView == VISIBLE`——连续自己消息头像是 `INVISIBLE`，会误判居左。
 - **合并转发**：若仍走「仅 richList」的逐条裁剪函数，合并详情里 badge 会丢；须用合并专用组装。
 - **合并详情**：安卓须在 `CombineAdapter` 挂 badge（会话列表 binder 复用）；iOS 走既有 `ZXIMChatCell`，但建模型时须读到 `baseExtra`/`extra`。
+- **iOS 合并打包**：勿只读 `yy_modelToJSONObject` 的 `content.extra`（可能空）；应用与会话 badge 相同的 `parseMsgExtraDictionary` / `content.extra` 再裁剪写入 `baseExtra`+`extra`。无字段时不要用空串覆盖原 `extra`。
+- **iOS 合并建模型**：`user`/`senderUserInfo` 的 id 须写回 `message.senderUserId`（群 AI 靠 `ga_`）；文本/机器人同步 `_extra`；个人昵称拉取成功后发 `ZXNotifyGroupUserAvatarUpdatedFromDB` 刷新列表。
+- **安卓合并详情 · 群 AI**：定时群 AI 多为 `ZX:ActionCardMsg`；`ActionCardTransformation` 须带 `extra`/`baseExtra`，`obtain` 后 `setExtra`，否则门闩丢失。打包 ActionCard/引用同文本写 `baseExtra`；`senderUserId` 空时回落 `userInfo.userId`。
+- **旧聊天记录**：修复前已上传的合并 OSS 无 badge 字段，须重新合并转发才能验证。

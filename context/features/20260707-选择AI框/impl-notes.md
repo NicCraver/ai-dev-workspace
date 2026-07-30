@@ -5,7 +5,7 @@
 
 ## 状态流转
 
-弹窗状态：`activeTab ∈ {recent, group, org}` · `keyword` · `selectedKey = ${ownerType}:${id}` · `selected`（当前选中项整体）· `loading`。搜索由 `AiBoxSearchBox` 自管 `open` 状态（focus 开 / blur 延迟关 / 选中关）。
+弹窗状态：`activeTab ∈ {recent, group, org}` · `keyword` · `selectedKey = ${ownerType}:${id}` · `selected`（当前选中项整体）· `loading`。搜索由 `AiBoxSearchBox` 自管 `open` 状态（focus 开 / blur 延迟关 / 选中关）。**每次打开**重置 `activeTab=recent`（「全部」）并清空选中。
 
 事件：切 tab → 懒取数（每 tab 首次进入拉一次，缓存）→ 点行即选（`selectedKey/selected` 即时更新，底部「已选」即时）→ 确定 → 上抛 `submit(selection)` 并关窗。组织架构 tab 由 OrgPicker 自管钻取状态（公司→部门→人员 + 面包屑），选中人员上抛与其它 tab 同形态 item。
 
@@ -18,12 +18,12 @@
 
 ## 接口调用时序
 
-1. **弹窗打开**（`open=true`）：并行预取最近联系人 + `getMyGroups({type:'organization'})` → `POST /personalAiFrame/batchGetAgent({groupIds})` 补齐群组 agent 字段。最近联系人时序：`getRecentContacts`（桥）→ web 端 `sortRecentLikeTransmitMessage` → `POST /personalAiFrame/recentContactList`（HTTP，按 id/type 批量补齐 `agentName` 等）；外联群在切到群组 tab 且选「外联群」时懒拉；组织架构由 OrgPicker 在 mount / 切 scope 时拉 `getOrgCompanies`。
-2. **群组二级切换**：首次进入某 `type` 时 `getMyGroups({type})` → `batchGetAgent({groupIds})`，结果缓存于内存，不重复请求。
-3. **组织钻取**（对齐 PC 转发 `outsource-group-select` → `company-dept-user`）：点公司 → `getDeptUsers({corpId:公司id, pid: rootDeptId||id, corpType, corpAndCorpRelType, labelType})` → `batchGetAgent({accountIds})` 补齐当前层人员 agent 字段；点部门 → 同参换 `pid=deptId` 后再 batch；面包屑回公司层仍用 `rootDeptId||id`。宿主公司列表走 `getContactTree({type, isGroup:1})`。若首屏仅一个与企业同名的根部门则自动钻入（不写入面包屑），避免多一层企业。
+1. **弹窗打开**（`open=true`）：`getAllImDialogue({selectModel:1})` → 归一化后**全量展示**（含无 `agentId`）。**不再** `agentItemsOnly`，也**不再**调 `batchGetAgent`。外联群在切到群组 tab 且选「外联群」时懒拉（若仍走桥）；组织架构由 OrgPicker 在 mount / 切 scope 时拉 `getOrgCompanies`，人员层展示 `getDeptUsers` 全量人员（选择 AI 框**不**传 `requireAgent`），也不再 batch。
+2. **群组二级切换**：选择 AI 框群组 tab 现用同一份 `getAllImDialogue` 缓存的组织群子集，不单独 `getMyGroups`+batch。
+3. **组织钻取**（对齐 PC 转发 `outsource-group-select` → `company-dept-user`）：点公司 → `getDeptUsers({corpId:公司id, pid: rootDeptId||id, corpType, corpAndCorpRelType, labelType})`；点部门 → 同参换 `pid=deptId`；**不再**每层 `batchGetAgent`。面包屑回公司层仍用 `rootDeptId||id`。宿主公司列表走 `getContactTree({type, isGroup:1})`。若首屏仅一个与企业同名的根部门则自动钻入（不写入面包屑），避免多一层企业。
 4. **搜索**：HTTP `POST /personalAiFrame/selectGroupBySearch({accountId, searchContent})`（300ms 防抖）→ 回参 `groupList`+`privateList`，前端分三 tab 展示；空 keyword 不请求，popover 显示空态图。（旧桥 `searchAiBoxPicker`/宿主 `getAccountSearchByUserName`+`getGroupBySearch` 已由 web 弃用，desktop 侧可保留兜底或后续下线）
 5. **确定选中**：`saveSelected` → `list(filterTypes:null, exemptAgentIds push 本次 agentId)` → 用回参刷新主侧栏并激活该项（详见下「选中后持久化」）；失败则本地 upsert 兜底。
-6. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底；`recentContactList` / `batchGetAgent` 失败则保留桥侧名称/头像，不阻断弹窗其它 tab。
+6. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底；`getAllImDialogue` 失败则空列表+错误文案，不阻断关窗。
 
 ## 边界情况
 
@@ -34,6 +34,9 @@
 | 搜索 focus 无输入 | popover 显示空态图（对齐 PC `search-result` no-data） |
 | 未选中点确定 | 「确定」按钮 disabled |
 | 弹窗关闭 | 重置 keyword；不强制清列表缓存（二次打开秒显） |
+| 弹窗打开 | 重置 `activeTab=recent`（全部）+ 清空选中；再拉 `getAllImDialogue` |
+| 私聊 `privateInfo.leave === 1` | 展示名 = `targetName` + `（已离职）`（`normalizeAiBoxDialogueList`；弹窗列表/搜索与侧栏 focus 搜同源） |
+| 回参无 `agentId` | **仍展示**该人/群行；选中后走既有 save/upsert（合成 agentId 路径） |
 | 群 store 无成员 | 宿主并发 `groupInfoApi` 补取后拼 `accountInfoList`（最多 4 人） |
 | popover Teleport 到 body | 须用 inline `height`/`maxHeight` 限制高度；勿在根节点用 `h-full`（会按视口撑满） |
 
@@ -75,13 +78,13 @@
 - `groupListApi` 返回群项用 **`type`**（0/10），契约要求 `groupType` → handler 内 `groupType: g.type` 映射。会话模型里才叫 `groupType`，两套字段名同语义。
 - `getContactTree` 公司节点：名在 **`label`**（非 `name`/`corpName`）、人数在 **`num`**（非 `memberCount`）→ handler 映射为 `name/memberCount`。组织树的分组节点（type 1/2）的 `label` 作为公司项 `category`（如「入职企业/我的下级」），web OrgPicker 据此分组显示。选择态须 **`isGroup:1`**（对齐 `organization-list` showType=group）。公司项透传 **`id`/`rootDeptId`/`corpType`/`corpAndCorpRelType`/`labelType`**：`getDeptUsers.corpId` 用节点 **`id`**（同 `company-dept-user`），首屏 pid 用 **`rootDeptId||id`**；曾误用裸 `pid:'0'` 且缺附加参数 → 多一层企业或「暂无人员」。
 - `getDeptUserPagelist` 入参除 `corpId/pid` 外，PC 转发还传 `corpType/corpAndCorpRelType/labelType`；桥已透传（与 `company-dept-user.getUsers` 一致）。
-- **`agentName` / `agentAvatar`**：桌面桥无独立 AI 框字段时先用昵称/群名/群头像兜底。**最近联系人 tab** 走 `recentContactList`；**群组 tab** 走 `batchGetAgent({groupIds})`（有 `agentAvatar` 时 `AiBoxRow` 用单头像替代 2×2）；**组织架构人员** 每层 `getDeptUsers` 后走 `batchGetAgent({accountIds})`；搜索仍走 `selectGroupBySearch`。
-- **`batchGetAgent` Map 无 key**：请求里有 id 但无 AI 框数据时对应 key 不出现在 `groupMap`/`accountMap`，保留桥侧兜底字段，不阻断列表。
+- **`agentName` / `agentAvatar` / `agentId`**：选择 AI 框 **直接信** `getAllImDialogue(selectModel:1)` 回参；**无 `agentId` 也展示**（已停用 `agentItemsOnly` 与弹窗内 `batchGetAgent`）。搜索仍走 `selectGroupBySearch`（自带 agent 字段）；侧栏 focus 搜与弹窗同源 normalize、不过滤。
+- **`batchGetAgent` Map 无 key**：选择 AI 框路径已不再依赖；其它场景（若有）仍约定无数据则 key 不出现。
 - **`lastChatAt` 群组 tab 暂为 0**：`groupListApi` 不返回最近消息时间，handler 当前填 0 → 群组 tab 不按时间倒序。待联调确认是否从 `GetLatestOneMsg`/`lastConversationTime` 补（需知群会话 key 格式）。最近联系人 tab 的 `lastChatAt` 取 `item.lastConversationTime || item.message?.messageTime`，已实现。
 - `getRecentContacts` 旧 handler 形参 `(e,data,uuid,webContentsId)` 与 `sendToHost` 实参不匹配（`webContentsId` 实为 undefined，靠 `e.sender.sendTo` 在 Electron 19 退化/兜底跑通）——新增 handler 照搬此既有模式，未改。
 - **AiBrowser 个人 AI iframe 桥**：`/zx/personal` 在 iframe 内无 `window.webview`；`useAiBoxPickerData` 检测 iframe 后走 `parent.postMessage(personal-ai:bridge-request)` → AiBrowser `handlePersonalAiMessage` → `aiBoxPickerHost` → `personal-ai:bridge-result` 回传。token 仍走既有 `getToken`/`setToken`（`App.vue`）。
 - **最近联系人排序**：与 PC 转发弹窗 `transmit-message.vue` `allConversation` 一致——有 `message` 的项靠前，同有则按 `messageTime` 倒序。**排序在 web 端**（`sortRecentLikeTransmitMessage`）；桥返回 `hasMessage` + `messageTime`（`messageTime` 允许为 0，勿用 falsy 判断）。
-- **群 2x2 头像**：桥返回 `accountInfoList`（`[{id,nickName,avatar}]`，最多 4 项）；web 归一化须保留该字段，不可只留 `avatar`。
+- **群 2x2 头像（对齐选择数据来源）**：取 `groupInfo.accountInfoList` 前 4 人的 `avatar`（字段 `{id,nickName,avatar}`）交给 `AcGroupAvatar` 拼图；归一化时群行 `avatar` 置空串，**有成员列表时优先拼图，无成员再回退 `agentAvatar`/单头像**。选中进侧栏仍优先 `agentAvatar`（`mapSelectionToAgent`）。弹窗每次打开重置 `activeTab=recent`（「全部」）。
 
 ## 与 bridge 的交互
 
@@ -352,7 +355,7 @@ PC `PersonalAiChat` 内嵌 `Home`（`hideBuiltinCollapseChrome=true`）时，`Ch
 
 **联调坑（2026-07-29）**：`HomeGuidePage` 全屏遮罩（`z-2000`）盖住真设置按钮，假图标原先无点击 → 点「设置」进不了 `gotoSettingPage`。已改为点击高亮设置/文案条 → 关引导并 `click` 真实锚点。
 
-**联调坑（2026-07-29·提示）**：个人 AI 在 AiBrowser iframe 内时，`checkAgentInEdit` 有占用只 `postMessage(showSettingMsgBox)`，宿主无 `ai-frame-view-container` 接 ClashDialog；且原先本地 `showFailToast`(vant) 在 PC 不可见。已改为本地 `showToastError`（PC=ElMessage），iframe 仍顺带 postMessage。
+**联调坑（2026-07-29·提示）**：个人 AI 占用提示改为 web 自弹 `SettingEditClashDialog`（对齐 PC ClashDialog：文案 + 私信 + 我知道了），不再依赖宿主 postMessage / vant toast。
 
 ### PC 独立原生窗（desktop + web）
 
