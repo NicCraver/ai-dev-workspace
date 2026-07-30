@@ -1,6 +1,6 @@
 # Impl Notes：定时任务消息 · 气泡下来源 badge
 
-> 平台无关逻辑提炼。参考端：PC `MsgPersonalAiRow` + `msg-list.getAiSourceBadgeVariant`。最后更新：2026-07-30（补自己消息详情 badge）
+> 平台无关逻辑提炼。参考端：PC `MsgPersonalAiRow` + `msg-list.getAiSourceBadgeVariant`。最后更新：2026-07-30（安卓/iOS 详情仅循环时间，不含触发名）
 
 ## 与 identity tag 的区别
 
@@ -31,7 +31,9 @@ isSelf = personalId === 当前登录用户 id
 
 - 个人：`"来自" + displayName(personalAccountId) + "个人AI框"`（查用户缓存，不用 `content.user.name`）
 - 群：固定 `"来自群AI框"`（不查人）
-- 详情（仅自己）：`triggerName + " " + cycleText`（缺一则只显示有的；都空则不渲染）
+- 详情（仅自己）：
+  - **PC**：`triggerName + " " + cycleText`（缺一则只显示有的；都空则不渲染）
+  - **安卓 / iOS**：仅 `cycleText`（**不展示** `agentSetAbilityTriggerName`；cycle 空则不渲染详情 pill）
 
 ## 详情 badge：`dealForExtraInfo`
 
@@ -39,7 +41,7 @@ isSelf = personalId === 当前登录用户 id
 
 | 字段 | 用途 |
 |------|------|
-| `agentSetAbilityTriggerName` | 触发名 |
+| `agentSetAbilityTriggerName` | 触发名（**仅 PC 拼进详情**；安卓/iOS 忽略） |
 | `cycleUnit` | `day` / `week` / `month` / `stage` / `quarter` / `year`；缺省 → 无循环文案 |
 | `cycleValue` | 每 N 个周期，默认 1；为 1 时省略数字（「每天」vs「每2天」） |
 | `hourMinute` 或 `time` | 时:分；`00:00` 或空不拼到文案末尾 |
@@ -70,7 +72,7 @@ isSelf = personalId === 当前登录用户 id
 | 撤回 | 无 badge |
 | tag | 完全按旧逻辑，与 fixTask 无关 |
 | 他人个人 AI / 群 AI | 有来源 badge 时也不出详情 badge |
-| `dealForExtraInfo` 缺或无 cycle/触发名 | 仅来源 badge |
+| `dealForExtraInfo` 缺或无 cycle（安卓/iOS）/ 无 cycle 且无触发名（PC） | 仅来源 badge |
 
 ## 联调坑
 
