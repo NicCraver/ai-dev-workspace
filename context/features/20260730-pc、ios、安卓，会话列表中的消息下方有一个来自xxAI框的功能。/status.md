@@ -1,6 +1,6 @@
 # Status：定时任务消息 · 气泡下来源 badge
 
-> 最后更新：2026-07-31（个人 AI 昵称改取实时资料：iOS `getSenderNickName` / PC `parseName`）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-31（iOS 合并转发已 push；PC/iOS 列表昵称取实时资料 · 本地未 commit）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -10,29 +10,30 @@
 | 个人 badge + `fixTaskMessage===1` 门闩 · plan Task 1/2/3 | — | ✅ 已 push | ✅ 已 push | ✅ 已 push |
 | 群 AI badge「来自群AI框」· plan Task 1/2/3 | — | ✅ 已 push | ✅ 已 push | ✅ 已 push |
 | 自己消息详情 badge | — | ✅ 仅循环时间 + 反序对齐 PC（`cc79be12c`） | ✅ 仅循环时间 + 反序对齐 PC | ✅ 触发名+循环时间（`ff400773`）+ 样式（`0b648606`） |
-| 合并转发保留字段 + 合并详情列表 badge | — | ✅ `37a06f9ce`（待真机） | 🚧 修打包源/读侧（本地未 commit） | ✅ `126d78d6` |
+| 合并转发保留字段 + 合并详情列表 badge | — | ✅ `37a06f9ce`（待真机） | ✅ `e88ac08cb`（待真机·须重合并） | ✅ `126d78d6` |
+| 个人/群 AI 列表昵称取实时资料 | — | ⬜ 待对齐 | 🚧 本地未 commit（`getSenderNickName`） | 🚧 本地未 commit（`parseName`→`GetSenderName`） |
 | impl-notes 补全 · plan Task 4 | ✅（共用） | ✅ | ✅ | ✅ |
 | 自测通过 | — | ⬜ 待真机 | ⬜ 待真机（须**重新合并转发**后再开聊天记录） | ⬜ 待手测 |
 
-> web：本期不做。tag（昵称旁）未改。
+> web：本期不做。tag（昵称旁文案）未改；仅发送者展示名改为实时资料。
 
 ## 提交（分支 `personal-ai-chat`）
 
 | 端 | 提交 |
 |----|------|
-| desktop | `126d78d6`（合并列表 MsgPersonalAiRow + 保留字段）· `0b648606`（样式）· `ff400773`（详情）· `8444e7c3` · `2cb02be3`；旁路回执 `a9bb3136`；HEAD `4218fae4`；**本地未 commit**：`parseName` 个人 AI 改走 `GetSenderName`（最新名） |
+| desktop | `126d78d6`（合并列表 MsgPersonalAiRow + 保留字段）· `0b648606`（样式）· `ff400773`（详情）· `8444e7c3` · `2cb02be3`；旁路回执 `a9bb3136`；HEAD `4218fae4`；**本地未 commit**：`parseName` 个人/群 AI 一律 `GetSenderName`（`AiAgentAccountInfoMap` 最新名；勿提交 `.env.test` 等） |
 | android | `37a06f9ce`（合并保留字段 + CombineAdapter badge + ActionCard/引用还原）· `cc79be12c`（右对齐 + pill 顺序）· `02cef0fdc`（来源）· `fe6d1687f`（详情）· `6ecb5ae92`（定时图标） |
-| ios | `5f3167a13`（来源）· `80d7870db`（详情+图标）· `1193d3595`（反序）；**本地未 commit**：合并保留字段 + 读 baseExtra/extra + **打包用 parseMsgExtra + 同步 senderUserId + 昵称拉取后刷新**；**`getSenderNickName` 个人 AI 优先 `groupAgentRels.agentName`** |
+| ios | `e88ac08cb`（合并保留字段 + 读 baseExtra/extra + 打包 parseMsgExtra + senderUserId + 昵称拉取刷新）· `1193d3595`（反序）· `80d7870db`（详情+图标）· `5f3167a13`（来源）；**本地未 commit**：`getSenderNickName` 个人 AI 优先 `groupAgentRels.agentName`，群 AI 仍走 `ZXAIAgentModel`，消息体 name 仅兜底 |
 
 ## 待办 / 阻塞
 
 - (旁路 · web/desktop · 选择数据范围) ✅ 外联群子 tab key `outreach`；**列表：人头像 + 群拼图、不展示智能体名**；**私聊 leave=1 后缀「（已离职）」**（本地未 commit，见 `20260729-4端重选择构数据来源弹窗`）。
 - (旁路 · web · 选择AI框) ✅ 群头像拼图 + 默认全部 tab + 停用 batchGetAgent + **不过滤无 agentId** + 人头像 privateInfo + 侧栏 focus 拉 getAllImDialogue 本地搜；**私聊 leave=1 后缀「（已离职）」**；未 commit（见 `20260707-选择AI框`）。
-- (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条发出后无 badge。另：**本地未 commit** `parseName` 个人 AI 取最新名（勿提交 `.env.test` 等调试配置）。
-- (android) ⏳ 真机：会话 badge + 合并详情「来自群AI框」（ActionCard）；须**重新合并转发**（`37a06f9ce` 已 push）。
-- (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用本包**重新合并转发**后再打开（旧 OSS 无字段）。本地待 commit / push（含合并字段 + **个人 AI 昵称取 `groupAgentRels` 最新名**）。
+- (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条发出后无 badge。另：提交并手测 `parseName` 实时名（**勿** stage `.env.test` / `electron-builder.yml` / `package.json`）。
+- (android) ⏳ 真机：会话 badge + 合并详情「来自群AI框」（ActionCard）；须**重新合并转发**（`37a06f9ce` 已 push）。列表昵称是否已取实时资料待对齐确认。
+- (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用含 `e88ac08cb` 的包**重新合并转发**后再打开（旧 OSS 无字段）。另：提交并手测 `getSenderNickName` 实时名。
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`；`dealForExtraInfo` 字段形态与文档一致。
-- 2026-07-31 个人/群 AI 消息列表昵称：**优先实时资料**（iOS `groupAgentRels` / `ZXAIAgentModel`；PC `AiAgentAccountInfoMap`），消息体 `user.name` 仅兜底；改名后历史消息同步更新。
+- 2026-07-31 个人/群 AI 消息列表昵称：**优先实时资料**（iOS `groupAgentRels` / 群 `ZXAIAgentModel`；PC `AiAgentAccountInfoMap`），消息体 `user.name` 仅兜底；改名后历史消息同步更新。
 
 ## 关键决策记录
 

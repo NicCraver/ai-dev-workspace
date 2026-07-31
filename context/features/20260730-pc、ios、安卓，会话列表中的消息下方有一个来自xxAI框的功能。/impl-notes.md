@@ -1,6 +1,6 @@
 # Impl Notes：定时任务消息 · 气泡下来源 badge
 
-> 平台无关逻辑提炼。参考端：PC `MsgPersonalAiRow` + `msg-list.getAiSourceBadgeVariant`。最后更新：2026-07-30（安卓/iOS 详情仅循环时间；自己消息双 pill 反序对齐 PC `0b648606`）
+> 平台无关逻辑提炼。参考端：PC `MsgPersonalAiRow` + `msg-list.getAiSourceBadgeVariant`。最后更新：2026-07-31（列表发送者昵称优先实时智能体资料）
 
 ## 与 identity tag 的区别
 
@@ -34,6 +34,17 @@ isSelf = personalId === 当前登录用户 id
 - 详情（仅自己）：
   - **PC**：`triggerName + " " + cycleText`（缺一则只显示有的；都空则不渲染）
   - **安卓 / iOS**：仅 `cycleText`（**不展示** `agentSetAbilityTriggerName`；cycle 空则不渲染详情 pill）
+
+## 列表发送者昵称（个人/群 AI）
+
+气泡旁展示的发送者名（非 badge 文案）与群 AI 对齐：**优先实时智能体资料**，消息体里的 `user.name` / `senderUserInfo.name` **仅兜底**。智能体改名后，历史消息列表应同步显示新名。
+
+| 归属 | 优先来源 | 兜底 |
+|------|----------|------|
+| 个人 AI（sender 为智能体前缀且带 personal 判据） | 群内智能体关系表上的当前 `agentName`（按 sender 账号匹配） | 消息体 name |
+| 群 AI | 当前会话绑定的群智能体资料名（须确认账号与 sender 一致，避免个人 AI 误用群名） | 消息体 name |
+
+PC：走统一的发送者名解析（智能体账号映射表最新名）。安卓若仍冻结消息体 name，应对齐本表。
 
 ## 详情 badge：`dealForExtraInfo`
 
