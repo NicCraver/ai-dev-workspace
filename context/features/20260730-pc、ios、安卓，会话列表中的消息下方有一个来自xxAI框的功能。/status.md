@@ -27,6 +27,7 @@
 
 ## 待办 / 阻塞
 
+- (旁路 · web · 选择AI框) ✅ OrgPicker 隐藏本人：`imAccount`（缺省 `accountId`）=== 登录人 id 不展示。
 - (旁路 · web · 选择AI框) ✅ OrgPicker 人员行对齐 AiBoxRow：人头像 40px + 姓名/智能体双行（`avatar` 只用通讯录，不用 agentAvatar）。
 - (旁路 · web · 选择AI框) ✅ 组织架构人员副标题：对齐 `getAllImDialogue` 的 `agentName`（会话缓存按 accountId 合并，缺口 `batchGetAgent`）；通讯录不再用人名冒充。本地未 commit。
 - (旁路 · web · 选择AI框) ✅ 组织架构改 HTTP 直调 `getContract`/`sub_dept_user_pagelist`（不经 PC 桥；desktop handler 保留）；见 `20260707-选择AI框`。本地未 commit。
