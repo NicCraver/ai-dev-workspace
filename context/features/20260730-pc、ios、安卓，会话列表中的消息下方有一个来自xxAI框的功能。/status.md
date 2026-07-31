@@ -1,6 +1,6 @@
 # Status：定时任务消息 · 气泡下来源 badge
 
-> 最后更新：2026-07-31（iOS 合并转发已 push；PC/iOS 列表昵称取实时资料 · 本地未 commit）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-31（旁路：web 组织架构 HTTP 直调；iOS 合并已 push；PC/iOS 列表昵称取实时资料 · 本地未 commit）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -27,6 +27,7 @@
 
 ## 待办 / 阻塞
 
+- (旁路 · web · 选择AI框) ✅ 组织架构改 HTTP 直调 `getContract`/`sub_dept_user_pagelist`（不经 PC 桥；desktop handler 保留）；见 `20260707-选择AI框`。本地未 commit。
 - (旁路 · web/desktop · 选择数据范围) ✅ 外联群子 tab key `outreach`；**列表：人头像 + 群拼图、不展示智能体名**；**私聊 leave=1 后缀「（已离职）」**（本地未 commit，见 `20260729-4端重选择构数据来源弹窗`）。
 - (旁路 · web · 选择AI框) ✅ 群头像拼图 + 默认全部 tab + 停用 batchGetAgent + **不过滤无 agentId** + 人头像 privateInfo + 侧栏 focus 拉 getAllImDialogue 本地搜；**私聊 leave=1 后缀「（已离职）」**；未 commit（见 `20260707-选择AI框`）。
 - (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条发出后无 badge。另：提交并手测 `parseName` 实时名（**勿** stage `.env.test` / `electron-builder.yml` / `package.json`）。

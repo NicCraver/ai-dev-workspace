@@ -118,12 +118,13 @@ web 分流：`payload.ok` → 新；有 `payload.scopes` → 老。取消：`cod
 
 ## 版本与兼容
 
-- 老 desktop 壳无 `getMyGroups`/`getOrgCompanies`/`getDeptUsers`/`searchAiBoxPicker` 时，web 端 `useAiBoxPickerData` 捕获异常 → 弹窗提示「请升级到最新版本」。
+- 老 desktop 壳无 `getMyGroups`/`getOrgCompanies`/`getDeptUsers`/`searchAiBoxPicker` 时：组织架构与搜索已改走 HTTP，**不依赖**这些桥；仅最近联系人/群组仍可能提示「请升级到最新版本」。
 - `getRecentContacts` 缺 `agentName`/`lastChatAt`：视为宿主 bug，联调时由 desktop 侧补齐（见选择AI框 spec「待联调确认 1」）。
 - 移动端（`wnsdk.aiChat.*`）取数类接口（最近联系人/群组/组织）本期不实现；**`selectAiAgent` ios/android 均已落地**（android 见上表；原生只回传选中项，saveSelected/list 在 web H5）。
 
 ## Changelog
 
+- 2026-07-31 web 选择 AI 框组织架构改直调 contact（`getContract` / `sub_dept_user_pagelistV3`），不再调桥 `getOrgCompanies`/`getDeptUsers`；desktop 桥 handler 保留不动。
 - 2026-07-23 web 兼容老 iOS：开页同时传 `agentId`+`initialScopes`；回传按 `ok`（新）/ `scopes`（老）分流。
 - 2026-07-22 选择数据范围（ios/android）：入参改 `{agentId,accountId?}`；原生 `getAgentDataRange` 返显 + `saveDataRange` 落库；桥成功只 ACK `{ok:true}`；web 再拉记忆。方案 `plan-数据范围原生落库.md`。
 - 2026-07-29 AiBrowser → iframe：新增 `aiBoxDeactivate`（切离个人 AI / 关面板）；`aiBoxCheckVersion` 兼作激活（冲延后消息 + 只刷记忆 + 验版）。web `pageActive = docVisible && shellActive`。

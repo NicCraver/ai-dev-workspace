@@ -18,9 +18,9 @@
 
 ## 接口调用时序
 
-1. **弹窗打开**（`open=true`）：`getAllImDialogue({selectModel:1})` → 归一化后**全量展示**（含无 `agentId`）。**不再** `agentItemsOnly`，也**不再**调 `batchGetAgent`。外联群在切到群组 tab 且选「外联群」时懒拉（若仍走桥）；组织架构由 OrgPicker 在 mount / 切 scope 时拉 `getOrgCompanies`，人员层展示 `getDeptUsers` 全量人员（选择 AI 框**不**传 `requireAgent`），也不再 batch。
+1. **弹窗打开**（`open=true`）：`getAllImDialogue({selectModel:1})` → 归一化后**全量展示**（含无 `agentId`）。**不再** `agentItemsOnly`，也**不再**调 `batchGetAgent`。外联群在切到群组 tab 且选「外联群」时懒拉（若仍走桥）；组织架构由 OrgPicker 在 mount / 切 scope 时 **HTTP** 拉公司树（`getContract`，`isGroup:1`），人员层 **HTTP** `sub_dept_user_pagelist[V3]` 全量人员（选择 AI 框**不**传 `requireAgent`），也不再 batch。
 2. **群组二级切换**：选择 AI 框群组 tab 现用同一份 `getAllImDialogue` 缓存的组织群子集，不单独 `getMyGroups`+batch。
-3. **组织钻取**（对齐 PC 转发 `outsource-group-select` → `company-dept-user`）：点公司 → `getDeptUsers({corpId:公司id, pid: rootDeptId||id, corpType, corpAndCorpRelType, labelType})`；点部门 → 同参换 `pid=deptId`；**不再**每层 `batchGetAgent`。面包屑回公司层仍用 `rootDeptId||id`。宿主公司列表走 `getContactTree({type, isGroup:1})`。若首屏仅一个与企业同名的根部门则自动钻入（不写入面包屑），避免多一层企业。
+3. **组织钻取**（对齐 PC 转发 `outsource-group-select` → `company-dept-user`，**取数改 web 直调 contact，不经桥**）：点公司 → `getDeptUserPagelist({corpId:公司id, pid: rootDeptId||id, corpType, corpAndCorpRelType, labelType})`；点部门 → 同参换 `pid=deptId`；**不再**每层 `batchGetAgent`。面包屑回公司层仍用 `rootDeptId||id`。公司列表走 `getContactTree({type, isGroup:1})`（即 `POST …/getContract`）。若首屏仅一个与企业同名的根部门则自动钻入（不写入面包屑），避免多一层企业。
 4. **搜索**：HTTP `POST /personalAiFrame/selectGroupBySearch({accountId, searchContent})`（300ms 防抖）→ 回参 `groupList`+`privateList`，前端分三 tab 展示；空 keyword 不请求，popover 显示空态图。（旧桥 `searchAiBoxPicker`/宿主 `getAccountSearchByUserName`+`getGroupBySearch` 已由 web 弃用，desktop 侧可保留兜底或后续下线）
 5. **确定选中**：`saveSelected` → `list(filterTypes:null, exemptAgentIds push 本次 agentId)` → 用回参刷新主侧栏并激活该项（详见下「选中后持久化」）；失败则本地 upsert 兜底。
 6. **失败策略**：各 `fetch*` `.catch(() => [])` 或空结构兜底；`getAllImDialogue` 失败则空列表+错误文案，不阻断关窗。
@@ -88,16 +88,27 @@
 
 ## 与 bridge 的交互
 
-取数经宿主桥（契约见 `context/bridge.md`），`useAiBoxPickerData` 双通道：
+最近联系人 / 群组仍经宿主桥（契约见 `context/bridge.md`），`useAiBoxPickerData` 双通道：
 - **微应用 webview**：`window.webview.getXxx()` → preload `sendToHost` → `webview-control` → `aiBoxPickerHost`
 - **AiBrowser iframe**：`parent.postMessage(personal-ai:bridge-request)` → AiBrowser → `aiBoxPickerHost` → `personal-ai:bridge-result`
 
 方法映射：
 - `getRecentContacts()` → 最近联系人 tab（首入懒拉，缓存；web 端排序后再调 `recentContactList` 补齐 agentName）
-- `getMyGroups({type})` → 群组 tab（按组织群/外联群二级切换懒拉）
-- `getOrgCompanies({type})` / `getDeptUsers({corpId,pid,corpType?,corpAndCorpRelType?,labelType?})` → 组织架构钻取（公司列表含 `id`/`rootDeptId`；进公司 pid=`rootDeptId||id`）
-- ~~`searchAiBoxPicker({search})` → 搜索 popover~~ **已弃用**：搜索改走 HTTP `POST /personalAiFrame/selectGroupBySearch`（见下「弹窗搜索取数」）
+- `getMyGroups({type})` → 群组 tab（按组织群/外联群二级切换懒拉；选择 AI 框现多走 `getAllImDialogue` 缓存）
+- ~~`getOrgCompanies` / `getDeptUsers`~~ **已弃用（web）**：组织架构改走 HTTP（见下）；desktop 桥 handler **保留不动**，供兜底/其它入口
+- ~~`searchAiBoxPicker({search})` → 搜索 popover~~ **已弃用**：搜索改走 HTTP `POST /personalAiFrame/selectGroupBySearch`
 - 桥缺失/失败 → 调用方 `.catch(() => [])` 兜底
+
+## 组织架构 HTTP 取数（替换桥 getOrgCompanies / getDeptUsers）
+
+与搜索同款：web 直调 contact 域，**不改 PC 原生转发/通讯录，不删桥**。
+
+| 步骤 | 接口 | 说明 |
+|------|------|------|
+| 公司层 | `POST …/orInv/contactV2/getContract`（`type` 0 组织/1 外联，`isGroup:1`） | 树 walk：`type===3` 为公司；`id`→`corpId`；透传 `rootDeptId/corpType/corpAndCorpRelType/labelType`；父节点 `label`→`category` |
+| 部门/人员 | `GET …/orInv/contactV2/sub_dept_user_pagelistV3`（内网无 V3 后缀） | 入参 `corpId/pid/pageNum/pageSize` + 可选 `corpType/corpAndCorpRelType/labelType`；回参 `depts.list`/`users.list` 映射为 OrgPicker 行 |
+
+进公司首屏 `pid=rootDeptId||id`；空则回退 `pid=0`；同名根部门自动跳过（逻辑仍在 OrgPicker）。失败 → 空列表，不阻断其它 tab。
 
 ## 最近联系人 agentName 补齐（`POST /personalAiFrame/recentContactList`）
 

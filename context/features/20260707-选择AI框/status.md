@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-30（web：不过滤无 agentId + leave 后缀 + 群拼图/默认全部/停 batchGetAgent；未 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-31（web：组织架构改 HTTP 直调 getContract/sub_dept_user，PC 桥保留；未 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ✅ **组织架构改 HTTP 直调**：`fetchCompanies`/`fetchDeptUsers` → `getContract` + `sub_dept_user_pagelistV3`（映射对齐 PC host）；**不改 desktop**；桥 `getOrgCompanies`/`getDeptUsers` 保留。本地未 commit；**待** PC E2E（公司层分组、进公司人员、外联 scope）
 - (web) ✅ **选择AI框不过滤无 agentId**：弹窗 `normalize` 全量展示；OrgPicker 去掉 `require-agent`；侧栏 focus 搜同源。本地未 commit。
 - (web) ✅ **选择AI框私聊 leave=1**：`aiBoxPickerModel.normalize` 后缀 `（已离职）`（弹窗列表/搜索 + 侧栏 focus 搜同源）；本地未 commit。
 - (web) ~~**选择AI框群头像 / 默认 tab / 停用 batchGetAgent**~~：群行 `accountInfoList` 拼图；打开默认「全部」；弹窗/OrgPicker/`fetchGroups` **不再**调 `batchGetAgent`（曾一度 `agentItemsOnly`，现已取消）。侧栏搜索：focus 拉 `getAllImDialogue` 后前端滤。代码已写**未 commit**；**待** PC E2E
