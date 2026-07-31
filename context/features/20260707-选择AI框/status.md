@@ -1,6 +1,6 @@
 # Status：选择AI框
 
-> 最后更新：2026-07-31（web：组织架构改 HTTP 直调 getContract/sub_dept_user，PC 桥保留；未 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-07-31（web：FloatingDock 收起态黄角标；本地未 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -47,6 +47,7 @@
 - (web) ~~**移动端头栏返回/开列表竖线**~~：`MPersonalAiChatWrapper` `#header-left` 返回与 `side-close` 之间加 `#C9CFD9` 竖线（`w-px h-4`）。已 push `16af40b`；**待** 真机视觉验收
 - (web / android) ~~**选择数据范围安卓改 WebView 直调**~~：web `isAndroid` → `window.WebView.selectDataRangeScope`；回传 `javascript:dataRangeScopeResultFromAndroid`。web 已 push `0987537`；**被上条「原生落库」方案取代**（入参改 agentId、回传改 ACK）
 - (web) ~~**FloatingDock 双收起态精简**~~（`mode=both`）：隐藏「选择AI框」入口；「展开历史」仅图标；「展开列表」亦仅图标（注释「列表」文案）。已 push；**待** PC 视觉验收
+- (web) 🚧 **FloatingDock 收起态黄角标**：「展开历史」挂当前 AI 框 `unreadCount`；「展开列表」挂各框未读总和；样式对齐 HistoryCard/AgentItem（`#FA7700`，≤0 不显，>99 为 `99+`）。History 收起会卸载故不从 sessionList 汇总。本地未 commit；**待** PC 视觉/E2E
 - (web) ~~**展开/收起对话列表图标**~~：新增独立资源 `collapse-chat-list` / `expand-chat-list`；仅 `PersonalAiChatAgentList` 收起 + FloatingDock「展开列表」使用。全局 `side-close`/`side-open`（历史/设置等）已恢复原样。已 push `aeb6fee`；**待** 视觉验收
 - (web) ~~**Chat Header 标题区右侧预留**~~：`Header.vue` max-width 公式 `mobilePx(50)` → `mobilePx(118)`（+40 再 +28，避免长标题挤右侧按钮）。已 push `aeb6fee`；**待** 视觉验收
 - (android) ~~**选择数据范围底栏挤出 / 已选弹层**~~：底栏「清空已选」→「清空」；展开已选对齐 iOS（标题「已选择：N人, M个群」+「确认」、分区「已选择的人/群组」、chip+红减号，半屏 Flexbox）。已 push `3b8760ac4`；**待** 真机视觉验收
