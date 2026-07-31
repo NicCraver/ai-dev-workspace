@@ -1,6 +1,6 @@
 # Status：定时任务消息 · 气泡下来源 badge
 
-> 最后更新：2026-07-31（旁路：web 激活刷记忆改 getAgentDataRange + aiBoxCheckVersion 去重，见 `20260729-pc不可见推送延后与记忆刷新`）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-31（旁路：desktop 登录后补拉 `getBadgePushInfo`）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -21,7 +21,7 @@
 
 | 端 | 提交 |
 |----|------|
-| desktop | `126d78d6`（合并列表 MsgPersonalAiRow + 保留字段）· `0b648606`（样式）· `ff400773`（详情）· `8444e7c3` · `2cb02be3`；旁路回执 `a9bb3136`；`personal-ai-chat` HEAD `4218fae4`；列表实时昵称 `a4371382`（`feat/personal-ai-list-realtime-nickname`，已与 `origin` 同步；待合入 `personal-ai-chat`） |
+| desktop | `126d78d6`（合并列表 MsgPersonalAiRow + 保留字段）· `0b648606`（样式）· `ff400773`（详情）· `8444e7c3` · `2cb02be3`；旁路回执 `a9bb3136`；`personal-ai-chat` HEAD `4218fae4`；列表实时昵称 `a4371382`（`feat/personal-ai-list-realtime-nickname`）；登录补拉角标（同分支，待 commit hash） |
 | android | `37a06f9ce`（合并保留字段 + CombineAdapter badge + ActionCard/引用还原）· `cc79be12c`（右对齐 + pill 顺序）· `02cef0fdc`（来源）· `fe6d1687f`（详情）· `6ecb5ae92`（定时图标） |
 | ios | `e88ac08cb`（合并保留字段 + 读 baseExtra/extra + 打包 parseMsgExtra + senderUserId + 昵称拉取刷新）· `1193d3595`（反序）· `80d7870db`（详情+图标）· `5f3167a13`（来源）；列表实时昵称 `a68a68261`（`feat/personal-ai-list-realtime-nickname`，已与 `origin` 同步；待合入 `personal-ai-chat`） |
 
@@ -37,11 +37,13 @@
 - (旁路 · web · 选择AI框) ✅ FloatingDock 收起态黄角标 + 移动端顶栏总角标：已 push `personal-ai-chat` `9796bca`（见 `20260707-选择AI框`）。
 - (旁路 · web · FloatingDock 新对话) ✅ Dock「开启新对话」偶发无反应：根因同 AI 框再点把 `chatReady=false` 且不重挂载，`bumpNewChat` 空等 ready；已改为直调 `Home.startNewChat`（对齐 History），同 agent 再选 early-return。已 push `personal-ai-chat` `343757c`。
 - (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条发出后无 badge。另：手测 `parseName` 实时名；`a4371382` 已在 `origin/feat/personal-ai-list-realtime-nickname`，**待合入** `personal-ai-chat`。工作区脏文件仅为本地调试（`.env.test` / `electron-builder.yml` / `package.json`），**不入库**。
+- (旁路 · desktop · 角标) ✅ `main.vue` mounted 登录后调 `PollingPersonalAiBadge.setupPolling()` → `getBadgePushInfo`（无 sessionIds，只刷壳角标不推 iframe）；在 `feat/personal-ai-list-realtime-nickname`。
 - (android) ⏳ 真机：会话 badge + 合并详情「来自群AI框」（ActionCard）；须**重新合并转发**（`37a06f9ce` 已 push）。列表昵称是否已取实时资料待对齐确认。
 - (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用含 `e88ac08cb` 的包**重新合并转发**后再打开（旧 OSS 无字段）。另：手测 `getSenderNickName` 实时名；`a68a68261` 已在 `origin/feat/personal-ai-list-realtime-nickname`，**待合入** `personal-ai-chat`。
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`；`dealForExtraInfo` 字段形态与文档一致。
 - 2026-07-31 个人/群 AI 消息列表昵称：**优先实时资料**（iOS `groupAgentRels` / 群 `ZXAIAgentModel`；PC `AiAgentAccountInfoMap`），消息体 `user.name` 仅兜底；改名后历史消息同步更新。
-- 2026-07-31 本回合：仅查阅「推送角标后从 PC 对话切回个人 AI」逻辑，**无 apps 功能代码改动**；未改 impl-notes（非 web 联调）。
+- (旁路 · web · 角标误清) ✅ 激活刷记忆改 `getAgentDataRange`；`aiBoxCheckVersion` 激活 300ms 去重（见 `20260729-pc不可见推送延后与记忆刷新`）；桌面 sider 强切仍待改。
+- 2026-07-31 本回合：desktop 登录后补拉 `getBadgePushInfo`。
 
 ## 关键决策记录
 
