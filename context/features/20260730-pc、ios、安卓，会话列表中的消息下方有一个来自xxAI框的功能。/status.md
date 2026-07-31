@@ -1,6 +1,6 @@
 # Status：定时任务消息 · 气泡下来源 badge
 
-> 最后更新：2026-07-31（本回合：排查对话↔AI 双次 `aiBoxCheckVersion` / 角标误清；无本功能代码变更；desktop 脏文件仍为本地调试）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-31（旁路：web 激活刷记忆改 getAgentDataRange + aiBoxCheckVersion 去重，见 `20260729-pc不可见推送延后与记忆刷新`）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -41,7 +41,7 @@
 - (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用含 `e88ac08cb` 的包**重新合并转发**后再打开（旧 OSS 无字段）。另：手测 `getSenderNickName` 实时名；`a68a68261` 已在 `origin/feat/personal-ai-list-realtime-nickname`，**待合入** `personal-ai-chat`。
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`；`dealForExtraInfo` 字段形态与文档一致。
 - 2026-07-31 个人/群 AI 消息列表昵称：**优先实时资料**（iOS `groupAgentRels` / 群 `ZXAIAgentModel`；PC `AiAgentAccountInfoMap`），消息体 `user.name` 仅兜底；改名后历史消息同步更新。
-- (旁路 · desktop/web · 选择AI框角标) 🔍 已定位：对话切回 AI 时 `visible` watcher + `selectBySiderItem→selectWebview` **双发** `aiBoxCheckVersion`；推送改写 `aiBrowserSiderItem` 为个人 AI 后，即使用户停在其它 tab 也会被强制激活并 `flushDeferred` + `getLastSessionMessage`（有清未读副作用）→ 有概率误清黄角标。待修（见 `20260707-选择AI框` / `20260729-pc不可见推送延后与记忆刷新`）。本功能矩阵无代码变更；未改 impl-notes。
+- 2026-07-31 本回合：仅查阅「推送角标后从 PC 对话切回个人 AI」逻辑，**无 apps 功能代码改动**；未改 impl-notes（非 web 联调）。
 
 ## 关键决策记录
 

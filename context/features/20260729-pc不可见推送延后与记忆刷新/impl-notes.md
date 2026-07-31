@@ -33,8 +33,10 @@ pageActive = docVisible && shellActive
 **激活（pageActive 变为 true）**
 
 1. 若有 pending → 按激活态完整跑推送刷新  
-2. getLastSessionMessage → **只**回写记忆栏  
+2. `getAgentDataRange`（优先 `accountId`+`agentId`）→ **只**回写记忆栏（**不用** `getLastSessionMessage`，避免清未读/角标）  
 3. 既有 build_version 验版  
+
+壳 `aiBoxCheckVersion` 可能双发（面板 visible + selectWebview）：web 对激活工作 **300ms 去重**（仍置 `shellActive=true`）。
 
 ## 边界情况
 
@@ -54,7 +56,8 @@ pageActive = docVisible && shellActive
 
 - **只延后消息不够**：不可见时仍刷 list/History 也会把未读清掉，角标一闪。须整次延后。  
 - AiBrowser 内切 tab 不改 visibility → 靠 deactivate；且壳在非个人 AI 可见态不要 post。  
-- `pageActive` 须拆 docVisible / shellActive。
+- `pageActive` 须拆 docVisible / shellActive。  
+- **2026-07-31**：激活用 `getLastSessionMessage` 会清当前会话未读 → 角标误清；已改为 `getAgentDataRange`。桌面「推送改 sider 强制切个人 AI」仍可误激活，须桌面另改。
 
 ## 与 bridge 的交互
 

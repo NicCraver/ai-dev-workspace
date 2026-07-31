@@ -35,7 +35,8 @@
 
 // AiBrowser → AI框 iframe：切到 AI框 tab 时通知验版 + 激活（对象或 JSON 字符串均可）
 { "source": "zx-pc", "type": "aiBoxCheckVersion" }
-// web：pageActive=true；冲延后消息刷新；getLastSessionMessage 只更新记忆栏；再对比 /ai-chat/build_version
+// web：pageActive=true；冲延后消息刷新；getAgentDataRange 只更新记忆栏；再对比 /ai-chat/build_version
+// （勿用 getLastSessionMessage：会清未读/角标；aiBoxCheckVersion 激活工作 web 侧 300ms 去重）
 // 与 JENKINS_BUILD_NUMBER；不一致则先把当前选中写入 URL query（agentId/belongId/belongType/sessionId），再静默 location.reload()
 // 刷新后：URL 深链（belongType 1|3）一律 saveSelected → list → 选中 AI 框；chat-ready 后再按 sessionId 选会话；个人框直接匹配；否则默认个人 AI 框
 // PC web 另可通过 `useDocumentVisibility`（hidden→visible）触发同一激活/验版（须 shellActive 仍为 true）；移动端不做
