@@ -1,6 +1,6 @@
 # Status：定时任务消息 · 气泡下来源 badge
 
-> 最后更新：2026-07-31（desktop 工作区仅有本地调试配置漂移，badge 矩阵无变更）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-31（个人 AI 昵称改取实时资料：iOS `getSenderNickName` / PC `parseName`）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -20,18 +20,19 @@
 
 | 端 | 提交 |
 |----|------|
-| desktop | `126d78d6`（合并列表 MsgPersonalAiRow + 保留字段）· `0b648606`（样式）· `ff400773`（详情）· `8444e7c3` · `2cb02be3`；旁路回执 `a9bb3136`；HEAD `4218fae4`（版本号 + 旁路数据范围，与 badge 无关） |
+| desktop | `126d78d6`（合并列表 MsgPersonalAiRow + 保留字段）· `0b648606`（样式）· `ff400773`（详情）· `8444e7c3` · `2cb02be3`；旁路回执 `a9bb3136`；HEAD `4218fae4`；**本地未 commit**：`parseName` 个人 AI 改走 `GetSenderName`（最新名） |
 | android | `37a06f9ce`（合并保留字段 + CombineAdapter badge + ActionCard/引用还原）· `cc79be12c`（右对齐 + pill 顺序）· `02cef0fdc`（来源）· `fe6d1687f`（详情）· `6ecb5ae92`（定时图标） |
-| ios | `5f3167a13`（来源）· `80d7870db`（详情+图标）· `1193d3595`（反序）；**本地未 commit**：合并保留字段 + 读 baseExtra/extra + **打包用 parseMsgExtra + 同步 senderUserId + 昵称拉取后刷新** |
+| ios | `5f3167a13`（来源）· `80d7870db`（详情+图标）· `1193d3595`（反序）；**本地未 commit**：合并保留字段 + 读 baseExtra/extra + **打包用 parseMsgExtra + 同步 senderUserId + 昵称拉取后刷新**；**`getSenderNickName` 个人 AI 优先 `groupAgentRels.agentName`** |
 
 ## 待办 / 阻塞
 
 - (旁路 · web/desktop · 选择数据范围) ✅ 外联群子 tab key `outreach`；**列表：人头像 + 群拼图、不展示智能体名**；**私聊 leave=1 后缀「（已离职）」**（本地未 commit，见 `20260729-4端重选择构数据来源弹窗`）。
 - (旁路 · web · 选择AI框) ✅ 群头像拼图 + 默认全部 tab + 停用 batchGetAgent + **不过滤无 agentId** + 人头像 privateInfo + 侧栏 focus 拉 getAllImDialogue 本地搜；**私聊 leave=1 后缀「（已离职）」**；未 commit（见 `20260707-选择AI框`）。
-- (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条发出后无 badge。工作区未提交改动仅为 `.env.test` / `electron-builder.yml` / `package.json`（本地调试配置，**禁止提交**），与本期 badge 无关。
+- (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条发出后无 badge。另：**本地未 commit** `parseName` 个人 AI 取最新名（勿提交 `.env.test` 等调试配置）。
 - (android) ⏳ 真机：会话 badge + 合并详情「来自群AI框」（ActionCard）；须**重新合并转发**（`37a06f9ce` 已 push）。
-- (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用本包**重新合并转发**后再打开（旧 OSS 无字段）。本地待 commit / push。
+- (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用本包**重新合并转发**后再打开（旧 OSS 无字段）。本地待 commit / push（含合并字段 + **个人 AI 昵称取 `groupAgentRels` 最新名**）。
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`；`dealForExtraInfo` 字段形态与文档一致。
+- 2026-07-31 个人/群 AI 消息列表昵称：**优先实时资料**（iOS `groupAgentRels` / `ZXAIAgentModel`；PC `AiAgentAccountInfoMap`），消息体 `user.name` 仅兜底；改名后历史消息同步更新。
 
 ## 关键决策记录
 
@@ -47,3 +48,4 @@
 - 2026-07-30 安卓 / iOS：详情 pill 左侧加定时图标 12px，与文案间距 4px（`ic_personal_ai_schedule` / `icon_personal_ai_schedule`）
 - 2026-07-30 PC `0b648606`：详情 pill 加 `timing` 图标；自己消息 `flex-row-reverse`（视觉 **详情|来源**，来源贴右）；pill 间距 `gap-2`（8px）。安卓/iOS 同步反序与 8 间距；文案仍仅循环时间
 - 2026-07-30 **转发**（对齐 PC `126d78d6`）：逐条抹掉 badge 字段；合并 OSS 保留字段，且**合并聊天记录列表**渲染 badge。安卓写 `extra`+`baseExtra`；读侧 `baseExtra` 优先、`extra` 兜底；`extra` 为对象时转字符串勿清空
+- 2026-07-31 个人 AI 列表昵称与群 AI 一致：取最新资料，不冻结消息体 name
