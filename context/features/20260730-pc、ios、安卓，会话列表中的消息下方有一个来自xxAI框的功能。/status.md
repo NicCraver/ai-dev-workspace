@@ -36,7 +36,6 @@
 - (旁路 · web · 选择AI框) ✅ 群头像拼图 + 默认全部 tab + 停用 batchGetAgent + **不过滤无 agentId** + 人头像 privateInfo + 侧栏 focus 拉 getAllImDialogue 本地搜；**私聊 leave=1 后缀「（已离职）」**；未 commit（见 `20260707-选择AI框`）。
 - (旁路 · web · 选择AI框) 🚧 FloatingDock 收起态黄角标：展开历史=当前框 `unreadCount`，展开列表=各框总和；本地未 commit（见 `20260707-选择AI框`）。
 - (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条发出后无 badge。另：手测 `parseName` 实时名；分支 `feat/personal-ai-list-realtime-nickname` `a4371382` 待合入 `personal-ai-chat` / push。
-- (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条发出后无 badge。另：手测 `parseName` 实时名；分支 `feat/personal-ai-list-realtime-nickname` `a4371382` 待合入 `personal-ai-chat` / push。
 - (android) ⏳ 真机：会话 badge + 合并详情「来自群AI框」（ActionCard）；须**重新合并转发**（`37a06f9ce` 已 push）。列表昵称是否已取实时资料待对齐确认。
 - (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用含 `e88ac08cb` 的包**重新合并转发**后再打开（旧 OSS 无字段）。另：手测 `getSenderNickName` 实时名；分支 `feat/personal-ai-list-realtime-nickname` `a68a68261` 待合入 `personal-ai-chat` / push。
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`；`dealForExtraInfo` 字段形态与文档一致。
