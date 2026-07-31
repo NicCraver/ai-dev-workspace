@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ✅ **FloatingDock「开启新对话」偶发无反应**：根因——同 AI 框再点 `handleSelectAgent` 把 `chatReady=false` 且 `chatPaneKey` 不变不重挂载；Dock `bumpNewChat` 依赖 ready 门闩会空等，History 直调 `startNewChat` 不受影响。已修并 push `personal-ai-chat` `343757c`：`Home`/`index` expose `startNewChat`；Dock/`requestNewChat` 优先直调；同 agent 再选 early-return。
 - (web) ✅ **组织架构人员显示智能体名**：对齐 `getAllImDialogue` 私聊字段（`agentName/agentId/…`）；`SelectAiBoxDialog` 把 `allItems` 注入 OrgPicker；缺口再 `batchGetAgent`；通讯录映射不再用人名冒充 agentName。已 push `2962c88`；**待** PC E2E
 - (web) ✅ **组织架构改 HTTP 直调**：`fetchCompanies`/`fetchDeptUsers` → `getContract` + `sub_dept_user_pagelistV3`（映射对齐 PC host）；**不改 desktop**；桥 `getOrgCompanies`/`getDeptUsers` 保留。已 push `2962c88`（+ barrel `a272701`）；**待** PC E2E（公司层分组、进公司人员、外联 scope、隐藏本人）
 - (web) ✅ **选择AI框不过滤无 agentId**：弹窗 `normalize` 全量展示；OrgPicker 去掉 `require-agent`；侧栏 focus 搜同源。本地未 commit。
