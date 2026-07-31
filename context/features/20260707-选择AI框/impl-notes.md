@@ -110,6 +110,14 @@
 
 进公司首屏 `pid=rootDeptId||id`；空则回退 `pid=0`；同名根部门自动跳过（逻辑仍在 OrgPicker）。失败 → 空列表，不阻断其它 tab。
 
+**人员智能体名（选择 AI 框）**：通讯录回参只有人名，**没有** `agentName`。展示对齐「全部」tab 的 `getAllImDialogue` 私聊字段：
+
+1. 父弹窗把已拉的归一化 `allItems` 注入 OrgPicker（`agentLookupItems`）；
+2. 按 `accountId === targetId` 合并 `agentName` / `agentId` / `aiRoleId` / `agentAvatar`（保留通讯录人头像）；
+3. 仍无 `agentName` 的账号再 `batchGetAgent({ accountIds })` 补洞；Map 无 key → 不显示副标题（勿用人名冒充）。
+
+选择数据范围 `showAgentName=false`，跳过上述补齐。
+
 ## 最近联系人 agentName 补齐（`POST /personalAiFrame/recentContactList`）
 
 选择弹窗「最近联系人」在桥取数之后的 **HTTP 补齐**（`baseMap.ai`），与主列表 `list` 接口同域、不同用途。

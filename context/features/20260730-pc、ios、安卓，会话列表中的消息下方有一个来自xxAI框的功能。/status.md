@@ -27,6 +27,7 @@
 
 ## 待办 / 阻塞
 
+- (旁路 · web · 选择AI框) ✅ 组织架构人员副标题：对齐 `getAllImDialogue` 的 `agentName`（会话缓存按 accountId 合并，缺口 `batchGetAgent`）；通讯录不再用人名冒充。本地未 commit。
 - (旁路 · web · 选择AI框) ✅ 组织架构改 HTTP 直调 `getContract`/`sub_dept_user_pagelist`（不经 PC 桥；desktop handler 保留）；见 `20260707-选择AI框`。本地未 commit。
 - (旁路 · web/desktop · 选择数据范围) ✅ 外联群子 tab key `outreach`；**列表：人头像 + 群拼图、不展示智能体名**；**私聊 leave=1 后缀「（已离职）」**（本地未 commit，见 `20260729-4端重选择构数据来源弹窗`）。
 - (旁路 · web · 选择AI框) ✅ 群头像拼图 + 默认全部 tab + 停用 batchGetAgent + **不过滤无 agentId** + 人头像 privateInfo + 侧栏 focus 拉 getAllImDialogue 本地搜；**私聊 leave=1 后缀「（已离职）」**；未 commit（见 `20260707-选择AI框`）。

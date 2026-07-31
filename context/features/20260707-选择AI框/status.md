@@ -23,6 +23,7 @@
 
 ## 待办 / 阻塞
 
+- (web) ✅ **组织架构人员显示智能体名**：对齐 `getAllImDialogue` 私聊字段（`agentName/agentId/…`）；`SelectAiBoxDialog` 把 `allItems` 注入 OrgPicker；缺口再 `batchGetAgent`；通讯录映射不再用人名冒充 agentName。本地未 commit；**待** PC E2E
 - (web) ✅ **组织架构改 HTTP 直调**：`fetchCompanies`/`fetchDeptUsers` → `getContract` + `sub_dept_user_pagelistV3`（映射对齐 PC host）；**不改 desktop**；桥 `getOrgCompanies`/`getDeptUsers` 保留。本地未 commit；**待** PC E2E（公司层分组、进公司人员、外联 scope）
 - (web) ✅ **选择AI框不过滤无 agentId**：弹窗 `normalize` 全量展示；OrgPicker 去掉 `require-agent`；侧栏 focus 搜同源。本地未 commit。
 - (web) ✅ **选择AI框私聊 leave=1**：`aiBoxPickerModel.normalize` 后缀 `（已离职）`（弹窗列表/搜索 + 侧栏 focus 搜同源）；本地未 commit。
