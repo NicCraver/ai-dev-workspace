@@ -1,6 +1,6 @@
 # Status：定时任务消息 · 气泡下来源 badge
 
-> 最后更新：2026-07-31（PC 列表实时昵称已 commit 分支 `feat/personal-ai-list-realtime-nickname`；iOS 仍本地未 commit）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-07-31（PC/iOS 列表实时昵称已 commit 分支 `feat/personal-ai-list-realtime-nickname`）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -11,7 +11,7 @@
 | 群 AI badge「来自群AI框」· plan Task 1/2/3 | — | ✅ 已 push | ✅ 已 push | ✅ 已 push |
 | 自己消息详情 badge | — | ✅ 仅循环时间 + 反序对齐 PC（`cc79be12c`） | ✅ 仅循环时间 + 反序对齐 PC | ✅ 触发名+循环时间（`ff400773`）+ 样式（`0b648606`） |
 | 合并转发保留字段 + 合并详情列表 badge | — | ✅ `37a06f9ce`（待真机） | ✅ `e88ac08cb`（待真机·须重合并） | ✅ `126d78d6` |
-| 个人/群 AI 列表昵称取实时资料 | — | ⬜ 待对齐 | 🚧 本地未 commit（`getSenderNickName`） | ✅ `a4371382`（分支 `feat/personal-ai-list-realtime-nickname`，待合入/`push`） |
+| 个人/群 AI 列表昵称取实时资料 | — | ⬜ 待对齐 | ✅ `a68a68261`（分支 `feat/personal-ai-list-realtime-nickname`，待合入/`push`） | ✅ `a4371382`（分支 `feat/personal-ai-list-realtime-nickname`，待合入/`push`） |
 | impl-notes 补全 · plan Task 4 | ✅（共用） | ✅ | ✅ | ✅ |
 | 自测通过 | — | ⬜ 待真机 | ⬜ 待真机（须**重新合并转发**后再开聊天记录） | ⬜ 待手测 |
 
@@ -23,7 +23,7 @@
 |----|------|
 | desktop | `126d78d6`（合并列表 MsgPersonalAiRow + 保留字段）· `0b648606`（样式）· `ff400773`（详情）· `8444e7c3` · `2cb02be3`；旁路回执 `a9bb3136`；`personal-ai-chat` HEAD `4218fae4`；列表实时昵称 `a4371382`（分支 `feat/personal-ai-list-realtime-nickname`，`parseName`→`GetSenderName`；未推远端） |
 | android | `37a06f9ce`（合并保留字段 + CombineAdapter badge + ActionCard/引用还原）· `cc79be12c`（右对齐 + pill 顺序）· `02cef0fdc`（来源）· `fe6d1687f`（详情）· `6ecb5ae92`（定时图标） |
-| ios | `e88ac08cb`（合并保留字段 + 读 baseExtra/extra + 打包 parseMsgExtra + senderUserId + 昵称拉取刷新）· `1193d3595`（反序）· `80d7870db`（详情+图标）· `5f3167a13`（来源）；**本地未 commit**：`getSenderNickName` 个人 AI 优先 `groupAgentRels.agentName`，群 AI 仍走 `ZXAIAgentModel`，消息体 name 仅兜底 |
+| ios | `e88ac08cb`（合并保留字段 + 读 baseExtra/extra + 打包 parseMsgExtra + senderUserId + 昵称拉取刷新）· `1193d3595`（反序）· `80d7870db`（详情+图标）· `5f3167a13`（来源）；列表实时昵称 `a68a68261`（分支 `feat/personal-ai-list-realtime-nickname`，`getSenderNickName`；未推远端） |
 
 ## 待办 / 阻塞
 
@@ -36,7 +36,7 @@
 - (旁路 · web · 选择AI框) ✅ 群头像拼图 + 默认全部 tab + 停用 batchGetAgent + **不过滤无 agentId** + 人头像 privateInfo + 侧栏 focus 拉 getAllImDialogue 本地搜；**私聊 leave=1 后缀「（已离职）」**；未 commit（见 `20260707-选择AI框`）。
 - (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条发出后无 badge。另：手测 `parseName` 实时名；分支 `feat/personal-ai-list-realtime-nickname` `a4371382` 待合入 `personal-ai-chat` / push。
 - (android) ⏳ 真机：会话 badge + 合并详情「来自群AI框」（ActionCard）；须**重新合并转发**（`37a06f9ce` 已 push）。列表昵称是否已取实时资料待对齐确认。
-- (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用含 `e88ac08cb` 的包**重新合并转发**后再打开（旧 OSS 无字段）。另：提交并手测 `getSenderNickName` 实时名。
+- (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用含 `e88ac08cb` 的包**重新合并转发**后再打开（旧 OSS 无字段）。另：手测 `getSenderNickName` 实时名；分支 `feat/personal-ai-list-realtime-nickname` `a68a68261` 待合入 `personal-ai-chat` / push。
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`；`dealForExtraInfo` 字段形态与文档一致。
 - 2026-07-31 个人/群 AI 消息列表昵称：**优先实时资料**（iOS `groupAgentRels` / 群 `ZXAIAgentModel`；PC `AiAgentAccountInfoMap`），消息体 `user.name` 仅兜底；改名后历史消息同步更新。
 
