@@ -22,6 +22,7 @@
 
 - (web) ⏳ 真机手测：最近/联系人/群组/搜索四路径；取消不误提交；PC Dialog 无回归
 - (web) ⏳ 确认群 `groupNumber` 是否回传（影响 `(人数)` 展示）
+- (web) ✅ 大数据量性能：定高虚拟列表（Dialog/Popup/OrgPicker/Search）+ `shallowRef` + OrgPicker agentLookup Map；本地未 commit
 - (web) 本地改动在 `apps/web`，**尚未 commit**（等用户确认后提交 `personal-ai-chat`）
 - (全端) `selectAgentByNative` 保留作回滚
 
