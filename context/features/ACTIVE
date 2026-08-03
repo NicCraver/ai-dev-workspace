@@ -1,1 +1,1 @@
-20260802-web端的移动端的选择AI框，现在是调用原生，改为纯web端，参考web端的pc模式下的选择AI框，但是UI需要参考Popup的形式
+20260803-PC端和安卓端-选择数据范围，列表中的头像，如果groupInfo.accountInfoList-中avatar没有头像时，使用名字的最后一个字
