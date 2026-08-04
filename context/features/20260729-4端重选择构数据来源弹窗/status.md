@@ -1,6 +1,6 @@
 # Status：4端重构「选择数据来源」弹窗
 
-> 最后更新：2026-07-30（安卓 leave 后缀已 push `22507f131`；私聊 leave=1 展示名后缀「（已离职）」；PC 列表人头像 + 不展示智能体名；web 外联 tab key 修复）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-03（web 全选再优化：选中 Set + 懒搜索候选，本地未 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -62,7 +62,8 @@
 - (web) ✅ **外联群子 tab 空列表**：`GROUP_TABS` key `outsource` 与 `splitGroups.outreach` 错位；已改为 `outreach`（本地未 commit）。手测：`groupInfo.type>=10`（如「智信运营测试群」）应出现在「群组→外联群」。
 - (desktop/web) ✅ **列表展示对齐 spec**：人用 `privateInfo.avatar`；群用成员前 4 拼图（不用 `agentAvatar`）；**不展示智能体名**（列表/搜索/组织架构）。desktop + web 本地未 commit。
 - (desktop/android/ios) ✅ 外联分流本来就对：`isOutreach = groupInfo.type >= 10` + 外联分区消费 `outreach`。
-- (desktop/web) ⏳ **真机手测未做**（含搜索 popover：零接口、勾选互通、表头全选仍按全量；web 外联子 tab 回归；人头像/无智能体名；离职后缀）。
+- (web) ✅ **全选/渲染卡顿（二轮）**：`selectedKeySet`（Set）作选中真源，全选不再物化上千条 item Map；搜索候选聚焦后才挂、直接复用 `dialogueItems`（normalize 补 `id`）；OrgPicker 的 `private:id` 不再污染 `1_id` 真源；chip / org / search 适配键均懒算。本地未 commit。手测：上千条点「全部」与打开弹窗应更顺。
+- (desktop/web) ⏳ **真机手测未做**（含搜索 popover：零接口、勾选互通、表头全选仍按全量；web 外联子 tab 回归；人头像/无智能体名；离职后缀；**全选流畅度**）。
 - (android) ⏳ **真机自测**（含离职后缀）：打开只发 2 请求、本地搜、全选联动、三标记、桥 ACK 后胶囊刷新。
 - (ios) ⏳ **真机自测**（含离职后缀）：打开只发 2 请求；段头「全部」；群/搜索零额外列表请求；全选联动；迟到 restore 不冲选；过早进群页后列表能补出；搜索返回不崩；save 三标记；桥 ACK / `@` 再 get。
 - (android) ✅ 群头像：接口前 4 URL 拼 2×2（无 URL 退本地拼图）；待真机看列表/已选弹层。

@@ -24,7 +24,7 @@
 |----|------|
 | desktop | `126d78d6`（合并列表 MsgPersonalAiRow + 保留字段）· `0b648606`（样式）· `ff400773`（详情）· `8444e7c3` · `2cb02be3`；旁路回执 `a9bb3136`；`personal-ai-chat` HEAD `4218fae4`；列表实时昵称 `a4371382`；登录补拉角标 `a10650b4`（`feat/personal-ai-list-realtime-nickname`，待合入 `personal-ai-chat`） |
 | android | `37a06f9ce`（合并保留字段 + CombineAdapter badge + ActionCard/引用还原）· `cc79be12c`（右对齐 + pill 顺序）· `02cef0fdc`（来源）· `fe6d1687f`（详情）· `6ecb5ae92`（定时图标） |
-| ios | `e88ac08cb`（合并保留字段 + 读 baseExtra/extra + 打包 parseMsgExtra + senderUserId + 昵称拉取刷新）· `1193d3595`（反序）· `80d7870db`（详情+图标）· `5f3167a13`（来源）；列表实时昵称 `a68a68261`（`feat/personal-ai-list-realtime-nickname`，已与 `origin` 同步；待合入 `personal-ai-chat`）；逐条抹 badge（含 ActionCard）本地未 commit；合并详情隐藏「x条回复」本地未 commit |
+| ios | `9f18faced`（合并详情隐藏「x条回复」）· `e88ac08cb`（合并保留字段 + 读 baseExtra/extra + 打包 parseMsgExtra + senderUserId + 昵称拉取刷新）· `1193d3595`（反序）· `80d7870db`（详情+图标）· `5f3167a13`（来源）；列表实时昵称 `a68a68261`（`feat/personal-ai-list-realtime-nickname`，已与 `origin` 同步；待合入 `personal-ai-chat`）；逐条抹 badge（含 ActionCard）本地未 commit |
 
 ## 待办 / 阻塞
 
@@ -42,7 +42,7 @@
 - (android) ⏳ 真机：会话 badge + 合并详情「来自群AI框」（ActionCard）；须**重新合并转发**（`37a06f9ce` 已 push）。列表昵称是否已取实时资料待对齐确认。
 - (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用含 `e88ac08cb` 的包**重新合并转发**后再打开（旧 OSS 无字段）。另：手测 `getSenderNickName` 实时名；`a68a68261` 已在 `origin/feat/personal-ai-list-realtime-nickname`，**待合入** `personal-ai-chat`。
 - (ios) 🚧 逐条转发漏抹 badge：原 `convertModelByOriginModel` 只处理 Text/Reply，ActionCard（群 AI）原样带出 `fixTaskMessage` 等，其它端会显示来源 pill。已本地修：非文本 `createMessageByContent` 复制后走 `getForwardExtraByMsgExtra`；dict extra 也只留 richList。待 commit/push + 真机确认「逐条发出后无 badge」。
-- (ios) ✅ 合并详情误显「x条回复」：`isCombine` 时 attach 不查本地回复扩展、高度也不计入；根因是合并子消息保留原 `messageUId`，本地扩展表命中原会话回复数。本地已修（待 commit/push）。
+- (ios) ✅ 合并详情误显「x条回复」：`isCombine` 时 attach 不查本地回复扩展、高度也不计入；已 push `9f18faced` @ `personal-ai-chat`。
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`；`dealForExtraInfo` 字段形态与文档一致。
 - 2026-07-31 个人/群 AI 消息列表昵称：**优先实时资料**（iOS `groupAgentRels` / 群 `ZXAIAgentModel`；PC `AiAgentAccountInfoMap`），消息体 `user.name` 仅兜底；改名后历史消息同步更新。
 - (旁路 · web · 角标误清) ✅ 激活刷记忆改 `getAgentDataRange`；`aiBoxCheckVersion` 激活 300ms 去重（见 `20260729-pc不可见推送延后与记忆刷新`）；桌面 sider 强切仍待改。

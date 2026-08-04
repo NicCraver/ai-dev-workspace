@@ -121,3 +121,4 @@ PC：走统一的发送者名解析（智能体账号映射表最新名）。安
 - **iOS 合并建模型**：`user`/`senderUserInfo` 的 id 须写回 `message.senderUserId`（群 AI 靠 `ga_`）；文本/机器人同步 `_extra`；个人昵称拉取成功后发 `ZXNotifyGroupUserAvatarUpdatedFromDB` 刷新列表。
 - **安卓合并详情 · 群 AI**：定时群 AI 多为 `ZX:ActionCardMsg`；`ActionCardTransformation` 须带 `extra`/`baseExtra`，`obtain` 后 `setExtra`，否则门闩丢失。打包 ActionCard/引用同文本写 `baseExtra`；`senderUserId` 空时回落 `userInfo.userId`。
 - **旧聊天记录**：修复前已上传的合并 OSS 无 badge 字段，须重新合并转发才能验证。
+- **iOS 逐条转发**：仅 Text/Reply 走「只留 richList」不够——群 AI 定时多为 ActionCard，须复制 content 后再裁 extra；`extra` 为字典时禁止整包序列化（会把 badge 字段带出）。
