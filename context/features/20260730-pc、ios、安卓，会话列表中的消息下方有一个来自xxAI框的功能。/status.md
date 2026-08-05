@@ -1,6 +1,6 @@
 # Status：定时任务消息 · 气泡下来源 badge
 
-> 最后更新：2026-08-05（iOS/安卓逐条转发 extra 白名单对齐 PC）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-05（修：转发勿污染原消息；iOS 新建 model / 安卓合并不 setExtra）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -28,7 +28,7 @@
 
 ## 待办 / 阻塞
 
-- (android / ios) 🚧 逐条转发 extra 白名单对齐 PC `getForwardExtraByMsgExtra`（只留 `richList`）：代码已改，**待 commit/push + 真机**确认「逐条发出后无来源 pill；有格式的文本仍带 richList」
+- (android / ios) 🚧 逐条转发 extra 白名单对齐 PC（只留 `richList`）+ **禁止污染原消息**（iOS 新建 model；安卓合并打包不 `setExtra` 原 content）：代码已改，**待 commit/push + 真机**
 - (desktop) ⏳ 手测 badge + 合并聊天记录内仍有来源/详情 badge；逐条文本发出后无 badge。另：PC ActionCard 单条仍不走 `getForwardExtraByMsgExtra`（与移动端本次收紧不一致，若产品要求三端 ActionCard 也抹，需另改 PC）
 - (android) ⏳ 真机：会话 badge + 合并详情「来自群AI框」（ActionCard）；须**重新合并转发**（`37a06f9ce` 已 push）
 - (ios) ⏳ 真机：会话 badge + 合并详情 badge；须用含 `e88ac08cb` 的包**重新合并转发**后再打开（旧 OSS 无字段）
