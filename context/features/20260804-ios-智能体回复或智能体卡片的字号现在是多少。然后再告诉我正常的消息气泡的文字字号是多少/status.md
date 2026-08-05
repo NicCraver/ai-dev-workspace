@@ -1,6 +1,6 @@
 # Status：iOS 智能体正文与消息气泡字号对齐
 
-> 最后更新：2026-08-05（收尾同步；本功能矩阵无变化）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-08-05（收尾：澄清 apps/android 未提交改动归属；矩阵无变化）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -18,8 +18,10 @@
 ## 待办 / 阻塞
 
 - (ios) ⏳ 真机/模拟器手测：默认档智能体正文与普通气泡并排对比；切换中/大字号档验证同步放大；折叠卡片与流式回复行高正常
+- (ios) `personal-ai-chat-hotfix` 本地领先远端 1 提交（智能体字号对齐），待 push
 - (ios) 本地 `xcodebuild` 编译通过，链接阶段有环境既有问题（融云模拟器 slice），与本次改动无关
-- (编排) apps/android 本地未提交改动（`personal_ai_select` 群拼图末字）属功能 `20260803-PC端和安卓端-选择数据范围…`，与本 iOS 字号功能无关；矩阵 android 列仍为「本期不做」
+- (android) apps/android `personal-ai-chat-hotfix` 有 4 文件未提交（`personal_ai_select` 群拼图末字 / `GroupMember`），归属功能 `20260803-PC端和安卓端-选择数据范围…`，**与本 iOS 字号功能无关**；本功能矩阵 android 列仍为「— 本期不做」
+- (desktop) 已切至 `personal-ai-chat-hotfix`，与本 iOS 字号功能无关
 
 ## 关键决策记录
 
