@@ -47,4 +47,4 @@
 ## 联调坑
 
 - 后端未回传 `groupAndAccountSelectAll` 时外示走封顶规则，不会出现「全部数据」
-- 三标记（含 `groupAndAccountSelectAll`）可能回传字符串 `"1"` / `"0"`：展示判断用数值比较（如 `Number(flag)===1`），勿依赖严格布尔或 `=== 1`  alone
+- 三标记（含 `groupAndAccountSelectAll`）可能回传字符串 `"1"` / `"0"`：展示判断用数值比较（如 `Number(flag)===1`），勿依赖严格布尔或仅 `=== 1`
