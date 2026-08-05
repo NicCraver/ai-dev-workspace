@@ -89,14 +89,26 @@ PC：走统一的发送者名解析（智能体账号映射表最新名）。安
 
 ## 转发与 badge 字段
 
-转发时会裁剪 `content.extra`（去掉 @ 等）。与 badge 相关约定：
+转发时会裁剪 `content.extra`。**以 PC `getForwardExtraByMsgExtra` / `getCombineForwardExtraByMsgExtra` 为白名单事实来源**：
 
-| 模式 | badge 字段（`fixTaskMessage` / `personalAccountId` / `dealForExtraInfo`） |
-|------|--------------------------------------------------------------------------|
-| 逐条转发 / 单条长按转发 | **抹掉**（与现网一致；发出去的独立消息不显示 badge） |
-| 合并转发（写入 OSS 聊天记录 txt） | **保留**（打开合并详情时子消息仍可按门闩渲染 badge） |
+### 逐条 / 单条长按
 
-合并路径仍只保留：`richList`（若有）+ 上表三字段；其它 extra 键继续丢弃。
+| | |
+|--|--|
+| **保留** | 仅 `richList`（非空数组；整组原样拷贝，格式 type/value/startIndex/endIndex 不变） |
+| **抹掉** | `@`（`atUserList` / `atAllList` / `atAllUserList`）、AI 来源（`fixTaskMessage` / `personalAccountId` / `dealForExtraInfo`）、以及其它任意键 |
+| **无 richList** | extra 清空（发出去的独立消息不显示 badge） |
+
+文本与 ActionCard（群 AI 定时常见）均应走同一白名单；复制 content 后再改 extra，避免污染原会话气泡。
+
+### 合并转发（写入 OSS 聊天记录 txt）
+
+| | |
+|--|--|
+| **保留** | `richList`（若有）+ `personalAccountId` + `fixTaskMessage` + `dealForExtraInfo` |
+| **抹掉** | 其余全部（含 `@`） |
+
+打开合并详情时子消息仍可按门闩渲染 badge。
 
 ### 合并详情列表也要渲染 badge（对齐 PC winbox）
 
@@ -122,3 +134,5 @@ PC：走统一的发送者名解析（智能体账号映射表最新名）。安
 - **安卓合并详情 · 群 AI**：定时群 AI 多为 `ZX:ActionCardMsg`；`ActionCardTransformation` 须带 `extra`/`baseExtra`，`obtain` 后 `setExtra`，否则门闩丢失。打包 ActionCard/引用同文本写 `baseExtra`；`senderUserId` 空时回落 `userInfo.userId`。
 - **旧聊天记录**：修复前已上传的合并 OSS 无 badge 字段，须重新合并转发才能验证。
 - **iOS 逐条转发**：仅 Text/Reply 走「只留 richList」不够——群 AI 定时多为 ActionCard，须复制 content 后再裁 extra；`extra` 为字典时禁止整包序列化（会把 badge 字段带出）。
+- **安卓逐条 ActionCard**：勿直接 `setExtra` 再 `Message.obtain` 后还原——obtain 持有同一引用会把 badge 写回待发消息；应 encode 拷贝后再白名单裁剪。
+- **PC 现状**：文本逐条走白名单；ActionCard 单条目前**不**走该函数（原样带 extra）。移动端已按白名单收紧 ActionCard；若要求三端一致需另改 PC。
