@@ -1,6 +1,6 @@
 # Impl Notes：定时任务消息 · 气泡下来源 badge
 
-> 平台无关逻辑提炼。参考端：PC `MsgPersonalAiRow` + `msg-list.getAiSourceBadgeVariant`。最后更新：2026-07-31（列表发送者昵称优先实时智能体资料）
+> 平台无关逻辑提炼。参考端：PC `MsgPersonalAiRow` + `msg-list.getAiSourceBadgeVariant`。最后更新：2026-08-05（合并详情个人 AI 框名/头像优先消息体）
 
 ## 与 identity tag 的区别
 
@@ -35,16 +35,20 @@ isSelf = personalId === 当前登录用户 id
   - **PC**：`triggerName + " " + cycleText`（缺一则只显示有的；都空则不渲染）
   - **安卓 / iOS**：仅 `cycleText`（**不展示** `agentSetAbilityTriggerName`；cycle 空则不渲染详情 pill）
 
-## 列表发送者昵称（个人/群 AI）
+## 列表发送者昵称 / 头像（个人/群 AI）
 
-气泡旁展示的发送者名（非 badge 文案）与群 AI 对齐：**优先实时智能体资料**，消息体里的 `user.name` / `senderUserInfo.name` **仅兜底**。智能体改名后，历史消息列表应同步显示新名。
+**非 badge 文案**的发送者名与头像：
 
-| 归属 | 优先来源 | 兜底 |
-|------|----------|------|
-| 个人 AI（sender 为智能体前缀且带 personal 判据） | 群内智能体关系表上的当前 `agentName`（按 sender 账号匹配） | 消息体 name |
-| 群 AI | 当前会话绑定的群智能体资料名（须确认账号与 sender 一致，避免个人 AI 误用群名） | 消息体 name |
+| 场景 | 名/头像优先 | 兜底 |
+|------|-------------|------|
+| **合并详情 · 个人 AI**（`personalAccountId` 有值） | 消息体 `content.user` / `userInfo` / `senderUserInfo`（AI **框**名与头像） | 默认 AI 头像；**禁止**查打开详情时所在会话的 `ga_` 缓存 |
+| **合并详情 · 群 AI** | 同上消息体 | 默认 AI 头像（勿用当前会话群智能体缓存） |
+| **会话列表 · 个人 AI** | 消息体名/头像 | 群内智能体关系表当前资料 |
+| **会话列表 · 群 AI** | 当前会话绑定的群智能体资料（账号须与 sender 一致） | 消息体 |
 
-PC：走统一的发送者名解析（智能体账号映射表最新名）。安卓若仍冻结消息体 name，应对齐本表。
+合并详情昵称旁 **identity tag**：个人 →「个人AI框」；群 →「群AI框」（与会话列表一致；**无** `fixTaskMessage` 门闩）。
+
+打包：合并 OSS 每条子消息须带齐 `content.user`（及等价 `senderUserInfo`）的 `id`/`name`/`portrait`（或 `portraitUri`），且 `senderUserId` 为 `ga_`；**只写 OSS JSON，勿改写会话里原消息的 userInfo**。
 
 ## 详情 badge：`dealForExtraInfo`
 
@@ -138,3 +142,5 @@ PC：走统一的发送者名解析（智能体账号映射表最新名）。安
 - **安卓逐条 ActionCard**：勿直接 `setExtra` 再 `Message.obtain` 后还原——obtain 持有同一引用会把 badge 写回待发消息；应 encode 拷贝后再白名单裁剪。
 - **PC 现状**：文本逐条 `map` 浅拷贝后替换 `content` 对象，一般不污染会话列表；ActionCard 单条仍不走该函数（原样带 extra）。移动端已按白名单收紧 ActionCard；若要求三端一致需另改 PC。
 - **iOS 逐条转发（字段）**：仅 Text/Reply 走「只留 richList」不够——群 AI 定时多为 ActionCard，须复制 content 后再裁 extra；`extra` 为字典时禁止整包序列化（会把 badge 字段带出）。
+- **合并详情个人 AI 名/头像**：读侧按 `senderUserId` 查**当前会话**智能体缓存会 miss/错名；须优先消息体 `user`。iOS 打包若缺 `senderUserInfo` 时写登录人会污染展示——应补 AI 框 id/name/portrait 且勿写回原消息。旧 OSS 无 `user` 须重新合并。
+- **合并详情 tag**：有 `personalAccountId` + 智能体前缀 sender →「个人AI框」；与来源 badge 门闩无关。

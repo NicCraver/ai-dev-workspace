@@ -1,6 +1,6 @@
 # Status：iOS 智能体正文与消息气泡字号对齐
 
-> 最后更新：2026-08-05（旁路：转发勿污染原消息已修；本功能矩阵无变化）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-08-05（旁路：合并详情个人 AI 名/头像对齐，归属 20260730；本功能矩阵无变化）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 - (android) apps/android `personal-ai-chat-hotfix` 有 4 文件未提交（`personal_ai_select` 群拼图末字 / `GroupMember`），归属功能 `20260803-PC端和安卓端-选择数据范围…`，**与本 iOS 字号功能无关**；本功能矩阵 android 列仍为「— 本期不做」
 - (desktop) 已切至 `personal-ai-chat-hotfix`，与本 iOS 字号功能无关
 - (旁路 · ios/android · 转发) 🚧 逐条转发 extra 对齐 PC 只留 `richList`（含 ActionCard）；归属 `20260730-…来自xxAI框`，本地未 commit；与本字号功能无关
+- (旁路 · desktop/android/ios · 合并详情) 🚧 个人 AI 框名/头像 +「个人AI框」tag 对齐会话列表；归属 `20260730`，本地未 commit；与本字号功能无关
 
 ## 关键决策记录
 
