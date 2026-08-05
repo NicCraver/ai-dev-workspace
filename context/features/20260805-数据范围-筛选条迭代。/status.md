@@ -13,8 +13,10 @@
 
 ## 待办 / 阻塞
 
-- (全端) 代码已改；待真机确认：全选文案、n>999 封顶、点数据先开层再刷新胶囊
-- (ios) `ZXAIAgentSessionMemoryModel` 新增三标记字段，依赖 MJ 自动映射；联调确认后端已回传
+- (全端) 待真机确认：全选文案、箭头、n>999 封顶、点数据先开层再刷新胶囊
+- (web) 已修：`Number(flag)===1` 兼容字符串；`personal-ai-chat` 已 cherry-pick 功能+修复
+- (desktop) 已补数据胶囊箭头
+- (ios) MemoryModel 三标记依赖 MJ 映射；联调确认后端已回传
 - (全端) 设置页 / 定时任务文案本期不做（web 用 `persist=false` 隔离）
 
 ## 关键决策记录
