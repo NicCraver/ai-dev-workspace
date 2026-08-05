@@ -1,7 +1,7 @@
 # JSBridge 协议（WebView ↔ 原生）
 
 > 三端（Android / iOS / Electron）内嵌 web 的通信契约。任何一端改协议必须先改本文件。
-> 最后更新：2026-07-15
+> 最后更新：2026-08-05
 
 ## 通信机制
 
@@ -12,6 +12,7 @@
 | desktop（微应用 webview） | 内嵌 web 调 `window.webview.<method>(params)` → preload 生成 `uuid`，`ipcRenderer.sendToHost(<channel>, params, uuid)` | 宿主 `webview-control` `@ipc-message` → `aiBoxPickerHost` 取数 → `webview.send("trigger-result", …)` → preload 按 `uuid` resolve |
 | desktop（AiBrowser iframe） | iframe 内 `window.parent.postMessage({ type:"personal-ai:bridge-request", channel, params, uuid })` | **AiBrowser** `handlePersonalAiMessage` → `aiBoxPickerHost` 取数 → `event.source.postMessage({ type:"personal-ai:bridge-result", channel, uuid, data:{code,data} })` |
 | desktop（AiBrowser iframe，打开 IM） | iframe 内 `window.parent.postMessage({ type:"personal-ai:open-chat", payload:{ id, type, name?, avatar? } })`（fire-and-forget） | **AiBrowser**（主窗口内）直接 `openConversationById`；列表无会话时用 `name`/`avatar` `PushDialogue` 重建；**不**调 `resume-main-win-size` |
+| desktop（AiBrowser iframe，首屏就绪） | iframe 内 `window.parent.postMessage({ type:"personal-ai:ready" })`（fire-and-forget） | **AiBrowser** 收到即撤个人 AI 框首屏 loading 遮罩；宿主 **8s 超时**兜底（老版本 web 不发也不死锁） |
 | android | `wnsdk.aiChat.<method>(params)` | 回调 `success(result)` / `error`（选择 AI 框见下表） |
 | ios | `wnsdk.aiChat.selectAiAgent` 等 | 回调 `success(result)`：`result` 为 `ZXJSWebResponseModel.result` 解包值 |
 
@@ -32,6 +33,11 @@
 // AiBrowser iframe 打开 IM（web → AiBrowser，无响应）
 { "type": "personal-ai:open-chat", "payload": { "id": "<belongId>", "type": "group" | "chat", "name"?: "<显示名>", "avatar"?: "", "corpId"?: "", "groupType"?: 0 } }
 // type: "group"=群聊 / 其它（如 "chat"）=私聊；宿主 openConversationById：列表有则选中，无则用 name/avatar 重建会话再打开
+
+// AiBrowser iframe 首屏就绪（web → AiBrowser，无响应）
+{ "type": "personal-ai:ready" }
+// web 在 PersonalAiChat onMounted 后发；宿主收到即撤个人 AI 框首屏 loading 遮罩。
+// 宿主 8s 超时兜底：老版本 web 不发此消息也不会死锁。
 
 // AiBrowser → AI框 iframe：切到 AI框 tab 时通知验版 + 激活（对象或 JSON 字符串均可）
 { "source": "zx-pc", "type": "aiBoxCheckVersion" }
@@ -125,6 +131,7 @@ web 分流：`payload.ok` → 新；有 `payload.scopes` → 老。取消：`cod
 
 ## Changelog
 
+- 2026-08-05 登记 `personal-ai:ready`（web → AiBrowser，fire-and-forget）：web 首屏挂载完成信号，宿主据此撤个人 AI 框首屏假 loading；宿主 8s 超时兜底兼容老版本 web。
 - 2026-07-31 web 选择 AI 框组织架构改直调 contact（`getContract` / `sub_dept_user_pagelistV3`），不再调桥 `getOrgCompanies`/`getDeptUsers`；desktop 桥 handler 保留不动。
 - 2026-07-23 web 兼容老 iOS：开页同时传 `agentId`+`initialScopes`；回传按 `ok`（新）/ `scopes`（老）分流。
 - 2026-07-22 选择数据范围（ios/android）：入参改 `{agentId,accountId?}`；原生 `getAgentDataRange` 返显 + `saveDataRange` 落库；桥成功只 ACK `{ok:true}`；web 再拉记忆。方案 `plan-数据范围原生落库.md`。

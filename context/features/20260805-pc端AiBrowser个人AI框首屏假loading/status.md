@@ -1,26 +1,28 @@
 # Status：pc端AiBrowser个人AI框首屏假loading
 
-> 最后更新：2026-08-05（spec + plan 完成，待实施）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-08-05（T1–T5 代码与文档完成，待真机自测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | spec / plan | ✅ | — | — | ✅ |
-| T1 `personal-ai:ready` 类型与判定 + 单测 | — | — | — | ⬜ |
-| T2 `AiChatLoading.vue` 遮罩组件 | — | — | — | ⬜ |
-| T3 宿主接线（显隐 / 8s 超时 / iframe error） | — | — | — | ⬜ |
-| T4 web `onMounted` 回传 ready | ⬜ | — | — | — |
-| T5 bridge.md 登记 + impl-notes | ✅ | — | — | ⬜ |
-| 自测（首开 / 切回 / 拖拽 / 超时兜底） | — | — | — | ⬜ |
+| T1 `personal-ai:ready` 类型与判定 + 单测 | — | — | — | ✅ |
+| T2 `AiChatLoading.vue` 遮罩组件 | — | — | — | ✅ |
+| T3 宿主接线（显隐 / 8s 超时 / iframe error） | — | — | — | ✅ |
+| T4 web `onMounted` 回传 ready | ✅ | — | — | — |
+| T5 bridge.md 登记 + impl-notes | ✅ | — | — | ✅ |
+| 自测（首开 / 切回 / 拖拽 / 超时兜底） | — | — | — | 🚧 |
 
 > android / ios 本期不做：两端个人 AI 框走各自 WebView 宿主，白屏问题同样存在，待本期 desktop 验证后由 impl-notes 移植。
 
 ## 待办 / 阻塞
 
-- (desktop) ⬜ T1–T3 实施，按 plan.md 逐任务提交
-- (web) ⬜ T4：`PersonalAiChat.vue` `onMounted` 加 `notifyHostReady()`，需与 desktop 同期发版才生效（老版本 web 走 8s 超时分支，不会坏）
-- (desktop) ⬜ 真机自测 4 条：无纯白帧 / 切回不重复出现 / 遮罩期间可拖拽可点 / 断网 8s 自动撤
+- (desktop) 🚧 **真机自测 4 条**（待用户/Controller 执行 `npm run dev:test`）：
+  1. 首开个人 AI 框：转圈 +「页面加载中...」→ 淡出 → web 会话列表骨架接力，全程无纯白帧
+  2. 切到外链 AI tab 再切回个人 AI：遮罩不再出现
+  3. 遮罩期间：拖动窗口标题栏可移动、顶部 tab 可点击（验证 `no-drag`）
+  4. 断网或不可达 `APP_AICHAT`：8s 后遮罩自动撤，不死锁
 
 ## 关键决策记录
 
