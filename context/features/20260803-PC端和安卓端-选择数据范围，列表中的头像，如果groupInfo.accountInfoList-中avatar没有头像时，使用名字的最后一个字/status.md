@@ -1,6 +1,6 @@
 # Status：选择数据范围 · 群拼图无头像用名字末字
 
-> 最后更新：2026-08-04（Desktop 已 push `personal-ai-chat-hotfix`；Android 业务代码仍在本地；两端均待真机手测）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
+> 最后更新：2026-08-05（Android 已提交 hotfix；两端待手测）｜图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞 · — 本期不做
 
 ## 平台矩阵
 
@@ -10,7 +10,7 @@
 | T1 Desktop 归一化 groupMembers | — | — | — | ✅ |
 | T2 Desktop 拼图组件 + 列表/搜索/chip | — | — | — | 🚧 已提交 hotfix，待手测 |
 | T3 Android 归一化 groupMembers | — | ✅ | — | — |
-| T4 Android Helper 末字拼图 + 接线 | — | 🚧 代码+单测已完成，待手测 | — | — |
+| T4 Android Helper 末字拼图 + 接线 | — | 🚧 已提交 hotfix，待手测 | — | — |
 | T5 impl-notes + 手测验收 | — | 🚧 impl-notes 已写；手测待做 | — | 🚧 impl-notes 已写；手测待做 |
 | 自测通过 | — | ⬜ 待真机 | — | ⬜ 待真机 |
 
@@ -19,7 +19,7 @@
 ## 待办 / 阻塞
 
 - (desktop) ⏳ 已 push `personal-ai-chat-hotfix`（`11fddc1d`）；手测：无 avatar 有 nickName → 末字；搜索 / chip 同
-- (android) ⏳ 本地改动未提交；重装后手测列表 / 搜索 / 已选弹层：空头像格应显示末字，不再灰默认图
+- (android) ⏳ 已提交 `personal-ai-chat-hotfix`；重装后手测列表 / 搜索 / 已选弹层：空头像格应显示末字，不再灰默认图
 - (全端) 空位底色对齐：明确不做
 
 ## 关键决策记录

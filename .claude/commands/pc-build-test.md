@@ -22,7 +22,7 @@
 
 1. **优先最快路径**：§1 中 `sqlite3` 已是 arm64 → 跳过 §2；下载失败再按文档 §0 开代理。
 2. **Node 版本**：所有 npm / npx / node 命令必须包在 `vp env exec --node 14.21.3 --` 内。
-3. **构建命令**：完整构建用 `npm run pack:mac-test -- --config.npmRebuild=false`；只打 DMG 用 `npx electron-builder ... --config.npmRebuild=false`。禁止省略 `npmRebuild=false`。
+3. **构建命令**：完整构建用 `npm run pack:mac-test -- --config.npmRebuild=false`；只打 DMG 用 `cross-env MODE_ENV=test npx electron-builder -c ./electron-builder.yml -m --config.npmRebuild=false`。禁止省略 `npmRebuild=false`。
 4. **打包后必做 §6**：还原 `.env.test`（localhost）、去掉 `package.json` 的 `-test` version 后缀、重装 Electron 二进制；否则本机 `dev:test` 起不来。
 5. **禁止 git 提交**：`.env.test`、`electron-builder.yml`、`package.json`、`package-lock.json` 的 test 本地改动不得 stage / commit（工作区约定）。
 6. **自动打开产物目录（必做）**：凡产出 DMG 的模式（完整流程 / `--dmg-only`），在 §6 完成后**必须**执行：
@@ -38,7 +38,7 @@ open build   # 在 apps/desktop/ 下；用 Finder 打开 build/，无需用户�
 完成后用简短条目汇报：
 
 - **模式** / **结果**（成功 / 失败）
-- **产物**：`build/*-mac-arm64.dmg` 路径与大小（成功时）；注明已 `open build`
+- **产物**：`build/zx-mac-test_v*.dmg` 路径与大小（成功时）；注明已 `open build`
 - **校验**：`sqlite3.node` / `Electron` 的 `file` 输出一行摘要
 - **§6 恢复**：`.env.test`、version、Electron 重装是否完成；`dev:test` 是否已验证（或用户需手动验证）
 - **失败时**：对照文档 §7 症状表，给出已尝试的修复与下一步（不要无脑重跑全流程）
