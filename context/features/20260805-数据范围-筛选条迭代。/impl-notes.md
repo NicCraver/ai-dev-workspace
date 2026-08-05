@@ -35,6 +35,15 @@
 
 勾选全部应对新增群/人仍生效；本期只**消费** `groupAndAccountSelectAll` 做外示，不新开后端。
 
+## 各端落点摘要
+
+| 端 | 类型 | 数据 + 点击刷新 |
+|----|------|-----------------|
+| web | `DataRangeBar` + `filterCapsuleLabels.js` | `DataScopeBar`（persist=true）先开再 get |
+| desktop | personal + agent memory-bar | personal bar emit `refresh-memory` → chat-box fetch |
+| android | PersonalAiFilterBar + 群 DataCheck | Host：`openDataScope` + `fetchAndBind` |
+| ios | PersonalAiFilterBar + ZXAIAgentFilterBar | present picker + `zx_fetchPersonalAiMemoryForce`；MemoryModel 增三标记 |
+
 ## 联调坑
 
-- （待补）后端未回传 `groupAndAccountSelectAll` 时外示走封顶规则，不会出现「全部数据」
+- 后端未回传 `groupAndAccountSelectAll` 时外示走封顶规则，不会出现「全部数据」
