@@ -24,7 +24,7 @@
 
 - (desktop) ⏳ 多选转发三坑本地已修，**待 commit/push + 真机**
 - (android) ⏳ 合并转发页回复 + AI 引用头（encode/完整 decode `referMsg`）本地已改，**待 commit/push + 真机**
-- (ios) ⏳ 合并转发页回复 + AI 引用头（还原 payload、禁本机 UID 回落）本地已改，**待 commit/push + 真机**
+- (ios) ⏳ 合并转发页回复 + AI 引用头；点引用聚合勿「0条回复」（内嵌源+列表回复）本地已改，**待 commit/push + 真机**
 - (desktop / android / ios) ⏳ 合并详情个人 AI 名头像 tag：已 push hotfix，**待真机**
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`
 
