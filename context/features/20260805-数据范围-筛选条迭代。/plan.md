@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: 用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实施。步骤用 `- [ ]` 复选框跟踪。
 
-**Goal：** 聊天记忆筛选条：类型全选外示「全部类型」，数据全选外示「全部数据」/ 非全选封顶「数据+999」；点数据胶囊先开层并行 `getAgentDataRange`。
+**Goal：** 聊天记忆筛选条：类型全选外示「全部类型」，数据全选外示「全部数据」/ 非全选封顶「数据+999」；点数据胶囊先 `getAgentDataRange` 再开层。
 
-**Architecture：** 平台无关文案规则见 `spec.md`。各端本地实现；web 抽纯函数单测。点击数据：先开弹层，并行 get，只回写父级记忆/胶囊，不覆盖弹层内编辑快照。真全部只消费现有 `groupAndAccountSelectAll`，不改契约。
+**Architecture：** 平台无关文案规则见 `spec.md`。各端本地实现；web 抽纯函数单测。点击数据：先 get 回写父级记忆/胶囊，再开弹层（弹层与胶囊同源）；失败仍用本地开层。真全部只消费现有 `groupAndAccountSelectAll`，不改契约。
 
 **Tech Stack：** web Vue3；desktop Vue2.7（禁 `?.`/`??`）；ios ObjC；android Java。
 
@@ -13,7 +13,7 @@
 - 范围：**仅聊天记忆筛选条**；设置页 / 定时任务文案不动。
 - 类型：个人 + **群** AI；全选 = 当前 `dataRangeList` 全 `choose===1`；空列表保留现网空态。
 - 数据：仅个人 AI；`groupAndAccountSelectAll===1` →「全部数据」；缺省当 0 → `数据+min(n,999)`；弹层真实数。
-- 点击数据：先开层，并行 get；失败不关层、不强制 toast。
+- 点击数据：先 get 再开层；失败仍开层（本地）、不强制 toast。
 - save 三态：未知省略三 key，禁止 0 冒充。
 - desktop：禁可选链/空值合并；提交排除 `.env.test` / `electron-builder.yml` / `package.json` / `package-lock.json`。
 - 四端规则一致、代码各写；跨端移植只读 `impl-notes.md` + 契约 + `platforms/<端>.md`。

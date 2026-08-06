@@ -1,6 +1,6 @@
 # Impl Notes：数据范围-筛选条迭代。
 
-> 平台无关。最后更新：2026-08-05
+> 平台无关。最后更新：2026-08-06
 
 ## 文案规则
 
@@ -19,12 +19,12 @@
 
 ## 点击数据时序
 
-1. 先打开选人/群弹层（编辑用**打开瞬间** scopes 快照）
-2. 并行 `getAgentDataRange`
-3. 成功只回写**父级** scopes + 三标记 → 刷新胶囊；**不**覆盖弹层内正在编辑的勾选
-4. 失败：不关层、不强 toast、记忆不回滚
+1. 调用 `getAgentDataRange`
+2. 成功：回写父级 scopes + 三标记 → 刷新胶囊 → **再打开**选人/群弹层（编辑快照与胶囊同源）
+3. 失败：warn、不强 toast、记忆不回滚 → **仍用本地数据开层**
+4. 进行中重复点击：忽略（由首次请求结束后开层）
 
-移动端若开页已 get：可复用该次结果；ACK/返回后父级胶囊须按最新 flags 更新。
+移动端原生选人页若开页仍 get：属二次拉齐；ACK/返回后父级胶囊须按最新 flags 更新。
 
 ## 三标记与 save
 
@@ -39,12 +39,14 @@
 
 | 端 | 类型 | 数据 + 点击刷新 |
 |----|------|-----------------|
-| web | `DataRangeBar` + `filterCapsuleLabels.js` | `DataScopeBar`（persist=true）先开再 get |
-| desktop | personal + agent memory-bar | personal bar emit `refresh-memory` → chat-box fetch |
-| android | PersonalAiFilterBar + 群 DataCheck | Host：`openDataScope` + `fetchAndBind` |
-| ios | PersonalAiFilterBar + ZXAIAgentFilterBar | present picker + `zx_fetchPersonalAiMemoryForce`；MemoryModel 增三标记 |
+| web | `DataRangeBar` + `filterCapsuleLabels.js` | `DataScopeBar`（persist=true）先 get 再开；`nextTick` 后再设 open |
+| desktop | personal + agent memory-bar | personal bar emit `refresh-memory-scopes(done)` → chat-box fetch 后 done 开层 |
+| android | PersonalAiFilterBar + 群 DataCheck | Host：`fetchAndBind(true)` 后再 `openDataScope` |
+| ios | PersonalAiFilterBar + ZXAIAgentFilterBar | `zx_fetchPersonalAiMemoryThenPresentDataScope`；MemoryModel 增三标记 |
 
 ## 联调坑
 
 - 后端未回传 `groupAndAccountSelectAll` 时外示走封顶规则，不会出现「全部数据」
-- 三标记（含 `groupAndAccountSelectAll`）可能回传字符串 `"1"` / `"0"`：展示判断用数值比较（如 `Number(flag)===1`），勿依赖严格布尔或 `=== 1`  alone
+- 三标记（含 `groupAndAccountSelectAll`）可能回传字符串 `"1"` / `"0"`：展示判断用数值比较（如 `Number(flag)===1`、iOS `zx_isSelectAllFlagOne`、Android `isGroupAndAccountSelectAllOne`），勿依赖严格布尔或 `=== 1` alone
+- android get 用 `fetchGeneration` 丢弃过期响应；过期代际勿再 open（由最新一代 open）
+- 勿再「先开层再并行 get」：弹层打开瞬间快照会与随后回写的胶囊不一致
