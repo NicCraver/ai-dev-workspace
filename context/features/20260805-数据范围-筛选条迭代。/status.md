@@ -1,6 +1,6 @@
 # Status：数据范围-筛选条迭代。
 
-> 最后更新：2026-08-06（旁路：android 编译修复并已装真机；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-06（旁路：安卓合并详情引用头/点引用弹窗已装真机；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -18,8 +18,8 @@
 - (全端) 设置页 / 定时任务文案本期不做（web 用 `persist=false` 隔离）
 - (web) 本地未提交：`DataRangeBar` 关闭钮间距 / `SelectorClose` 去掉默认 `ml-2`（筛选条 UI 微调，**待 commit**）
 - (desktop) 旁路：多选转发三坑本地已修，**待 commit/push + 真机** → 详见 `20260730`
-- (android) 旁路：合并转发页回复 + 逐条/合并剥 `referMsgUid` 本地已改；`ReferencePreviewView` 误用 `isNotEmptyString` 已改 `!isEmpty`，**onTest 已装真机**；仍 **待 commit/push** → 详见 `20260730`
-- (ios) 旁路：合并转发页回复/AI 引用头对齐 PC；点引用「0条回复」已修，**待 commit/push + 真机** → 详见 `20260730`
+- (android) 旁路：合并详情引用头兜底 + 点引用开聚合弹窗已装 onTest（须**重新合并**验证）；仍 **待 commit/push + 自测** → 详见 `20260730`
+- (ios) 旁路：合并转发页回复/AI 引用头对齐 PC；点引用「0条回复」已修；导航圈内图标居中 +「N条回复」层下移，**待 commit/push + 真机** → 详见 `20260730`
 
 ## 关键决策记录
 
@@ -30,6 +30,7 @@
 - 2026-08-06：数据胶囊封顶 **999**（测试用 9 已回滚）
 - 2026-08-06：全端自测通过；desktop/web/android/ios 已推 `personal-ai-chat-hotfix`
 - 2026-08-06：(web) `DataScopeBar` 下拉箭头图标补 `mr-1`，与胶囊右缘留白对齐
+- 2026-08-06：旁路修 iOS 合并聊天记录页（导航圈内图标居中、「N条回复」层下移）；详见 `20260730-…/status.md`
 - 2026-08-06：排查确认 PC 多选转发问题**非本迭代引入**；修复记在 `20260730`
 - 2026-08-06：三端转发对齐 PC（剥 `referMsgUid`、保留引用类型）；合并转发页回复 android/ios 本地已修——**非筛选条范围**
 - 2026-08-06：(android) `ReferencePreviewView` 旁路改动误调 `util.StringUtils.isNotEmptyString`（方法在 `com.im.util`），改为已有 `!isEmpty`；onTest 装真机通过
