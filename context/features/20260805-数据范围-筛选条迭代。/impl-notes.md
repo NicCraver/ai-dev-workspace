@@ -44,6 +44,12 @@
 | android | PersonalAiFilterBar + 群 DataCheck | Host：`fetchAndBind(true)` 后再 `openDataScope` |
 | ios | PersonalAiFilterBar + ZXAIAgentFilterBar | `zx_fetchPersonalAiMemoryThenPresentDataScope`；MemoryModel 增三标记 |
 
+## 选择数据范围确定钮（web/desktop）
+
+- 0 项可选时确定钮仍可点击
+- 文案固定「确定」（不随已选数变化）
+- 主题色 `#3E7DFF`
+
 ## 联调坑
 
 - 后端未回传 `groupAndAccountSelectAll` 时外示走封顶规则，不会出现「全部数据」
