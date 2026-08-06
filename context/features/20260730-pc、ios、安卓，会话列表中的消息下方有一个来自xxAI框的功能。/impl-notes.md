@@ -141,6 +141,10 @@ isSelf = personalId === 当前登录用户 id
 - **安卓合并打包**：禁止对 `messageList` 里的原 `Message.getContent().setExtra(...)`；裁剪结果只写入 OSS JSON 的 `extra`/`baseExtra`。
 - **安卓逐条 ActionCard**：勿直接 `setExtra` 再 `Message.obtain` 后还原——obtain 持有同一引用会把 badge 写回待发消息；应 encode 拷贝后再白名单裁剪。
 - **PC 现状**：文本逐条 `map` 浅拷贝后替换 `content` 对象，一般不污染会话列表；ActionCard 单条仍不走该函数（原样带 extra）。移动端已按白名单收紧 ActionCard；若要求三端一致需另改 PC。
+- **PC 多选转发空列表**：勾选回调里对文本 `emojiContent.map` 无兜底——纯文本常无该字段会抛错；条数 UI 仍更新、真正转发列表为空 → 误报「请至少选择一项」。须 `Array.isArray` 后再 map。
+- **PC 转发后引用「不存在」**：ActionCard/`msg-refer` 用 `referMsgUid` 查**当前会话**列表；转发到其他会话必然 miss。转发时应剥离 `referMsgUid`（保留内嵌 `referMsg`）；读侧仅在「当前会话找得到且已撤回」时隐藏，否则展示内嵌快照。
+- **PC 回复转发**：勿再把 `ReferenceMessage` 强转纯文本（会丢掉引用块）；保留类型并剥离 `referMsgUid`。
+- **PC `packmysend`**：`extra` 为 JSON 字符串时禁止直接 object spread（会变成字符下标）；须先 `JSON.parse`。
 - **iOS 逐条转发（字段）**：仅 Text/Reply 走「只留 richList」不够——群 AI 定时多为 ActionCard，须复制 content 后再裁 extra；`extra` 为字典时禁止整包序列化（会把 badge 字段带出）。
 - **合并详情个人 AI 名/头像**：读侧按 `senderUserId` 查**当前会话**智能体缓存会 miss/错名；须优先消息体 `user`。iOS 打包若缺 `senderUserInfo` 时写登录人会污染展示——应补 AI 框 id/name/portrait 且勿写回原消息。旧 OSS 无 `user` 须重新合并。
 - **合并详情 tag**：有 `personalAccountId` + 智能体前缀 sender →「个人AI框」；与来源 badge 门闩无关。
