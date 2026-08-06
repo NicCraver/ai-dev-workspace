@@ -1,6 +1,6 @@
 # Status：数据范围-筛选条迭代。
 
-> 最后更新：2026-08-05 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-06 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -15,8 +15,8 @@
 
 - (全端) 待真机确认：全选文案、箭头、n>999 封顶、点数据先开层再刷新胶囊
 - (web) 已修：`Number(flag)===1` 兼容字符串；`personal-ai-chat` 已 cherry-pick 功能+修复
-- (desktop) 已补数据胶囊箭头 + 字符串标记兼容（与 web 同）；工作区未提交改动仅为本地 `.env`/`electron-builder`/`package*`，非本功能代码
-- (android) 测试包 `zx-android-test_v3.6.18.apk` 已打出，待装机验收
+- (desktop) 功能代码已提交（`090f73cb` feat + `53dd653c` fix：箭头 + 字符串标记）；工作区未提交改动仅为本地 `.env.test`/`electron-builder`/`package*`，非本功能代码、勿提交
+- (android) 测试包 `zx-android-test_v3.6.18.apk` 已重新打出（2026-08-06），待装机验收
 - (ios) MemoryModel 三标记依赖 MJ 映射；联调确认后端已回传
 - (全端) 设置页 / 定时任务文案本期不做（web 用 `persist=false` 隔离）
 
