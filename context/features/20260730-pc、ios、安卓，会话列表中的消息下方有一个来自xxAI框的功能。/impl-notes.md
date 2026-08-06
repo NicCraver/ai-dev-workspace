@@ -145,6 +145,8 @@ isSelf = personalId === 当前登录用户 id
 - **PC 转发后引用「不存在」**：ActionCard/`msg-refer` 用 `referMsgUid` 查**当前会话**列表；转发到其他会话必然 miss。转发时应剥离 `referMsgUid`（保留内嵌 `referMsg`）；读侧仅在「当前会话找得到且已撤回」时隐藏，否则展示内嵌快照。
 - **PC 回复转发**：勿再把 `ReferenceMessage` 强转纯文本（会丢掉引用块）；保留类型并剥离 `referMsgUid`。
 - **PC `packmysend`**：`extra` 为 JSON 字符串时禁止直接 object spread（会变成字符下标）；须先 `JSON.parse`。
+- **安卓对齐（进行中）**：逐条同样保留 Reference、剥 `referMsgUid`；空 uid 勿触发「已删除」刷新。合并 OSS 打包亦应清空 `referMsgUid`（尚未落地）。
+- **iOS 对齐（未开始）**：`convertModelByOriginModel` 仍把 Reply 转 Text；须保留 Reference、剥 uid，且 `getRcMessageState` 在无 uid 时按内嵌快照展示。
 - **iOS 逐条转发（字段）**：仅 Text/Reply 走「只留 richList」不够——群 AI 定时多为 ActionCard，须复制 content 后再裁 extra；`extra` 为字典时禁止整包序列化（会把 badge 字段带出）。
 - **合并详情个人 AI 名/头像**：读侧按 `senderUserId` 查**当前会话**智能体缓存会 miss/错名；须优先消息体 `user`。iOS 打包若缺 `senderUserInfo` 时写登录人会污染展示——应补 AI 框 id/name/portrait 且勿写回原消息。旧 OSS 无 `user` 须重新合并。
 - **合并详情 tag**：有 `personalAccountId` + 智能体前缀 sender →「个人AI框」；与来源 badge 门闩无关。
