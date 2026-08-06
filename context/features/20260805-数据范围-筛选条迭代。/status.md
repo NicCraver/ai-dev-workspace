@@ -1,6 +1,6 @@
 # Status：数据范围-筛选条迭代。
 
-> 最后更新：2026-08-06（旁路：合并转发页回复 android/ios 已改；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-06（旁路：android 测试包已装真机；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -17,9 +17,9 @@
 
 - (全端) 设置页 / 定时任务文案本期不做（web 用 `persist=false` 隔离）
 - (web) 本地未提交：`DataRangeBar` 关闭钮间距 / `SelectorClose` 去掉默认 `ml-2`（筛选条 UI 微调，**待 commit**）
-- (desktop) 旁路：多选转发三坑本地已修，**待 commit/push + 真机** → 详见 `20260730`
-- (android) 旁路：合并转发页回复 + 逐条/合并剥 `referMsgUid` 本地已改，**待 commit/push + 真机** → 详见 `20260730`
-- (ios) 旁路：合并转发页回复对齐 PC 本地已改，**待 commit/push + 真机** → 详见 `20260730`
+- (desktop) 旁路：多选转发三坑 + `msg-refer` 无 uid 按内嵌展示 / `packmysend` string extra 解析，本地已改，**待 commit/push + 真机**（勿提交 `.env.test` / `electron-builder.yml` / `package.json` / `package-lock.json`）→ 详见 `20260730`
+- (android) 旁路：合并转发页回复 + 逐条/合并剥 `referMsgUid` 本地已改；测试包 **已装真机**（`com.cnmts.smart_message.test`），**待 commit/push + 业务自测** → 详见 `20260730`
+- (ios) 旁路：合并转发页回复 + 保留 Reference/剥 uid/OSS 对齐 PC 本地已改，**待 commit/push + 真机** → 详见 `20260730`
 
 ## 关键决策记录
 
@@ -31,4 +31,5 @@
 - 2026-08-06：全端自测通过；desktop/web/android/ios 已推 `personal-ai-chat-hotfix`
 - 2026-08-06：(web) `DataScopeBar` 下拉箭头图标补 `mr-1`，与胶囊右缘留白对齐
 - 2026-08-06：排查确认 PC 多选转发问题**非本迭代引入**；修复记在 `20260730`
-- 2026-08-06：三端转发对齐 PC（剥 `referMsgUid`、保留引用类型）；合并转发页回复 android/ios 本地已修——**非筛选条范围**
+- 2026-08-06：三端转发对齐 PC（剥 `referMsgUid`、保留引用类型）；合并转发页回复 android/ios/desktop 本地已修——**非筛选条范围**
+- 2026-08-06：(android) 测试环境 APK 已装真机，旁路转发修复待业务自测与 commit
