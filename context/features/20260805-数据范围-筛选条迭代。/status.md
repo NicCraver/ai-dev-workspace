@@ -18,8 +18,8 @@
 - (全端) 设置页 / 定时任务文案本期不做（web 用 `persist=false` 隔离）
 - (web) 本地未提交：`DataRangeBar` 关闭钮间距 / `SelectorClose` 去掉默认 `ml-2`（筛选条 UI 微调，**待 commit**）
 - (desktop) 旁路：多选转发三坑 + `msg-refer` 无 uid 按内嵌展示 / `packmysend` string extra 解析，本地已改，**待 commit/push + 真机**（勿提交 `.env.test` / `electron-builder.yml` / `package.json` / `package-lock.json`）→ 详见 `20260730`
-- (android) 旁路：合并转发页回复 + 逐条/合并剥 `referMsgUid` 本地已改；测试包 **已装真机**（`com.cnmts.smart_message.test`），**待 commit/push + 业务自测** → 详见 `20260730`
-- (ios) 旁路：合并转发页回复 + 保留 Reference/剥 uid/OSS 对齐 PC 本地已改，**待 commit/push + 真机** → 详见 `20260730`
+- (android) 旁路：合并转发页回复/AI 引用头 + 剥 `referMsgUid` 本地已改；测试包 **已装真机**，**待 commit/push + 业务自测** → 详见 `20260730`
+- (ios) 旁路：合并转发页回复/AI 引用头对齐 PC 本地已改，**待 commit/push + 真机** → 详见 `20260730`
 
 ## 关键决策记录
 
