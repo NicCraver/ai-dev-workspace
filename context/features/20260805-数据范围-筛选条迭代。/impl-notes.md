@@ -13,9 +13,10 @@
 ### 数据（仅个人 AI 聊天记忆条）
 
 - `groupAndAccountSelectAll === 1` →「全部数据」
-- 否则（缺省 / undefined / null / 0 **展示当 0**）→「数据+min(n,999)」，n=`(dataRangeScopeList||[]).length`
+- 否则（缺省 / undefined / null / 0 **展示当 0**）→「数据+min(n,9)」，n=`(dataRangeScopeList||[]).length`
 - 弹层内列表与计数：真实数字，不封顶、不用「全部数据」替代
 - 设置页 / 定时任务（非聊天记忆 persist 路径）：**不要**套用本规则，保持「数据+n」
+- 封顶当前为 **9**（测试环境）；上线前可改回产品约定值
 
 ## 点击数据时序
 
@@ -47,4 +48,4 @@
 ## 联调坑
 
 - 后端未回传 `groupAndAccountSelectAll` 时外示走封顶规则，不会出现「全部数据」
-- 三标记（含 `groupAndAccountSelectAll`）可能回传字符串 `"1"` / `"0"`：展示判断用数值比较（如 `Number(flag)===1`），勿依赖严格布尔或仅 `=== 1`
+- 三标记（含 `groupAndAccountSelectAll`）可能回传字符串 `"1"` / `"0"`：展示判断用数值比较（如 `Number(flag)===1`），勿依赖严格布尔或 `=== 1`  alone
