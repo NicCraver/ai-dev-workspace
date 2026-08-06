@@ -23,8 +23,8 @@
 ## 待办 / 阻塞
 
 - (desktop) ⏳ 多选转发三坑本地已修，**待 commit/push + 真机**
-- (android) ⏳ 合并转发页回复：打包写 `content`+内嵌 payload、详情还原、剥 `referMsgUid` 本地已改，**待 commit/push + 真机**
-- (ios) ⏳ 合并转发页回复：保留 Reference、剥 uid、`getRcMessageState` 无 uid 按内嵌展示、合并预览拷贝 本地已改，**待 commit/push + 真机**
+- (android) ⏳ 合并转发页回复 + AI 引用头（encode/完整 decode `referMsg`）本地已改，**待 commit/push + 真机**
+- (ios) ⏳ 合并转发页回复 + AI 引用头（还原 payload、禁本机 UID 回落）本地已改，**待 commit/push + 真机**
 - (desktop / android / ios) ⏳ 合并详情个人 AI 名头像 tag：已 push hotfix，**待真机**
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`
 
@@ -34,3 +34,4 @@
 - 2026-08-06：(android) 对齐 PC 逐条：Reference 不再转文本；ActionCard/`Reference` 剥 `referMsgUid`；空 uid 跳过 `checkReferenceMessageIsExist`
 - 2026-08-06：(android) 合并页不显示回复：OSS/预览 JSON 须写 `content`=回复正文（勿只靠 Gson 的 `editSendText`）；还原内嵌引用；`referMsgUid` 清空
 - 2026-08-06：(ios) 合并页回复「消息源不一致」：预览勿用原消息 uid 查库；剥 `referMsgUid`；无 uid 时 `getRcMessageState` 返回正常；合并详情勿把 Reply 转 Text
+- 2026-08-06：(android/ios) AI 框合并详情引用头：安卓完整 decode `referMsg`；iOS 还原 payload 且禁止本机 UID 回落；名优先内嵌 `referMsg.user`
