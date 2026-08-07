@@ -1,6 +1,6 @@
 # Status：数据范围-筛选条迭代。
 
-> 最后更新：2026-08-07（web 筛选条 UI 微调：类型胶囊箭头↔关闭钮间距收紧；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-07（web 筛选条横向溢出滚动 + 两端淡出遮罩已推 `personal-ai-chat-hotfix`；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -16,8 +16,8 @@
 ## 待办 / 阻塞
 
 - (全端) 设置页 / 定时任务文案本期不做（web 用 `persist=false` 隔离）
-- (web) 本地未提交：`DataRangeBar` 关闭钮间距（`!-ml-0.5` → `!-ml-1.5`）/ `SelectorClose` 去掉默认 `ml-2`（筛选条 UI 微调，**待 commit**）
-- (desktop) 旁路：多选转发三坑已 push `personal-ai-chat-hotfix`，**待真机** → 详见 `20260730`
+- (web) 筛选条横向溢出可滚动 + 两端淡出遮罩 + 胶囊间距微调，已推 `personal-ai-chat-hotfix`（`50e5d98`）
+- (desktop) 工作区仅有 `.env.test` / `package.json` 等本地调试配置改动，**不计入本功能、勿提交**；旁路多选转发三坑已推 `personal-ai-chat-hotfix`，**待真机** → 详见 `20260730`
 - (android) 旁路：合并详情回复引用对齐 PC，**已推** `personal-ai-chat-hotfix`（`56173906a`）→ 详见 `20260730`
 - (ios) 旁路：合并转发回复/多选预勾等，**已推** `personal-ai-chat-hotfix`（`e24b0cd4b`）→ 详见 `20260730`
 
@@ -36,3 +36,4 @@
 - 2026-08-06：(android) `ReferencePreviewView` 旁路改动误调 `util.StringUtils.isNotEmptyString`（方法在 `com.im.util`），改为已有 `!isEmpty`；onTest 装真机通过
 - 2026-08-06：(android) 旁路合并详情：引用头 decode 兜底 + 点引用专用事件开聚合；须重新合并验证 → `20260730`
 - 2026-08-07：(web) 类型胶囊下拉箭头与关闭钮间距收紧：`SelectorClose` 负 margin `!-ml-0.5` → `!-ml-1.5`（容器 `gap-1`=4px，净 -2px；关闭钮 `!w-5` 内 14px 图标左右各 3px 内边距，视觉间距 5px → 1px）
+- 2026-08-07：(web) `FilterBar` 内容超出时横向滚动（隐藏滚动条），按 scroll 位置在左右两端显示淡出遮罩；同步微调时间/数据胶囊 `shrink`、内边距与关闭钮间距
