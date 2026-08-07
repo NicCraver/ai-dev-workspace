@@ -1,6 +1,6 @@
 # Status：数据范围-筛选条迭代。
 
-> 最后更新：2026-08-07（旁路：action-center 用 vp 装依赖；desktop 本地调试配置仍勿提交；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-07（旁路：action-center 关闭 PC 强更弹窗；desktop 本地调试配置仍勿提交；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -19,6 +19,7 @@
 - (web) 筛选条横向溢出可滚动 + 两端淡出遮罩 + 胶囊间距微调，已推 `personal-ai-chat-hotfix`（`50e5d98`）
 - (desktop) 工作区仅有 `.env.test` / `electron-builder.yml` / `package.json` / `package-lock.json` 本地调试配置改动，**不计入本功能、勿提交**；旁路多选转发三坑已推 `personal-ai-chat-hotfix`，**待真机** → 详见 `20260730`
 - (action-center) 旁路：挂载后用 Vite+ `vp i` 装依赖（重写 lock、`devEngines`、`pnpm-workspace.yaml` allowBuilds），**非本功能、勿计入矩阵**；pnpm 11 忽略原 `package.json#pnpm` 的 patches/overrides，后续若异常再迁配置
+- (action-center) 旁路：PC 版本升级弹窗已下线（`needsClientUpgrade = false`），不再按 UA 含 `3.4.23` 触发；**非本功能、勿计入矩阵**
 - (android) 旁路：合并详情回复引用对齐 PC，**已推** `personal-ai-chat-hotfix`（`56173906a`）→ 详见 `20260730`
 - (ios) 旁路：合并转发回复/多选预勾等，**已推** `personal-ai-chat-hotfix`（`e24b0cd4b`）→ 详见 `20260730`
 
@@ -39,3 +40,4 @@
 - 2026-08-07：(web) 类型胶囊下拉箭头与关闭钮间距收紧：`SelectorClose` 负 margin `!-ml-0.5` → `!-ml-1.5`（容器 `gap-1`=4px，净 -2px；关闭钮 `!w-5` 内 14px 图标左右各 3px 内边距，视觉间距 5px → 1px）
 - 2026-08-07：(web) `FilterBar` 内容超出时横向滚动（隐藏滚动条），按 scroll 位置在左右两端显示淡出遮罩；同步微调时间/数据胶囊 `shrink`、内边距与关闭钮间距
 - 2026-08-07：旁路挂载 `apps/action-center`，用 `vp i` 装依赖（非筛选条范围）；desktop 本地调试配置改动仍勿提交
+- 2026-08-07：旁路关闭 action-center PC 强更弹窗（`TheLayout` 中 `needsClientUpgrade` 固定 false）
