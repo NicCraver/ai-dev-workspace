@@ -1,6 +1,6 @@
 # Status：数据范围-筛选条迭代。
 
-> 最后更新：2026-08-07（旁路核对：action-center 强更下线 + SVG 工具噪声未提交；desktop 仅本地调试配置；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-07（旁路：android 合并详情引用点击/弹窗 NPE 已修并装真机；desktop 本地调试配置仍勿提交；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -21,6 +21,7 @@
 - (action-center) 旁路：挂载后用 Vite+ `vp i` 装依赖（重写 lock、`devEngines`、`pnpm-workspace.yaml` allowBuilds），**非本功能、勿计入矩阵**；pnpm 11 忽略原 `package.json#pnpm` 的 patches/overrides，后续若异常再迁配置
 - (action-center) 旁路：PC 版本升级弹窗已下线（`TheLayout` 中 `needsClientUpgrade = false`），不再按 UA 含 `3.4.23` 触发；**非本功能、勿计入矩阵**；当前在 `release` 工作区**尚未提交**
 - (action-center) 旁路：大量 `src/assets/svg/*.svg` 路径末尾 `Z` 被工具改写（与强更无关的格式噪声），**勿当业务提交**；是否还原或一并整理由人决定
+- (android) 旁路：合并详情引用点击无响应 + 开弹窗 NPE（合成源消息缺 `objectName`），本地已修并 **onTest 真机装包**；**未提交/未 push** → 详见 `20260730`
 - (android) 旁路：合并详情回复引用对齐 PC，**已推** `personal-ai-chat-hotfix`（`56173906a`）→ 详见 `20260730`
 - (ios) 旁路：合并转发回复/多选预勾等，**已推** `personal-ai-chat-hotfix`（`e24b0cd4b`）→ 详见 `20260730`
 
@@ -42,3 +43,4 @@
 - 2026-08-07：(web) `FilterBar` 内容超出时横向滚动（隐藏滚动条），按 scroll 位置在左右两端显示淡出遮罩；同步微调时间/数据胶囊 `shrink`、内边距与关闭钮间距
 - 2026-08-07：旁路挂载 `apps/action-center`，用 `vp i` 装依赖（非筛选条范围）；desktop 本地调试配置改动仍勿提交
 - 2026-08-07：旁路关闭 action-center PC 强更弹窗（`TheLayout` 中 `needsClientUpgrade` 固定 false）；同仓另有 SVG 路径格式噪声未提交
+- 2026-08-07：(android) 旁路：合并详情引用单击立即开弹窗（跳过双击延迟/空 uid 查库）；`ReferenceMessage` 合并 bindView 补挂引用头；合成源消息补 `objectName` 修弹窗 header NPE；onTest 已装真机，待用户复验后提交
