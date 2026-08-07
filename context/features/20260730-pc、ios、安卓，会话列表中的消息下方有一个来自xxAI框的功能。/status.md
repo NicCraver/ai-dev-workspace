@@ -23,15 +23,14 @@
 ## 待办 / 阻塞
 
 - (desktop) ✅ 多选转发三坑已 push `personal-ai-chat-hotfix`（`9d107693`），**待真机**
-- (android) ⏳ 合并详情引用头（encode/decode 兜底）+ 点引用开聚合弹窗已装 onTest；**须重新合并转发**验证；**待 commit/push + 自测勾选**
-- (ios) ⏳ 合并转发页回复 + AI 引用头；点引用聚合勿「0条回复」（内嵌源+列表回复）本地已改，**待 commit/push + 真机**
-- (ios) ⏳ 合并详情导航左右图标 iOS26 居中（本地已改）；回复层顶距已改回无额外偏移，待真机确认
+- (android) ✅ 合并详情回复引用对齐 PC，已推 `personal-ai-chat-hotfix`（`56173906a`）；旧 OSS 须**重新合并**再验，**待真机**
+- (ios) ✅ 合并转发回复/引用聚合/多选预勾/导航居中，已推 `personal-ai-chat-hotfix`（`e24b0cd4b`），**待真机**
 - (desktop / android / ios) ⏳ 合并详情个人 AI 名头像 tag：已 push hotfix，**待真机**
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`
 
 ## 关键决策记录
 
-- 2026-08-06：(desktop) 多选转发修复——`selectMessage` 兜底；转发剥 `referMsgUid`；保留 `ReferenceMessage`；`packmysend` parse string extra
+- 2026-08-06：(desktop) 多选转发修复——`selectMessage` 兜底；转发剥 `referMsgUid`；保留 `ReferenceMessage`；`packmysend` parse string extra；已 push `personal-ai-chat-hotfix`（`9d107693`）
 - 2026-08-06：(android) 对齐 PC 逐条：Reference 不再转文本；ActionCard/`Reference` 剥 `referMsgUid`；空 uid 跳过 `checkReferenceMessageIsExist`
 - 2026-08-06：(android) 合并页不显示回复：OSS/预览 JSON 须写 `content`=回复正文（勿只靠 Gson 的 `editSendText`）；还原内嵌引用；`referMsgUid` 清空
 - 2026-08-06：(ios) 合并页回复「消息源不一致」：预览勿用原消息 uid 查库；剥 `referMsgUid`；无 uid 时 `getRcMessageState` 返回正常；合并详情勿把 Reply 转 Text
