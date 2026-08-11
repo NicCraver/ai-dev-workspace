@@ -30,6 +30,7 @@
 - (全端) ⏳ 联调确认后端 `extra.fixTaskMessage` 为数字 `1`
 
 ## 关键决策记录
+- 2026-08-11（第五轮）：(ios) 合并详情昵称显示成 `user<>` —— 融云 `RCUserInfo` 的 description 格式（`user<%@>`，`RongIMLibCore` 二进制里可搜到；安卓 jar 未搜到，但 jar 压缩后 `strings` 证据偏弱），即某处把空 `RCUserInfo` 当昵称写进了消息体。处理：`ZXIMCellLogic.zx_isPlaceholderDisplayName:`（空 / `user<` 前缀均视为无效名）用于读侧三处取名与打包侧 `zx_packSenderUserDictionaryForModel`；个人 AI 框补兜底名「{拥有者昵称}个人AI框」（`personalAccountId` 在 extra 里，与来源 badge 同口径）。**待定**：该记录由哪端合并；安卓打开同一条是否正常（决定是字段口径问题还是数据本身）
 
 - 2026-08-06：(desktop) 多选转发修复——`selectMessage` 兜底；转发剥 `referMsgUid`；保留 `ReferenceMessage`；`packmysend` parse string extra；已 push `personal-ai-chat-hotfix`（`9d107693`）
 - 2026-08-06：(android) 对齐 PC 逐条：Reference 不再转文本；ActionCard/`Reference` 剥 `referMsgUid`；空 uid 跳过 `checkReferenceMessageIsExist`
