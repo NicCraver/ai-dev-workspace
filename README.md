@@ -21,12 +21,14 @@ bash scripts/bootstrap.sh
 
 ## 日常工作流（你只做 4 件事）
 
-| 你说的话 | 发生什么 |
-|----------|---------|
-| `/new-feature 语音消息` | 建文档目录、设为活跃功能，Superpowers 开始 brainstorm，产出 spec.md 供你**审核** |
-| "开始执行" | Superpowers 写 plan（你**审核**）→ 执行 → wrapup 技能自动更新 status.md 并提交 |
-| `/sync-contract 语音接口更新了，字段如下…` | 更新契约 → 分析四端影响面 → 待办进 status.md |
-| `/port ios` | 按 impl-notes + 契约 + iOS 约定移植，完成后自动收尾 |
+
+| 你说的话                           | 发生什么                                                          |
+| ------------------------------ | ------------------------------------------------------------- |
+| `/new-feature 语音消息`            | 建文档目录、设为活跃功能，Superpowers 开始 brainstorm，产出 spec.md 供你**审核**    |
+| "开始执行"                         | Superpowers 写 plan（你**审核**）→ 执行 → wrapup 技能自动更新 status.md 并提交 |
+| `/sync-contract 语音接口更新了，字段如下…` | 更新契约 → 分析四端影响面 → 待办进 status.md                                |
+| `/port ios`                    | 按 impl-notes + 契约 + iOS 约定移植，完成后自动收尾                          |
+
 
 其余全自动：每次会话开头 SessionStart hook 注入活跃功能状态；每次结束 Stop hook 检查"改了代码必须更新文档"，没更新会强制 Claude 补齐；每周跑一次 `/distill` 把 claude-mem 的碎片知识结晶回 `context/platforms/`。
 
@@ -49,3 +51,4 @@ apps/                      四个项目仓库挂载点（被 gitignore）
 - 状态图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞；"完成"= 自测通过，不是"代码写完"。
 - 功能上线后目录改名加 `done-` 前缀归档。
 - 文档守门 hook 只在 apps 有未提交改动且 status.md 未动时触发一次；纯问答会话不受影响（Claude 阻止结束，Cursor 自动续跑提示补齐）。
+
