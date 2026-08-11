@@ -1,6 +1,6 @@
 # Status：数据范围-筛选条迭代。
 
-> 最后更新：2026-08-11（stop-hook 收尾：android/ios 筛选条三全选标记均已推 `personal-ai-chat-hotfix`；android 评优徽章 4 文件、ios 合并引用快照 9 文件仍工作区未提交；desktop 仅本地调试配置；矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-11（旁路：android 合并详情评优+回复弹窗 tag/徽章、ios 合并引用快照仍工作区未提交；多次打 publishRelease 正式包；desktop 仅本地调试配置；矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -11,7 +11,7 @@
 | 接口联调（flags 回传验收） | ✅ | ✅ | ✅ | ✅ |
 | 自测通过 | ✅ | ✅ | ✅ | ✅ |
 
-> 本功能矩阵不变。apps 脏工作区均为**旁路**改动（合并详情评优/引用快照、desktop 本地调试配置），不记入上表格子。
+> 本功能矩阵不变。apps 脏工作区均为**旁路**改动（合并详情评优/引用快照、desktop 本地调试配置、正式包资源补丁），不记入上表格子。
 
 ## 待办 / 阻塞
 
@@ -25,9 +25,10 @@
 - (android) 旁路：筛选条 `saveDataRange` 补传三全选标记（`PersonalAiFilterHost`），**已推** `personal-ai-chat-hotfix`（`d48b5dd9d`）；非矩阵格子但关联个人 AI @ 筛选条
 - (ios) 旁路：筛选条 `saveDataRange` 透传三全选标记，**已推** `personal-ai-chat-hotfix`（`48adac034`）；非矩阵格子但关联个人 AI @ 筛选条
 - (android) 旁路：合并详情引用点击无响应 + 开弹窗 NPE（合成源消息缺 `objectName`），**已推** `personal-ai-chat-hotfix`（`e6a590558`）→ 详见 `20260730`
-- (android) 旁路：合并转发聊天记录页昵称行对齐 iOS——**新增** `CombineAppraisingBinder`（评优徽章+星星）+ `rc_item_combine_message.xml` 布局 + `CombineAdapter` 挂钩，`CombineDetailActivity` 补 `sentTime` 兜底。**工作区未提交、未编译** → 详见 `20260730`
-- (android) 旁路：**回复弹窗**（点引用弹出的「N条回复」层）补 AI 框 tag + 评优徽章星星（布局里原本没有这两个控件），并对空时间戳隐藏时间胶囊；**本地已改未提交、AI 未编译** → 详见 `20260730`
-- (ios) 旁路：合并详情引用快照全链路修复（9 文件）：打包侧 `zx_packReferMsgDictionaryForModel` 写 `referMsg.user/sentTime/extra/objectName`；读侧 `hydrateCombineReferModelsInList` 同列表回填；`ZXIMCellLogic`/`ZXRCMessageModel`/`UIImageView+Avatar` 等联动。第四轮再补：快照带上**引用正文**（否则群智能体回复合并后整块引用消失）、extra 白名单保 `fromType`、读侧按快照直接建 `referModel`、`sentTime<=0` 隐藏时间（原显示「元旦 08:00」）。**工作区未提交、未构建**，待 Xcode 编译 + 真机自测，**老记录须重新合并** → 详见 `20260730`
+- (android) 旁路：合并转发聊天记录页昵称行对齐 iOS——**新增** `CombineAppraisingBinder`（评优徽章+星星）+ `rc_item_combine_message.xml` 布局 + `CombineAdapter` 挂钩，`CombineDetailActivity` 补 `sentTime` 兜底。**工作区未提交**；当日有 onTest 真机装包与多次 `publishRelease` 出包 → 详见 `20260730`
+- (android) 旁路：**回复弹窗**（点引用弹出的「N条回复」层）补 AI 框 tag + 评优徽章星星（`ReferMessageUnitFragmentDialog` / `ReferMessageUnitListAdapter` + `rc_item_refer_unit_*.xml`），并对空时间戳隐藏时间胶囊；**本地已改未提交** → 详见 `20260730`
+- (android) 旁路：打正式包时补资源——`base_util` 增 `color_F0F5FF`、`basis_function_api` 拷贝 `em_camera_switch_normal.9.png`；`assemblePublishRelease` 需 `-x verifyPublishReleaseResources` 跳过库模块跨模块资源校验。产物：`smart_message-publish-release_v3.6.18.apk`（约 86M）。**资源补丁仍在工作区未提交**
+- (ios) 旁路：合并详情引用快照全链路修复（约 11 文件）：打包侧 `zx_packReferMsgDictionaryForModel` 写 `referMsg.user/sentTime/extra/objectName`；读侧 `hydrateCombineReferModelsInList` 同列表回填；`ZXIMCellLogic`/`ZXRCMessageModel`/`UIImageView+Avatar` 等联动。第四轮再补：快照带上**引用正文**（否则群智能体回复合并后整块引用消失）、extra 白名单保 `fromType`、读侧按快照直接建 `referModel`、`sentTime<=0` 隐藏时间（原显示「元旦 08:00」）。**工作区未提交、未构建**，待 Xcode 编译 + 真机自测，**老记录须重新合并** → 详见 `20260730`
 - (android) 旁路：群聊 @人/@智能体 退格逐字删除 —— **经确认无需修改，改动已撤回**（`RichEditText` 已 `git restore`，工作区干净）。排查结论留档：整块删除只挂 `View.OnKeyListener`（`RongExtension:545` / `ConversationLargeInputView:162` → `RichEditText.setKeyBordDeleteEvent()`），软键盘若走 `InputConnection.deleteSurroundingText` 则不派发 `KEYCODE_DEL`，TextWatcher `type==0` 分支为空无兜底；该设计自 2019 沿用至今（2024-05-07 `8a2314857`、2025-10 富文本重写 `cdc3dd358`/`a3a24a5e9` 均照搬），非近期回归。若后续要修：`RichEditText` 覆写 `onCreateInputConnection`，用 `InputConnectionWrapper` 拦 `deleteSurroundingText` / `sendKeyEvent(KEYCODE_DEL)` 收敛到 `setKeyBordDeleteEvent()`
 - (android) 旁路：合并详情回复引用对齐 PC，**已推** `personal-ai-chat-hotfix`（`56173906a`）→ 详见 `20260730`
 - (ios) 旁路：合并转发回复/多选预勾等，**已推** `personal-ai-chat-hotfix`（`e24b0cd4b`）→ 详见 `20260730`
@@ -54,6 +55,7 @@
 - 2026-08-07：(android) 旁路：合并详情引用单击立即开弹窗（跳过双击延迟/空 uid 查库）；`ReferenceMessage` 合并 bindView 补挂引用头；合成源消息补 `objectName` 修弹窗 header NPE；onTest 已装真机 → **已推** `e6a590558`
 - 2026-08-11：(android) 旁路：个人 AI @ 筛选条 `saveDataRange` 透传三全选标记 → **已推** `d48b5dd9d`
 - 2026-08-11：(ios) 旁路：筛选条 `saveDataRange` 透传三全选标记 → **已推** `48adac034`
-- 2026-08-11：(android) 旁路：合并详情评优徽章 `CombineAppraisingBinder` + 布局 + `sentTime` 兜底，**工作区未提交、未编译**（4 文件）
-- 2026-08-11：(ios) 旁路：合并引用快照打包/读侧回填（`ZXCombineMessageLogic` + `hydrateCombineReferModelsInList` 等），**工作区未提交、未构建**（9 文件）
-- 2026-08-11：stop-hook 触发收尾；web 工作区干净无新联调，impl-notes 不变
+- 2026-08-11：(android) 旁路：合并详情评优徽章 + 回复弹窗 AI tag/评优，**工作区未提交**；当日 onTest 装包 + 多次 `publishRelease`（`-x verifyPublishReleaseResources`）
+- 2026-08-11：(android) 旁路：正式包资源补丁 `color_F0F5FF` + `em_camera_switch_normal`，**工作区未提交**
+- 2026-08-11：(ios) 旁路：合并引用快照打包/读侧回填（约 11 文件），**工作区未提交、未构建**
+- 2026-08-11：stop-hook 触发收尾；无 web 新联调，impl-notes 不变
