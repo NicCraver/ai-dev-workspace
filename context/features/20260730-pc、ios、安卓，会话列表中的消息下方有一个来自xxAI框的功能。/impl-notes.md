@@ -151,6 +151,9 @@ isSelf = personalId === 当前登录用户 id
 - **合并转发页 · AI 框回复引用头**：PC 用内嵌 `referMsg.user.name`。安卓合并详情若走精简 Transformation/`obtain` 会丢掉 `referMsg` → 无引用头；打包须 `encode()`；读侧完整 decode，且 **有 `referMsg` 即可还原**（缺 `objName` 时回落 payload.`objectName` / 文本类型）。iOS 合并建模型若未还原 `referMsgPayload`，会回落本机 UID/历史 → **不同账号看到不同错误人名**；须还原内嵌 + 合并态禁止本机回落。**旧 OSS 无引用字段须重新合并转发**。
 - **iOS 合并打包 referMsg**：Reply/Robot 除剥 `referMsgUid` 外，须把被引用消息的 `user`（id/name/portrait）、`sentTime`、**合并白名单后的 `extra`/`baseExtra`** 写入 `referMsg`（读侧 `ga_` 引用勿查本机通讯录）。缺这三样的后果分别是：引用头显示原始 `ga_xxx` ID、时间退化成「元旦 08:00」（sentTime=0）、标签错成「群AI框」（标签靠 `personalAccountId`）。源消息按 `referMsgUid` 先在本批选中消息里找，找不到再查本地库——**必须在剥 uid 之前做**。
 - **合并详情 · 引用头回填（不重新合并也能修）**：旧 OSS 里 `referMsg` 只有正文，读侧可在同一份聊天记录列表内按「发送者 + 正文」找到源消息，回填名/头像/`sentTime`/`extra`。正文对不上（ActionCard 等）时只在「该发送者在本列表仅一条消息」时才回填，避免张冠李戴。iOS 落点 `ZXCombineMessageLogic +hydrateCombineReferModelsInList:`，合并详情与转发预览两条路径都要调。
+- **合并转发 · 引用「只有 uid 没有快照」**：会话页里智能体回复的引用块，很多时候不是靠消息体内嵌 `referMsg`，而是靠 `referMsgUid` / `extra` 里的触发 uid **查本地库**还原（iOS `agentReplyReferModelForMessage` 末段）。合并详情禁止查库（跨账号会串人），所以**打包时必须把源消息正文一并快照进 `referMsg`**（`[content encode]` 的 JSON + `user`/`sentTime`/`extra`/`objectName`），否则合并页整块引用直接不显示。快照的源消息按「本批选中 → 本地库 uid → 会话页同一套解析链路」三级找。
+- **合并转发 · extra 白名单要保 `fromType`**：iOS 用 `extra.fromType == 1` 判定智能体流式回复并选专用 cell（`ZXIMAgentStreamReplyCell`），裁掉后合并详情会掉到普通 cell，引用渲染跟着丢。
+- **合并详情 · 时间为 0**：引用快照没带 `sentTime` 时不要照常渲染时间，iOS 会显示成「元旦 08:00」（1970 本地化）；应在无时间戳时隐藏时间标签。
 - **合并详情 · 引用头兜底（不依赖列表匹配）**：`ga_` 账号的展示名/头像在「原会话群 + 该 agentAccountId」的群智能体关系表里是精确可查的，合并详情消息体没带名字时应查这一条再退回原始 ID（用 `targetId` 取 OSS 里的原群 ID；**不要**用不带账号约束的当前会话智能体缓存——那才是会串人名的来源）。
 - **合并详情 · referModel 会被 cell 重建覆盖**：`agentReplyReferModelForMessage:` 在 cellForRow / 高度计算里会重新造 referModel，把回填结果丢掉；合并态须在该函数入口直接返回已有 `referModel`。
 - **合并详情 · referModel 的会话类型**：引用模型由 `convertReferModelByMsgContent` 造出来时 `conversationType` 为 0，AI 框标签会退化成「AI框」（既非个人也非群）；须从父消息补 `conversationType`/`targetId`，并打 `isCombine`。
