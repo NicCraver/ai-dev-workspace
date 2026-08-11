@@ -1,6 +1,6 @@
 # Status：数据范围-筛选条迭代。
 
-> 最后更新：2026-08-07（旁路：web TimingDialog 高度自适应本地已改；android 合并详情引用点击/弹窗 NPE 已修并装真机；desktop 本地调试配置仍勿提交；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-11（旁路：android 合并详情评优徽章；ios 合并引用快照；原 2026-08-07 旁路：web TimingDialog 高度自适应本地已改；android 合并详情引用点击/弹窗 NPE 已修并装真机；desktop 本地调试配置仍勿提交；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -23,6 +23,7 @@
 - (action-center) 旁路：PC 版本升级弹窗已下线（`TheLayout` 中 `needsClientUpgrade = false`），不再按 UA 含 `3.4.23` 触发；**非本功能、勿计入矩阵**；当前在 `release` 工作区**尚未提交**
 - (action-center) 旁路：大量 `src/assets/svg/*.svg` 路径末尾 `Z` 被工具改写（与强更无关的格式噪声），**勿当业务提交**；是否还原或一并整理由人决定
 - (android) 旁路：合并详情引用点击无响应 + 开弹窗 NPE（合成源消息缺 `objectName`），本地已修并 **onTest 真机装包**；**未提交/未 push** → 详见 `20260730`
+- (android) 旁路：合并转发聊天记录页昵称行对齐 iOS——**新增** `CombineAppraisingBinder`（评优徽章+星星）+ 布局区块 + `CombineAdapter` 挂钩，`CombineDetailActivity` 补 `sentTime` 兜底；时间/AI 框 tag 的绑定代码本就存在，待截图定位。**本地已改未提交、AI 未编译** → 详见 `20260730`
 - (ios) 旁路：合并详情引用头显示原始 `ga_` ID、点引用聚合层头像/名/标签/时间全错，已重新修复（打包写 `referMsg.user/sentTime/extra` + 读侧同列表回填），**本地已改未提交、AI 未构建**，待 Xcode 编译 + 真机自测 → 详见 `20260730`
 - (android) 旁路：合并详情回复引用对齐 PC，**已推** `personal-ai-chat-hotfix`（`56173906a`）→ 详见 `20260730`
 - (ios) 旁路：合并转发回复/多选预勾等，**已推** `personal-ai-chat-hotfix`（`e24b0cd4b`）→ 详见 `20260730`
