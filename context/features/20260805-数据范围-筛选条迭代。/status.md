@@ -1,6 +1,6 @@
 # Status：数据范围-筛选条迭代。
 
-> 最后更新：2026-08-11（收尾：android 筛选条三全选标记本地 commit 未 push；评优徽章仍工作区未提交；ios 合并引用快照 9 文件未提交；desktop 仅本地调试配置；本功能矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-11（stop-hook 收尾：android/ios 筛选条三全选标记均已推 `personal-ai-chat-hotfix`；android 评优徽章 4 文件、ios 合并引用快照 9 文件仍工作区未提交；desktop 仅本地调试配置；矩阵仍全 ✅）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -11,7 +11,7 @@
 | 接口联调（flags 回传验收） | ✅ | ✅ | ✅ | ✅ |
 | 自测通过 | ✅ | ✅ | ✅ | ✅ |
 
-> 本功能矩阵不变。apps 脏工作区均为**旁路**或**未 push 补丁**，不记入上表格子。
+> 本功能矩阵不变。apps 脏工作区均为**旁路**改动（合并详情评优/引用快照、desktop 本地调试配置），不记入上表格子。
 
 ## 待办 / 阻塞
 
@@ -22,7 +22,8 @@
 - (action-center) 旁路：挂载后用 Vite+ `vp i` 装依赖（重写 lock、`devEngines`、`pnpm-workspace.yaml` allowBuilds），**非本功能、勿计入矩阵**；pnpm 11 忽略原 `package.json#pnpm` 的 patches/overrides，后续若异常再迁配置
 - (action-center) 旁路：PC 版本升级弹窗已下线（`TheLayout` 中 `needsClientUpgrade = false`），不再按 UA 含 `3.4.23` 触发；**非本功能、勿计入矩阵**；当前在 `release` 工作区**尚未提交**
 - (action-center) 旁路：大量 `src/assets/svg/*.svg` 路径末尾 `Z` 被工具改写（与强更无关的格式噪声），**勿当业务提交**；是否还原或一并整理由人决定
-- (android) 旁路：筛选条 `saveDataRange` 补传三全选标记（`PersonalAiFilterHost`），**已 commit 本地、未 push**（`d48b5dd9d`）；非矩阵格子但关联个人 AI @ 筛选条
+- (android) 旁路：筛选条 `saveDataRange` 补传三全选标记（`PersonalAiFilterHost`），**已推** `personal-ai-chat-hotfix`（`d48b5dd9d`）；非矩阵格子但关联个人 AI @ 筛选条
+- (ios) 旁路：筛选条 `saveDataRange` 透传三全选标记，**已推** `personal-ai-chat-hotfix`（`48adac034`）；非矩阵格子但关联个人 AI @ 筛选条
 - (android) 旁路：合并详情引用点击无响应 + 开弹窗 NPE（合成源消息缺 `objectName`），**已推** `personal-ai-chat-hotfix`（`e6a590558`）→ 详见 `20260730`
 - (android) 旁路：合并转发聊天记录页昵称行对齐 iOS——**新增** `CombineAppraisingBinder`（评优徽章+星星）+ `rc_item_combine_message.xml` 布局 + `CombineAdapter` 挂钩，`CombineDetailActivity` 补 `sentTime` 兜底。**工作区未提交、未编译** → 详见 `20260730`
 - (ios) 旁路：合并详情引用快照全链路修复（9 文件）：打包侧 `zx_packReferMsgDictionaryForModel` 写 `referMsg.user/sentTime/extra/objectName`；读侧 `hydrateCombineReferModelsInList` 同列表回填；`ZXIMCellLogic`/`ZXRCMessageModel`/`UIImageView+Avatar` 等联动。**工作区未提交、未构建**，待 Xcode 编译 + 真机自测 → 详见 `20260730`
@@ -50,6 +51,8 @@
 - 2026-08-07：旁路关闭 action-center PC 强更弹窗（`TheLayout` 中 `needsClientUpgrade` 固定 false）；同仓另有 SVG 路径格式噪声未提交
 - 2026-08-07：(web) 旁路 `TimingDialog` 弹窗高度改自适应（min 480 / max `calc(100vh-100px)`）。**坑**：`AcDialog` 的 body 是 `flex-1`（basis 0 ⇒ 收缩因子 0，不会变矮），其下靠 `h-full` 百分比传高；一旦弹窗根改成 `h-auto + max-h`，body 高度变为非确定值，`height:100%` 退化为 `auto`，内容被 body 的 `overflow-hidden` 裁掉且无滚动条。**不改公共 `AcDialog`** 的解法：弹窗根只留 `!h-auto`，min/max 下沉到内容层 `contentClass="!p-0 flex flex-col min-h-[432px] max-h-[calc(100vh-148px)]"`（148 = 留白 100 + header 48；footer 本组件自绘、已在内容层内，勿重复减），内容根 `h-full` → `flex-1 min-h-0`，滚动区 `flex flex-col flex-1 min-h-0 overflow-y-auto`，列表去掉 `h-full overflow-auto` 只留单一滚动容器。devtools 实测（vh=900）：480 → 559 → 759 → 卡 800 且可滚
 - 2026-08-07：(android) 旁路：合并详情引用单击立即开弹窗（跳过双击延迟/空 uid 查库）；`ReferenceMessage` 合并 bindView 补挂引用头；合成源消息补 `objectName` 修弹窗 header NPE；onTest 已装真机 → **已推** `e6a590558`
-- 2026-08-11：(android) 旁路：个人 AI @ 筛选条 `saveDataRange` 透传 `groupAndAccountSelectAll` / `organizationGroupSelectAll` / `outreachGroupSelectAll`（三者均为 null 时省略）；**本地 commit `d48b5dd9d`、未 push**
-- 2026-08-11：(android) 旁路：合并详情评优徽章 `CombineAppraisingBinder` + 布局 + `sentTime` 兜底，工作区未提交
-- 2026-08-11：(ios) 旁路：合并引用快照打包/读侧回填（`ZXCombineMessageLogic` + `hydrateCombineReferModelsInList` 等 9 文件），工作区未提交
+- 2026-08-11：(android) 旁路：个人 AI @ 筛选条 `saveDataRange` 透传三全选标记 → **已推** `d48b5dd9d`
+- 2026-08-11：(ios) 旁路：筛选条 `saveDataRange` 透传三全选标记 → **已推** `48adac034`
+- 2026-08-11：(android) 旁路：合并详情评优徽章 `CombineAppraisingBinder` + 布局 + `sentTime` 兜底，**工作区未提交、未编译**（4 文件）
+- 2026-08-11：(ios) 旁路：合并引用快照打包/读侧回填（`ZXCombineMessageLogic` + `hydrateCombineReferModelsInList` 等），**工作区未提交、未构建**（9 文件）
+- 2026-08-11：stop-hook 触发收尾；web 工作区干净无新联调，impl-notes 不变
