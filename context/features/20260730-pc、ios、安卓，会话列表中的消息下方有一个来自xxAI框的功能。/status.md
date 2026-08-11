@@ -21,6 +21,7 @@
 > web：本期不做。
 
 ## 待办 / 阻塞
+- (android) ✅ 合并详情/回复弹窗对齐 iOS（评优徽章、AI 框标签、引用源时间与 extra）已提交 `f34ef9502`，**未 push、AI 未编译**，待真机自测；老合并记录须**重新合并**才带 `referMsgSentTime`
 
 - (desktop) ✅ 多选转发三坑已 push `personal-ai-chat-hotfix`（`9d107693`），**待真机**
 - (android) ✅ 合并详情回复引用对齐 PC，已推 `personal-ai-chat-hotfix`（`56173906a`）；旧 OSS 须**重新合并**再验，**待真机**
