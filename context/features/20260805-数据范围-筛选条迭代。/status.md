@@ -16,9 +16,9 @@
 ## 待办 / 阻塞
 
 - (全端) 设置页 / 定时任务文案本期不做（web 用 `persist=false` 隔离）
-- (web) 筛选条横向溢出可滚动 + 两端淡出遮罩 + 胶囊间距微调，已推 `personal-ai-chat-hotfix`（`50e5d98`）
-- (web) 旁路：`TimingDialog` 高度自适应（min 480 / max `calc(100vh-100px)`），**本地已改未提交**；非筛选条范围
-- (desktop) 工作区仅有 `.env.test` / `electron-builder.yml` / `package.json` / `package-lock.json` 本地调试配置改动，**不计入本功能、勿提交**；旁路多选转发三坑已推 `personal-ai-chat-hotfix`，**待真机** → 详见 `20260730`
+- (web) 工作区干净，已与 `origin/personal-ai-chat-hotfix` 同步；筛选条横向溢出/遮罩等已推（`50e5d98` 及后续）
+- (web) 旁路：`TimingDialog` 高度自适应——**当前工作区无本地改动**（曾记「本地已改未提交」；若需恢复见 2026-08-07 决策）；非筛选条范围
+- (desktop) 工作区仅有 `.env.test` / `electron-builder.yml` / `package.json` / `package-lock.json` 本地调试配置改动，**不计入本功能、勿提交**；已与 `origin/personal-ai-chat-hotfix` 同步；旁路多选转发三坑已推，**待真机** → 详见 `20260730`
 - (action-center) 旁路：挂载后用 Vite+ `vp i` 装依赖（重写 lock、`devEngines`、`pnpm-workspace.yaml` allowBuilds），**非本功能、勿计入矩阵**；pnpm 11 忽略原 `package.json#pnpm` 的 patches/overrides，后续若异常再迁配置
 - (action-center) 旁路：PC 版本升级弹窗已下线（`TheLayout` 中 `needsClientUpgrade = false`），不再按 UA 含 `3.4.23` 触发；**非本功能、勿计入矩阵**；当前在 `release` 工作区**尚未提交**
 - (action-center) 旁路：大量 `src/assets/svg/*.svg` 路径末尾 `Z` 被工具改写（与强更无关的格式噪声），**勿当业务提交**；是否还原或一并整理由人决定
