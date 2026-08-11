@@ -25,7 +25,7 @@
 - (android) 旁路：合并详情引用点击无响应 + 开弹窗 NPE（合成源消息缺 `objectName`），本地已修并 **onTest 真机装包**；**未提交/未 push** → 详见 `20260730`
 - (android) 旁路：合并转发聊天记录页昵称行对齐 iOS——**新增** `CombineAppraisingBinder`（评优徽章+星星）+ 布局区块 + `CombineAdapter` 挂钩，`CombineDetailActivity` 补 `sentTime` 兜底；时间/AI 框 tag 的绑定代码本就存在，待截图定位。**本地已改未提交、AI 未编译** → 详见 `20260730`
 - (ios) 旁路：合并详情引用头显示原始 `ga_` ID、点引用聚合层头像/名/标签/时间全错，已重新修复（打包写 `referMsg.user/sentTime/extra` + 读侧同列表回填），**本地已改未提交、AI 未构建**，待 Xcode 编译 + 真机自测 → 详见 `20260730`
-- (android) 旁路：群聊 @人/@智能体 退格被逐字删除 —— 根因：整块删除只挂 `View.OnKeyListener`（`RongExtension:545` / `ConversationLargeInputView:162` → `RichEditText.setKeyBordDeleteEvent()`），软键盘走 `InputConnection.deleteSurroundingText` 不派发 `KEYCODE_DEL`，且 TextWatcher `type==0`（逐字删）分支为空无兜底。已在 `RichEditText` 覆写 `onCreateInputConnection`，用 `InputConnectionWrapper` 拦 `deleteSurroundingText` / `deleteSurroundingTextInCodePoints` / `sendKeyEvent(KEYCODE_DEL)` 收敛到 `setKeyBordDeleteEvent()`。`:IM:compileOnTestDebugJavaWithJavac` 通过；**本地已改未提交、未真机验证**（当前无设备连接）
+- (android) 旁路：群聊 @人/@智能体 退格逐字删除 —— **经确认无需修改，改动已撤回**（`RichEditText` 已 `git restore`，工作区干净）。排查结论留档：整块删除只挂 `View.OnKeyListener`（`RongExtension:545` / `ConversationLargeInputView:162` → `RichEditText.setKeyBordDeleteEvent()`），软键盘若走 `InputConnection.deleteSurroundingText` 则不派发 `KEYCODE_DEL`，TextWatcher `type==0` 分支为空无兜底；该设计自 2019 沿用至今（2024-05-07 `8a2314857`、2025-10 富文本重写 `cdc3dd358`/`a3a24a5e9` 均照搬），非近期回归。若后续要修：`RichEditText` 覆写 `onCreateInputConnection`，用 `InputConnectionWrapper` 拦 `deleteSurroundingText` / `sendKeyEvent(KEYCODE_DEL)` 收敛到 `setKeyBordDeleteEvent()`
 - (android) 旁路：合并详情回复引用对齐 PC，**已推** `personal-ai-chat-hotfix`（`56173906a`）→ 详见 `20260730`
 - (ios) 旁路：合并转发回复/多选预勾等，**已推** `personal-ai-chat-hotfix`（`e24b0cd4b`）→ 详见 `20260730`
 
