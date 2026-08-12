@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-12（人工视觉验收发现的问题四端均已修完，待用户统一复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-12（android 气泡宽度/箭头/右间距再修一轮，待用户统一复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -24,8 +24,12 @@
 - (android) 用户反馈底栏太挤 + 气泡定位不准，改方案：涉密入口从底栏挪到顶部标题栏右侧（5 个落点各自的标题栏：`activity_select_data_range`/`_contact`/`_group`/`_org_drill` 用 FrameLayout 顶栏，`_search` 无独立顶栏、加在搜索框右侧）—— **已改**（commit `faab41320`，`assembleDevelopDebug` BUILD SUCCESSFUL）：
   - 新建共享 `include_data_range_secret_entry.xml`，5 个 activity 顶部各 `<include>` 一份；`DataRangeMultiFooterHelper` 从底栏 `bind()` 里摘掉涉密入口逻辑，新增公开方法 `bindSecretEntry(View)` 供顶栏调用
   - 顺带修了「位置不准」两个真根因：①原代码 `content.measure(UNSPECIFIED, UNSPECIFIED)` 量出来的是文字不换行的单行高度，跟气泡容器 220dp 定宽下多行换行的真实高度对不上；改成按 220dp `EXACTLY` 量；②原代码按「贴底栏」逻辑用负 yoff 把气泡往上顶，入口挪到顶栏后这套算法会把气泡顶到状态栏外面去——改成 `showAsDropDown` 默认方向（挂件正下方）+ 小正 yoff；顺带按钮靠屏幕右侧、气泡 220dp 比按钮宽，加了 `xOff = 按钮宽 - 气泡宽` 让气泡右边缘对齐按钮右边缘，避免探出屏幕右侧
+- (android) 用户反馈气泡太宽、没箭头、右边贴死屏幕边缘 —— **已修**（commit `d78c3d4d5`，`assembleDevelopDebug` BUILD SUCCESSFUL）：①宽度 220dp → 180dp；②新建 `ic_data_range_secret_tip_arrow.xml`（12×6dp 向上三角，`#1F2329` 与气泡同色），布局改成「箭头 + 深色气泡体」两层，箭头水平位置在 `adjustSecretTipArrow()` 里按顶栏按钮内容中心运行时算 `marginEnd`（考虑 include 布局左右 12/16dp padding，最小 8dp 兜底）；③`xOff` 再减 12dp（`SECRET_TIP_EDGE_MARGIN_DP`），气泡右边缘不再贴屏幕边；④measure 从「220dp EXACTLY」改成「屏幕宽 AT_MOST」（气泡体自身 180dp 定宽，高度照样量得准）
 
 ## 待办 / 阻塞
+
+- (android) 气泡宽度 180dp / 箭头位置 / 右侧 12dp 留白均为估算值，仅编译验证，**未做真机像素级核对**；箭头 marginEnd 依赖顶栏按钮实际测量宽度，窄屏或系统字体放大时需实测确认箭头仍指在按钮上
+- (四端) 箭头形态目前不统一：仅 android 有向上箭头，web/desktop/iOS 仍是无箭头深色气泡——是否要求统一由用户定
 
 - (web) `vue-tsc --noEmit` 已过、`dataScopeModel` 单测 20/20 过；**未做**真实浏览器联调可视化验证——本地环境 `getAllImDialogue` 走真实接口（无 mock），未接入测试后端/登录态，无法起 `pnpm dev` 跑通真实弹窗看涉密/已离职 tag 实际渲染效果。建议开发者本地连测试环境跑一遍再合并。
 - (web) `pnpm format` 本地环境 `node_modules` 里 prettier 缺失（非本次改动引入的问题），跳过自动格式化，靠手工对齐现有代码风格；如需要请本地补齐依赖后跑一次 `pnpm format`。
@@ -48,4 +52,5 @@
 - 2026-08-12：(android) 说明气泡只在共享的 `include_data_range_multi_footer.xml` + `DataRangeMultiFooterHelper` 实现一次（复用仓库既有 `PopupWindow`/`popup_bg_jiantou_bottom_right` 惯例），5 个必需入口天然全覆盖，不用逐落点重复接；已离职灰色复用既有 `color_8F959E`，涉密配色复用既有 `color_FEAC00`/`color_FFF3DA`；`#E5E5E6` 无既有色值，直接写死在新 drawable 里（未改 `base_color.xml`）
 - 2026-08-12：底部「已选」「涉密」两按钮的正确顺序定为「已选在左、涉密在右紧挨」（以 web 实现为准）；四端逐一核实，android/desktop/ios 三端初版顺序都反了并已修正，web 本来就对
 - 2026-08-12：说明气泡最终定稿为「深色背景 + 文字居中」四端统一（此前 android 初版是白底黑字箭头气泡、desktop 初版是浅色左对齐，均已改）；android 因没有现成深色 9-patch 箭头资源，改用纯色圆角 `<shape>`，**不带箭头**（跟 web/desktop/iOS 是否要箭头未强制统一，如需要箭头版本再补美术资源）
+- 2026-08-12（修订）：android 应用户要求补回箭头，用 vector 三角形自绘（不依赖 9-patch 美术资源），宽度定 180dp；**此时 web/desktop/iOS 三端仍无箭头**，四端箭头形态不再统一——如需统一，另三端各自补一次
 - 2026-08-12：web 气泡左侧留白问题反复调试：`preventOverflow` 对该场景无效，根因是 `AcDialog` 内容区被本文件自身 scoped style 显式设了 `overflow: visible`，导致它不再是 popper 的 clipping boundary，实际按浏览器视口计算溢出（视口够大，永远不触发）；改用 `offset` modifier 的 skid 分量做固定像素偏移，最终数值由用户手动调定
