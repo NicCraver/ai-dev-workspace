@@ -26,6 +26,11 @@
   - 顺带修了「位置不准」两个真根因：①原代码 `content.measure(UNSPECIFIED, UNSPECIFIED)` 量出来的是文字不换行的单行高度，跟气泡容器 220dp 定宽下多行换行的真实高度对不上；改成按 220dp `EXACTLY` 量；②原代码按「贴底栏」逻辑用负 yoff 把气泡往上顶，入口挪到顶栏后这套算法会把气泡顶到状态栏外面去——改成 `showAsDropDown` 默认方向（挂件正下方）+ 小正 yoff；顺带按钮靠屏幕右侧、气泡 220dp 比按钮宽，加了 `xOff = 按钮宽 - 气泡宽` 让气泡右边缘对齐按钮右边缘，避免探出屏幕右侧
 - (android) 用户反馈气泡太宽、没箭头、右边贴死屏幕边缘 —— **已修**（commit `d78c3d4d5`，`assembleDevelopDebug` BUILD SUCCESSFUL）：①宽度 220dp → 180dp；②新建 `ic_data_range_secret_tip_arrow.xml`（12×6dp 向上三角，`#1F2329` 与气泡同色），布局改成「箭头 + 深色气泡体」两层，箭头水平位置在 `adjustSecretTipArrow()` 里按顶栏按钮内容中心运行时算 `marginEnd`（考虑 include 布局左右 12/16dp padding，最小 8dp 兜底）；③`xOff` 再减 12dp（`SECRET_TIP_EDGE_MARGIN_DP`），气泡右边缘不再贴屏幕边；④measure 从「220dp EXACTLY」改成「屏幕宽 AT_MOST」（气泡体自身 180dp 定宽，高度照样量得准）
 
+- (web/desktop) 用户要求跟 android 对齐：涉密图标+文字从底栏挪到标题栏「关闭按钮左侧」—— **已改**：
+  - (web) `AcDialog.vue` 新增 `header-right` 具名插槽（插在关闭按钮左侧，`v-if="$slots['header-right']"` 无插槽时不渲染不占位，其它调用方零影响）；`SelectDataRangeDialog.vue` 把涉密 `el-popover` 从 `#footer-left` 移到 `#header-right`，`placement` 由 `top` 改 `bottom-end`（右对齐触发器，避免 280px 气泡探出 440px 弹窗右边缘），去掉原先为底栏左边缘问题加的 `offset [12,12]` hack；commit `7e8cc76`，`vue-tsc --noEmit` 通过
+  - (desktop) 涉密入口从 `personal-ai-data-scope-dialog.vue` 底栏移到宿主 `personal-ai-memory-bar.vue` 的 `a-modal` `slot="title"`（该弹窗的标题栏/关闭按钮属于宿主 antd modal，不在子组件内）；`secretInfoVisible` 状态、深色气泡样式、`SvgIcon` 注册一并搬到宿主，子组件里对应的 state/import/样式已清理；箭头颜色覆盖从 `[x-placement^="top"]` 改成 `^="bottom"`；commit `77857e47`，eslint 过
+  - 该弹窗仅 `personal-ai-memory-bar.vue` 一处引用，无其它落点需要同步
+
 ## 待办 / 阻塞
 
 - (android) 气泡宽度 180dp / 箭头位置 / 右侧 12dp 留白均为估算值，仅编译验证，**未做真机像素级核对**；箭头 marginEnd 依赖顶栏按钮实际测量宽度，窄屏或系统字体放大时需实测确认箭头仍指在按钮上
@@ -35,6 +40,8 @@
 - (web) `pnpm format` 本地环境 `node_modules` 里 prettier 缺失（非本次改动引入的问题），跳过自动格式化，靠手工对齐现有代码风格；如需要请本地补齐依赖后跑一次 `pnpm format`。
 - (android) `/port android` 已提交 commit `0f6100be3`（`personal-ai-chat-hotfix`，未 push）；`./gradlew :smart_message:assembleDevelopDebug` BUILD SUCCESSFUL，`DataScopeModelTest` 单测全过；底栏窄屏（如 320pt 级）拥挤情况未做真机视觉核对，气泡垂直偏移量为测量高度+8dp 固定间距估算，非像素级对齐设计稿；未碰原有两个不相关未提交资源文件
 - (ios) `/port ios` 已提交 commit `0646ddd6`（`personal-ai-chat-hotfix`，未 push）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建验证**，需要人工用 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build 一次确认；说明气泡宽度/定位为自行设计（无设计稿像素级比对），窄屏（iPhone SE）底栏拥挤未单独适配测试；未碰原有 11 个不相关未提交文件
+- (web/desktop) 涉密入口挪顶栏后**未做浏览器/dev 真机视觉验证**（气泡朝下弹出的定位、标题栏拥挤度），只过了 `vue-tsc` / eslint；建议本地各起一次看一眼
+- (ios) 涉密入口仍在底栏「已选」右侧，未跟随 android/web/desktop 挪到顶部标题栏
 - (desktop) `/port desktop` 已提交 commit `443a4e85`（`personal-ai-chat-hotfix`，未 push）；eslint + 模板编译通过，**未跑 `npm run dev` 真机交互验证**（弹窗五个落点 + 说明气泡实际点击行为、popover 定位），建议本地起一次 dev 环境走查；说明气泡按钮尺寸/间距为估算值；未碰 `.env.test`/`electron-builder.yml`/`package.json`/`package-lock.json` 禁忌文件
 
 ## 关键决策记录
@@ -51,6 +58,7 @@
 - 2026-08-12：(ios) `ZXDataScopeTagView` 因被 `ZXForwardCell`/`ZXUserCollectionCell`（转发等功能复用）引用，放在 Picker 目录被跨模块 import；新增字段默认 `NO`，转发等无关流程视觉零影响；组织架构回填直接复用既有 `dialogueContactMap` 基础设施，未新建查找表类
 - 2026-08-12：(android) 说明气泡只在共享的 `include_data_range_multi_footer.xml` + `DataRangeMultiFooterHelper` 实现一次（复用仓库既有 `PopupWindow`/`popup_bg_jiantou_bottom_right` 惯例），5 个必需入口天然全覆盖，不用逐落点重复接；已离职灰色复用既有 `color_8F959E`，涉密配色复用既有 `color_FEAC00`/`color_FFF3DA`；`#E5E5E6` 无既有色值，直接写死在新 drawable 里（未改 `base_color.xml`）
 - 2026-08-12：底部「已选」「涉密」两按钮的正确顺序定为「已选在左、涉密在右紧挨」（以 web 实现为准）；四端逐一核实，android/desktop/ios 三端初版顺序都反了并已修正，web 本来就对
+- 2026-08-12（后续推翻）：涉密入口最终统一挪到**标题栏关闭按钮左侧**，底栏只保留「已选」；android 先改，随后 web/desktop 跟进；ios **尚未跟进**，如需四端一致要再补一次
 - 2026-08-12：说明气泡最终定稿为「深色背景 + 文字居中」四端统一（此前 android 初版是白底黑字箭头气泡、desktop 初版是浅色左对齐，均已改）；android 因没有现成深色 9-patch 箭头资源，改用纯色圆角 `<shape>`，**不带箭头**（跟 web/desktop/iOS 是否要箭头未强制统一，如需要箭头版本再补美术资源）
 - 2026-08-12（修订）：android 应用户要求补回箭头，用 vector 三角形自绘（不依赖 9-patch 美术资源），宽度定 180dp；**此时 web/desktop/iOS 三端仍无箭头**，四端箭头形态不再统一——如需统一，另三端各自补一次
 - 2026-08-12：web 气泡左侧留白问题反复调试：`preventOverflow` 对该场景无效，根因是 `AcDialog` 内容区被本文件自身 scoped style 显式设了 `overflow: visible`，导致它不再是 popper 的 clipping boundary，实际按浏览器视口计算溢出（视口够大，永远不触发）；改用 `offset` modifier 的 skid 分量做固定像素偏移，最终数值由用户手动调定
