@@ -341,7 +341,7 @@
     padding:5px 0 2px;
   }
 
-  /* 引用消息：合并详情页里就是纯展示，不可点 */
+  /* 引用消息：quote-block 本身可点，点了弹回复弹窗（撤回态没有源消息，不可点） */
   .quote-block{
     background:#F2F3F5;
     border-left:3px solid #C9CDD4;
@@ -354,6 +354,8 @@
     flex-direction:column;
     gap:1px;
   }
+  .quote-block.clickable{cursor:pointer;}
+  .quote-block.clickable:hover{background:#E8EAED;}
   .quote-block .q-name{color:var(--text-2);font-weight:500;}
   /* 复用给 legend 里"预览弹窗"入口 */
   .quote-hint{
@@ -703,7 +705,7 @@
     </div>
 
     <!-- 9. 引用消息：按被引用的原消息类型不同，摘要文案不同（对齐PC研究里的 summaryList 占位规则）。
-         合并详情页里点击均无反应，不显示"N条回复"、不弹层（对齐PC真实实现） -->
+         quote-block 本身可点，点了弹「N条回复」弹窗；撤回态没有源消息，不可点 -->
 
     <!-- 9a. 引用文本 -->
     <div class="msg-row">
@@ -714,13 +716,13 @@
           <span class="time-pill">10:20</span>
         </div>
         <div class="bubble">
-          <div class="quote-block">
+          <div class="quote-block clickable" onclick="openDrawer()">
             <span class="q-name">张三：</span>
             <span>明天的评审改到下午三点，会议室不变。</span>
           </div>
           收到，我把日历也同步改一下。
         </div>
-        <div class="type-tag">类型：引用消息·引用文本 —— <b>合并详情页内点击无反应，不显示"N条回复"、不弹层</b>（对齐PC真实实现：合并详情列表把引用消息当纯文本渲染）；「N条回复」弹窗只在<b>普通会话内</b>点引用块才会触发，下面单独放了个入口按钮演示该弹窗长什么样</div>
+        <div class="type-tag">类型：引用消息·引用文本 —— 点 quote-block 弹「N条回复」弹窗（下方演示）</div>
       </div>
     </div>
 
@@ -733,13 +735,13 @@
           <span class="time-pill">10:21</span>
         </div>
         <div class="bubble">
-          <div class="quote-block">
+          <div class="quote-block clickable" onclick="openDrawer()">
             <span class="q-name">张三：</span>
             <span>[图片]</span>
           </div>
           这张图我存一下。
         </div>
-        <div class="type-tag">类型：引用消息·引用图片——摘要按类型给占位文案「[图片]」，不内嵌缩略图</div>
+        <div class="type-tag">类型：引用消息·引用图片——摘要按类型给占位文案「[图片]」，不内嵌缩略图；quote-block 可点弹回复弹窗</div>
       </div>
     </div>
 
@@ -752,13 +754,13 @@
           <span class="time-pill">10:22</span>
         </div>
         <div class="bubble">
-          <div class="quote-block">
+          <div class="quote-block clickable" onclick="openDrawer()">
             <span class="q-name">张三：</span>
             <span>[文件] 数据范围筛选条-评审版v3.pdf</span>
           </div>
           辛苦按这版走查一下。
         </div>
-        <div class="type-tag">类型：引用消息·引用文件——占位文案「[文件] 文件名」</div>
+        <div class="type-tag">类型：引用消息·引用文件——占位文案「[文件] 文件名」；quote-block 可点弹回复弹窗</div>
       </div>
     </div>
 
@@ -771,13 +773,13 @@
           <span class="time-pill">10:23</span>
         </div>
         <div class="bubble">
-          <div class="quote-block">
+          <div class="quote-block clickable" onclick="openDrawer()">
             <span class="q-name">张三：</span>
             <span>[位置] 星辰大厦 A 座</span>
           </div>
           好的，导航已经打开。
         </div>
-        <div class="type-tag">类型：引用消息·引用位置——占位文案「[位置] 地点名」</div>
+        <div class="type-tag">类型：引用消息·引用位置——占位文案「[位置] 地点名」；quote-block 可点弹回复弹窗</div>
       </div>
     </div>
 
@@ -790,13 +792,13 @@
           <span class="time-pill">10:24</span>
         </div>
         <div class="bubble">
-          <div class="quote-block">
+          <div class="quote-block clickable" onclick="openDrawer()">
             <span class="q-name">需求助手：</span>
             <span>[卡片] 评审纪要 · 自动生成</span>
           </div>
           这份纪要辛苦大家过一遍。
         </div>
-        <div class="type-tag">类型：引用消息·引用群AI卡片 ActionCard——占位文案「[卡片] 标题」</div>
+        <div class="type-tag">类型：引用消息·引用群AI卡片 ActionCard——占位文案「[卡片] 标题」；quote-block 可点弹回复弹窗</div>
       </div>
     </div>
 
@@ -809,17 +811,17 @@
           <span class="time-pill">10:25</span>
         </div>
         <div class="bubble">
-          <div class="quote-block">
+          <div class="quote-block clickable" onclick="openDrawer()">
             <span class="q-name">张三：</span>
             <span>[聊天记录] 项目群的聊天记录</span>
           </div>
           这个对我们排期有参考价值。
         </div>
-        <div class="type-tag">类型：引用消息·引用嵌套合并消息——占位文案「[聊天记录] 标题」</div>
+        <div class="type-tag">类型：引用消息·引用嵌套合并消息——占位文案「[聊天记录] 标题」；quote-block 可点弹回复弹窗</div>
       </div>
     </div>
 
-    <!-- 9g. 引用已撤回消息（边界态：不能再展示原文） -->
+    <!-- 9g. 引用已撤回消息（边界态：没有源消息可查，不可点） -->
     <div class="msg-row">
       <div class="avatar">李</div>
       <div class="msg-main">
@@ -834,7 +836,7 @@
           </div>
           啊，没事我重新发一下。
         </div>
-        <div class="type-tag">类型：引用消息·引用已撤回消息——边界态，原文取不到，只能显示"已撤回"占位，不显示发送者名</div>
+        <div class="type-tag">类型：引用消息·引用已撤回消息——边界态，原文取不到，只能显示"已撤回"占位，不显示发送者名；<b>不可点</b>（没有源消息可查，弹不出回复弹窗）</div>
       </div>
     </div>
 
@@ -942,7 +944,7 @@
   <br><br>
   <b>本轮按 10 张真实截图二次还原</b>：评优徽章改成「六边形年/季图标+胶囊+竖分隔线+星」（星色按集团=金/板块=灰，实拍配色，非猜测）；文件消息按类型给实底色图标，未知类型灰底问号；新增「来自XXX个人AI框」归因胶囊（气泡下方独立一行，区别于昵称行的 tag）；群AI卡片改成"蓝色提示条+嵌套小卡+行动中心归属胶囊"结构。
   <br><br>
-  <b>逻辑修正（不只是样式）</b>：① 评优徽章只挂真人 senderId（查账户考核库），个人AI框/群AI框/机器人这三种 tag 身份互斥于评优，不会同时出现——之前误把评优挂在机器人头像上，已改成挂在真人（李博雅/苑立杰）身上；② 时间统一紧跟昵称/tag自然接排，不再顶格推到行最右——10张截图里没有一例把时间推到行尾，之前 <code>margin-left:auto</code> 是猜的；③ <b>合并详情页内的引用消息点击无反应</b>，不显示/不触发「N条回复」——之前挂在合并页里的点击弹层是错的（对齐PC真实实现），「N条回复」弹窗只在普通会话内点引用块才会出现，<span class="quote-hint" style="cursor:pointer;display:inline" onclick="openDrawer()">点这里预览弹窗效果 →</span>；④ 个人AI框定时发送的调度时间胶囊「⏰ 每天20:32」<b>只有账户本人可见</b>，群AI框定时发送的调度胶囊则群内所有人可见——两种AI框身份的可见性规则不一样，别混着实现。
+  <b>逻辑修正（不只是样式）</b>：① 评优徽章只挂真人 senderId（查账户考核库），个人AI框/群AI框/机器人这三种 tag 身份互斥于评优，不会同时出现——之前误把评优挂在机器人头像上，已改成挂在真人（李博雅/苑立杰）身上；② 时间统一紧跟昵称/tag自然接排，不再顶格推到行最右——10张截图里没有一例把时间推到行尾，之前 <code>margin-left:auto</code> 是猜的；③ <b>合并详情页内点 quote-block 会弹出「N条回复」弹窗</b>（对齐 android/iOS 真实实现，PC 目前该功能有缺口——见下方"引用消息 7 种子类型"，除已撤回态外都可点，<span class="quote-hint" style="cursor:pointer;display:inline" onclick="openDrawer()">点这里试试 →</span>）；④ 个人AI框定时发送的调度时间胶囊「⏰ 每天20:32」<b>只有账户本人可见</b>，群AI框定时发送的调度胶囊则群内所有人可见——两种AI框身份的可见性规则不一样，别混着实现。
   <br><br>
   改这个文件直接改上面 <b>.msg-row</b> 各块即可，每块下面灰字 <b>.type-tag</b> 标了类型，定稿后删掉即可当正式还原稿。
 </div>
