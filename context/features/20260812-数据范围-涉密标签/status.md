@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-12（ios 涉密入口改自定义 view + 气泡补箭头，待用户统一复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-12（ios 涉密入口撤回独立行、改回标题栏本行右侧，气泡箭头保留，待用户统一复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -48,11 +48,13 @@
   - 气泡补了向上箭头：`CAShapeLayer` 画 12×6pt 三角形（不依赖美术资源，同色 `#1F2329`），水平位置对准按钮中心，气泡改挂在箭头下方——对齐 android 现在「箭头+气泡体」的两层结构
   - 大括号/圆括号计数校验通过，仍未跑 `xcodebuild`
 
+- (ios) 用户复验：加了新行是错的，「放到选择数据范围这一行的右侧」（标题栏本行，不要另起一行）—— **已撤回**（commit `b247e8605`）：5 个页面全部撤掉 `secretEntryBar`，改回 `self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.secretEntry.button]`，`searchHeaderView`/`breadcrumbScroll`/`tableView`/`searchBarContainer` 的顶部约束还原成直接贴 `self.view`。箭头逻辑（`ZXDataScopeSecretEntry.m`）不受影响，保留。大括号/圆括号计数核对后跟撤回前的版本完全一致（确认改动只是去掉新增部分，没有引入新问题）
+
 ## 待办 / 阻塞
 
 - (android) 气泡宽度 180dp / 箭头位置 / 右侧 12dp 留白均为估算值，仅编译验证，**未做真机像素级核对**；箭头 marginEnd 依赖顶栏按钮实际测量宽度，窄屏或系统字体放大时需实测确认箭头仍指在按钮上
 - (四端) 箭头形态目前不统一：android/iOS 有向上箭头，web/desktop 仍是无箭头深色气泡——是否要求统一由用户定
-- (ios) 涉密入口改成自定义 `secretEntryBar` 后占了一整行高度（36pt），会让 `searchHeaderView` 等内容整体下移；未做真机视觉验证是否显挤/是否需要压缩高度
+- (ios) 涉密入口最终定为标题栏本行右侧（`rightBarButtonItem`），跟其余三端（顶部标题栏/关闭按钮左侧）逻辑一致，均未跑真机验证
 
 - (web) `vue-tsc --noEmit` 已过、`dataScopeModel` 单测 20/20 过；**未做**真实浏览器联调可视化验证——本地环境 `getAllImDialogue` 走真实接口（无 mock），未接入测试后端/登录态，无法起 `pnpm dev` 跑通真实弹窗看涉密/已离职 tag 实际渲染效果。建议开发者本地连测试环境跑一遍再合并。
 - (web) `pnpm format` 本地环境 `node_modules` 里 prettier 缺失（非本次改动引入的问题），跳过自动格式化，靠手工对齐现有代码风格；如需要请本地补齐依赖后跑一次 `pnpm format`。
