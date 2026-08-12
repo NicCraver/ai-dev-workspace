@@ -33,7 +33,7 @@
 - (web/desktop) 用户复验：desktop 涉密没贴到关闭按钮左侧 + 两端气泡要「正下方居中」弹出 —— **已修**（web commit `508c329`、desktop commit `55161faf`）：
   - (desktop) 根因是全局 `assets/styles/reset-ui-ifram.scss` 里 `.ant-modal-wrap .ant-modal-header{display:flex;padding:0 20px;height:50px}`——header 被设成 flex 后 `.ant-modal-title` 不再撑满宽度，标题栏内的 `space-between` 没有可分配空间，涉密就紧贴标题文字。修法：①本文件所有弹窗样式的外层选择器由 `.pa-data-scope-modal` 改成 `.ant-modal-wrap.pa-data-scope-modal`（3 个 class 压过全局的 2 个）；②`.ant-modal-title` 加 `flex:1;min-width:0`；③header padding 改 `0 48px 0 24px`（高度/垂直居中沿用全局 50px flex 头部，右侧 48px 让开 56px 宽的关闭按钮命中区）
   - 两端 `placement` 由 `bottom-end` 改 `bottom`（气泡正对触发器居中、向下展开）；注意气泡 280px 宽而触发器靠弹窗右缘，居中弹出时气泡右半会探出弹窗右边界（popper 挂 body、不被弹窗裁剪，视口内可见），这是「居中」要求的必然结果，如不接受需改回 `bottom-end` 或缩窄气泡
-- (web) 用户要求气泡再右移一点 —— 加 `popper-options` 的 `offset` modifier `[16, 12]`（skid 16 = 沿 x 右移 16px，distance 12 = 与触发器垂直间距，保持 Element Plus 默认值）；commit `dec0eef`，`vue-tsc` 通过。**位移量凭手感给的，需要你目测再调**：改 skid 那个数字（第一个）即可，正数右移、负数左移；desktop 侧未同步该偏移（Element UI 2 的 popover 无同款 `popper-options` 写法，需要时用 `.pa-secret-info-popover{margin-left:Npx}` 达成）
+- (web) 用户要求「再右移一点」，先误改成气泡偏移（`offset [16,12]`，commit `dec0eef`），实际指的是**触发按钮**本身 —— 已撤掉气泡偏移，改成给按钮加 `-mr-3`（右移 12px，缩短与关闭按钮 48px 命中区之间的视觉留白），气泡跟着按钮走仍保持正下方居中；commit `5b9f15f`，`vue-tsc` 通过。位移量凭手感，继续微调就改 `-mr-*` 这个类
 
 - (ios) 用户要求涉密入口跟 android 一样挪到顶部标题栏右侧，同时反馈「点击涉密没有弹出层」—— **已改**（commit `7b74ce6b8`）：
   - 新建 `ZXDataScopeSecretEntry.h/.m`：独立小类持有按钮 + 深色气泡展示/收起逻辑，供 `initWithCustomView:` 塞进 `navigationItem.rightBarButtonItem`；5 个页面（Controller/ContactPage/GroupPage/OrgDrill/Search）统一改用它，`viewWillDisappear` 里的收起调用同步从 `[self.bottomBar dismissSecretBubble]` 改成 `[self.secretEntry dismissBubble]`
