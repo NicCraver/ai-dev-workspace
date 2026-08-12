@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合并转发聊天记录页 · 全量示例</title>
+<style>
+  :root{
+    --brand:#3E7DFF;
+    --brand-light:#EEF3FF;
+    --text-1:#1F2329;
+    --text-2:#646A73;
+    --text-3:#8F959E;
+    --border:#E8E9EB;
+    --bg-page:#F5F6F8;
+    --bg-card:#FFFFFF;
+    --danger:#F53F3F;
+    --star:#FFA000;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:#2b2f36;
+    color:var(--text-1);
+    display:flex;
+    justify-content:center;
+    padding:32px 16px;
+  }
+
+  /* ------- 外层说明条 ------- */
+  .lab-note{
+    position:fixed;
+    top:12px;left:50%;
+    transform:translateX(-50%);
+    font-size:12px;
+    color:#aab0bb;
+    background:#1c1f24;
+    padding:6px 14px;
+    border-radius:999px;
+    z-index:50;
+  }
+  .type-tag{
+    font-size:11px;
+    color:var(--text-3);
+    margin-top:4px;
+    user-select:none;
+  }
+
+  /* ------- 手机容器 ------- */
+  .phone{
+    width:390px;
+    max-width:100%;
+    height:844px;
+    background:var(--bg-page);
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+
+  /* ------- 顶部导航 ------- */
+  .navbar{
+    height:52px;
+    flex:none;
+    background:#fff;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    padding:0 12px;
+    gap:8px;
+  }
+  .nav-icon-btn{
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:8px;
+    color:var(--text-1);
+    cursor:pointer;
+    flex:none;
+  }
+  .nav-icon-btn:hover{background:#F2F3F5;}
+  .nav-title{
+    flex:1;
+    text-align:center;
+    font-size:15px;
+    font-weight:600;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .nav-title small{
+    display:block;
+    font-weight:400;
+    font-size:11px;
+    color:var(--text-3);
+    margin-top:1px;
+  }
+  .nav-forward{
+    font-size:14px;
+    color:var(--brand);
+    font-weight:500;
+    flex:none;
+    padding:6px 4px;
+    cursor:pointer;
+  }
+
+  /* ------- 消息列表 ------- */
+  .list{
+    flex:1;
+    overflow-y:auto;
+    padding:12px 12px 24px;
+  }
+  .date-divider{
+    text-align:center;
+    font-size:12px;
+    color:var(--text-3);
+    margin:8px 0 16px;
+  }
+
+  .msg-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .avatar{
+    width:36px;height:36px;
+    border-radius:8px;
+    flex:none;
+    background:linear-gradient(135deg,#7DA6FF,#3E7DFF);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+    overflow:hidden;
+  }
+  .avatar.robot{background:linear-gradient(135deg,#8F959E,#646A73);}
+  .msg-main{
+    flex:1;
+    min-width:0;
+  }
+  .msg-head{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:4px;
+    flex-wrap:wrap;
+  }
+  .nickname{
+    font-size:13px;
+    color:var(--text-2);
+    font-weight:500;
+  }
+  .ai-tag{
+    font-size:10px;
+    line-height:16px;
+    padding:0 6px;
+    border-radius:4px;
+    background:var(--brand-light);
+    color:var(--brand);
+    flex:none;
+  }
+  .ai-tag.robot{background:#F2F3F5;color:var(--text-3);}
+  .ai-tag.group-ai{background:#EBFBEF;color:#00B368;}
+  .time-pill{
+    font-size:10px;
+    color:var(--text-3);
+    margin-left:auto;
+    flex:none;
+  }
+
+  .bubble{
+    display:inline-block;
+    max-width:100%;
+    background:var(--bg-card);
+    border-radius:10px;
+    padding:9px 12px;
+    font-size:14px;
+    line-height:1.5;
+    color:var(--text-1);
+    word-break:break-word;
+  }
+
+  /* 评优徽章 */
+  .appraise-row{
+    display:flex;
+    align-items:center;
+    gap:2px;
+    margin-top:6px;
+  }
+  .appraise-badge{
+    font-size:10px;
+    color:#fff;
+    background:linear-gradient(135deg,#FFB020,#FF8A00);
+    padding:1px 6px;
+    border-radius:4px;
+    margin-right:4px;
+  }
+  .star{color:var(--star);font-size:12px;letter-spacing:-1px;}
+  .star.dim{color:#E5E6EB;}
+
+  /* 图片消息 */
+  .img-bubble{
+    width:180px;height:130px;
+    border-radius:10px;
+    background:repeating-linear-gradient(45deg,#DCE0E6,#DCE0E6 10px,#E8EAED 10px,#E8EAED 20px);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-3);
+    font-size:12px;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  /* 文件消息 */
+  .file-bubble{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--bg-card);
+    border-radius:10px;
+    padding:10px 12px;
+    width:230px;
+  }
+  .file-icon{
+    width:36px;height:36px;
+    border-radius:8px;
+    background:var(--brand-light);
+    color:var(--brand);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;
+    font-weight:700;
+    flex:none;
+  }
+  .file-info{min-width:0;flex:1;}
+  .file-name{font-size:13px;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .file-size{font-size:11px;color:var(--text-3);margin-top:2px;}
+
+  /* 位置消息 */
+  .loc-bubble{
+    width:230px;
+    border-radius:10px;
+    overflow:hidden;
+    background:var(--bg-card);
+  }
+  .loc-map{
+    height:80px;
+    background:
+      linear-gradient(0deg, rgba(62,125,255,.08) 1px, transparent 1px) 0 0/20px 20px,
+      linear-gradient(90deg, rgba(62,125,255,.08) 1px, transparent 1px) 0 0/20px 20px,
+      #EEF3FF;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .loc-pin{width:20px;height:20px;border-radius:50% 50% 50% 0;background:var(--brand);transform:rotate(-45deg);}
+  .loc-text{padding:8px 10px;font-size:12px;color:var(--text-2);}
+  .loc-text b{display:block;font-size:13px;color:var(--text-1);font-weight:500;margin-bottom:2px;}
+
+  /* 群AI卡片 ActionCard */
+  .card-bubble{
+    width:250px;
+    border-radius:10px;
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    overflow:hidden;
+  }
+  .card-head{
+    display:flex;align-items:center;gap:8px;
+    padding:10px 12px;
+    border-bottom:1px solid var(--border);
+  }
+  .card-icon{
+    width:28px;height:28px;border-radius:6px;
+    background:linear-gradient(135deg,#3E7DFF,#7B5CFF);
+    flex:none;
+  }
+  .card-title{font-size:13px;font-weight:600;color:var(--text-1);}
+  .card-body{padding:10px 12px;font-size:12px;color:var(--text-2);line-height:1.5;}
+  .card-foot{
+    padding:8px 12px;
+    font-size:11px;
+    color:var(--brand);
+    border-top:1px solid var(--border);
+  }
+
+  /* 引用消息（可点击） */
+  .quote-wrap{cursor:pointer;}
+  .quote-block{
+    background:#F2F3F5;
+    border-left:3px solid #C9CDD4;
+    border-radius:6px;
+    padding:6px 10px;
+    font-size:12px;
+    color:var(--text-3);
+    margin-bottom:6px;
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+  }
+  .quote-block .q-name{color:var(--text-2);font-weight:500;}
+  .quote-hint{
+    font-size:11px;
+    color:var(--brand);
+    margin-top:6px;
+  }
+  .quote-wrap:hover .bubble{background:#F7F9FF;}
+
+  /* 嵌套合并消息卡片 */
+  .combine-bubble{
+    width:250px;
+    border-radius:10px;
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    overflow:hidden;
+    cursor:pointer;
+  }
+  .combine-bubble:hover{border-color:var(--brand);}
+  .combine-title{
+    padding:10px 12px 4px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text-1);
+  }
+  .combine-summary{
+    padding:0 12px 10px;
+    font-size:12px;
+    color:var(--text-2);
+    line-height:1.6;
+  }
+  .combine-summary div{
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .combine-foot{
+    padding:7px 12px;
+    font-size:11px;
+    color:var(--text-3);
+    background:#FAFBFC;
+    border-top:1px solid var(--border);
+  }
+
+  /* 撤回/占位 */
+  .system-line{
+    text-align:center;
+    font-size:12px;
+    color:var(--text-3);
+    margin:10px 0;
+  }
+
+  /* 无时间戳兜底示例 —— 不渲染 time-pill，靠留白体现 */
+
+  /* ------- 引用回复弹窗（覆盖层，抽屉式） ------- */
+  .drawer-mask{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.35);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+    z-index:20;
+  }
+  .drawer-mask.show{opacity:1;pointer-events:auto;}
+
+  .drawer{
+    position:absolute;
+    left:0;right:0;bottom:0;
+    height:72%;
+    background:var(--bg-page);
+    border-radius:16px 16px 0 0;
+    transform:translateY(100%);
+    transition:transform .25s ease;
+    display:flex;
+    flex-direction:column;
+    z-index:21;
+    box-shadow:0 -8px 30px rgba(0,0,0,.15);
+  }
+  .drawer.show{transform:translateY(0);}
+  .drawer-handle{
+    width:36px;height:4px;
+    background:#DEE0E3;
+    border-radius:99px;
+    margin:8px auto 4px;
+    flex:none;
+  }
+  .drawer-head{
+    flex:none;
+    padding:6px 16px 12px;
+    text-align:center;
+    font-size:14px;
+    font-weight:600;
+    border-bottom:1px solid var(--border);
+    position:relative;
+  }
+  .drawer-close{
+    position:absolute;
+    right:12px;top:2px;
+    width:26px;height:26px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-3);
+    cursor:pointer;
+    border-radius:50%;
+  }
+  .drawer-close:hover{background:#F2F3F5;}
+
+  .drawer-body{
+    flex:1;
+    overflow-y:auto;
+    padding:12px 16px 24px;
+  }
+
+  .source-card{
+    background:var(--brand-light);
+    border:1px solid #C9DBFF;
+    border-radius:10px;
+    padding:10px 12px;
+    margin-bottom:14px;
+    position:relative;
+  }
+  .source-card .src-badge{
+    position:absolute;
+    top:-9px;left:10px;
+    background:var(--brand);
+    color:#fff;
+    font-size:10px;
+    padding:1px 8px;
+    border-radius:99px;
+  }
+
+  .reply-count-hint{
+    font-size:12px;
+    color:var(--text-3);
+    margin:2px 0 14px;
+  }
+
+  /* ------- 底部类型速览 legend ------- */
+  .legend{
+    width:390px;
+    max-width:100%;
+    margin-top:20px;
+    background:#1c1f24;
+    border-radius:12px;
+    padding:14px 16px;
+    color:#c7cbd1;
+    font-size:12px;
+    line-height:1.9;
+  }
+  .legend b{color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="lab-note">合并转发聊天记录页 · 消息类型全量示例（点橙色虚线框的引用消息弹回复层）</div>
+
+<div class="phone">
+
+  <!-- 顶部导航 -->
+  <div class="navbar">
+    <div class="nav-icon-btn">←</div>
+    <div class="nav-title">张三、李四的聊天记录
+      <small>共 11 条消息</small>
+    </div>
+    <div class="nav-forward">转发</div>
+  </div>
+
+  <!-- 消息列表 -->
+  <div class="list" id="list">
+
+    <div class="date-divider">2026年8月10日</div>
+
+    <!-- 1. 纯文本 -->
+    <div class="msg-row">
+      <div class="avatar">张</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">张三</span>
+          <span class="time-pill">10:02</span>
+        </div>
+        <div class="bubble">明天的评审改到下午三点，会议室不变。</div>
+        <div class="type-tag">类型：文本消息 TextMessage</div>
+      </div>
+    </div>
+
+    <!-- 2. 文本 + 个人AI框 tag -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李四</span>
+          <span class="ai-tag">个人AI框</span>
+          <span class="time-pill">10:03</span>
+        </div>
+        <div class="bubble">好的，我已同步给对应的同学，PRD 也会在会前更新完。</div>
+        <div class="type-tag">类型：文本 + 个人AI框 tag（发送者昵称行右侧）</div>
+      </div>
+    </div>
+
+    <!-- 3. 群AI框 tag + 评优徽章 -->
+    <div class="msg-row">
+      <div class="avatar robot">AI</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">需求助手</span>
+          <span class="ai-tag group-ai">群AI框</span>
+          <span class="time-pill">10:05</span>
+        </div>
+        <div class="bubble">已根据讨论生成任务清单，共 5 项，负责人待认领。</div>
+        <div class="appraise-row">
+          <span class="appraise-badge">优秀回答</span>
+          <span class="star">★★★★</span><span class="star dim">★</span>
+        </div>
+        <div class="type-tag">类型：群AI框 tag + 评优徽章（星级最多4星）</div>
+      </div>
+    </div>
+
+    <!-- 4. 机器人 tag，无时间戳兜底 -->
+    <div class="msg-row">
+      <div class="avatar robot">机</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">系统机器人</span>
+          <span class="ai-tag robot">机器人</span>
+          <!-- 无 time-pill：sentTime<=0 时隐藏时间胶囊 -->
+        </div>
+        <div class="bubble">欢迎加入群聊，请遵守群公告。</div>
+        <div class="type-tag">类型：机器人 tag + 时间戳缺失兜底（不渲染时间胶囊）</div>
+      </div>
+    </div>
+
+    <!-- 5. 图片消息 -->
+    <div class="msg-row">
+      <div class="avatar">张</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">张三</span>
+          <span class="time-pill">10:08</span>
+        </div>
+        <div class="img-bubble">🖼 图片占位 720×960</div>
+        <div class="type-tag">类型：图片消息 ImageMessage</div>
+      </div>
+    </div>
+
+    <!-- 6. 文件消息 -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李四</span>
+          <span class="time-pill">10:12</span>
+        </div>
+        <div class="file-bubble">
+          <div class="file-icon">PDF</div>
+          <div class="file-info">
+            <div class="file-name">数据范围筛选条-评审版v3.pdf</div>
+            <div class="file-size">2.4 MB</div>
+          </div>
+        </div>
+        <div class="type-tag">类型：文件消息 FileMessage</div>
+      </div>
+    </div>
+
+    <!-- 7. 位置消息 -->
+    <div class="msg-row">
+      <div class="avatar">张</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">张三</span>
+          <span class="time-pill">10:15</span>
+        </div>
+        <div class="loc-bubble">
+          <div class="loc-map"><div class="loc-pin"></div></div>
+          <div class="loc-text"><b>星辰大厦 A 座</b>北京市海淀区中关村大街1号</div>
+        </div>
+        <div class="type-tag">类型：位置消息 LocationMessage</div>
+      </div>
+    </div>
+
+    <!-- 8. 群AI卡片 ActionCard -->
+    <div class="msg-row">
+      <div class="avatar robot">AI</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">需求助手</span>
+          <span class="ai-tag group-ai">群AI框</span>
+          <span class="time-pill">10:18</span>
+        </div>
+        <div class="card-bubble">
+          <div class="card-head">
+            <div class="card-icon"></div>
+            <div class="card-title">评审纪要 · 自动生成</div>
+          </div>
+          <div class="card-body">共记录 8 条决议，3 个待办已建单，点击查看完整纪要与关联任务。</div>
+          <div class="card-foot">查看详情 →</div>
+        </div>
+        <div class="type-tag">类型：群AI卡片 ActionCardMessage</div>
+      </div>
+    </div>
+
+    <!-- 9. 引用消息（可点击弹回复层） -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李四</span>
+          <span class="time-pill">10:20</span>
+        </div>
+        <div class="quote-wrap" onclick="openDrawer()">
+          <div class="bubble">
+            <div class="quote-block">
+              <span class="q-name">张三：</span>
+              <span>明天的评审改到下午三点，会议室不变。</span>
+            </div>
+            收到，我把日历也同步改一下。
+          </div>
+          <div class="quote-hint">💬 3 条回复 · 点击查看</div>
+        </div>
+        <div class="type-tag">类型：引用消息 ReferenceMessage（点击打开右侧「N条回复」抽屉）</div>
+      </div>
+    </div>
+
+    <!-- 10. 嵌套合并消息 -->
+    <div class="msg-row">
+      <div class="avatar">张</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">张三</span>
+          <span class="time-pill">10:25</span>
+        </div>
+        <div class="combine-bubble">
+          <div class="combine-title">项目群的聊天记录</div>
+          <div class="combine-summary">
+            <div>王五：接口联调已完成</div>
+            <div>赵六：[图片]</div>
+            <div>陈七：明天上线前再过一遍用例</div>
+          </div>
+          <div class="combine-foot">共 6 条消息</div>
+        </div>
+        <div class="type-tag">类型：嵌套合并消息 CombineMessage（合并里再合并，点击可再下钻一层）</div>
+      </div>
+    </div>
+
+    <!-- 11. 撤回占位 -->
+    <div class="system-line">李四 撤回了一条消息</div>
+    <div class="type-tag" style="text-align:center;margin-top:-10px;margin-bottom:16px;">类型：撤回/已删除占位 RecallMessage</div>
+
+  </div>
+
+  <!-- 引用回复抽屉 -->
+  <div class="drawer-mask" id="mask" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-head">
+      3 条回复
+      <div class="drawer-close" onclick="closeDrawer()">✕</div>
+    </div>
+    <div class="drawer-body">
+
+      <div class="source-card">
+        <span class="src-badge">源消息</span>
+        <div class="msg-head" style="margin-top:4px;">
+          <span class="nickname">张三</span>
+          <span class="time-pill">10:02</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-1);margin-top:2px;">明天的评审改到下午三点，会议室不变。</div>
+      </div>
+      <div class="reply-count-hint">以下是针对该消息的回复</div>
+
+      <!-- 回复1：普通文本 -->
+      <div class="msg-row">
+        <div class="avatar">李</div>
+        <div class="msg-main">
+          <div class="msg-head">
+            <span class="nickname">李四</span>
+            <span class="time-pill">10:20</span>
+          </div>
+          <div class="bubble">收到，我把日历也同步改一下。</div>
+        </div>
+      </div>
+
+      <!-- 回复2：AI框 tag + 无时间戳 -->
+      <div class="msg-row">
+        <div class="avatar">王</div>
+        <div class="msg-main">
+          <div class="msg-head">
+            <span class="nickname">王五</span>
+            <span class="ai-tag">个人AI框</span>
+            <!-- 时间戳缺失兜底：不渲染 -->
+          </div>
+          <div class="bubble">已帮你标记日历冲突，无冲突。</div>
+        </div>
+      </div>
+
+      <!-- 回复3：评优 -->
+      <div class="msg-row">
+        <div class="avatar robot">AI</div>
+        <div class="msg-main">
+          <div class="msg-head">
+            <span class="nickname">需求助手</span>
+            <span class="ai-tag group-ai">群AI框</span>
+            <span class="time-pill">10:24</span>
+          </div>
+          <div class="bubble">已在群日历同步新时间，并通知全部参会人。</div>
+          <div class="appraise-row">
+            <span class="appraise-badge">优秀回答</span>
+            <span class="star">★★★</span><span class="star dim">★★</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="legend">
+  <b>示例覆盖类型清单</b>（共 12 种，来自三端调研汇总）：
+  文本 / 图片 / 文件 / 位置 / 群AI卡片 ActionCard / 引用消息 / 嵌套合并消息 / 撤回占位 /
+  个人AI框 tag / 群AI框 tag / 机器人 tag / 评优徽章+星级 / 时间戳缺失兜底。
+  <br><br>
+  改这个文件直接改上面 <b>.msg-row</b> 各块即可，每块下面灰字 <b>.type-tag</b> 标了类型，定稿后删掉即可当正式还原稿。
+</div>
+
+<script>
+function openDrawer(){
+  document.getElementById('mask').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('mask').classList.remove('show');
+  document.getElementById('drawer').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
