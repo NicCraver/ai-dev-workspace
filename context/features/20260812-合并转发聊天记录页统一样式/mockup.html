@@ -187,45 +187,49 @@
     word-break:break-word;
   }
 
-  /* 评优徽章+星级：对齐 desktop ExcellentMedal.vue —— 内嵌在「昵称+tag+时间」同一行，非气泡下方单独一行
-     色值/文案 5 种徽章：集团优秀/板块优秀=紫(#8787FB) 集团良好/板块良好+=蓝(#4A7ADF) 板块良好=绿(#2A877D)
-     星星按「集团(corp)/板块(plate)」区分图标家族，按「年度22px/季度18px」区分尺寸，累积制显示 icon+数量 */
+  /* 评优徽章+星级：按真实截图还原 —— 六边形「年/季」图标 + 圆角文案胶囊 + 竖分隔线 + 星星
+     色值 5 种：集团优秀/板块优秀=紫(#8787FB) 集团良好/板块良好+=蓝(#4A7ADF) 板块良好=绿(#2A877D)
+     星星颜色按「集团=金 / 板块=灰」区分（截图实拍：集团优秀配金星，板块良好+配灰星），累积制数字紧跟星星 */
   .medal-inline{
     display:inline-flex;
     align-items:center;
-    gap:5px;
-    margin-left:2px;
+    margin-left:4px;
   }
-  .medal-badge{
+  .eval-badge{
     display:inline-flex;
     align-items:center;
-    height:16px;
-    padding:0 6px 0 3px;
-    border-radius:2px;
-    font-size:10px;
+    height:18px;
+    border-radius:9px;
+    padding:0 7px 0 2px;
     color:#fff;
+    font-size:10px;
+    font-weight:500;
     gap:3px;
     white-space:nowrap;
   }
-  .medal-ico{width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,.45);flex:none;}
-  .medal-you{background:#8787FB;}       /* 集团优秀 / 板块优秀 */
-  .medal-liangjia{background:#4A7ADF;}  /* 集团良好 / 板块良好+ */
-  .medal-liang{background:#2A877D;}     /* 板块良好 */
-  .medal-div{width:1px;height:10px;background:#E0E4E8;flex:none;}
-  .medal-star{
+  .eval-hex{
+    width:15px;height:15px;
+    clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0% 50%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:8px;font-weight:700;
+    background:rgba(255,255,255,.28);
+    flex:none;
+  }
+  .eval-you{background:#8787FB;}       /* 集团优秀 / 板块优秀 */
+  .eval-liangjia{background:#4A7ADF;}  /* 集团良好 / 板块良好+ */
+  .eval-liang{background:#2A877D;}     /* 板块良好 */
+  .eval-div{width:1px;height:11px;background:#E5E6EB;margin:0 6px;flex:none;}
+  .eval-star{
     display:inline-flex;
     align-items:center;
     justify-content:center;
-    border-radius:50%;
-    color:#fff;
-    line-height:1;
+    font-size:13px;
     flex:none;
+    line-height:1;
   }
-  .medal-star.corp{background:linear-gradient(135deg,#9B95FB,#7B5CFF);}   /* 集团 */
-  .medal-star.plate{background:linear-gradient(135deg,#6C9BEF,#4A7ADF);}  /* 板块 */
-  .medal-star.year{width:16px;height:16px;font-size:9px;}
-  .medal-star.quarter{width:13px;height:13px;font-size:7px;}
-  .medal-star-count{font-size:10px;color:var(--text-2);}
+  .eval-star.corp{color:#FFA000;}   /* 集团＝金 */
+  .eval-star.plate{color:#B0B4BB;}  /* 板块＝灰 */
+  .eval-star-count{font-size:10px;color:var(--text-2);margin-left:2px;}
 
   /* 图片消息 */
   .img-bubble{
@@ -252,16 +256,32 @@
   .file-icon{
     width:36px;height:36px;
     border-radius:8px;
-    background:var(--brand-light);
-    color:var(--brand);
     display:flex;align-items:center;justify-content:center;
-    font-size:11px;
+    font-size:10px;
     font-weight:700;
+    color:#fff;
     flex:none;
   }
+  /* 按截图还原：已知类型给品牌色实底图标(如txt=蓝)，未知类型灰底问号 */
+  .file-icon.txt{background:#2E86F5;}
+  .file-icon.unknown{background:#C9CDD4;font-size:14px;}
   .file-info{min-width:0;flex:1;}
   .file-name{font-size:13px;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .file-size{font-size:11px;color:var(--text-3);margin-top:2px;}
+
+  /* AI来源归因胶囊："来自XXX个人AI框" —— 单独一行放在内容气泡下方，非昵称行tag */
+  .ai-source-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    height:24px;
+    padding:0 10px;
+    border-radius:12px;
+    background:#F2F3F5;
+    color:var(--text-3);
+    font-size:12px;
+    margin-top:6px;
+  }
 
   /* 位置消息 */
   .loc-bubble{
@@ -282,31 +302,44 @@
   .loc-text{padding:8px 10px;font-size:12px;color:var(--text-2);}
   .loc-text b{display:block;font-size:13px;color:var(--text-1);font-weight:500;margin-bottom:2px;}
 
-  /* 群AI卡片 ActionCard */
-  .card-bubble{
-    width:250px;
-    border-radius:10px;
+  /* 群AI卡片 ActionCard —— 按"行动中心分享卡"截图还原：蓝色提示条 + 白底嵌套小卡 + 灰色归属胶囊footer */
+  .card-bubble{width:260px;}
+  .card-tip{
+    display:flex;align-items:center;gap:6px;
+    padding:8px 10px;
+    border-radius:10px 10px 0 0;
+    background:var(--brand-light);
+    color:var(--brand);
+    font-size:12px;
+    font-weight:500;
+  }
+  .card-tip .dot{width:14px;height:14px;border-radius:4px;background:var(--brand);flex:none;}
+  .card-inner{
     background:var(--bg-card);
+    border-radius:0 0 10px 10px;
+    padding:10px;
+  }
+  .card-nested{
     border:1px solid var(--border);
+    border-radius:8px;
     overflow:hidden;
   }
-  .card-head{
-    display:flex;align-items:center;gap:8px;
-    padding:10px 12px;
-    border-bottom:1px solid var(--border);
+  .card-nested-head{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 10px;
+    background:#EAF1FF;
+    font-size:12px;
+    font-weight:600;
+    color:var(--text-1);
   }
-  .card-icon{
-    width:28px;height:28px;border-radius:6px;
-    background:linear-gradient(135deg,#3E7DFF,#7B5CFF);
-    flex:none;
+  .card-nested-head .status{
+    font-size:10px;color:#fff;background:var(--brand);
+    padding:0 5px;border-radius:3px;flex:none;
   }
-  .card-title{font-size:13px;font-weight:600;color:var(--text-1);}
-  .card-body{padding:10px 12px;font-size:12px;color:var(--text-2);line-height:1.5;}
-  .card-foot{
-    padding:8px 12px;
-    font-size:11px;
-    color:var(--brand);
-    border-top:1px solid var(--border);
+  .card-nested-body{padding:8px 10px;font-size:11px;color:var(--text-2);line-height:1.6;}
+  .card-expand{
+    text-align:center;font-size:11px;color:var(--text-3);
+    padding:5px 0 2px;
   }
 
   /* 引用消息（可点击） */
@@ -515,7 +548,8 @@
           <span class="time-pill">10:03</span>
         </div>
         <div class="bubble">好的，我已同步给对应的同学，PRD 也会在会前更新完。</div>
-        <div class="type-tag">类型：文本 + 个人AI框 tag（发送者昵称行右侧）</div>
+        <div><span class="ai-source-pill">来自李四个人AI框</span></div>
+        <div class="type-tag">类型：文本 + 个人AI框 tag（昵称行）+ 「来自XXX个人AI框」归因胶囊（气泡下方独立一行，还原截图 11）</div>
       </div>
     </div>
 
@@ -528,14 +562,14 @@
           <span class="ai-tag group-ai">群AI框</span>
           <span class="time-pill">10:05</span>
           <span class="medal-inline">
-            <span class="medal-badge medal-you"><span class="medal-ico"></span>集团优秀</span>
-            <span class="medal-div"></span>
-            <span class="medal-star corp year">★</span>
-            <span class="medal-star-count">2</span>
+            <span class="eval-badge eval-you"><span class="eval-hex">年</span>集团优秀</span>
+            <span class="eval-div"></span>
+            <span class="eval-star corp">★</span>
+            <span class="eval-star-count">×2</span>
           </span>
         </div>
         <div class="bubble">已根据讨论生成任务清单，共 5 项，负责人待认领。</div>
-        <div class="type-tag">类型：群AI框 tag + 评优徽章「集团优秀」(紫#8787FB) + 年度集团星(22px累积制显示×数量)——对齐 desktop ExcellentMedal.vue，内嵌在昵称+时间同一行</div>
+        <div class="type-tag">类型：群AI框 tag + 评优徽章「年 集团优秀」(紫#8787FB+金星)——还原自真实截图，六边形年/季图标+胶囊+竖线+星，内嵌昵称/时间同一行</div>
       </div>
     </div>
 
@@ -574,14 +608,21 @@
           <span class="nickname">李四</span>
           <span class="time-pill">10:12</span>
         </div>
-        <div class="file-bubble">
-          <div class="file-icon">PDF</div>
+        <div class="file-bubble" style="margin-bottom:8px;">
+          <div class="file-icon txt">TXT</div>
           <div class="file-info">
-            <div class="file-name">数据范围筛选条-评审版v3.pdf</div>
-            <div class="file-size">2.4 MB</div>
+            <div class="file-name">测试.txt</div>
+            <div class="file-size">6 B</div>
           </div>
         </div>
-        <div class="type-tag">类型：文件消息 FileMessage</div>
+        <div class="file-bubble">
+          <div class="file-icon unknown">{?}</div>
+          <div class="file-info">
+            <div class="file-name">测试.md</div>
+            <div class="file-size">6 B</div>
+          </div>
+        </div>
+        <div class="type-tag">类型：文件消息 FileMessage（已知类型=品牌色实底图标，未知类型=灰底问号，还原截图 11）</div>
       </div>
     </div>
 
@@ -611,14 +652,20 @@
           <span class="time-pill">10:18</span>
         </div>
         <div class="card-bubble">
-          <div class="card-head">
-            <div class="card-icon"></div>
-            <div class="card-title">评审纪要 · 自动生成</div>
+          <div class="card-tip"><span class="dot"></span>评审纪要：共记录 8 条决议</div>
+          <div class="card-inner">
+            <div class="card-nested">
+              <div class="card-nested-head"><span class="status">进行</span>待办清单 ···</div>
+              <div class="card-nested-body">
+                1、接口联调 —— 负责人：王五，测试通过<br>
+                2、UI走查 —— 负责人：赵六
+              </div>
+            </div>
+            <div class="card-expand">查看更多 ⌄</div>
           </div>
-          <div class="card-body">共记录 8 条决议，3 个待办已建单，点击查看完整纪要与关联任务。</div>
-          <div class="card-foot">查看详情 →</div>
         </div>
-        <div class="type-tag">类型：群AI卡片 ActionCardMessage</div>
+        <div class="ai-source-pill">🅐 行动中心：评审纪要</div>
+        <div class="type-tag">类型：群AI卡片 ActionCardMessage（还原截图 12/13：蓝色提示条+嵌套小卡+灰色"行动中心：XX"归属胶囊）</div>
       </div>
     </div>
 
@@ -725,9 +772,9 @@
             <span class="ai-tag group-ai">群AI框</span>
             <span class="time-pill">10:24</span>
             <span class="medal-inline">
-              <span class="medal-badge medal-liangjia"><span class="medal-ico"></span>板块良好+</span>
-              <span class="medal-div"></span>
-              <span class="medal-star plate quarter">★</span>
+              <span class="eval-badge eval-liangjia"><span class="eval-hex">季</span>板块良好+</span>
+              <span class="eval-div"></span>
+              <span class="eval-star plate">★</span>
             </span>
           </div>
           <div class="bubble">已在群日历同步新时间，并通知全部参会人。</div>
@@ -744,7 +791,9 @@
   文本 / 图片 / 文件 / 位置 / 群AI卡片 ActionCard / 引用消息 / 嵌套合并消息 / 撤回占位 /
   个人AI框 tag / 群AI框 tag / 机器人 tag / 评优徽章+星级 / 时间戳缺失兜底。
   <br><br>
-  <b>评优/tag 色值已对齐 desktop 真实代码</b>：徽章色取自 <code>ExcellentMedal.vue</code> colorMap（集团优秀/板块优秀=紫#8787FB，集团良好/板块良好+=蓝#4A7ADF，板块良好=绿#2A877D，和 android <code>AppraisingTypeUtil</code> 完全一致）；AI/机器人 tag 色取自 <code>msg-list.vue</code> 的 <code>.tag-personal-ai/.tag-agent/.tag-robot</code>；徽章+星级布局改成内嵌在昵称+时间同一行（对齐 desktop 实际结构，而非气泡下方单独一行）；主题色改为 <code>#3E7EFF</code>（desktop unocss primary 精确值）。
+  <b>评优/tag 色值已对齐 desktop 真实代码</b>：徽章色取自 <code>ExcellentMedal.vue</code> colorMap（集团优秀/板块优秀=紫#8787FB，集团良好/板块良好+=蓝#4A7ADF，板块良好=绿#2A877D，和 android <code>AppraisingTypeUtil</code> 完全一致）；AI/机器人 tag 色取自 <code>msg-list.vue</code> 的 <code>.tag-personal-ai/.tag-agent/.tag-robot</code>；主题色改为 <code>#3E7EFF</code>（desktop unocss primary 精确值）。
+  <br><br>
+  <b>本轮按 10 张真实截图二次还原</b>：评优徽章改成「六边形年/季图标+胶囊+竖分隔线+星」（星色按集团=金/板块=灰，实拍配色，非猜测）；文件消息按类型给实底色图标，未知类型灰底问号；新增「来自XXX个人AI框」归因胶囊（气泡下方独立一行，区别于昵称行的 tag）；群AI卡片改成"蓝色提示条+嵌套小卡+行动中心归属胶囊"结构。
   <br><br>
   改这个文件直接改上面 <b>.msg-row</b> 各块即可，每块下面灰字 <b>.type-tag</b> 标了类型，定稿后删掉即可当正式还原稿。
 </div>
