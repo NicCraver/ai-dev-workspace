@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-12（android 气泡宽度/箭头/右间距再修一轮，待用户统一复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-12（ios 涉密入口挪顶栏 + 重写弹层逻辑修无弹层问题，四端入口位置全部收敛到标题栏，待用户统一复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -31,6 +31,14 @@
   - (desktop) 涉密入口从 `personal-ai-data-scope-dialog.vue` 底栏移到宿主 `personal-ai-memory-bar.vue` 的 `a-modal` `slot="title"`（该弹窗的标题栏/关闭按钮属于宿主 antd modal，不在子组件内）；`secretInfoVisible` 状态、深色气泡样式、`SvgIcon` 注册一并搬到宿主，子组件里对应的 state/import/样式已清理；箭头颜色覆盖从 `[x-placement^="top"]` 改成 `^="bottom"`；commit `77857e47`，eslint 过
   - 该弹窗仅 `personal-ai-memory-bar.vue` 一处引用，无其它落点需要同步
 
+- (ios) 用户要求涉密入口跟 android 一样挪到顶部标题栏右侧，同时反馈「点击涉密没有弹出层」—— **已改**（commit `7b74ce6b8`）：
+  - 新建 `ZXDataScopeSecretEntry.h/.m`：独立小类持有按钮 + 深色气泡展示/收起逻辑，供 `initWithCustomView:` 塞进 `navigationItem.rightBarButtonItem`；5 个页面（Controller/ContactPage/GroupPage/OrgDrill/Search）统一改用它，`viewWillDisappear` 里的收起调用同步从 `[self.bottomBar dismissSecretBubble]` 改成 `[self.secretEntry dismissBubble]`
+  - `ZXPersonalAiPickerBottomBar` 摘除全部涉密相关代码（按钮/气泡/常量），`clearButton` 的最小间距约束改回挂在 `selectedButton.mas_right`（即涉密功能加入前的原状）
+  - 「没有弹出层」反复读代码没找到确凿 bug（target-action、约束、window 兜底逻辑走查都对），这次重写时顺手把两处存疑写法改成更保险的写法：气泡固定用 `[UIApplication sharedApplication].keyWindow`（原来 `self.window ?: keyWindow`，多窗口/悬浮来电条等场景下 `self.window` 可能不是真正的 key window）；按钮位置改成 `[button convertRect:button.bounds toView:window]`（按钮自己转换自己的 bounds，不依赖挂在哪层父视图，比原来 `[self convertRect:secretButton.frame toView:window]` 更不容易因层级变化算错）——**没有真机验证能否根治**，需要你 Xcode 编译后实测
+  - 气泡定位同步改造：顶栏按钮下方弹出（不是原来底栏那套往上顶的算法）、右边缘对齐按钮右边缘避免探出屏幕（跟这次 android 顶栏改造的思路一致）
+  - `zhixinApp.xcodeproj/project.pbxproj` 手工注册了新增两个源文件（3 个 target 的 PBXBuildFile + Sources 阶段各一份），`plutil -lint` 校验语法通过
+  - 大括号/圆括号计数校验通过；仍未跑 `xcodebuild`（仓库规定 AI 不擅自构建），**这是继上次「没有弹出层」反馈之后的第二次未经真机验证的改动**，务必编译后重点复测这一处
+
 ## 待办 / 阻塞
 
 - (android) 气泡宽度 180dp / 箭头位置 / 右侧 12dp 留白均为估算值，仅编译验证，**未做真机像素级核对**；箭头 marginEnd 依赖顶栏按钮实际测量宽度，窄屏或系统字体放大时需实测确认箭头仍指在按钮上
@@ -41,7 +49,7 @@
 - (android) `/port android` 已提交 commit `0f6100be3`（`personal-ai-chat-hotfix`，未 push）；`./gradlew :smart_message:assembleDevelopDebug` BUILD SUCCESSFUL，`DataScopeModelTest` 单测全过；底栏窄屏（如 320pt 级）拥挤情况未做真机视觉核对，气泡垂直偏移量为测量高度+8dp 固定间距估算，非像素级对齐设计稿；未碰原有两个不相关未提交资源文件
 - (ios) `/port ios` 已提交 commit `0646ddd6`（`personal-ai-chat-hotfix`，未 push）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建验证**，需要人工用 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build 一次确认；说明气泡宽度/定位为自行设计（无设计稿像素级比对），窄屏（iPhone SE）底栏拥挤未单独适配测试；未碰原有 11 个不相关未提交文件
 - (web/desktop) 涉密入口挪顶栏后**未做浏览器/dev 真机视觉验证**（气泡朝下弹出的定位、标题栏拥挤度），只过了 `vue-tsc` / eslint；建议本地各起一次看一眼
-- (ios) 涉密入口仍在底栏「已选」右侧，未跟随 android/web/desktop 挪到顶部标题栏
+- (ios) 涉密入口已挪到顶部标题栏右侧（commit `7b74ce6b8`），**未做真机验证**，尤其要重点确认「点击弹出气泡」这个之前反馈失效的交互这次是否正常
 - (desktop) `/port desktop` 已提交 commit `443a4e85`（`personal-ai-chat-hotfix`，未 push）；eslint + 模板编译通过，**未跑 `npm run dev` 真机交互验证**（弹窗五个落点 + 说明气泡实际点击行为、popover 定位），建议本地起一次 dev 环境走查；说明气泡按钮尺寸/间距为估算值；未碰 `.env.test`/`electron-builder.yml`/`package.json`/`package-lock.json` 禁忌文件
 
 ## 关键决策记录
@@ -58,7 +66,7 @@
 - 2026-08-12：(ios) `ZXDataScopeTagView` 因被 `ZXForwardCell`/`ZXUserCollectionCell`（转发等功能复用）引用，放在 Picker 目录被跨模块 import；新增字段默认 `NO`，转发等无关流程视觉零影响；组织架构回填直接复用既有 `dialogueContactMap` 基础设施，未新建查找表类
 - 2026-08-12：(android) 说明气泡只在共享的 `include_data_range_multi_footer.xml` + `DataRangeMultiFooterHelper` 实现一次（复用仓库既有 `PopupWindow`/`popup_bg_jiantou_bottom_right` 惯例），5 个必需入口天然全覆盖，不用逐落点重复接；已离职灰色复用既有 `color_8F959E`，涉密配色复用既有 `color_FEAC00`/`color_FFF3DA`；`#E5E5E6` 无既有色值，直接写死在新 drawable 里（未改 `base_color.xml`）
 - 2026-08-12：底部「已选」「涉密」两按钮的正确顺序定为「已选在左、涉密在右紧挨」（以 web 实现为准）；四端逐一核实，android/desktop/ios 三端初版顺序都反了并已修正，web 本来就对
-- 2026-08-12（后续推翻）：涉密入口最终统一挪到**标题栏关闭按钮左侧**，底栏只保留「已选」；android 先改，随后 web/desktop 跟进；ios **尚未跟进**，如需四端一致要再补一次
+- 2026-08-12（后续推翻）：涉密入口最终统一挪到**标题栏**，底栏只保留「已选」；android 先改（顶栏右侧），随后 web/desktop 跟进（标题栏关闭按钮左侧）；ios 最后跟进——用户直接指定「标题栏右侧」（iOS 原生导航栏没有 web/desktop 那种「关闭按钮」概念，右侧对应 `rightBarButtonItem`，四端里最后一个补齐）
 - 2026-08-12：说明气泡最终定稿为「深色背景 + 文字居中」四端统一（此前 android 初版是白底黑字箭头气泡、desktop 初版是浅色左对齐，均已改）；android 因没有现成深色 9-patch 箭头资源，改用纯色圆角 `<shape>`，**不带箭头**（跟 web/desktop/iOS 是否要箭头未强制统一，如需要箭头版本再补美术资源）
 - 2026-08-12（修订）：android 应用户要求补回箭头，用 vector 三角形自绘（不依赖 9-patch 美术资源），宽度定 180dp；**此时 web/desktop/iOS 三端仍无箭头**，四端箭头形态不再统一——如需统一，另三端各自补一次
 - 2026-08-12：web 气泡左侧留白问题反复调试：`preventOverflow` 对该场景无效，根因是 `AcDialog` 内容区被本文件自身 scoped style 显式设了 `overflow: visible`，导致它不再是 popper 的 clipping boundary，实际按浏览器视口计算溢出（视口够大，永远不触发）；改用 `offset` modifier 的 skid 分量做固定像素偏移，最终数值由用户手动调定
