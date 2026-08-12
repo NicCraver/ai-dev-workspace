@@ -6,7 +6,7 @@
 <title>合并转发聊天记录页 · 全量示例</title>
 <style>
   :root{
-    --brand:#3E7DFF;
+    --brand:#3E7EFF;
     --brand-light:#EEF3FF;
     --text-1:#1F2329;
     --text-2:#646A73;
@@ -155,20 +155,25 @@
   .ai-tag{
     font-size:10px;
     line-height:16px;
-    padding:0 6px;
-    border-radius:4px;
-    background:var(--brand-light);
-    color:var(--brand);
+    padding:0 4px;
+    border-radius:2px;
     flex:none;
+    /* 个人AI框：色值取自 desktop msg-list.vue .tag-personal-ai */
+    background:#E3F6FE;
+    color:#45C5F7;
   }
-  .ai-tag.robot{background:#F2F3F5;color:var(--text-3);}
-  .ai-tag.group-ai{background:#EBFBEF;color:#00B368;}
+  /* 机器人：desktop .tag-robot */
+  .ai-tag.robot{background:#E2ECFF;color:#5D616B;}
+  /* 群AI框：desktop .tag-agent */
+  .ai-tag.group-ai{background:#F1E8FF;color:#9F66FE;}
   .time-pill{
     font-size:10px;
     color:var(--text-3);
     margin-left:auto;
     flex:none;
   }
+  /* 有评优徽章时，时间不再顶右对齐，跟徽章+星级一起自然接排（对齐 desktop ExcellentMedal 内嵌布局） */
+  .msg-head.has-medal .time-pill{margin-left:4px;}
 
   .bubble{
     display:inline-block;
@@ -182,23 +187,45 @@
     word-break:break-word;
   }
 
-  /* 评优徽章 */
-  .appraise-row{
-    display:flex;
+  /* 评优徽章+星级：对齐 desktop ExcellentMedal.vue —— 内嵌在「昵称+tag+时间」同一行，非气泡下方单独一行
+     色值/文案 5 种徽章：集团优秀/板块优秀=紫(#8787FB) 集团良好/板块良好+=蓝(#4A7ADF) 板块良好=绿(#2A877D)
+     星星按「集团(corp)/板块(plate)」区分图标家族，按「年度22px/季度18px」区分尺寸，累积制显示 icon+数量 */
+  .medal-inline{
+    display:inline-flex;
     align-items:center;
-    gap:2px;
-    margin-top:6px;
+    gap:5px;
+    margin-left:2px;
   }
-  .appraise-badge{
+  .medal-badge{
+    display:inline-flex;
+    align-items:center;
+    height:16px;
+    padding:0 6px 0 3px;
+    border-radius:2px;
     font-size:10px;
     color:#fff;
-    background:linear-gradient(135deg,#FFB020,#FF8A00);
-    padding:1px 6px;
-    border-radius:4px;
-    margin-right:4px;
+    gap:3px;
+    white-space:nowrap;
   }
-  .star{color:var(--star);font-size:12px;letter-spacing:-1px;}
-  .star.dim{color:#E5E6EB;}
+  .medal-ico{width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,.45);flex:none;}
+  .medal-you{background:#8787FB;}       /* 集团优秀 / 板块优秀 */
+  .medal-liangjia{background:#4A7ADF;}  /* 集团良好 / 板块良好+ */
+  .medal-liang{background:#2A877D;}     /* 板块良好 */
+  .medal-div{width:1px;height:10px;background:#E0E4E8;flex:none;}
+  .medal-star{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    color:#fff;
+    line-height:1;
+    flex:none;
+  }
+  .medal-star.corp{background:linear-gradient(135deg,#9B95FB,#7B5CFF);}   /* 集团 */
+  .medal-star.plate{background:linear-gradient(135deg,#6C9BEF,#4A7ADF);}  /* 板块 */
+  .medal-star.year{width:16px;height:16px;font-size:9px;}
+  .medal-star.quarter{width:13px;height:13px;font-size:7px;}
+  .medal-star-count{font-size:10px;color:var(--text-2);}
 
   /* 图片消息 */
   .img-bubble{
@@ -496,17 +523,19 @@
     <div class="msg-row">
       <div class="avatar robot">AI</div>
       <div class="msg-main">
-        <div class="msg-head">
+        <div class="msg-head has-medal">
           <span class="nickname">需求助手</span>
           <span class="ai-tag group-ai">群AI框</span>
           <span class="time-pill">10:05</span>
+          <span class="medal-inline">
+            <span class="medal-badge medal-you"><span class="medal-ico"></span>集团优秀</span>
+            <span class="medal-div"></span>
+            <span class="medal-star corp year">★</span>
+            <span class="medal-star-count">2</span>
+          </span>
         </div>
         <div class="bubble">已根据讨论生成任务清单，共 5 项，负责人待认领。</div>
-        <div class="appraise-row">
-          <span class="appraise-badge">优秀回答</span>
-          <span class="star">★★★★</span><span class="star dim">★</span>
-        </div>
-        <div class="type-tag">类型：群AI框 tag + 评优徽章（星级最多4星）</div>
+        <div class="type-tag">类型：群AI框 tag + 评优徽章「集团优秀」(紫#8787FB) + 年度集团星(22px累积制显示×数量)——对齐 desktop ExcellentMedal.vue，内嵌在昵称+时间同一行</div>
       </div>
     </div>
 
@@ -687,20 +716,21 @@
         </div>
       </div>
 
-      <!-- 回复3：评优 -->
+      <!-- 回复3：评优（换一种徽章类型，演示"板块良好+"蓝底 + 季度板块星·非累积单颗） -->
       <div class="msg-row">
         <div class="avatar robot">AI</div>
         <div class="msg-main">
-          <div class="msg-head">
+          <div class="msg-head has-medal">
             <span class="nickname">需求助手</span>
             <span class="ai-tag group-ai">群AI框</span>
             <span class="time-pill">10:24</span>
+            <span class="medal-inline">
+              <span class="medal-badge medal-liangjia"><span class="medal-ico"></span>板块良好+</span>
+              <span class="medal-div"></span>
+              <span class="medal-star plate quarter">★</span>
+            </span>
           </div>
           <div class="bubble">已在群日历同步新时间，并通知全部参会人。</div>
-          <div class="appraise-row">
-            <span class="appraise-badge">优秀回答</span>
-            <span class="star">★★★</span><span class="star dim">★★</span>
-          </div>
         </div>
       </div>
 
@@ -713,6 +743,8 @@
   <b>示例覆盖类型清单</b>（共 12 种，来自三端调研汇总）：
   文本 / 图片 / 文件 / 位置 / 群AI卡片 ActionCard / 引用消息 / 嵌套合并消息 / 撤回占位 /
   个人AI框 tag / 群AI框 tag / 机器人 tag / 评优徽章+星级 / 时间戳缺失兜底。
+  <br><br>
+  <b>评优/tag 色值已对齐 desktop 真实代码</b>：徽章色取自 <code>ExcellentMedal.vue</code> colorMap（集团优秀/板块优秀=紫#8787FB，集团良好/板块良好+=蓝#4A7ADF，板块良好=绿#2A877D，和 android <code>AppraisingTypeUtil</code> 完全一致）；AI/机器人 tag 色取自 <code>msg-list.vue</code> 的 <code>.tag-personal-ai/.tag-agent/.tag-robot</code>；徽章+星级布局改成内嵌在昵称+时间同一行（对齐 desktop 实际结构，而非气泡下方单独一行）；主题色改为 <code>#3E7EFF</code>（desktop unocss primary 精确值）。
   <br><br>
   改这个文件直接改上面 <b>.msg-row</b> 各块即可，每块下面灰字 <b>.type-tag</b> 标了类型，定稿后删掉即可当正式还原稿。
 </div>
