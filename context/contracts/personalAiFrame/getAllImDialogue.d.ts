@@ -4,6 +4,7 @@
  * 用途：① 个人 AI 框选会话 / 选智能体时拉取全部 IM 会话列表；
  *       ② 四端「选择数据来源」弹窗的候选清单（全量人 + 群，一次拉取、弹窗内存缓存）
  * Changelog:
+ * - 2026-08-12 回参单项增加 ignoreChatType（1-忽略聊天记录；0-不忽略）
  * - 2026-07-30 「选择 AI 框」web：**不再** `agentItemsOnly` 过滤无 agentId；列表/侧栏搜展示全量归一化项。
  * - 2026-07-30 「选择数据来源」与「选择 AI 框」：私聊 `privateInfo.leave === 1` 时展示名后缀 `（已离职）`
  *   （web 分别在 dataScopeModel / aiBoxPickerModel normalize；搜索/列表同源）。
@@ -98,6 +99,8 @@ export interface PersonalAiFrameImDialogueItem {
   privateInfo?: PersonalAiFrameImDialoguePrivateInfo;
   /** 群组信息（type=3 时有值） */
   groupInfo?: PersonalAiFrameImDialogueGroupInfo;
+  /** 1-忽略聊天记录；0-不忽略；mock: 0 */
+  ignoreChatType?: number;
 }
 
 /**
