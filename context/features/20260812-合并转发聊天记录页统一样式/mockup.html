@@ -513,7 +513,7 @@
   <div class="navbar">
     <div class="nav-icon-btn">←</div>
     <div class="nav-title">张三、李四的聊天记录
-      <small>共 11 条消息</small>
+      <small>共 21 条消息</small>
     </div>
     <div class="nav-forward">转发</div>
   </div>
@@ -548,6 +548,24 @@
         <div class="bubble">好的，我已同步给对应的同学，PRD 也会在会前更新完。</div>
         <div><span class="ai-source-pill">来自李四个人AI框</span></div>
         <div class="type-tag">类型：文本 + 个人AI框 tag（昵称行）+ 「来自XXX个人AI框」归因胶囊（气泡下方独立一行，还原截图 11）</div>
+      </div>
+    </div>
+
+    <!-- 2b. 个人AI框·定时发送：多一个时间胶囊标识，且只有本人能看到具体时间 -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李权泓个人AI框</span>
+          <span class="ai-tag">个人AI框</span>
+          <span class="time-pill">20:32</span>
+        </div>
+        <div class="bubble">lxq 群测试1</div>
+        <div>
+          <span class="ai-source-pill">来自李权泓个人AI框</span>
+          <span class="ai-source-pill">⏰ 每天 20:32</span>
+        </div>
+        <div class="type-tag">类型：个人AI框·定时发送——比普通个人AI框消息多一个「⏰ 每天20:32」调度胶囊（还原截图14）。<b>逻辑：这个调度时间胶囊只有账户本人可见</b>，群里其他人看到的是同一条消息，但不显示这个时间胶囊，只有「来自XXX个人AI框」</div>
       </div>
     </div>
 
@@ -666,7 +684,28 @@
       </div>
     </div>
 
-    <!-- 9. 引用消息：合并详情页里点它不弹"N条回复"，纯文本展示（对齐PC真实行为，引用块本身仍照常显示） -->
+    <!-- 8b. 群AI框·定时发送：同样要挂「群AI框」标识 + 调度胶囊，但对群内所有人都可见（跟个人AI框仅本人可见不同） -->
+    <div class="msg-row">
+      <div class="avatar robot">AI</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">需求助手</span>
+          <span class="ai-tag group-ai">群AI框</span>
+          <span class="time-pill">09:00</span>
+        </div>
+        <div class="bubble">早安打卡提醒：今日站会 10:00 开始，请提前准备进度同步内容。</div>
+        <div>
+          <span class="ai-source-pill">来自群AI框</span>
+          <span class="ai-source-pill">⏰ 每个工作日 09:00</span>
+        </div>
+        <div class="type-tag">类型：群AI框·定时发送——必须带「群AI框」tag + 调度胶囊。<b>逻辑：跟个人AI框不同，群AI框的调度时间对群内所有人可见</b>（不是仅发起人可见），因为这是群共享的定时任务，不是私人配置</div>
+      </div>
+    </div>
+
+    <!-- 9. 引用消息：按被引用的原消息类型不同，摘要文案不同（对齐PC研究里的 summaryList 占位规则）。
+         合并详情页里点击均无反应，不显示"N条回复"、不弹层（对齐PC真实实现） -->
+
+    <!-- 9a. 引用文本 -->
     <div class="msg-row">
       <div class="avatar">李</div>
       <div class="msg-main">
@@ -681,7 +720,121 @@
           </div>
           收到，我把日历也同步改一下。
         </div>
-        <div class="type-tag">类型：引用消息 ReferenceMessage —— <b>合并详情页内点击无反应，不显示"N条回复"、不弹层</b>（对齐PC真实实现：合并详情列表把引用消息当纯文本渲染）；「N条回复」弹窗只在<b>普通会话内</b>点引用块才会触发，下面单独放了个入口按钮演示该弹窗长什么样</div>
+        <div class="type-tag">类型：引用消息·引用文本 —— <b>合并详情页内点击无反应，不显示"N条回复"、不弹层</b>（对齐PC真实实现：合并详情列表把引用消息当纯文本渲染）；「N条回复」弹窗只在<b>普通会话内</b>点引用块才会触发，下面单独放了个入口按钮演示该弹窗长什么样</div>
+      </div>
+    </div>
+
+    <!-- 9b. 引用图片 -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李四</span>
+          <span class="time-pill">10:21</span>
+        </div>
+        <div class="bubble">
+          <div class="quote-block">
+            <span class="q-name">张三：</span>
+            <span>[图片]</span>
+          </div>
+          这张图我存一下。
+        </div>
+        <div class="type-tag">类型：引用消息·引用图片——摘要按类型给占位文案「[图片]」，不内嵌缩略图</div>
+      </div>
+    </div>
+
+    <!-- 9c. 引用文件 -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李四</span>
+          <span class="time-pill">10:22</span>
+        </div>
+        <div class="bubble">
+          <div class="quote-block">
+            <span class="q-name">张三：</span>
+            <span>[文件] 数据范围筛选条-评审版v3.pdf</span>
+          </div>
+          辛苦按这版走查一下。
+        </div>
+        <div class="type-tag">类型：引用消息·引用文件——占位文案「[文件] 文件名」</div>
+      </div>
+    </div>
+
+    <!-- 9d. 引用位置 -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李四</span>
+          <span class="time-pill">10:23</span>
+        </div>
+        <div class="bubble">
+          <div class="quote-block">
+            <span class="q-name">张三：</span>
+            <span>[位置] 星辰大厦 A 座</span>
+          </div>
+          好的，导航已经打开。
+        </div>
+        <div class="type-tag">类型：引用消息·引用位置——占位文案「[位置] 地点名」</div>
+      </div>
+    </div>
+
+    <!-- 9e. 引用群AI卡片 -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李四</span>
+          <span class="time-pill">10:24</span>
+        </div>
+        <div class="bubble">
+          <div class="quote-block">
+            <span class="q-name">需求助手：</span>
+            <span>[卡片] 评审纪要 · 自动生成</span>
+          </div>
+          这份纪要辛苦大家过一遍。
+        </div>
+        <div class="type-tag">类型：引用消息·引用群AI卡片 ActionCard——占位文案「[卡片] 标题」</div>
+      </div>
+    </div>
+
+    <!-- 9f. 引用嵌套合并消息 -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李四</span>
+          <span class="time-pill">10:25</span>
+        </div>
+        <div class="bubble">
+          <div class="quote-block">
+            <span class="q-name">张三：</span>
+            <span>[聊天记录] 项目群的聊天记录</span>
+          </div>
+          这个对我们排期有参考价值。
+        </div>
+        <div class="type-tag">类型：引用消息·引用嵌套合并消息——占位文案「[聊天记录] 标题」</div>
+      </div>
+    </div>
+
+    <!-- 9g. 引用已撤回消息（边界态：不能再展示原文） -->
+    <div class="msg-row">
+      <div class="avatar">李</div>
+      <div class="msg-main">
+        <div class="msg-head">
+          <span class="nickname">李四</span>
+          <span class="time-pill">10:26</span>
+        </div>
+        <div class="bubble">
+          <div class="quote-block">
+            <span class="q-name" style="color:var(--text-3);">原消息</span>
+            <span style="font-style:italic;">已撤回，无法查看</span>
+          </div>
+          啊，没事我重新发一下。
+        </div>
+        <div class="type-tag">类型：引用消息·引用已撤回消息——边界态，原文取不到，只能显示"已撤回"占位，不显示发送者名</div>
       </div>
     </div>
 
@@ -780,15 +933,16 @@
 </div>
 
 <div class="legend">
-  <b>示例覆盖类型清单</b>（共 12 种，来自三端调研汇总）：
-  文本 / 图片 / 文件 / 位置 / 群AI卡片 ActionCard / 引用消息 / 嵌套合并消息 / 撤回占位 /
-  个人AI框 tag / 群AI框 tag / 机器人 tag / 评优徽章+星级 / 时间戳缺失兜底。
+  <b>示例覆盖类型清单</b>（来自三端调研汇总）：
+  文本 / 图片 / 文件 / 位置 / 群AI卡片 ActionCard / 嵌套合并消息 / 撤回占位 /
+  个人AI框 tag / 群AI框 tag / 机器人 tag / 评优徽章+星级 / 时间戳缺失兜底 / AI框定时发送调度胶囊 /
+  <b>引用消息 7 种子类型</b>（引用文本/图片/文件/位置/群AI卡片/嵌套合并消息/已撤回消息，各自摘要占位文案不同）。
   <br><br>
   <b>评优/tag 色值已对齐 desktop 真实代码</b>：徽章色取自 <code>ExcellentMedal.vue</code> colorMap（集团优秀/板块优秀=紫#8787FB，集团良好/板块良好+=蓝#4A7ADF，板块良好=绿#2A877D，和 android <code>AppraisingTypeUtil</code> 完全一致）；AI/机器人 tag 色取自 <code>msg-list.vue</code> 的 <code>.tag-personal-ai/.tag-agent/.tag-robot</code>；主题色改为 <code>#3E7EFF</code>（desktop unocss primary 精确值）。
   <br><br>
   <b>本轮按 10 张真实截图二次还原</b>：评优徽章改成「六边形年/季图标+胶囊+竖分隔线+星」（星色按集团=金/板块=灰，实拍配色，非猜测）；文件消息按类型给实底色图标，未知类型灰底问号；新增「来自XXX个人AI框」归因胶囊（气泡下方独立一行，区别于昵称行的 tag）；群AI卡片改成"蓝色提示条+嵌套小卡+行动中心归属胶囊"结构。
   <br><br>
-  <b>逻辑修正（不只是样式）</b>：① 评优徽章只挂真人 senderId（查账户考核库），个人AI框/群AI框/机器人这三种 tag 身份互斥于评优，不会同时出现——之前误把评优挂在机器人头像上，已改成挂在真人（李博雅/苑立杰）身上；② 时间统一紧跟昵称/tag自然接排，不再顶格推到行最右——10张截图里没有一例把时间推到行尾，之前 <code>margin-left:auto</code> 是猜的；③ <b>合并详情页内的引用消息点击无反应</b>，不显示/不触发「N条回复」——之前挂在合并页里的点击弹层是错的（对齐PC真实实现），「N条回复」弹窗只在普通会话内点引用块才会出现，<span class="quote-hint" style="cursor:pointer;display:inline" onclick="openDrawer()">点这里预览弹窗效果 →</span>
+  <b>逻辑修正（不只是样式）</b>：① 评优徽章只挂真人 senderId（查账户考核库），个人AI框/群AI框/机器人这三种 tag 身份互斥于评优，不会同时出现——之前误把评优挂在机器人头像上，已改成挂在真人（李博雅/苑立杰）身上；② 时间统一紧跟昵称/tag自然接排，不再顶格推到行最右——10张截图里没有一例把时间推到行尾，之前 <code>margin-left:auto</code> 是猜的；③ <b>合并详情页内的引用消息点击无反应</b>，不显示/不触发「N条回复」——之前挂在合并页里的点击弹层是错的（对齐PC真实实现），「N条回复」弹窗只在普通会话内点引用块才会出现，<span class="quote-hint" style="cursor:pointer;display:inline" onclick="openDrawer()">点这里预览弹窗效果 →</span>；④ 个人AI框定时发送的调度时间胶囊「⏰ 每天20:32」<b>只有账户本人可见</b>，群AI框定时发送的调度胶囊则群内所有人可见——两种AI框身份的可见性规则不一样，别混着实现。
   <br><br>
   改这个文件直接改上面 <b>.msg-row</b> 各块即可，每块下面灰字 <b>.type-tag</b> 标了类型，定稿后删掉即可当正式还原稿。
 </div>
