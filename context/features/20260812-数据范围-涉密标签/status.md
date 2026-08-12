@@ -20,6 +20,10 @@
   - (desktop) 原来 `placement="top-start"` + 浅色文字，改 `placement="top"` + `effect="dark"` + `.pa-secret-info-content{text-align:center}` + `.pa-secret-info-popover{margin-left:12px}` —— **已修**（commit `04239dbe`，eslint 过）
   - (ios) 背景本来就是深色 `Color_HEX(@"1F2329")`，只是文字没居中 —— **已修**（commit `6ac9858bb`，`textLabel.textAlignment = NSTextAlignmentCenter`；大括号/圆括号计数校验通过，未跑 xcodebuild）
   - (android) 原来是白底黑字箭头气泡（`popup_bg_jiantou_bottom_right` 9-patch，采样确认背景 `#FFFFFF`），换成深色圆角 shape `bg_data_range_secret_tip.xml`（`#1F2329` + 6dp 圆角，无箭头）+ 文字白色居中 —— **已修**（commit `fd1655ba6`，`assembleDevelopDebug` BUILD SUCCESSFUL）
+  - (desktop) 深色其实没生效——Element UI（Vue2）的 `el-popover` **没有** tooltip 那种 `effect="dark"` 属性，`.el-popover` 基础样式写死白底，之前设的 `effect="dark"` 是个无效属性；改用自定义 class 硬覆盖背景/边框/箭头颜色（`!important`）—— **已修**（commit `ce75f76a`，eslint 过）
+- (android) 用户反馈底栏太挤 + 气泡定位不准，改方案：涉密入口从底栏挪到顶部标题栏右侧（5 个落点各自的标题栏：`activity_select_data_range`/`_contact`/`_group`/`_org_drill` 用 FrameLayout 顶栏，`_search` 无独立顶栏、加在搜索框右侧）—— **已改**（commit `faab41320`，`assembleDevelopDebug` BUILD SUCCESSFUL）：
+  - 新建共享 `include_data_range_secret_entry.xml`，5 个 activity 顶部各 `<include>` 一份；`DataRangeMultiFooterHelper` 从底栏 `bind()` 里摘掉涉密入口逻辑，新增公开方法 `bindSecretEntry(View)` 供顶栏调用
+  - 顺带修了「位置不准」两个真根因：①原代码 `content.measure(UNSPECIFIED, UNSPECIFIED)` 量出来的是文字不换行的单行高度，跟气泡容器 220dp 定宽下多行换行的真实高度对不上；改成按 220dp `EXACTLY` 量；②原代码按「贴底栏」逻辑用负 yoff 把气泡往上顶，入口挪到顶栏后这套算法会把气泡顶到状态栏外面去——改成 `showAsDropDown` 默认方向（挂件正下方）+ 小正 yoff；顺带按钮靠屏幕右侧、气泡 220dp 比按钮宽，加了 `xOff = 按钮宽 - 气泡宽` 让气泡右边缘对齐按钮右边缘，避免探出屏幕右侧
 
 ## 待办 / 阻塞
 
