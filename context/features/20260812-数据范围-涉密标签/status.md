@@ -30,6 +30,9 @@
   - (web) `AcDialog.vue` 新增 `header-right` 具名插槽（插在关闭按钮左侧，`v-if="$slots['header-right']"` 无插槽时不渲染不占位，其它调用方零影响）；`SelectDataRangeDialog.vue` 把涉密 `el-popover` 从 `#footer-left` 移到 `#header-right`，`placement` 由 `top` 改 `bottom-end`（右对齐触发器，避免 280px 气泡探出 440px 弹窗右边缘），去掉原先为底栏左边缘问题加的 `offset [12,12]` hack；commit `7e8cc76`，`vue-tsc --noEmit` 通过
   - (desktop) 涉密入口从 `personal-ai-data-scope-dialog.vue` 底栏移到宿主 `personal-ai-memory-bar.vue` 的 `a-modal` `slot="title"`（该弹窗的标题栏/关闭按钮属于宿主 antd modal，不在子组件内）；`secretInfoVisible` 状态、深色气泡样式、`SvgIcon` 注册一并搬到宿主，子组件里对应的 state/import/样式已清理；箭头颜色覆盖从 `[x-placement^="top"]` 改成 `^="bottom"`；commit `77857e47`，eslint 过
   - 该弹窗仅 `personal-ai-memory-bar.vue` 一处引用，无其它落点需要同步
+- (web/desktop) 用户复验：desktop 涉密没贴到关闭按钮左侧 + 两端气泡要「正下方居中」弹出 —— **已修**（web commit `508c329`、desktop commit `55161faf`）：
+  - (desktop) 根因是全局 `assets/styles/reset-ui-ifram.scss` 里 `.ant-modal-wrap .ant-modal-header{display:flex;padding:0 20px;height:50px}`——header 被设成 flex 后 `.ant-modal-title` 不再撑满宽度，标题栏内的 `space-between` 没有可分配空间，涉密就紧贴标题文字。修法：①本文件所有弹窗样式的外层选择器由 `.pa-data-scope-modal` 改成 `.ant-modal-wrap.pa-data-scope-modal`（3 个 class 压过全局的 2 个）；②`.ant-modal-title` 加 `flex:1;min-width:0`；③header padding 改 `0 48px 0 24px`（高度/垂直居中沿用全局 50px flex 头部，右侧 48px 让开 56px 宽的关闭按钮命中区）
+  - 两端 `placement` 由 `bottom-end` 改 `bottom`（气泡正对触发器居中、向下展开）；注意气泡 280px 宽而触发器靠弹窗右缘，居中弹出时气泡右半会探出弹窗右边界（popper 挂 body、不被弹窗裁剪，视口内可见），这是「居中」要求的必然结果，如不接受需改回 `bottom-end` 或缩窄气泡
 
 - (ios) 用户要求涉密入口跟 android 一样挪到顶部标题栏右侧，同时反馈「点击涉密没有弹出层」—— **已改**（commit `7b74ce6b8`）：
   - 新建 `ZXDataScopeSecretEntry.h/.m`：独立小类持有按钮 + 深色气泡展示/收起逻辑，供 `initWithCustomView:` 塞进 `navigationItem.rightBarButtonItem`；5 个页面（Controller/ContactPage/GroupPage/OrgDrill/Search）统一改用它，`viewWillDisappear` 里的收起调用同步从 `[self.bottomBar dismissSecretBubble]` 改成 `[self.secretEntry dismissBubble]`
@@ -39,10 +42,16 @@
   - `zhixinApp.xcodeproj/project.pbxproj` 手工注册了新增两个源文件（3 个 target 的 PBXBuildFile + Sources 阶段各一份），`plutil -lint` 校验语法通过
   - 大括号/圆括号计数校验通过；仍未跑 `xcodebuild`（仓库规定 AI 不擅自构建），**这是继上次「没有弹出层」反馈之后的第二次未经真机验证的改动**，务必编译后重点复测这一处
 
+- (ios) 用户反馈：①不要用原生 `UIBarButtonItem`；②气泡没有箭头 —— **已改**（commit `bd145c96c`）：
+  - 摘掉 `navigationItem.rightBarButtonItem`，改成 5 个页面各自新增一个纯 `UIView`（`secretEntryBar`，高 36pt，内含右对齐 16pt 的涉密按钮）插到系统导航栏与原有内容（`searchHeaderView`/`breadcrumbScroll`/`tableView`/`searchBarContainer`）之间，原来「顶到 `self.view` 顶部」的约束改成挂在这个新 bar 的 `mas_bottom` 下；仅数据范围模式显示（`.hidden` + 高度 0 双重收起，跟 `bottomBar` 现有写法一致）
+  - 气泡补了向上箭头：`CAShapeLayer` 画 12×6pt 三角形（不依赖美术资源，同色 `#1F2329`），水平位置对准按钮中心，气泡改挂在箭头下方——对齐 android 现在「箭头+气泡体」的两层结构
+  - 大括号/圆括号计数校验通过，仍未跑 `xcodebuild`
+
 ## 待办 / 阻塞
 
 - (android) 气泡宽度 180dp / 箭头位置 / 右侧 12dp 留白均为估算值，仅编译验证，**未做真机像素级核对**；箭头 marginEnd 依赖顶栏按钮实际测量宽度，窄屏或系统字体放大时需实测确认箭头仍指在按钮上
-- (四端) 箭头形态目前不统一：仅 android 有向上箭头，web/desktop/iOS 仍是无箭头深色气泡——是否要求统一由用户定
+- (四端) 箭头形态目前不统一：android/iOS 有向上箭头，web/desktop 仍是无箭头深色气泡——是否要求统一由用户定
+- (ios) 涉密入口改成自定义 `secretEntryBar` 后占了一整行高度（36pt），会让 `searchHeaderView` 等内容整体下移；未做真机视觉验证是否显挤/是否需要压缩高度
 
 - (web) `vue-tsc --noEmit` 已过、`dataScopeModel` 单测 20/20 过；**未做**真实浏览器联调可视化验证——本地环境 `getAllImDialogue` 走真实接口（无 mock），未接入测试后端/登录态，无法起 `pnpm dev` 跑通真实弹窗看涉密/已离职 tag 实际渲染效果。建议开发者本地连测试环境跑一遍再合并。
 - (web) `pnpm format` 本地环境 `node_modules` 里 prettier 缺失（非本次改动引入的问题），跳过自动格式化，靠手工对齐现有代码风格；如需要请本地补齐依赖后跑一次 `pnpm format`。
