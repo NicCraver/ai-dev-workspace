@@ -1,22 +1,22 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-12 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-12（四端代码均已落地，web/desktop/ios 待人工视觉/构建验证，android 已过 gradle build + 单测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| Tag 接入（全部/群组/搜索/组织架构/已选） | ✅ | ⬜ | ⬜ | ⬜ |
-| 涉密说明气泡（底部图标按钮） | ✅ | ⬜ | ⬜ | ⬜ |
-| 自测通过 | 🚧 | ⬜ | ⬜ | ⬜ |
+| Tag 接入（全部/群组/搜索/组织架构/已选） | ✅ | ✅ | ✅ | ✅ |
+| 涉密说明气泡（底部图标按钮） | ✅ | ✅ | ✅ | ✅ |
+| 自测通过 | 🚧 | ✅ | 🚧 | 🚧 |
 
 ## 待办 / 阻塞
 
 - (web) `vue-tsc --noEmit` 已过、`dataScopeModel` 单测 20/20 过；**未做**真实浏览器联调可视化验证——本地环境 `getAllImDialogue` 走真实接口（无 mock），未接入测试后端/登录态，无法起 `pnpm dev` 跑通真实弹窗看涉密/已离职 tag 实际渲染效果。建议开发者本地连测试环境跑一遍再合并。
 - (web) `pnpm format` 本地环境 `node_modules` 里 prettier 缺失（非本次改动引入的问题），跳过自动格式化，靠手工对齐现有代码风格；如需要请本地补齐依赖后跑一次 `pnpm format`。
-- (android) 待 `/port android`：全部/群组/组织架构/搜索/已选、选择联系人、选择已有群组等落点接入涉密/已离职 tag + 说明入口
-- (ios) 待 `/port ios`：同上
-- (desktop) 待 `/port desktop`：PC 原生弹窗结构下接入涉密/已离职 tag + 说明气泡
+- (android) `/port android` 已提交 commit `0f6100be3`（`personal-ai-chat-hotfix`，未 push）；`./gradlew :smart_message:assembleDevelopDebug` BUILD SUCCESSFUL，`DataScopeModelTest` 单测全过；底栏窄屏（如 320pt 级）拥挤情况未做真机视觉核对，气泡垂直偏移量为测量高度+8dp 固定间距估算，非像素级对齐设计稿；未碰原有两个不相关未提交资源文件
+- (ios) `/port ios` 已提交 commit `0646ddd6`（`personal-ai-chat-hotfix`，未 push）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建验证**，需要人工用 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build 一次确认；说明气泡宽度/定位为自行设计（无设计稿像素级比对），窄屏（iPhone SE）底栏拥挤未单独适配测试；未碰原有 11 个不相关未提交文件
+- (desktop) `/port desktop` 已提交 commit `443a4e85`（`personal-ai-chat-hotfix`，未 push）；eslint + 模板编译通过，**未跑 `npm run dev` 真机交互验证**（弹窗五个落点 + 说明气泡实际点击行为、popover 定位），建议本地起一次 dev 环境走查；说明气泡按钮尺寸/间距为估算值；未碰 `.env.test`/`electron-builder.yml`/`package.json`/`package-lock.json` 禁忌文件
 
 ## 关键决策记录
 
@@ -27,3 +27,7 @@
 - 2026-08-12：组织架构 tab 数据源不带涉密/离职字段，前端用已拉取的候选清单（getAllImDialogue 全量人+群）按账号 id 本地建查找表回填，不改组织树接口
 - 2026-08-12：移动端「选择数据范围」现状 100% 走 wnsdk 桥接原生页面，本期不新建 mobile web 页面，只改 android/ios 原生
 - 2026-08-12：工作区另有一批与本功能无关、未提交的 `hideChat`/`saveAgentSetInfo`/`getAgentSetInfo` 契约改动（Agent 设置域），经确认不属于本功能范围，未合并处理，留给对应负责人
+- 2026-08-12：desktop/android/ios 三端移植不新开分支，直接 commit 到各自现有的 `personal-ai-chat-hotfix`（工作区里各自还有跟本功能无关的未提交改动，均未触碰）；web 端例外，单独用 `feat/data-scope-secret-tag` 分支
+- 2026-08-12：(desktop) tag 组件因被公共组件 `dept-user-check-list.vue`（转发/建群等多功能复用）引用，上提到 `components/common/`；组织架构人员行走新增可选 prop `userTagMap`（默认 null，不传时其它调用方零影响）
+- 2026-08-12：(ios) `ZXDataScopeTagView` 因被 `ZXForwardCell`/`ZXUserCollectionCell`（转发等功能复用）引用，放在 Picker 目录被跨模块 import；新增字段默认 `NO`，转发等无关流程视觉零影响；组织架构回填直接复用既有 `dialogueContactMap` 基础设施，未新建查找表类
+- 2026-08-12：(android) 说明气泡只在共享的 `include_data_range_multi_footer.xml` + `DataRangeMultiFooterHelper` 实现一次（复用仓库既有 `PopupWindow`/`popup_bg_jiantou_bottom_right` 惯例），5 个必需入口天然全覆盖，不用逐落点重复接；已离职灰色复用既有 `color_8F959E`，涉密配色复用既有 `color_FEAC00`/`color_FFF3DA`；`#E5E5E6` 无既有色值，直接写死在新 drawable 里（未改 `base_color.xml`）

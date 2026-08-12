@@ -666,9 +666,9 @@ git commit -m "feat(data-scope): 组织架构/已选 tag 回填 + 涉密说明�
 
 按仓库根 `CLAUDE.md` 的跨端移植规则：Task 7 的 `impl-notes.md` 写好后，desktop / android / ios 各自用 `/port` 技能移植，**不要**在本 plan 里预先臆测三端的原生文件路径——`/port` 会在执行时只读 `impl-notes.md` + `context/contracts/` + 目标端 `context/platforms/<端>.md`，用目标端惯用范式实现，禁止照抄 web 代码。
 
-- [ ] `/port desktop`（PC 原生弹窗结构与 web 一致，是否复用 web 组件还是独立 Vue2.7 实现以 `platforms/desktop.md` 现状为准）
-- [ ] `/port android`（原生「选择联系人/选择已有群组/全部/搜索/已选」各落点）
-- [ ] `/port ios`（同 android）
+- [x] `/port desktop`（commit `443a4e85`，`personal-ai-chat-hotfix`，未 push）——eslint + 模板编译过，未跑 `npm run dev` 真机验证
+- [x] `/port android`（commit `0f6100be3`，`personal-ai-chat-hotfix`，未 push）——`assembleDevelopDebug` BUILD SUCCESSFUL，`DataScopeModelTest` 单测过
+- [x] `/port ios`（commit `0646ddd6`，`personal-ai-chat-hotfix`，未 push）——按仓库规定未跑 `xcodebuild`，需人工 Xcode clean build 确认
 
 三端各自完成后回填 `status.md` 平台矩阵。
 
