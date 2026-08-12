@@ -1,21 +1,21 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-12（人工验收发现视觉问题，正在修：ios 涉密按钮应在已选右侧、desktop 列表 tag 应紧挨姓名而非贴行右缘、web 气泡已改深色居中；android 待复查同类问题）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-12（人工视觉验收发现的问题四端均已修完，待用户统一复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| Tag 接入（全部/群组/搜索/组织架构/已选） | ✅ | 🚧 | ✅ | 🚧 |
-| 涉密说明气泡（底部图标按钮） | ✅ | 🚧 | 🚧 | ✅ |
+| Tag 接入（全部/群组/搜索/组织架构/已选） | ✅ | ✅ | ✅ | ✅ |
+| 涉密说明气泡（底部图标按钮） | ✅ | ✅ | ✅ | ✅ |
 | 自测通过 | 🚧 | ✅ | 🚧 | 🚧 |
 
-## 视觉验收发现的问题（2026-08-12，修复子agent 执行中）
+## 视觉验收发现的问题（2026-08-12，均已修复，待用户统一复验）
 
-- (ios) 底部「涉密」说明按钮应在「已选」按钮**右侧**紧挨着，之前放到了左侧最前 —— 修复中
-- (desktop) 列表行 tag 被布局挤到行最右边缘，应**紧挨姓名/群名右侧** —— 修复中
+- (ios) 底部「涉密」按钮应在「已选」右侧紧挨着，原来放在左侧最前 —— **已修**（commit `9afc47fb6`，交换约束顺序，同步修了 `clearButton` 最小间距基准；气泡固定文案逐字核对无误）
+- (desktop) ①列表行 tag 被布局挤到行最右边缘，应紧挨姓名/群名右侧 —— **已修**（commit `b81d002d`，根因 `.pa-ds-name`/`.pa-ds-search-name` 用了 `flex: 1` 撑满剩余空间把 tag 推到行尾，改成 `flex: 0 1 auto`；5 处落点逐一排查，全部/群组/搜索行有此 bug 已修，组织架构行/已选 chip 本来就没问题未改）；②底部涉密/已选按钮顺序反了 —— **已修**（commit `77cd791a`，交换两个 `el-popover` 模板顺序，改成已选左、涉密右）
 - (web) 涉密说明气泡应深色主题 + 居中弹出 + 文字居中 —— **已修**（commit `268f2bb`，`placement="top"` + `effect="dark"` + 文字 `text-center`）
-- (android) 未明确验收，安排复查是否有上述两类同款问题（按钮位置 / tag 贴右边缘） —— 排查中
+- (android) 复查同款问题：①底部按钮顺序——确实同样反了，**已修**（commit `02ac567a6`，交换 `include_data_range_multi_footer.xml` 里两个 LinearLayout 顺序，`id` 不变，Helper 绑定不受影响）；②列表 tag 贴边——排查后**结构上不存在**该问题（`item_friend_content.xml` 姓名 `layout_weight=1` 是被 4 处其他选择器复用的既有写法，tag 紧跟姓名无额外撑开/靠右对齐，跟 desktop 的反面案例不是一回事，未改动，需你实测确认姓名很短时是否有可感知间隙）；`assembleDevelopDebug` 已重新跑过 BUILD SUCCESSFUL
 
 ## 待办 / 阻塞
 
@@ -38,3 +38,4 @@
 - 2026-08-12：(desktop) tag 组件因被公共组件 `dept-user-check-list.vue`（转发/建群等多功能复用）引用，上提到 `components/common/`；组织架构人员行走新增可选 prop `userTagMap`（默认 null，不传时其它调用方零影响）
 - 2026-08-12：(ios) `ZXDataScopeTagView` 因被 `ZXForwardCell`/`ZXUserCollectionCell`（转发等功能复用）引用，放在 Picker 目录被跨模块 import；新增字段默认 `NO`，转发等无关流程视觉零影响；组织架构回填直接复用既有 `dialogueContactMap` 基础设施，未新建查找表类
 - 2026-08-12：(android) 说明气泡只在共享的 `include_data_range_multi_footer.xml` + `DataRangeMultiFooterHelper` 实现一次（复用仓库既有 `PopupWindow`/`popup_bg_jiantou_bottom_right` 惯例），5 个必需入口天然全覆盖，不用逐落点重复接；已离职灰色复用既有 `color_8F959E`，涉密配色复用既有 `color_FEAC00`/`color_FFF3DA`；`#E5E5E6` 无既有色值，直接写死在新 drawable 里（未改 `base_color.xml`）
+- 2026-08-12：底部「已选」「涉密」两按钮的正确顺序定为「已选在左、涉密在右紧挨」（以 web 实现为准）；四端逐一核实，android/desktop/ios 三端初版顺序都反了并已修正，web 本来就对
