@@ -14,8 +14,12 @@
 
 - (ios) 底部「涉密」按钮应在「已选」右侧紧挨着，原来放在左侧最前 —— **已修**（commit `9afc47fb6`，交换约束顺序，同步修了 `clearButton` 最小间距基准；气泡固定文案逐字核对无误）
 - (desktop) ①列表行 tag 被布局挤到行最右边缘，应紧挨姓名/群名右侧 —— **已修**（commit `b81d002d`，根因 `.pa-ds-name`/`.pa-ds-search-name` 用了 `flex: 1` 撑满剩余空间把 tag 推到行尾，改成 `flex: 0 1 auto`；5 处落点逐一排查，全部/群组/搜索行有此 bug 已修，组织架构行/已选 chip 本来就没问题未改）；②底部涉密/已选按钮顺序反了 —— **已修**（commit `77cd791a`，交换两个 `el-popover` 模板顺序，改成已选左、涉密右）
-- (web) 涉密说明气泡应深色主题 + 居中弹出 + 文字居中 —— **已修**（commit `268f2bb`，`placement="top"` + `effect="dark"` + 文字 `text-center`）；气泡贴左边缘 —— **已修**（commit `95b4c36`，`popper-options` 加 `preventOverflow padding:16`）
+- (web) 涉密说明气泡应深色主题 + 居中弹出 + 文字居中 —— **已修**（commit `268f2bb`，`placement="top"` + `effect="dark"` + 文字 `text-center`）；气泡贴左边缘——先后试了 `preventOverflow`（无效，根因见下）、`offset` skid 32/12，**最终由用户本人手动定稿**（commit `517ae05`：offset skid `[12,12]`，去掉外层负边距，文案加 `-m-1`）
 - (android) 复查同款问题：①底部按钮顺序——确实同样反了，**已修**（commit `02ac567a6`，交换 `include_data_range_multi_footer.xml` 里两个 LinearLayout 顺序，`id` 不变，Helper 绑定不受影响）；②列表 tag 贴边——排查后**结构上不存在**该问题（`item_friend_content.xml` 姓名 `layout_weight=1` 是被 4 处其他选择器复用的既有写法，tag 紧跟姓名无额外撑开/靠右对齐，跟 desktop 的反面案例不是一回事，未改动，需你实测确认姓名很短时是否有可感知间隙）；`assembleDevelopDebug` 已重新跑过 BUILD SUCCESSFUL
+- （全端追加）用户要求「都按 web 端来」，气泡统一深色 + 文字居中，主线程直接改（未用子agent）：
+  - (desktop) 原来 `placement="top-start"` + 浅色文字，改 `placement="top"` + `effect="dark"` + `.pa-secret-info-content{text-align:center}` + `.pa-secret-info-popover{margin-left:12px}` —— **已修**（commit `04239dbe`，eslint 过）
+  - (ios) 背景本来就是深色 `Color_HEX(@"1F2329")`，只是文字没居中 —— **已修**（commit `6ac9858bb`，`textLabel.textAlignment = NSTextAlignmentCenter`；大括号/圆括号计数校验通过，未跑 xcodebuild）
+  - (android) 原来是白底黑字箭头气泡（`popup_bg_jiantou_bottom_right` 9-patch，采样确认背景 `#FFFFFF`），换成深色圆角 shape `bg_data_range_secret_tip.xml`（`#1F2329` + 6dp 圆角，无箭头）+ 文字白色居中 —— **已修**（commit `fd1655ba6`，`assembleDevelopDebug` BUILD SUCCESSFUL）
 
 ## 待办 / 阻塞
 
@@ -39,3 +43,5 @@
 - 2026-08-12：(ios) `ZXDataScopeTagView` 因被 `ZXForwardCell`/`ZXUserCollectionCell`（转发等功能复用）引用，放在 Picker 目录被跨模块 import；新增字段默认 `NO`，转发等无关流程视觉零影响；组织架构回填直接复用既有 `dialogueContactMap` 基础设施，未新建查找表类
 - 2026-08-12：(android) 说明气泡只在共享的 `include_data_range_multi_footer.xml` + `DataRangeMultiFooterHelper` 实现一次（复用仓库既有 `PopupWindow`/`popup_bg_jiantou_bottom_right` 惯例），5 个必需入口天然全覆盖，不用逐落点重复接；已离职灰色复用既有 `color_8F959E`，涉密配色复用既有 `color_FEAC00`/`color_FFF3DA`；`#E5E5E6` 无既有色值，直接写死在新 drawable 里（未改 `base_color.xml`）
 - 2026-08-12：底部「已选」「涉密」两按钮的正确顺序定为「已选在左、涉密在右紧挨」（以 web 实现为准）；四端逐一核实，android/desktop/ios 三端初版顺序都反了并已修正，web 本来就对
+- 2026-08-12：说明气泡最终定稿为「深色背景 + 文字居中」四端统一（此前 android 初版是白底黑字箭头气泡、desktop 初版是浅色左对齐，均已改）；android 因没有现成深色 9-patch 箭头资源，改用纯色圆角 `<shape>`，**不带箭头**（跟 web/desktop/iOS 是否要箭头未强制统一，如需要箭头版本再补美术资源）
+- 2026-08-12：web 气泡左侧留白问题反复调试：`preventOverflow` 对该场景无效，根因是 `AcDialog` 内容区被本文件自身 scoped style 显式设了 `overflow: visible`，导致它不再是 popper 的 clipping boundary，实际按浏览器视口计算溢出（视口够大，永远不触发）；改用 `offset` modifier 的 skid 分量做固定像素偏移，最终数值由用户手动调定
