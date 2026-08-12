@@ -887,6 +887,8 @@
       </div>
       <div class="reply-count-hint">以下是针对该消息的回复</div>
 
+      <!-- 回复本身就是一条 ReferenceMessage，自带引用块——不是纯文本，还原截图16的真实结构 -->
+
       <!-- 回复1：普通文本 -->
       <div class="msg-row">
         <div class="avatar">李</div>
@@ -895,7 +897,13 @@
             <span class="nickname">李四</span>
             <span class="time-pill">10:20</span>
           </div>
-          <div class="bubble">收到，我把日历也同步改一下。</div>
+          <div class="bubble">
+            <div class="quote-block">
+              <span class="q-name">张三：</span>
+              <span>明天的评审改到下午三点，会议室不变。</span>
+            </div>
+            回复 @张三：收到，我把日历也同步改一下。
+          </div>
         </div>
       </div>
 
@@ -908,7 +916,13 @@
             <span class="ai-tag">个人AI框</span>
             <!-- 时间戳缺失兜底：不渲染 -->
           </div>
-          <div class="bubble">已帮你标记日历冲突，无冲突。</div>
+          <div class="bubble">
+            <div class="quote-block">
+              <span class="q-name">张三：</span>
+              <span>明天的评审改到下午三点，会议室不变。</span>
+            </div>
+            回复 @张三：已帮你标记日历冲突，无冲突。
+          </div>
         </div>
       </div>
 
@@ -925,7 +939,13 @@
               <span class="eval-star plate">★</span>
             </span>
           </div>
-          <div class="bubble">已在群日历同步新时间，并通知全部参会人。</div>
+          <div class="bubble">
+            <div class="quote-block">
+              <span class="q-name">张三：</span>
+              <span>明天的评审改到下午三点，会议室不变。</span>
+            </div>
+            回复 @张三：已在群日历同步新时间，并通知全部参会人。
+          </div>
         </div>
       </div>
 
@@ -944,7 +964,7 @@
   <br><br>
   <b>本轮按 10 张真实截图二次还原</b>：评优徽章改成「六边形年/季图标+胶囊+竖分隔线+星」（星色按集团=金/板块=灰，实拍配色，非猜测）；文件消息按类型给实底色图标，未知类型灰底问号；新增「来自XXX个人AI框」归因胶囊（气泡下方独立一行，区别于昵称行的 tag）；群AI卡片改成"蓝色提示条+嵌套小卡+行动中心归属胶囊"结构。
   <br><br>
-  <b>逻辑修正（不只是样式）</b>：① 评优徽章只挂真人 senderId（查账户考核库），个人AI框/群AI框/机器人这三种 tag 身份互斥于评优，不会同时出现——之前误把评优挂在机器人头像上，已改成挂在真人（李博雅/苑立杰）身上；② 时间统一紧跟昵称/tag自然接排，不再顶格推到行最右——10张截图里没有一例把时间推到行尾，之前 <code>margin-left:auto</code> 是猜的；③ <b>合并详情页内点 quote-block 会弹出「N条回复」弹窗</b>（对齐 android/iOS 真实实现，PC 目前该功能有缺口——见下方"引用消息 7 种子类型"，除已撤回态外都可点，<span class="quote-hint" style="cursor:pointer;display:inline" onclick="openDrawer()">点这里试试 →</span>）；④ 个人AI框定时发送的调度时间胶囊「⏰ 每天20:32」<b>只有账户本人可见</b>，群AI框定时发送的调度胶囊则群内所有人可见——两种AI框身份的可见性规则不一样，别混着实现。
+  <b>逻辑修正（不只是样式）</b>：① 评优徽章只挂真人 senderId（查账户考核库），个人AI框/群AI框/机器人这三种 tag 身份互斥于评优，不会同时出现——之前误把评优挂在机器人头像上，已改成挂在真人（李博雅/苑立杰）身上；② 时间统一紧跟昵称/tag自然接排，不再顶格推到行最右——10张截图里没有一例把时间推到行尾，之前 <code>margin-left:auto</code> 是猜的；③ <b>合并详情页内点 quote-block 会弹出「N条回复」弹窗</b>（对齐 android/iOS 真实实现，PC 目前该功能有缺口——见下方"引用消息 7 种子类型"，除已撤回态外都可点，<span class="quote-hint" style="cursor:pointer;display:inline" onclick="openDrawer()">点这里试试 →</span>）；④ 个人AI框定时发送的调度时间胶囊「⏰ 每天20:32」<b>只有账户本人可见</b>，群AI框定时发送的调度胶囊则群内所有人可见——两种AI框身份的可见性规则不一样，别混着实现；⑤ <b>回复弹窗里每条回复本身就是一条 ReferenceMessage</b>，自带引用块，不是纯文本气泡——之前3条回复写成了光秃秃的纯文本，不真实；"回复"这个动作本来就是带引用发的，所以列表里原样渲染出来自然带着 quote-block（还原截图16结构）。
   <br><br>
   改这个文件直接改上面 <b>.msg-row</b> 各块即可，每块下面灰字 <b>.type-tag</b> 标了类型，定稿后删掉即可当正式还原稿。
 </div>
