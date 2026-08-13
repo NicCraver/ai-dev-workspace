@@ -11,7 +11,7 @@
 | spec 定稿 | — | — | ✅ | — |
 | plan 拆解（14 个 Task） | — | — | ✅ | — |
 | T0 先落袋现有 505 行未提交改动 | — | — | ⬜ | — |
-| T1 摸清四个接入点真实链路 | — | — | ⬜ | — |
+| T1 摸清四个接入点真实链路 | — | — | ✅ | — |
 | T2 引入 libcmark_gfm + 冒烟解析 | — | — | ⬜ | — |
 | T3 ZXMarkdownStyle / Block / TableModel | — | — | ⬜ | — |
 | T4 ZXMarkdownAttributedBuilder | — | — | ⬜ | — |
@@ -22,8 +22,7 @@
 | T9 ZXMarkdownManager 切换 + 三重兜底 | — | — | ⬜ | — |
 | T10 接入机器人气泡 | — | — | ⬜ | — |
 | T11 接入智能体气泡 + 流式 | — | — | ⬜ | — |
-| T12 接入回复聚合弹窗 | — | — | ⬜ | — |
-| T13 接入合并转发详情页 | — | — | ⬜ | — |
+| T12+13 验证聚合弹窗 / 合并转发详情页（降级为纯验证） | — | — | ⬜ | — |
 | T14 三档构建 + 全量自测 + 收尾 | — | — | ⬜ | — |
 
 ## 各端工作区现状（2026-08-13 19:10，`scripts/code-status.sh`）
@@ -40,7 +39,7 @@
 
 - (ios) **先处理 iOS 工作区那 505 行未提交改动**：内联 HTML 那套是本功能要复用的基础（spec「内联 HTML」章节直接引用 `processHTMLTags`），本功能动刀前先把它 commit 掉，否则两轮改动混在一个 diff 里没法回滚
 - (ios) plan.md 已定稿（14 个 Task，含每步代码与人工构建卡点），下一步开始执行 T0
-- (ios) 合并转发详情页（`ZXCombineMessageLogic` 链路）是否复用会话页 cell 未验证 —— plan 第一步排查任务；若是独立实现则多一个接入点
+- ~~(ios) 合并转发详情页是否复用会话页 cell 未验证~~ —— **已查清**：`ZXRCIMCommbineChatController` 继承 `ZXRCIMBaseChatController`，聚合弹窗也直接复用两个 cell，两处都不用改代码，只需验证（详见 impl-notes「接入点链路」）
 - (ios) `pod install` 与三档构建（模拟器 Debug / 真机 Debug / Prod archive）由人工执行，AI 不跑
 - (ios) 包体增量待实测：archive 后看 Xcode Organizer 的 App Thinning Size Report
 

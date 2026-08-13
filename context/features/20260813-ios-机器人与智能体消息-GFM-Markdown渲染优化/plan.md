@@ -2039,50 +2039,33 @@ git commit -m "feat(markdown): 智能体气泡接入段栈渲染，流式未闭�
 
 ---
 
-## Task 12: 接入回复聚合弹窗（ios）
+## Task 12+13: 验证聚合弹窗与合并转发详情页（ios · 纯验证）
 
-**Files:**
-- Modify: `apps/ios/SmartMessage/ZX_Modules/ZX_Message/ZX_RCIMMessageChat/ZX_ReplyPolymer/ZXPolymerPopView.m:539` 附近（具体行号以 Task 1 的排查结论为准）
+**Task 1 排查结论：这两处都不需要改代码。**
 
-- [ ] **Step 1: 按 Task 1 的结论选接法**
+- 回复聚合弹窗 `ZXPolymerPopView` 虽自带 `cellForRowAtIndexPath`，但直接复用 `ZXIMAgentStreamReplyCell`（`:541`）与 `ZXGroupRobotCell`（`:834/839`）
+- 合并转发详情页是 `ZXRCIMCommbineChatController : ZXRCIMBaseChatController`（`ZXRCIMCommbineChatController.h:13`），继承父类的 cell 分发，同一套 cell
 
-- 若正文控件是 `UITextView` → 照 Task 10 模式加 `markdownContentView` 分支
-- 若是 `UILabel` → 先换成 `ZXMarkdownContentView`（`UILabel` 挂不了 attachment 点击），约束照搬原 label
+Task 10/11 改完，这两处自动生效。本任务只做验证。
 
-- [ ] **Step 2: 🧑 人工自测**
+**Files:** 无（若验证发现异常再定位）
 
-在群里对一条含表格的智能体回复点开聚合弹窗，确认表格渲染、可横拖、弹窗高度正确。
+- [ ] **Step 1: 🧑 验证聚合弹窗**
 
-- [ ] **Step 3: 提交**
+在群里对一条含表格的智能体回复点开聚合弹窗：表格渲染正确、可横拖、弹窗高度正确、内容不被截断。
 
-```bash
-cd apps/ios
-git add SmartMessage/ZX_Modules/ZX_Message/ZX_RCIMMessageChat/ZX_ReplyPolymer/ZXPolymerPopView.m
-git commit -m "feat(markdown): 回复聚合弹窗接入段栈渲染"
-```
+- [ ] **Step 2: 🧑 验证合并转发详情页**
 
----
+把一条含表格 + 三层列表的机器人消息合并转发，打开详情页：渲染与会话页一致，收起/展开正常。
 
-## Task 13: 接入合并转发详情页（ios）
+- [ ] **Step 3: 若发现异常才需改代码**
 
-**Files:**
-- Modify: 由 Task 1 的排查结论确定（`ZXCombineMessageLogic` 链路上的详情页 Controller / cell）
-
-- [ ] **Step 1: 按结论接入**
-
-- 若复用会话页 cell → Task 10/11 改完这里自动就好，本任务只做验证，跳到 Step 2
-- 若是独立实现 → 照 Task 10 模式加 `markdownContentView` 分支与高度改写
-
-- [ ] **Step 2: 🧑 人工自测**
-
-把一条含表格 + 三层列表的机器人消息合并转发，打开详情页确认渲染与会话页一致。
-
-- [ ] **Step 3: 提交**
+两处都不重写渲染，只可能在**宽度**上出偏差（弹窗与详情页的可用宽度不同于会话页）。若表格或段栈宽度不对，检查 `kChatMsgContentW` 在这两个容器下的取值，把宽度改为从容器实际宽度推导，而不是写死会话页常量。改完提交：
 
 ```bash
 cd apps/ios
 git add -u
-git commit -m "feat(markdown): 合并转发详情页接入段栈渲染"
+git commit -m "fix(markdown): 聚合弹窗/合并转发详情页段栈宽度按容器实际宽度推导"
 ```
 
 ---
