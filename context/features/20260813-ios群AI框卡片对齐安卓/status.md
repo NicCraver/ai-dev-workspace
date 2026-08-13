@@ -26,6 +26,15 @@
     上限 2 行、上下各 12pt、最小 44；替换原先写死的 `44`（三处高度计算）。
   - `titleLab` 改 `numberOfLines = 2` + `NSLineBreakByTruncatingTail`，对齐安卓
     `rc_item_action_card_message.xml` 的 `maxLines=2 / ellipsize=end`。
+  - **正文渲染不再只给 `ga_` 开**（2026-08-13 第二轮修复）：`setModel:` 的 `else` 分支原先是
+    `initWithString:` 纯文本，导致「AI 框定时任务推送到个人文件夹」这类消息（`conversationType=1`、
+    `senderUserId` 是本人账号、不带 `ga_`，例：`messageUId=CVV8-JE4T-46E7-TSGJ`）把 `**` 与
+    `<span style="color:x">` 原样打出来。改为一律走 `ZXMarkdownManager renderMarkdownBy:param:`
+    （`parseMarkdown=YES`、`parseReference=NO`、`parseIllustration=YES`），不拼「回复 @xx：」前缀，
+    与安卓 `ActionCardMessageItemProvider` 对所有 ActionCard 都走 Markwon 一致。
+  - 正文样式判据从 `isAgent` 放宽到 `isAgent || isFixTaskMessageForMessage:`，
+    定时任务卡片正文用 `Color_H1` + `agentMessageBodyTextAttributesWithColor:`，
+    不再比群里那条浅一号（原 `Font(14)` + `Color_H2/H3`）。`linkTextAttributes` 统一成主色无下划线。
 - `SmartMessage/ZX_Base/ZX_Manager/ZXMarkdownManager.m`
   - `renderMarkdown:defaultAttrs:` 链路里新增 `processHTMLTags:defaultAttrs:`，位置在粗体/斜体之后、
     链接之前——`**<span style="color:blue">x</span>**` 先由粗体拿到 bold 字体，HTML 步骤只叠加颜色。
@@ -47,8 +56,12 @@
 - 自测点：出问题的那条消息（群 `1816016632343183361`，`messageUId=CVV7-VU8I-0F2F-32C8`）——
   标题条 2 行省略号、正文「值班总负责人：赵富文」蓝色加粗、结尾祝福语橙色、看不到 `<span …>` 原文、
   气泡下仍是「来自群AI框」。
+- 自测点 2：个人文件夹里那条（私聊 `targetId=1427075521872220161`，`messageUId=CVV8-JE4T-46E7-TSGJ`），
+  同样要有加粗蓝字 + 橙色祝福语，无 `<span …>` 原文。
 - 回归点：@智能体流式回复（无 title 时不应多出空白标题头、打字机过程高度不跳）、
-  群机器人卡片（有 title，高度由固定 44 变为按内容）、长回复「查看更多」折叠。
+  群机器人卡片（有 title，高度由固定 44 变为按内容；正文现在也按 markdown 解析，
+  `*`/`#`/`[]()` 等符号会被当语法吃掉——需确认线上机器人卡片文案里没有这类裸符号）、
+  长回复「查看更多」折叠。
 - 会话列表/引用行的纯文本摘要（`stripMarkdownSyntaxFromText`）**按决定保持现状**，仍会露出 `<span …>` 原文；
   安卓 `AgentReplyDisplayUtil` 同样不剥，两端一致。
 - desktop / web 是否有同类问题未查。
