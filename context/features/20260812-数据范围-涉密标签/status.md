@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13（契约新增 getSecretButtonTip；web 误推已撤回，功能在 `feat/data-scope-secret-tag`；其余三端仍在 `personal-ai-chat`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13 18:10（android 气泡落位重写：显式宽 + showAtLocation，箭头按实际落位反推）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -8,8 +8,8 @@
 |------|-----|---------|-----|---------|
 | Tag 接入（全部/群组/搜索/组织架构/已选） | ✅ | ✅ | ✅ | ✅ |
 | 涉密说明入口+气泡（标题栏，非底栏） | ✅ | ✅ | ✅ | ✅ |
-| 气泡文案改走 getSecretButtonTip | ⬜ | ⬜ | ⬜ | ⬜ |
-| 自测通过 | 🚧 | ✅ | 🚧 | 🚧 |
+| 气泡文案改走 getSecretButtonTip | 🚧 | 🚧 | 🚧 | 🚧 |
+| 自测通过 | 🚧 | 🚧 | 🚧 | 🚧 |
 
 > 本功能代码侧：android/ios/desktop 已 push 到各自 `origin/personal-ai-chat`（android `1b65e8aff`、ios `272e68c5e`、desktop `55161faf`）。web **不在** `personal-ai-chat`：误 cherry-pick 已 force-with-lease 撤回到 `7163903`（只去掉 18 个涉密 commit，筛选条 4 个仍留在 pac）；功能在 `origin/feat/data-scope-secret-tag` `5b9f15f`。android/ios/desktop 旁路脏区未提交。
 
@@ -67,10 +67,9 @@
   - 头像：已选 chip 改走 `setAvatarByAccountId:name:avatar:`（文字头像只当占位，有 URL 继续加载）；列表行 `ZXForwardCell` 同样改为有 `avatarURL` 就 `sd_setImage`。用户复验头像已对
   - 名字第一轮只撤了 DefaultLow、stack 宽收 0，用户复验仍全是 `...`。对照 android `item_data_range_selected_row`：chip `wrap_content`、姓名 `wrap_content` + **maxWidth 160dp** 才省略。iOS 改成同一套：`itemSizeForUserModel` 用真实约束间距算宽，姓名最多 160pt；cell 里姓名宽度写死为测量值，有 tag 才加 4pt 间隙。超过 160pt 才尾部省略
 
-- (四端) 涉密气泡文案从硬编码改为 `POST /personalAiFrame/getSecretButtonTip`（契约已加，调用代码未改）。后端状态「开发中」；失败/空串降级策略未定（是否回退旧静态文案）。YApi mock 是「涉密信息请勿外传」，与当前硬编码「人力部门人员、公司全员群，…」不是同一句，联调时以配置实际值为准。
-
 ## 待办 / 阻塞
 
+- (四端) 涉密气泡文案已改走 `POST /personalAiFrame/getSecretButtonTip`，**代码已写、未联调/自测**。失败或空串回退旧静态文案「人力部门人员、公司全员群，聊天记录与文件涉密，不参与AI分析」（静默，不弹错）。YApi mock 是「涉密信息请勿外传」，联调以配置 `personal.ai.frame.secret.tip.text` 实际值为准。
 - (android) 气泡已改为两行自适应宽，箭头位置 / 右侧 12dp 留白仍为估算值，**未做真机像素级核对**；系统字体放大时气泡会变宽，需确认仍不探出屏幕右侧、箭头仍指在按钮上
 - (四端) 箭头形态目前不统一：android/iOS 有向上箭头，web/desktop 仍是无箭头深色气泡——是否要求统一由用户定
 - (ios) 涉密入口最终定为标题栏本行右侧（`rightBarButtonItem`），跟其余三端（顶部标题栏/关闭按钮左侧）逻辑一致，均未跑真机验证
@@ -121,3 +120,6 @@
 
 - 2026-08-13：收尾同步——矩阵「涉密说明」行改为标题栏入口表述（底栏方案已废弃）；impl-notes 说明气泡章节对齐顶栏落点与四端箭头差异；apps 脏区仍为旁路，自测状态不变；无关契约改动未提交
 - 2026-08-13：android/ios/desktop 涉密代码 push 到各自 `origin/personal-ai-chat`。web 先误 cherry-pick 到 `personal-ai-chat`，后按用户要求 force-with-lease 撤回到 `7163903`，并 push `feat/data-scope-secret-tag`（`5b9f15f`）。android 快进时 hotfix 上未推送的「合并详情」commit `f34ef9502` 会一并进入 `personal-ai-chat`（无法从历史上剥离）
+- 2026-08-13：推翻「纯前端静态文案、无需请求接口」——后端新增 `POST /personalAiFrame/getSecretButtonTip`（无入参，`data` 为配置字符串）。契约已落 `getSecretButtonTip.d.ts`。
+- 2026-08-13：四端调用代码已接 `getSecretButtonTip`。打开「选择数据范围」时预拉；`data` 非空字符串才替换展示；失败/空串回退旧静态文案，静默不弹错。android 去掉硬编码 `\n` 与 `maxLines=2`，宽度跟实际字符串走。未联调，矩阵标 🚧。
+- 2026-08-13：(android) 用户实测截图——气泡整体被推到屏幕左侧、盖住搜索框与「选择联系人」，箭头也脱离「涉密」按钮。根因：`PopupWindow` 用 `WRAP_CONTENT` 建时会**自己再量一遍**内容宽度，跟 `toggleSecretTip()` 里预量的值对不上（宽文案 + 换行时差得更多），负 `xOff` 又叠加系统的屏幕内钳制，气泡被顶到左边缘；箭头 `marginEnd` 是按「预量宽」推的，于是跟着错位。改法（`DataRangeMultiFooterHelper.java`）：①`new PopupWindow(content, tipWidth, WRAP_CONTENT)` 显式给宽，实际宽 = 预量宽；②改用 `showAtLocation(NO_GRAVITY, tipLeft, tipTop)` 按窗口坐标直接落位（`getLocationInWindow` 取按钮位置），气泡右边缘对齐屏幕右侧 12dp 留白、左侧同样留 12dp 钳制；③`adjustSecretTipArrow(content, tipLeft, tipWidth)` 改成用**实际落位**反推箭头 `marginEnd`（按钮视觉中心按 `getPaddingLeft/Right` 实算，不再写死 12/16dp），两端各留 8dp 圆角兜底。`assembleDevelopDebug` BUILD SUCCESSFUL；**未真机复测**，android 工作区仍为旁路脏区（含 `getSecretButtonTip` 接入）未提交。
