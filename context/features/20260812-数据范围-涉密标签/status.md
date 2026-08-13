@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-12（ios 涉密入口撤回独立行、改回标题栏本行右侧，气泡箭头保留，待用户统一复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13（android 本轮改动代码审查，3 个问题已修并提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -82,3 +82,16 @@
 - 2026-08-12：说明气泡最终定稿为「深色背景 + 文字居中」四端统一（此前 android 初版是白底黑字箭头气泡、desktop 初版是浅色左对齐，均已改）；android 因没有现成深色 9-patch 箭头资源，改用纯色圆角 `<shape>`，**不带箭头**（跟 web/desktop/iOS 是否要箭头未强制统一，如需要箭头版本再补美术资源）
 - 2026-08-12（修订）：android 应用户要求补回箭头，用 vector 三角形自绘（不依赖 9-patch 美术资源），宽度定 180dp；**此时 web/desktop/iOS 三端仍无箭头**，四端箭头形态不再统一——如需统一，另三端各自补一次
 - 2026-08-12：web 气泡左侧留白问题反复调试：`preventOverflow` 对该场景无效，根因是 `AcDialog` 内容区被本文件自身 scoped style 显式设了 `overflow: visible`，导致它不再是 popper 的 clipping boundary，实际按浏览器视口计算溢出（视口够大，永远不触发）；改用 `offset` modifier 的 skid 分量做固定像素偏移，最终数值由用户手动调定
+
+## android 代码审查（2026-08-13）
+
+对本迭代 android 侧改动（`f34ef9502..d78c3d4d5`，共 5 个 commit）逐文件审查，3 个问题已修并提交 commit `a3204ec46`（`assembleDevelopDebug` BUILD SUCCESSFUL，`:smart_message:testDevelopDebugUnitTest --tests *DataScopeModelTest*` BUILD SUCCESSFUL）：
+
+1. **（性能，最严重）组织架构行 tag 回填是逐行 O(n) 线性扫**：`SelectOrgDrillActivity.onBindViewHolder` 每绑一行都调 `DataRangeDialogueSession.get()`（该方法返回**整份候选清单的 ArrayList 拷贝**，还带 synchronized 锁）再 `DataScopeModel.findPrivateByAccountId` 线性遍历。候选清单是「全量人 + 群」，量级上千时滑动会明显掉帧，也跟 impl-notes 里写的「建查找表」方案不符。改法：`DataScopeModel.findPrivateByAccountId(List, id)` 换成 `buildPrivateIndex(List)` 返回 `Map<账号id, 私聊项>`，索引在 `DataRangeDialogueSession.set()` 里随缓存一起重建，行绑定改调新增的 `DataRangeDialogueSession.findPrivate(accountId)`（O(1)、无拷贝）。单测同步改成 `buildPrivateIndex_keepsPrivateOnlyAndSkipsGroups`（额外断言群不进表）。
+2. **（功能）单选复用链路出现点不动的「涉密」死按钮**：`include_data_range_secret_entry.xml` 在 5 个页面里是无条件 `<include>`（默认 visible），但 `bindSecretEntry()` 只在 `if (multiMode)` 分支里调。`SelectAiAgentActivity` 会以**单选**方式拉起 `SelectContactActivity`/`SelectGroupActivity`/`SelectSearchActivity`（不带 `EXTRA_MULTI`），那条链路顶栏会显示「涉密」但点了没反应，而且这功能本就不属于选人/选群单选流程。改法：include 根节点默认 `visibility="gone"`，由 `bindSecretEntry()` 绑定时置 `VISIBLE`——多选链路照常显示，单选链路自动不出现。
+3. **（泄漏）气泡开着时页面销毁会 WindowLeaked**：`secretTipPopup` 只在 `showSelectedSheet()` 里被主动收起，点「确定」保存后 `finish()`（或任何非返回键的 finish）时若气泡还开着，`PopupWindow` 会随 Activity 窗口一起泄漏。改法：`bindSecretEntry()` 里给入口 view 挂 `OnAttachStateChangeListener`，`onViewDetachedFromWindow` 收起气泡；同时抽出 `dismissSecretTip()` 复用（不用逐个 Activity 加 `onDestroy`）。
+4. 顺带修了 `toggleSecretTip()` 上方与代码矛盾的过时注释（还写着「220dp 定宽 / EXACTLY 量」，实际已是 180dp + 屏幕宽 AT_MOST）。
+
+审查中确认**没问题、未改动**的点：`ignoreChatType` 用 `isFlagOne` 判定（Integer 拆箱比较，Gson 对字符串 "1" 已按数值解析，逻辑与契约一致）；箭头 `marginEnd` / 气泡 `xOff` 的几何推导逐项验算正确；`item_friend_content.xml` 里姓名 `wrap_content + weight=1` 处在 **wrap_content 的父容器**中，多余空间为 0、溢出时负 delta 只压缩姓名，tag 既不会被推到行尾也不会被挤丢（与 desktop 那个 `flex:1` bug 不同源，此前判断正确）；`SelectContactActivity` 只渲染企业行、无人员行，不是遗漏的 tag 落点；`color_FFF3DA`/`color_FEAC00`/`color_8F959E` 三个色值均已在 `base_color.xml` 既有定义中（工作区里 `base_color.xml` 那条未提交改动是无关的 `color_F0F5FF`，未动）。
+
+> 仍未做：真机走查（本仓库无 UI 自动化），顶栏「涉密」在 5 个页面的实际位置/气泡箭头对齐需实测。
