@@ -26,6 +26,7 @@
 | 交互 | 遮罩吃掉点击事件，防止误触未填好的列表 |
 
 各端实现：
+- desktop 组织架构 tab：走的是 element `v-loading`，只能在弹窗根类下覆写 `.el-loading-mask`（底色）+ `.el-loading-spinner`（隐藏 `.circular`，用 `::before` 画环、`::after` 出文案）。**别去改公共组件 `dept-user-check-list.vue`**，那个被转发/建群等多个功能复用。
 - web/desktop：CSS 边框环（`border-2 #D7E3FF` + `border-top-color #3E7EFF` + `animate-spin`）
 - android：`drawable/bg_page_loading_ring.xml` = `<rotate>` + `ring` shape + sweep 渐变（`#D7E3FF`→`#3E7EFF`），挂 `ProgressBar#indeterminateDrawable`，`indeterminateDuration=1000`。**不要再加 `indeterminateTint`**，会把双色染成单色。
 - ios：私有类 `ZXDataScopeLoadingRing`（两层 `CAShapeLayer`：整圈底环 + `strokeEnd=0.25` 的弧头，`transform.rotation.z` 1s 无限旋转）。系统 `UIActivityIndicatorView` 是 12 根辐条，跟 web 不是一个东西，别用。

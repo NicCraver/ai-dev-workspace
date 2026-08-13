@@ -5,12 +5,18 @@
   "type": "module",
   "description": "多端协同编排仓库工具脚本",
   "bin": {
-    "zhixin-run-android": "./scripts/zhixin-run-android.mjs"
+    "zhixin-run-android": "./scripts/zhixin-run-android.mjs",
+    "pc-build-test": "./scripts/pc-build-test.mjs"
   },
   "scripts": {
     "zhixin-run-android": "node scripts/zhixin-run-android.mjs",
     "zhixin-run-android:quick": "node scripts/zhixin-run-android.mjs --quick",
-    "zhixin-run-android:develop": "node scripts/zhixin-run-android.mjs --develop"
+    "zhixin-run-android:develop": "node scripts/zhixin-run-android.mjs --develop",
+    "pc-build-test": "node scripts/pc-build-test.mjs",
+    "pc-build-test:dmg": "node scripts/pc-build-test.mjs --dmg-only",
+    "pc-build-test:check": "node scripts/pc-build-test.mjs --check",
+    "pc-build-test:recover": "node scripts/pc-build-test.mjs --recover",
+    "pc-build-test:native": "node scripts/pc-build-test.mjs --native"
   },
   "engines": {
     "node": ">=18"

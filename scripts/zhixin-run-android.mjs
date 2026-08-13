@@ -14,6 +14,24 @@ const ANDROID_DIR = path.join(WORKSPACE_ROOT, 'apps/android');
 
 const ACTIVITY = 'com.cnmts.smart_message.activity.AppStartSplashActivity';
 
+function formatElapsed(ms) {
+  const totalSec = ms / 1000;
+  if (totalSec < 60) return `${totalSec.toFixed(1)}s`;
+  const sec = Math.round(totalSec);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  return `${m}m ${s}s`;
+}
+
+function trackElapsed() {
+  const startedAt = Date.now();
+  process.on('exit', () => {
+    console.log(`用时 ${formatElapsed(Date.now() - startedAt)}`);
+  });
+}
+
 function assertAndroidDir() {
   if (!fs.existsSync(path.join(ANDROID_DIR, 'gradlew'))) {
     console.error(`错误: 找不到 Android 工程 ${ANDROID_DIR}`);
@@ -173,6 +191,7 @@ function main() {
     process.exit(0);
   }
 
+  trackElapsed();
   assertAndroidDir();
   const config = resolveConfig(opts.develop);
 

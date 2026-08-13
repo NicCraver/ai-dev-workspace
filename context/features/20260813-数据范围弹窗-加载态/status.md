@@ -1,6 +1,6 @@
 # Status：数据范围弹窗-加载态优化
 
-> 最后更新：2026-08-13 13:50 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13 14:05 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -14,6 +14,7 @@
 
 - **desktop** `src/renderer/components/chitchat/sendbox/personal-ai-data-scope-dialog.vue`
   - 「全部」/「群组」两个 tab 的 `dialogueLoading` 分支从一行文字 `加载中…` 换成铺满列表区的加载块（对齐 `AcPageLoading`：#F4F6F8 底、32px 双色环、gap 12、14px 灰字、文案「数据加载中...」）。
+  - 组织架构 tab（`company-dept-user` → `dept-user-check-list` 用的是 element `v-loading`）在**本弹窗作用域内**改写 `.el-loading-mask` / `.el-loading-spinner`，换成同款双色环 + 「数据加载中...」，不影响其它页面的 el-loading。
   - 新增分片渲染：`renderLimit`（首屏 60 条，`requestAnimationFrame` 每帧 +60），列表只渲染 `allRenderList` / `orgGroupRenderList` / `outreachGroupRenderList`；全选、三态图标、上报仍用全量。`beforeDestroy` 取消 rAF。
 - **android** `SelectDataRangeActivity` + `SelectContactActivity` + `SelectGroupActivity` + `SelectOrgDrillActivity`（及对应 4 个 layout）
   - 裸 `ProgressBar` 换成铺满列表区的加载容器（#F4F6F8 底 + 32dp 双色环 + 「数据加载中...」），转圈用新增 `drawable/bg_page_loading_ring.xml`（ring + sweep 渐变 #D7E3FF→#3E7EFF，1s 一圈）；字段由 `ProgressBar progressBar` 改为 `View loadingView`，`updateProgressBar()` 更名 `updateLoadingView()`。
