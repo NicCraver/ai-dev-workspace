@@ -38,8 +38,9 @@
 ## 流式（打字机）渲染的关键约定
 
 - 流式过程中正文是**语法不完整**的：表格可能只吐了表头、代码围栏可能没闭合。
-- 判定规则：**流未结束** 且 该表格是**全文最后一个块**（后面没有内容收口）→ 该表格降级为等宽纯文本显示。
-- 流结束、或后面又来了新块时，它自然升级成表格视图。高度只跳一次。
+- 规则（实现时从「只降级末尾表格」简化而来）：**流式期间所有表格一律按等宽纯文本显示**；流结束后重新解析（非流式）才成表。
+  - 简化理由：流式路径的正文承载控件是单个富文本控件，中途出现表格视图会让「流式渲染」与「最终渲染」两条路径的高度体系分叉；统一降级后流式路径永远只有富文本，高度只在流结束时跳一次。
+- 缓存注意：布局快照按内容做缓存时，**streaming 标志必须进缓存 key**，否则流结束后会命中流式期间那份「表格是纯文本」的快照，表格永远不成表。
 - 反例：每个 token 都重建表格视图会掉帧，且高度反复抖动。
 
 ## 兜底策略（三层）
@@ -68,6 +69,17 @@
 ## 错误处理策略
 
 解析失败不向用户暴露任何提示，静默回退老实现渲染，仅打日志。Markdown 渲染属于展示层，不应因解析问题让消息不可读。
+
+## 工程坑（iOS 本地环境，2026-08-13 实测）
+
+1. **`pod install` 会拆掉 `zhixinAppTest` / `zhixinAppProd` 的 Pods 配置**。Podfile 里只声明了 `target 'zhixinApp'`，另两个 target 的 `baseConfigurationReference` 是人工指到 `Pods-zhixinApp.*.xcconfig` 的；跑一次 `pod install` 就被 CocoaPods 清空，之后这两个 target 编译直接报 `'AFNetworking/AFNetworking.h' file not found`。
+   - 应对：`pod install` 后把 `zhixinApp.xcodeproj/project.pbxproj` 还原（`git checkout HEAD -- zhixinApp.xcodeproj/project.pbxproj`），xcconfig 文件本身已重新生成、内容含新依赖，指回去即可。
+   - 根治办法（未做，需团队决定）：把三个 target 都写进 Podfile（共享 `def` 或 `abstract_target`）。
+2. **`pod` 在 Ruby 3.2 + activesupport 7.0.8 下直接崩**：`uninitialized constant ActiveSupport::LoggerThreadSafeLevel::Logger`。绕过方式：`RUBYOPT="-rlogger" pod install`。
+3. **本机 CocoaPods Specs 仓只有 `.git` 没有工作树**（`~/.cocoapods/repos/cocoapods` 空目录 + 1.5G `.git`，本地分支 `main` 无提交），导致任何 pod 都找不到 spec。修复：`git -C ~/.cocoapods/repos/cocoapods checkout -B master origin/master`。
+4. `Pods/` 与 `Podfile.lock` 都在 `.gitignore` 里 —— 依赖变更只提交 `Podfile`，其他人必须自己跑 `pod install`（会踩坑 1）。
+5. 新文件必须写进 `project.pbxproj`（工程 `objectVersion = 48`，不支持文件夹同步组）。批量加可用 CocoaPods 自带的 `xcodeproj` gem，注意挂 `zhixinApp` / `zhixinAppProd` / `zhixinAppTest` 三个 target（`NOtificationService` / `ZXShare` 不挂，与既有 `ZXMarkdownManager.m` 一致）。
+6. cmark-gfm 头文件落在 `Pods/Headers/Public/libcmark_gfm/`，导入写 `<libcmark_gfm/cmark-gfm.h>`。为兼容源码内置等其它集成方式，统一走 `ZXMarkdownCMark.h` 的 `__has_include` 兜底，未集成时宏 `ZX_MARKDOWN_CMARK_AVAILABLE=0`，解析器返回空、调用方自动回退老正则。
 
 ## 联调坑（实际接口 ≠ 文档之处）
 
