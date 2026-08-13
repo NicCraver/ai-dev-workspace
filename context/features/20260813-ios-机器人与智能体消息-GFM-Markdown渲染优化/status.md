@@ -1,23 +1,30 @@
 # Status：ios-机器人与智能体消息-GFM-Markdown渲染优化
 
-> 最后更新：2026-08-13 19:10（spec 已定稿提交 `972f75a`，plan 未写，代码未动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13 19:30（spec + plan 已定稿，代码未动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
-本功能**只动 iOS**，其余三端不涉及（web 已用 marked、android 已用 Markwon，均为真 GFM 解析器）。
+本功能**只动 iOS**，其余三端不涉及（web 已用 marked、android 已用 Markwon，均为真 GFM 解析器）。行号对应 `plan.md` 的 Task。
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | spec 定稿 | — | — | ✅ | — |
-| plan 拆解 | — | — | ⬜ | — |
-| 引入 libcmark_gfm（Podfile + pod install） | — | — | ⬜ | — |
-| Markdown/ 组件组（Parser/Block/Builder/Style） | — | — | ⬜ | — |
-| ZXMarkdownTableView 横滚表格 | — | — | ⬜ | — |
-| ZXMarkdownContentView 段栈 + 高度/收起态 | — | — | ⬜ | — |
-| 四个接入点改造（机器人气泡/智能体气泡/聚合弹窗/合并转发详情） | — | — | ⬜ | — |
-| 流式未闭合表格降级 | — | — | ⬜ | — |
-| Debug 自测页（GFM 用例集） | — | — | ⬜ | — |
-| 自测通过（含三档构建） | — | — | ⬜ | — |
+| plan 拆解（14 个 Task） | — | — | ✅ | — |
+| T0 先落袋现有 505 行未提交改动 | — | — | ⬜ | — |
+| T1 摸清四个接入点真实链路 | — | — | ⬜ | — |
+| T2 引入 libcmark_gfm + 冒烟解析 | — | — | ⬜ | — |
+| T3 ZXMarkdownStyle / Block / TableModel | — | — | ⬜ | — |
+| T4 ZXMarkdownAttributedBuilder | — | — | ⬜ | — |
+| T5 ZXMarkdownParser 块序列 + 流式降级 | — | — | ⬜ | — |
+| T6 ZXMarkdownTableView 横滚表格 | — | — | ⬜ | — |
+| T7 ZXMarkdownContentView 段栈 + 高度/收起态 | — | — | ⬜ | — |
+| T8 Debug 摇一摇自测页（30 条用例） | — | — | ⬜ | — |
+| T9 ZXMarkdownManager 切换 + 三重兜底 | — | — | ⬜ | — |
+| T10 接入机器人气泡 | — | — | ⬜ | — |
+| T11 接入智能体气泡 + 流式 | — | — | ⬜ | — |
+| T12 接入回复聚合弹窗 | — | — | ⬜ | — |
+| T13 接入合并转发详情页 | — | — | ⬜ | — |
+| T14 三档构建 + 全量自测 + 收尾 | — | — | ⬜ | — |
 
 ## 各端工作区现状（2026-08-13 19:10，`scripts/code-status.sh`）
 
@@ -32,7 +39,7 @@
 ## 待办 / 阻塞
 
 - (ios) **先处理 iOS 工作区那 505 行未提交改动**：内联 HTML 那套是本功能要复用的基础（spec「内联 HTML」章节直接引用 `processHTMLTags`），本功能动刀前先把它 commit 掉，否则两轮改动混在一个 diff 里没法回滚
-- (ios) plan.md 未写，下一步 writing-plans
+- (ios) plan.md 已定稿（14 个 Task，含每步代码与人工构建卡点），下一步开始执行 T0
 - (ios) 合并转发详情页（`ZXCombineMessageLogic` 链路）是否复用会话页 cell 未验证 —— plan 第一步排查任务；若是独立实现则多一个接入点
 - (ios) `pod install` 与三档构建（模拟器 Debug / 真机 Debug / Prod archive）由人工执行，AI 不跑
 - (ios) 包体增量待实测：archive 后看 Xcode Organizer 的 App Thinning Size Report
