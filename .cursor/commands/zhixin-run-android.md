@@ -3,7 +3,9 @@
 **立即执行，不要探索代码、不要自行拼命令：**
 
 ```bash
-bash apps/android/.cursor/commands/scripts/zhixin-run-android.sh $ARGUMENTS
+node scripts/zhixin-run-android.mjs $ARGUMENTS
+# 或：npm run zhixin-run-android -- $ARGUMENTS
+# bash 版仍可用：bash apps/android/.cursor/commands/scripts/zhixin-run-android.sh $ARGUMENTS
 ```
 
 （脚本以 `apps/android` 为准；本仓库仅转发。）

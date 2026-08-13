@@ -1,0 +1,18 @@
+{
+  "name": "ai-dev-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "多端协同编排仓库工具脚本",
+  "bin": {
+    "zhixin-run-android": "./scripts/zhixin-run-android.mjs"
+  },
+  "scripts": {
+    "zhixin-run-android": "node scripts/zhixin-run-android.mjs",
+    "zhixin-run-android:quick": "node scripts/zhixin-run-android.mjs --quick",
+    "zhixin-run-android:develop": "node scripts/zhixin-run-android.mjs --develop"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
