@@ -1,17 +1,22 @@
 # Status：数据范围弹窗-加载态优化
 
-> 最后更新：2026-08-13 14:05 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13 14:25 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| 列表区加载动画（对齐 web `AcPageLoading`，不再白屏） | ➖ 已有骨架/文案，本次未改 | ✅ | ✅ | ✅ |
+| 列表区加载动画（对齐 web `AcPageLoading`，不再白屏） | ✅ | ✅ | ✅ | ✅ |
 | 大数据量渲染不卡（分片/复用） | ➖ 已有虚拟列表 | ➖ RecyclerView 复用 | ➖ UITableView 复用 | ✅ 分片渲染 |
-| 自测通过 | ➖ | 🚧（改成双色环后需再看一眼真机） | 🚧（AI 不构建，待 Xcode 自测） | 🚧（lint 已过，待起 dev 自测） |
+| 自测通过 | 🚧（vue-tsc 通过，待起 dev 自测） | 🚧（改成双色环后需再看一眼真机） | 🚧（AI 不构建，待 Xcode 自测） | 🚧（lint 已过，待起 dev 自测） |
 
 ## 本次改动落点
 
+- **web**
+  - `components/common/AcPageLoading.vue` 加可选 `text` prop（默认「页面加载中...」，向后兼容既有 8 处调用）。
+  - `picker/AiBoxVirtualList.vue` 加 `loading` prop：取数中渲染 `<AcPageLoading text="数据加载中..." />`，优先于空文案。
+  - `picker/SelectDataRangeDialog.vue` 传 `:loading="dialogueLoading"`，`emptyText` 只留失败/空态。
+  - `picker/OrgPicker.vue` 两个列表传 `:loading="loading"`，`empty-text` 简化为「暂无企业」「暂无人员」（同时惠及选择AI框弹窗）。
 - **desktop** `src/renderer/components/chitchat/sendbox/personal-ai-data-scope-dialog.vue`
   - 「全部」/「群组」两个 tab 的 `dialogueLoading` 分支从一行文字 `加载中…` 换成铺满列表区的加载块（对齐 `AcPageLoading`：#F4F6F8 底、32px 双色环、gap 12、14px 灰字、文案「数据加载中...」）。
   - 组织架构 tab（`company-dept-user` → `dept-user-check-list` 用的是 element `v-loading`）在**本弹窗作用域内**改写 `.el-loading-mask` / `.el-loading-spinner`，换成同款双色环 + 「数据加载中...」，不影响其它页面的 el-loading。
@@ -25,7 +30,8 @@
 
 - (ios) 需人工在 Xcode 编译自测（仓库规定 AI 不跑 xcodebuild）。
 - (desktop) 需 `npm run dev:test` 起应用，用大数据量账号验证滚动是否跟手（eslint 已过）。
-- apps 三端代码（android / ios / desktop）**未提交**；web 本次未改。
+- apps 四端代码（web / android / ios / desktop）**均未提交**。
+- 选择AI框弹窗（`SelectAiBoxDialog` / `SelectAiBoxPopup`）的「加载中…」文案未动——不属于数据范围，如需统一再说。
 
 ## 关键决策记录
 
