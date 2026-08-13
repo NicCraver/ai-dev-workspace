@@ -2,6 +2,7 @@
  * 契约：个人AI框域 · 保存/发布 Agent 设置信息（不含知识库）
  * POST /agentSetBasic/saveAgentSetInfo
  * Changelog:
+ * - 2026-08-12 fixedTimeTask 的 selectMyAiBox / sendAiMessageScopeVOList / displayFormat 改为可选（get 回参不含）
  * - 2026-07-14 新增 POST /agentSetBasic/saveAgentSetInfo
  */
 
@@ -132,12 +133,12 @@ export interface PersonalAiFrameAgentSetFixedTimeTask {
   yearDays?: number[];
   yearCountdown?: number;
   dealMeans?: PersonalAiFrameAgentSetDealMean[];
-  /** 勾选我的 AI 框：1-勾选；0-未勾选 */
-  selectMyAiBox: number;
-  /** 定时发送范围 */
-  sendAiMessageScopeVOList: PersonalAiFrameAgentSetSendScope[];
-  /** 展示形式：1-个人智能体发送；2-以人的形式发送 */
-  displayFormat: number;
+  /** 勾选我的 AI 框：1-勾选；0-未勾选（save 入参必填；get 回参无此字段） */
+  selectMyAiBox?: number;
+  /** 定时发送范围（save 入参必填；get 回参无此字段） */
+  sendAiMessageScopeVOList?: PersonalAiFrameAgentSetSendScope[];
+  /** 展示形式：1-个人智能体发送；2-以人的形式发送（save 入参必填；get 回参无此字段） */
+  displayFormat?: number;
 }
 
 /** 触发技能-条件触发 */
