@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13（四端涉密标签已提交并 push 到各自 `personal-ai-chat`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13（web 误推已撤回，功能在 `feat/data-scope-secret-tag`；其余三端仍在 `personal-ai-chat`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -10,7 +10,7 @@
 | 涉密说明入口+气泡（标题栏，非底栏） | ✅ | ✅ | ✅ | ✅ |
 | 自测通过 | 🚧 | ✅ | 🚧 | 🚧 |
 
-> 本功能代码侧：四端均已合入并 **push 到 `origin/personal-ai-chat`**（按仓库约定不 push hotfix/feat）。android `1b65e8aff`（已选弹层姓名/头像 + 气泡两行）；ios `272e68c5e`（列表 tag 防挤出 + 已选 chip 最多 160pt）；desktop `55161faf`（无新增 commit，hotfix 快进合入）；web cherry-pick 18 个涉密 commit 到 `personal-ai-chat` 后 `02a7008`。本地工作分支仍回 hotfix/feat；android/ios/desktop 旁路脏区未提交。
+> 本功能代码侧：android/ios/desktop 已 push 到各自 `origin/personal-ai-chat`（android `1b65e8aff`、ios `272e68c5e`、desktop `55161faf`）。web **不在** `personal-ai-chat`：误 cherry-pick 已 force-with-lease 撤回到 `7163903`（只去掉 18 个涉密 commit，筛选条 4 个仍留在 pac）；功能在 `origin/feat/data-scope-secret-tag` `5b9f15f`。android/ios/desktop 旁路脏区未提交。
 
 ## 视觉验收发现的问题（2026-08-12，均已修复，待用户统一复验）
 
@@ -81,7 +81,7 @@
 - (web/desktop) 涉密入口挪顶栏后**未做浏览器/dev 真机视觉验证**（气泡朝下弹出的定位、标题栏拥挤度），只过了 `vue-tsc` / eslint；建议本地各起一次看一眼
 - (desktop) `/port desktop` 及顶栏对齐改动已随 hotfix 快进 **push 到 `origin/personal-ai-chat`**（HEAD `55161faf`）；**未跑 `npm run dev` 真机交互验证**
 - (desktop) 旁路（非本功能）：工作区仅有 `.env.test` / `electron-builder.yml` / `package.json` 本地调试配置改动，**勿提交**
-- (web) 18 个涉密 commit 已 cherry-pick 到 `personal-ai-chat` 并 push（HEAD `02a7008`）；本地 `feat/data-scope-secret-tag` 未删。push 时顺带带上该分支原先未推的 4 个筛选条 commit
+- (web) 误推到 `personal-ai-chat` 的 18 个 cherry-pick 已撤回（`02a7008` → `7163903`）；功能已 push 到 `origin/feat/data-scope-secret-tag`（`5b9f15f`）。远端原同名分支是无关的 stage/release 历史，本次 force-with-lease 覆盖
 - (context) 旁路：工作区另有 `hideChat`/`saveAgentSetInfo`/`getAgentSetInfo` 契约改动未提交，不属于本功能，勿并入本次 docs 提交
 
 ## 关键决策记录
@@ -117,4 +117,4 @@
 > 仍未做：真机走查（本仓库无 UI 自动化），顶栏「涉密」在 5 个页面的实际位置/气泡箭头对齐需实测。
 
 - 2026-08-13：收尾同步——矩阵「涉密说明」行改为标题栏入口表述（底栏方案已废弃）；impl-notes 说明气泡章节对齐顶栏落点与四端箭头差异；apps 脏区仍为旁路，自测状态不变；无关契约改动未提交
-- 2026-08-13：四端涉密标签代码提交并 **只 push `origin/personal-ai-chat`**（不 push hotfix/feat）。android/ios 本轮未提交修复一并 commit 后快进合入；web 从 feat 分支 cherry-pick 18 个 commit。android 快进时 hotfix 上未推送的「合并详情」commit `f34ef9502` 会一并进入 `personal-ai-chat`（无法从历史上剥离）
+- 2026-08-13：android/ios/desktop 涉密代码 push 到各自 `origin/personal-ai-chat`。web 先误 cherry-pick 到 `personal-ai-chat`，后按用户要求 force-with-lease 撤回到 `7163903`，并 push `feat/data-scope-secret-tag`（`5b9f15f`）。android 快进时 hotfix 上未推送的「合并详情」commit `f34ef9502` 会一并进入 `personal-ai-chat`（无法从历史上剥离）
