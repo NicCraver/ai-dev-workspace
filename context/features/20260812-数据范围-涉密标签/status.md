@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13 18:10（android 气泡落位重写：显式宽 + showAtLocation，箭头按实际落位反推）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13 18:15（四端 getSecretButtonTip 接入代码均在脏区未提交；android 气泡落位/收窄 20% 同步未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -11,7 +11,7 @@
 | 气泡文案改走 getSecretButtonTip | 🚧 | 🚧 | 🚧 | 🚧 |
 | 自测通过 | 🚧 | 🚧 | 🚧 | 🚧 |
 
-> 本功能代码侧：android/ios/desktop 已 push 到各自 `origin/personal-ai-chat`（android `1b65e8aff`、ios `272e68c5e`、desktop `55161faf`）。web **不在** `personal-ai-chat`：误 cherry-pick 已 force-with-lease 撤回到 `7163903`（只去掉 18 个涉密 commit，筛选条 4 个仍留在 pac）；功能在 `origin/feat/data-scope-secret-tag` `5b9f15f`。android/ios/desktop 旁路脏区未提交。
+> 本功能代码侧：web 在 `feat/data-scope-secret-tag`（`origin` synced，HEAD `f99ec77` 加载态；`getSecretButtonTip` **未提交**）。android/ios/desktop 在 `personal-ai-chat-hotfix`（均 synced；涉密 tag/顶栏/已选等已 push，本轮 `getSecretButtonTip` + android 气泡落位/收窄 **均未提交**）。各端旁路脏区（android 相机资源、ios/desktop combine、desktop 本地包配置）勿当本功能提交。
 
 ## 视觉验收发现的问题（2026-08-12，均已修复，待用户统一复验）
 
@@ -69,22 +69,22 @@
 
 ## 待办 / 阻塞
 
-- (四端) 涉密气泡文案已改走 `POST /personalAiFrame/getSecretButtonTip`，**代码已写、未联调/自测**。失败或空串回退旧静态文案「人力部门人员、公司全员群，聊天记录与文件涉密，不参与AI分析」（静默，不弹错）。YApi mock 是「涉密信息请勿外传」，联调以配置 `personal.ai.frame.secret.tip.text` 实际值为准。
-- (android) 气泡已改为两行自适应宽，箭头位置 / 右侧 12dp 留白仍为估算值，**未做真机像素级核对**；系统字体放大时气泡会变宽，需确认仍不探出屏幕右侧、箭头仍指在按钮上
-- (四端) 箭头形态目前不统一：android/iOS 有向上箭头，web/desktop 仍是无箭头深色气泡——是否要求统一由用户定
-- (ios) 涉密入口最终定为标题栏本行右侧（`rightBarButtonItem`），跟其余三端（顶部标题栏/关闭按钮左侧）逻辑一致，均未跑真机验证
+- (四端) 涉密气泡文案改走 `POST /personalAiFrame/getSecretButtonTip`：**调用代码已在四端脏区写好、均未 commit/push，也未联调/自测**。打开「选择数据范围」时预拉；`data` 非空才替换展示；失败/空串静默回退「人力部门人员、公司全员群，聊天记录与文件涉密，不参与AI分析」。YApi mock「涉密信息请勿外传」只是占位，联调以配置 `personal.ai.frame.secret.tip.text` 为准。
+  - (web) `SelectDataRangeDialog.vue` + `personalAiFrame.js`（`feat/data-scope-secret-tag` 未提交）
+  - (android) `AiChatBasicInterface.getSecretButtonTip` + `DataRangeMultiFooterHelper` 预拉/展示（`personal-ai-chat-hotfix` 未提交；与下方气泡落位/收窄同一脏区）
+  - (ios) `ZXDataScopeSecretEntry.m` + `ZXAIAgentManager`/`ZXApiMacro.h`（`personal-ai-chat-hotfix` 未提交；同脏区还有 combine 旁路文件，提交时勿混入）
+  - (desktop) `personal-ai-memory-bar.vue` + `aiBasic.js`（`personal-ai-chat-hotfix` 未提交）
+- (android) 气泡落位重写（显式宽 + `showAtLocation` + 按实际落位反推箭头）与宽度按自然排版 **×0.8 收窄 20%** 均在未提交脏区；`assembleDevelopDebug` 已过，**未真机复测**箭头/右侧 12dp 留白/系统字体放大
+- (四端) 箭头形态仍不统一：android/iOS 有向上箭头，web/desktop 无箭头——是否统一由用户定
+- (ios) 涉密入口在标题栏 `rightBarButtonItem`；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真机构建**；尤其复测「点击弹出气泡」、接口文案换行后宽度
 
-- (web) `vue-tsc --noEmit` 已过、`dataScopeModel` 单测 20/20 过；**未做**真实浏览器联调可视化验证——本地环境 `getAllImDialogue` 走真实接口（无 mock），未接入测试后端/登录态，无法起 `pnpm dev` 跑通真实弹窗看涉密/已离职 tag 实际渲染效果。建议开发者本地连测试环境跑一遍再合并。
-- (web) `pnpm format` 本地环境 `node_modules` 里 prettier 缺失（非本次改动引入的问题），跳过自动格式化，靠手工对齐现有代码风格；如需要请本地补齐依赖后跑一次 `pnpm format`。
-- (android) 已选弹层名字/头像 + 涉密气泡两行已 commit `1b65e8aff` 并随 hotfix 快进 **push 到 `origin/personal-ai-chat`**；**仍未真机**
-- (android) 旁路（非本功能）：工作区仍有打正式包留下的资源补丁未提交——`basis_function_api` 拷贝 `em_camera_switch_normal.9.png`；**勿当本功能提交**
-- (ios) `/port ios`、顶栏/箭头、以及本轮列表 tag / 已选 chip 均已 commit（HEAD `272e68c5e`）并 **push 到 `origin/personal-ai-chat`**（远端原先没有该分支，本次新建）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建 + 真机验证**；尤其要确认「点击弹出气泡」、短中名字完整、超长才省略
-- (ios) 旁路（非本功能）：工作区仍有合并详情引用快照全链路改动约 11 文件未提交（属 `20260730`），**勿当本功能提交** → 详见该功能 status
-- (web/desktop) 涉密入口挪顶栏后**未做浏览器/dev 真机视觉验证**（气泡朝下弹出的定位、标题栏拥挤度），只过了 `vue-tsc` / eslint；建议本地各起一次看一眼
-- (desktop) `/port desktop` 及顶栏对齐改动已随 hotfix 快进 **push 到 `origin/personal-ai-chat`**（HEAD `55161faf`）；**未跑 `npm run dev` 真机交互验证**
-- (desktop) 旁路（非本功能）：工作区仅有 `.env.test` / `electron-builder.yml` / `package.json` 本地调试配置改动，**勿提交**
-- (web) 误推到 `personal-ai-chat` 的 18 个 cherry-pick 已撤回（`02a7008` → `7163903`）；功能已 push 到 `origin/feat/data-scope-secret-tag`（`5b9f15f`）。远端原同名分支是无关的 stage/release 历史，本次 force-with-lease 覆盖
-- (context) 旁路：工作区另有 `hideChat`/`saveAgentSetInfo`/`getAgentSetInfo` 契约改动未提交，不属于本功能，勿并入本次 docs 提交
+- (web) 已 push 的 tag/顶栏/加载态等在 `origin/feat/data-scope-secret-tag`；**未做**真实浏览器联调（含 `getSecretButtonTip` 与 tag 渲染）；本地无测试登录态时无法完整自测
+- (web) `pnpm format` 本地 prettier 缺失（非本次引入），需本地补齐依赖后再跑
+- (android) 已选名字/头像 + 两行气泡等已 push（`1b65e8aff` 一带）；旁路：`basis_function_api/em_camera_switch_normal.9.png` **勿提交**
+- (ios) tag/顶栏/已选 chip 等已 push；旁路：combine 引用快照约 6 文件（`20260730`）**勿当本功能提交**
+- (web/desktop) 涉密顶栏 + 气泡朝下弹出**未做**浏览器/dev 视觉验证
+- (desktop) 顶栏对齐等已 push；旁路：`.env.test` / `electron-builder.yml` / `package.json` **勿提交**
+- (context) 旁路：`hideChat`/`saveAgentSetInfo`/`getAgentSetInfo` 契约改动未提交，勿并入本功能 docs
 
 ## 关键决策记录
 
@@ -124,3 +124,4 @@
 - 2026-08-13：四端调用代码已接 `getSecretButtonTip`。打开「选择数据范围」时预拉；`data` 非空字符串才替换展示；失败/空串回退旧静态文案，静默不弹错。android 去掉硬编码 `\n` 与 `maxLines=2`，宽度跟实际字符串走。未联调，矩阵标 🚧。
 - 2026-08-13：(android) 用户实测截图——气泡整体被推到屏幕左侧、盖住搜索框与「选择联系人」，箭头也脱离「涉密」按钮。根因：`PopupWindow` 用 `WRAP_CONTENT` 建时会**自己再量一遍**内容宽度，跟 `toggleSecretTip()` 里预量的值对不上（宽文案 + 换行时差得更多），负 `xOff` 又叠加系统的屏幕内钳制，气泡被顶到左边缘；箭头 `marginEnd` 是按「预量宽」推的，于是跟着错位。改法（`DataRangeMultiFooterHelper.java`）：①`new PopupWindow(content, tipWidth, WRAP_CONTENT)` 显式给宽，实际宽 = 预量宽；②改用 `showAtLocation(NO_GRAVITY, tipLeft, tipTop)` 按窗口坐标直接落位（`getLocationInWindow` 取按钮位置），气泡右边缘对齐屏幕右侧 12dp 留白、左侧同样留 12dp 钳制；③`adjustSecretTipArrow(content, tipLeft, tipWidth)` 改成用**实际落位**反推箭头 `marginEnd`（按钮视觉中心按 `getPaddingLeft/Right` 实算，不再写死 12/16dp），两端各留 8dp 圆角兜底。`assembleDevelopDebug` BUILD SUCCESSFUL；**未真机复测**，android 工作区仍为旁路脏区（含 `getSecretButtonTip` 接入）未提交。
 - 2026-08-13：(android) 用户要求气泡再窄 20%。实现为「两遍 measure」：第一遍按屏幕宽量出文案自然排版宽，再把 `TextView.setMaxWidth(自然宽 * 0.8 - 24dp左右padding)` 后重量一遍，气泡多换一行、整体窄 20%。比例走常量 `SECRET_TIP_WIDTH_RATIO`（想再调只改这一个数）。`assembleDevelopDebug` BUILD SUCCESSFUL，未真机复测。
+- 2026-08-13：收尾同步——四端 `getSecretButtonTip` 接入与 android 气泡落位/收窄均在 apps 脏区未提交；矩阵「接口文案」/「自测」仍 🚧；impl-notes 已含接口文案与定位说明，web 未联调故未改 impl-notes；旁路脏区仍排除在本功能 commit 外
