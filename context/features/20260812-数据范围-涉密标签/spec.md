@@ -1,6 +1,6 @@
 # Spec：数据范围-涉密标签
 
-> 由 Superpowers brainstorm 产出，覆盖模板。最后更新：2026-08-12
+> 由 Superpowers brainstorm 产出，覆盖模板。最后更新：2026-08-13
 
 ## 背景与目标
 
@@ -23,12 +23,11 @@
 
 - 本期做：
   - 四端「选择数据范围」全部相关 tab/页面新增「涉密」「已离职」两种 tag 展示（同一 tag 组件、不同配色）
-  - 底部工具栏说明图标按钮 + 点击展开/收起说明气泡（纯前端静态文案，无接口）
+  - 标题栏说明图标按钮 + 点击展开/收起说明气泡（文案走 `getSecretButtonTip`）
   - 「已离职」由现有姓名后缀 `（已离职）` 改造为独立 tag，与涉密 tag 视觉统一
   - web 端补涉密图标素材 `secret.svg`（已给的 SVG）
 - 本期不做：
-  - 不新增/变更后端接口（`ignoreChatType` 字段契约已就绪，后端已支持）
-  - 不改组织架构树、群列表等其他接口结构
+  - 不改组织架构树、群列表等其他接口结构（`ignoreChatType` 仍复用既有字段）
   - 与本功能无关的工作区遗留改动（`saveAgentSetInfo` / `getAgentSetInfo` / `hideChat` 等 Agent 设置域改动）不属于本功能范围，不合并进来
 
 ## 各端差异点
@@ -47,6 +46,7 @@
 
 - `context/contracts/personalAiFrame/getAllImDialogue.d.ts`：`ignoreChatType`（1-忽略聊天记录/涉密；0-不忽略）已在契约中，后端已上线，直接接入，无需 mock 过渡。
 - `privateInfo.leave`（同一契约文件既有字段）：已离职判定，逻辑不变，只改展示形式（后缀文案 → tag）。
+- `context/contracts/personalAiFrame/getSecretButtonTip.d.ts`：POST `/personalAiFrame/getSecretButtonTip`，无入参，`data` 为涉密按钮气泡文案字符串（配置 `personal.ai.frame.secret.tip.text`）。后端状态「开发中」。
 - 组织架构树 / 群列表 / 搜索等接口：本期不改，涉密与已离职标记由前端按 id 从 `getAllImDialogue` 缓存回填。
 
 ## Tag 视觉规格
@@ -65,8 +65,8 @@
 
 - 入口：弹窗/页面底部工具栏「[涉密图标]涉密」按钮（非行内 tag）
 - 交互：点击切换显示/隐藏；点击气泡外任意区域关闭
-- 文案（固定，四端一致）：「人力部门人员、公司全员群，聊天记录与文件涉密，不参与AI分析」
-- 无需请求接口，纯前端静态渲染
+- 文案：打开「选择数据范围」时请求 `getSecretButtonTip`，用回参 `data` 字符串展示；不再写死前端文案
+- 接口失败/未返回时的降级策略待联调确认（是否回退到旧静态文案，或展示空气泡）
 
 ## 待用户确认的问题
 

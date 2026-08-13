@@ -3,13 +3,12 @@
 **立即执行，不要探索代码、不要自行拼命令：**
 
 ```bash
-bash apps/android/.cursor/commands/scripts/anzhuo-build-test.sh $ARGUMENTS
+node scripts/anzhuo-build-test.mjs $ARGUMENTS
 ```
 
-（脚本以 `apps/android` 为准；本仓库仅转发。）
+（工作区根目录脚本；Android 工程在 `apps/android`。只构建、不安装。）
 
-默认：`assembleOnTestDebug`（包名 `com.cnmts.smart_message.test`），成功后 **`open` 产物目录**  
-`smart_message/build/outputs/apk/onTest/debug/`。
+默认：`assembleOnTestDebug`，成功后重命名为 `zx-android-test_v*.apk` 并 **`open` 产物目录**。
 
 可选：`--develop`（开发环境 APK）。
 

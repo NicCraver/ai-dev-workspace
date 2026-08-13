@@ -1,6 +1,6 @@
 # Status：合并详情（聊天记录页）智能体回复丢引用（iOS 转发→安卓看）
 
-> 最后更新：2026-08-13 16:40 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13 17:10 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 问题
 
@@ -17,8 +17,9 @@
 |------|-----|---------|-----|---------|
 | 合并详情兼容 iOS 打包的引用快照 | ➖ | ✅ | ➖ 无需改 | ⬜ 未查 |
 | 合并详情 `RC:ReferenceMsg` 画引用块 | ➖ | ✅ 本来就画 | ✅ 本来就画 | ✅ 本次新增 |
-| 引用人昵称被写成 `ga_` 账号 id | ➖ | ✅ 本次 | ✅ 本次（读 + 发） | ✅ 本次 |
-| 真机 / 客户端自测 | ➖ | 🚧 已装 onTest 包待验 | ⬜ 待人工 Xcode 构建 | ⬜ 待跑 dev:test |
+| 引用人昵称被写成 `ga_` 账号 id（合并详情） | ➖ | ✅ | ✅（读 + 发） | ✅ |
+| 引用人昵称被写成 `ga_` 账号 id（**会话页**） | ➖ | ✅ 复用同一处改动 | ➖ 发送侧已修 | ✅ 第三轮补 |
+| 真机 / 客户端自测 | ➖ | 🚧 改动未装机（只编译过） | ⬜ 待人工 Xcode 构建 | ⬜ 待跑 dev:test |
 
 ## 定位（已抓真实 OSS 包比对，非推断）
 
@@ -105,6 +106,34 @@
 验证：`./gradlew :IM:compileDevelopDebugJavaWithJavac` 通过；desktop `eslint` 通过 + `vue-template-compiler`
 编译两个模板 0 错误。iOS 按仓库规范不自行构建。
 
+## 第三轮：会话页（非合并详情）同样显示 `ga_xxx`（2026-08-13 17:00）
+
+现象：iOS 在个人 AI 框会话里回复智能体那条消息，安卓 / PC 的**聊天会话页**引用条显示
+`ga_2079857285076635650：收到，测试正常…`，正文前缀「回复 @Bob：」正常（前缀是发送时写死进正文的文本，
+和引用快照不是一条链路，所以只有引用条露馅）。
+
+定位：
+
+- 消息体仍是第二轮那份 iOS 快照（`referMsg.user.name = referMsg.user.id = ga_…`），发送侧修复未构建，
+  且**存量消息永远是这份数据**，只能靠读侧兜底。
+- **android**：会话页引用条走 `ReferenceMessageItemProvider` → `ReferencePreviewView`，与合并详情同一个类，
+  第二轮的占位判定已覆盖 —— 代码已修，**当前装机的包没带这个改动**，所以现场仍显示 ga_。
+- **desktop**：会话页走 `msg-reply` → `msg-refer`，第二轮只加了「name === id 视为占位 → 查 `AllUserMap`」，
+  而 `ga_` 智能体不在通讯录 map 里 → 兜底又回落到 `user.name`，等于原样显示 ga_。**真缺口**。
+
+改动（desktop 1 文件，`components/chitchat/message/msg-refer.vue`）：
+
+- 新增 `isPlaceholderName(name, uid)`：空 / 等于账号 id / `ga_`、`robot_` 前缀 —— 与安卓
+  `ReferencePreviewView.isPlaceholderReferName()`、iOS `zx_isPlaceholderDisplayName:` 同口径。
+- `senderName` 解析顺序：`senderNameOverride` → 非占位的内嵌 `user.name` → **`ga_` 查
+  `GetAiAgentAccountInfoMap`（与气泡上方发件人同一数据源）** → `AllUserMap[uid]` → 回落内嵌名。
+- 抽出 `referUser` / `referUserId` 两个 computed（`user.id` → `user.userId` → `referMsgUserId`）。
+- `mounted` 加 `ensureReferAgentName()`：引用人是 `ga_`、昵称占位且 map 里没缓存时，调一次
+  `getAgentBaseInfoForPlatform`（服务内部会 `SetAiAgentAccountInfoMap`，回来自动驱动 `senderName` 重算）；
+  失败静默，不改现有展示。
+
+验证：`npx eslint src/renderer/components/chitchat/message/msg-refer.vue` exit 0。未跑 `dev:test`。
+
 ## 待办 / 阻塞
 
 - (android) **真机自测**：重开那条 iOS 转发的聊天记录，确认第 4 条出现引用块「李峰：你好」+ 蓝色「回复 @李峰：」，
@@ -112,7 +141,9 @@
 - iOS **不需要改**：它写的 `referObjName` + 快照信息量够，安卓读不了是安卓的兼容问题。
   （若要收敛差异，可另起任务让 iOS 也补写 `objName`，属锦上添花。）
 - desktop / web 读同一份 iOS 包是否也丢引用，未验证（desktop 的「不画引用块」已单独修，见第二轮）。
-- (desktop) `npm run dev:test` 打开那条聊天记录，确认引用块出现且昵称是「Bob」而非 `ga_…`。
+- (desktop) `npm run dev:test` 打开那条聊天记录，确认引用块出现且昵称是「Bob」而非 `ga_…`；
+  **另测会话页**：个人 AI 框会话里那条 iOS 发的回复，引用条应显示 AI 框名而非 `ga_2079857285076635650`。
+- (android) 会话页这条同样要复验 —— 代码已改但**未装机**，需重新 `installOnTestDebug` 后再看现场。
 - (ios) 人工在 Xcode 构建自测：① 老消息的引用条昵称回填；② 新发一条回复智能体的消息，抓包看
   `referMsg.user.name` 不再是 `ga_…`。
 - 昵称占位判定按「`ga_` / `robot_` 前缀」实现，若将来有真人昵称以此开头会被误判（可能性极低，先记着）。

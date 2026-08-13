@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13（web 误推已撤回，功能在 `feat/data-scope-secret-tag`；其余三端仍在 `personal-ai-chat`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13（契约新增 getSecretButtonTip；web 误推已撤回，功能在 `feat/data-scope-secret-tag`；其余三端仍在 `personal-ai-chat`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -8,6 +8,7 @@
 |------|-----|---------|-----|---------|
 | Tag 接入（全部/群组/搜索/组织架构/已选） | ✅ | ✅ | ✅ | ✅ |
 | 涉密说明入口+气泡（标题栏，非底栏） | ✅ | ✅ | ✅ | ✅ |
+| 气泡文案改走 getSecretButtonTip | ⬜ | ⬜ | ⬜ | ⬜ |
 | 自测通过 | 🚧 | ✅ | 🚧 | 🚧 |
 
 > 本功能代码侧：android/ios/desktop 已 push 到各自 `origin/personal-ai-chat`（android `1b65e8aff`、ios `272e68c5e`、desktop `55161faf`）。web **不在** `personal-ai-chat`：误 cherry-pick 已 force-with-lease 撤回到 `7163903`（只去掉 18 个涉密 commit，筛选条 4 个仍留在 pac）；功能在 `origin/feat/data-scope-secret-tag` `5b9f15f`。android/ios/desktop 旁路脏区未提交。
@@ -65,6 +66,8 @@
 - (ios) 用户反馈点「已选」后：① chip 名字几乎全是 `...`；② `privateInfo.avatar` 有 URL 却显示文字头像（如「连佳康」粉底「佳康」）—— **已改**（ios 未提交，未跑 xcodebuild）：
   - 头像：已选 chip 改走 `setAvatarByAccountId:name:avatar:`（文字头像只当占位，有 URL 继续加载）；列表行 `ZXForwardCell` 同样改为有 `avatarURL` 就 `sd_setImage`。用户复验头像已对
   - 名字第一轮只撤了 DefaultLow、stack 宽收 0，用户复验仍全是 `...`。对照 android `item_data_range_selected_row`：chip `wrap_content`、姓名 `wrap_content` + **maxWidth 160dp** 才省略。iOS 改成同一套：`itemSizeForUserModel` 用真实约束间距算宽，姓名最多 160pt；cell 里姓名宽度写死为测量值，有 tag 才加 4pt 间隙。超过 160pt 才尾部省略
+
+- (四端) 涉密气泡文案从硬编码改为 `POST /personalAiFrame/getSecretButtonTip`（契约已加，调用代码未改）。后端状态「开发中」；失败/空串降级策略未定（是否回退旧静态文案）。YApi mock 是「涉密信息请勿外传」，与当前硬编码「人力部门人员、公司全员群，…」不是同一句，联调时以配置实际值为准。
 
 ## 待办 / 阻塞
 

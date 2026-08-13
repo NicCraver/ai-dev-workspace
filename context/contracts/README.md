@@ -34,6 +34,7 @@ contracts/
 │  ├─ shareFileDataList.d.ts    # POST /agentFileShare/shareFileDataList
 │  ├─ saveAgentSetInfo.d.ts     # POST /agentSetBasic/saveAgentSetInfo
 │  ├─ getAgentSetInfo.d.ts      # POST /agentSetBasic/getAgentSetInfo
+│  ├─ getSecretButtonTip.d.ts   # POST /personalAiFrame/getSecretButtonTip
 │  ├─ getBadgePushInfo.d.ts     # POST /agentSetBasic/getBadgePushInfo
 │  ├─ groupGet.groupAgentRels.d.ts # POST /api/chat/v1/group/get（智能体片段）
 │  └─ groupGet.groupRobots.d.ts # POST /api/chat/v1/group/get（群机器人可@判定）

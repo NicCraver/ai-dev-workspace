@@ -1,22 +1,21 @@
 ---
-description: 只允许 push 到 personal-ai-chat，禁止推其他分支
+description: 禁止擅自 push 到联调/发布分支
 alwaysApply: true
 ---
 
 # Git Push 分支约定
 
-本工作区（含 `apps/web`、`apps/android`、`apps/ios`、`apps/desktop` 及 context）**一律只 push 到 `personal-ai-chat`**。
+本工作区（含 `apps/web`、`apps/android`、`apps/ios`、`apps/desktop` 及 context）**禁止擅自 push 到联调/发布分支**。
 
 ## 必须遵守
 
-- 开发、提交、`git push` **只针对 `personal-ai-chat`**。
 - **禁止** push 到 `test-202512`、`release`、`main`/`master` 或其他联调/发布分支（即使用户口头说「push 吧」且当前 checkout 在那些分支上）。
-- 若用户要推非 `personal-ai-chat`：先 **明确拒绝并提醒本约定**，等用户再次明确指定分支名后再推。
+- 若用户要推上述联调/发布分支：先 **明确拒绝并提醒本约定**，等用户再次明确指定分支名后再推。
 - 合入 test / release 由人在远端 MR/本地自行处理；Agent **不要**主动在那些分支上 commit + push。
 
 ## 反例（已发生过，禁止再犯）
 
-- 在 `test-202512` 修完丢树后直接 `git push origin test-202512` —— **违规**。应只保证代码在 `personal-ai-chat` 完整并 push 该分支。
+- 在 `test-202512` 修完丢树后直接 `git push origin test-202512` —— **违规**。应 push 当前功能分支，合入 test 由人处理。
 
 ## PC 端（apps/desktop）提交禁忌
 
