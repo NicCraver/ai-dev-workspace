@@ -10,16 +10,19 @@
 |------|-----|---------|-----|---------|
 | spec 定稿 | — | — | ✅ | — |
 | plan 拆解（14 个 Task） | — | — | ✅ | — |
-| T0 先落袋现有 505 行未提交改动 | — | — | ⬜ | — |
+| T0 先落袋现有 505 行未提交改动 | — | — | ✅ | — |
 | T1 摸清四个接入点真实链路 | — | — | ✅ | — |
-| T2 引入 libcmark_gfm + 冒烟解析 | — | — | ⬜ | — |
-| T3 ZXMarkdownStyle / Block / TableModel | — | — | ⬜ | — |
-| T4 ZXMarkdownAttributedBuilder | — | — | ⬜ | — |
-| T5 ZXMarkdownParser 块序列 + 流式降级 | — | — | ⬜ | — |
-| T6 ZXMarkdownTableView 横滚表格 | — | — | ⬜ | — |
-| T7 ZXMarkdownContentView 段栈 + 高度/收起态 | — | — | ⬜ | — |
-| T8 Debug 摇一摇自测页（30 条用例） | — | — | ⬜ | — |
-| T9 ZXMarkdownManager 切换 + 三重兜底 | — | — | ⬜ | — |
+| T2 引入 libcmark_gfm + 冒烟解析 | — | — | ❌ | — |
+| T3 ZXMarkdownStyle / Block / TableModel | — | — | 🚧 | — |
+| T4 ZXMarkdownAttributedBuilder | — | — | 🚧 | — |
+| T5 ZXMarkdownParser 块序列 + 流式降级 | — | — | 🚧 | — |
+| T6 ZXMarkdownTableView 横滚表格 | — | — | 🚧 | — |
+| T7 ZXMarkdownContentView 段栈 + 高度/收起态 | — | — | 🚧 | — |
+| T8 Debug 摇一摇自测页（30 条用例） | — | — | 🚧 | — |
+| T9 ZXMarkdownManager 切换 + 三重兜底 | — | — | 🚧 | — |
+
+> 🚧 = 代码已写完并提交（ios `a973897d2`），**未编译验证**——卡在 T2 的依赖没装上。
+> ❌ = T2 阻塞：`pod install` 报 `Unable to find a specification for libcmark_gfm (~> 0.29.4)`，`pod repo update` 在拉 178M 的 CocoaPods/Specs git 仓，已跑 40 分钟未完。
 | T10 接入机器人气泡 | — | — | ⬜ | — |
 | T11 接入智能体气泡 + 流式 | — | — | ⬜ | — |
 | T12+13 验证聚合弹窗 / 合并转发详情页（降级为纯验证） | — | — | ⬜ | — |
@@ -36,6 +39,11 @@
 | desktop | `personal-ai-chat-hotfix` | synced | 脏 3 | 不涉及 | `.env.test`/`electron-builder.yml`/`package.json` 本地调试配置，按规矩**禁止提交** |
 
 ## 待办 / 阻塞
+
+- (ios) **❌ 当前阻塞**：`libcmark_gfm` 装不上。`pod install` 报 `Unable to find a specification for libcmark_gfm (~> 0.29.4)`；Podfile 的 source 是 `https://github.com/CocoaPods/Specs.git`（178M git 仓），`pod repo update` 跑 40 分钟未完。两条出路：①等 repo update 跑完再 `pod install`；②给 Podfile 加 `source 'https://cdn.cocoapods.org/'`（本机 `~/.cocoapods/repos/trunk` 已存在 CDN 源，秒解析）。
+- (ios) 附带环境坑：`pod` 在 Ruby 3.2 + activesupport 7.0.8 下直接报 `uninitialized constant ActiveSupport::LoggerThreadSafeLevel::Logger`，需用 `RUBYOPT="-rlogger" pod ...` 绕过。
+- (ios) T3-T9 代码已提交但**一行没编译过**，装上依赖后第一件事是 clean build 收编译错误。
+- (ios) 新文件已用 `xcodeproj` gem 写进 `project.pbxproj`，挂 `zhixinApp` / `zhixinAppProd` / `zhixinAppTest` 三个 target（`NOtificationService`/`ZXShare` 未挂，与 `ZXMarkdownManager.m` 现状一致）。
 
 - (ios) **先处理 iOS 工作区那 505 行未提交改动**：内联 HTML 那套是本功能要复用的基础（spec「内联 HTML」章节直接引用 `processHTMLTags`），本功能动刀前先把它 commit 掉，否则两轮改动混在一个 diff 里没法回滚
 - (ios) plan.md 已定稿（14 个 Task，含每步代码与人工构建卡点），下一步开始执行 T0
