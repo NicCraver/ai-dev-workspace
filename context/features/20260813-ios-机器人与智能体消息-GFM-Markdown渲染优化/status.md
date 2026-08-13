@@ -50,11 +50,7 @@
 - (ios) ⚠️ **`pod install` 会拆掉 `zhixinAppTest`/`zhixinAppProd` 的 Pods xcconfig 挂载**，之后编译报 `'AFNetworking/AFNetworking.h' file not found`。本次已通过还原 `project.pbxproj` 修好；其他人拉到这个分支跑 `pod install` 会再踩一次。根治要把三个 target 都写进 Podfile（需团队决定，本次未做）。详见 impl-notes「工程坑」。
 - (ios) 本机 `pod` 需 `RUBYOPT="-rlogger"` 前缀才能跑（Ruby 3.2 + activesupport 7.0.8 的 Logger 常量问题）。
 
-- (ios) **先处理 iOS 工作区那 505 行未提交改动**：内联 HTML 那套是本功能要复用的基础（spec「内联 HTML」章节直接引用 `processHTMLTags`），本功能动刀前先把它 commit 掉，否则两轮改动混在一个 diff 里没法回滚
-- (ios) plan.md 已定稿（14 个 Task，含每步代码与人工构建卡点），下一步开始执行 T0
-- ~~(ios) 合并转发详情页是否复用会话页 cell 未验证~~ —— **已查清**：`ZXRCIMCommbineChatController` 继承 `ZXRCIMBaseChatController`，聚合弹窗也直接复用两个 cell，两处都不用改代码，只需验证（详见 impl-notes「接入点链路」）
-- (ios) `pod install` 与三档构建（模拟器 Debug / 真机 Debug / Prod archive）由人工执行，AI 不跑
-- (ios) 包体增量待实测：archive 后看 Xcode Organizer 的 App Thinning Size Report
+> 已了结：T0 那 505 行内联 HTML 改动已提交（`a67d3d364`）；合并转发详情页链路已查清（复用会话页 cell，见 impl-notes）。
 
 ## 关键决策记录
 
@@ -62,5 +58,6 @@
 - 2026-08-13 解析器换 **`pod 'libcmark_gfm', '~> 0.29.4'`**（trunk 上 `cmark-gfm` pod 停在 2018 年 0.1.0，不可用）；走 CocoaPods 而非源码内置，由用户拍板
 - 2026-08-13 表格改 **独立子视图横向滚动**（`ZXMarkdownTableView`），气泡内容视图从单 `UITextView` 改为段栈；单元格 `UILabel` 不可选中，复制走整条消息长按
 - 2026-08-13 流式表格：**未闭合先当纯文本，收完再成表**，高度只跳一次
+- 2026-08-14 实现时把上一条简化为「**流式期间所有表格都按纯文本**」：流式路径只有单个富文本控件，中途插表格视图会让流式与最终两条高度体系分叉。布局快照缓存 key 必须带 streaming 标志，否则收完后命中流式那份快照、表格永远不成表
 - 2026-08-13 三重兜底：无表格消息走原单 textView 路径 / 解析异常或超 20000 字符回退老正则 / 全局开关 `ZXMarkdownUseCMark`
 - 2026-08-13 `ZXMarkdownManager` 对外 API 一个不删，内部换解析器，非气泡调用方零改动
