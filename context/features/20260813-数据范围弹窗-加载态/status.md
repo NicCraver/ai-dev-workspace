@@ -1,6 +1,6 @@
 # Status：数据范围弹窗-加载态优化
 
-> 最后更新：2026-08-13 14:25 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13 14:55（四端已提交并 push） ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -30,7 +30,8 @@
 
 - (ios) 需人工在 Xcode 编译自测（仓库规定 AI 不跑 xcodebuild）。
 - (desktop) 需 `npm run dev:test` 起应用，用大数据量账号验证滚动是否跟手（eslint 已过）。
-- apps 四端代码（web / android / ios / desktop）**均未提交**。
+- 四端代码已提交并 push：web `f99ec77` → `feat/data-scope-secret-tag`（MR 414）；android `a9c292fb4`、ios `f1d200d43`、desktop `021a018c` → 各自 `personal-ai-chat-hotfix`（本次连同此前的涉密标签 commits 一起推上去）。
+- android / ios / desktop 的 `personal-ai-chat` 分支已用一个 revert commit 撤回此前误推的涉密标签改动（android `ef663e031` 连带撤了 `f34ef9502` 合并详情、ios `8cbb3e1c5`、desktop `83fc047c`），远程历史未改写，撤回后树内容与各自 hotfix 分叉点一致。
 - 选择AI框弹窗（`SelectAiBoxDialog` / `SelectAiBoxPopup`）的「加载中…」文案未动——不属于数据范围，如需统一再说。
 
 ## 关键决策记录
