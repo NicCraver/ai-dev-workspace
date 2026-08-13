@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13 18:15（四端 getSecretButtonTip 接入代码均在脏区未提交；android 气泡落位/收窄 20% 同步未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13 18:20（四端 getSecretButtonTip 已 commit+push；仍未联调/自测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -11,7 +11,7 @@
 | 气泡文案改走 getSecretButtonTip | 🚧 | 🚧 | 🚧 | 🚧 |
 | 自测通过 | 🚧 | 🚧 | 🚧 | 🚧 |
 
-> 本功能代码侧：web 在 `feat/data-scope-secret-tag`（`origin` synced，HEAD `f99ec77` 加载态；`getSecretButtonTip` **未提交**）。android/ios/desktop 在 `personal-ai-chat-hotfix`（均 synced；涉密 tag/顶栏/已选等已 push，本轮 `getSecretButtonTip` + android 气泡落位/收窄 **均未提交**）。各端旁路脏区（android 相机资源、ios/desktop combine、desktop 本地包配置）勿当本功能提交。
+> 本功能代码侧：web `origin/feat/data-scope-secret-tag` `e2640d6`；android/ios/desktop 各自 `origin/personal-ai-chat-hotfix`（android `f5f2d0ce3`、ios `8b6dbf809`、desktop `763cd15e`）。四端 `getSecretButtonTip` 已 push。旁路脏区仍在：android 相机资源、ios combine、desktop `electron-builder.yml`/`package.json`。
 
 ## 视觉验收发现的问题（2026-08-12，均已修复，待用户统一复验）
 
@@ -69,22 +69,22 @@
 
 ## 待办 / 阻塞
 
-- (四端) 涉密气泡文案改走 `POST /personalAiFrame/getSecretButtonTip`：**调用代码已在四端脏区写好、均未 commit/push，也未联调/自测**。打开「选择数据范围」时预拉；`data` 非空才替换展示；失败/空串静默回退「人力部门人员、公司全员群，聊天记录与文件涉密，不参与AI分析」。YApi mock「涉密信息请勿外传」只是占位，联调以配置 `personal.ai.frame.secret.tip.text` 为准。
-  - (web) `SelectDataRangeDialog.vue` + `personalAiFrame.js`（`feat/data-scope-secret-tag` 未提交）
-  - (android) `AiChatBasicInterface.getSecretButtonTip` + `DataRangeMultiFooterHelper` 预拉/展示（`personal-ai-chat-hotfix` 未提交；与下方气泡落位/收窄同一脏区）
-  - (ios) `ZXDataScopeSecretEntry.m` + `ZXAIAgentManager`/`ZXApiMacro.h`（`personal-ai-chat-hotfix` 未提交；同脏区还有 combine 旁路文件，提交时勿混入）
-  - (desktop) `personal-ai-memory-bar.vue` + `aiBasic.js`（`personal-ai-chat-hotfix` 未提交）
-- (android) 气泡落位重写（显式宽 + `showAtLocation` + 按实际落位反推箭头）与宽度按自然排版 **×0.8 收窄 20%** 均在未提交脏区；`assembleDevelopDebug` 已过，**未真机复测**箭头/右侧 12dp 留白/系统字体放大
+- (四端) `getSecretButtonTip` **已 commit+push，未联调/自测**。打开「选择数据范围」时预拉；`data` 非空才替换；失败/空串静默回退旧静态文案。联调以配置 `personal.ai.frame.secret.tip.text` 为准。
+  - web `e2640d6` → `origin/feat/data-scope-secret-tag`
+  - android `f5f2d0ce3`（含气泡显式宽 + `showAtLocation` + 收窄 20%）→ `origin/personal-ai-chat-hotfix`
+  - ios `8b6dbf809` → `origin/personal-ai-chat-hotfix`
+  - desktop `763cd15e` → `origin/personal-ai-chat-hotfix`
+- (android) 气泡落位/收窄已随上面 commit push；**未真机复测**箭头、右侧 12dp 留白、系统字体放大
 - (四端) 箭头形态仍不统一：android/iOS 有向上箭头，web/desktop 无箭头——是否统一由用户定
-- (ios) 涉密入口在标题栏 `rightBarButtonItem`；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真机构建**；尤其复测「点击弹出气泡」、接口文案换行后宽度
+- (ios) 未跑 `xcodebuild`；复测点击弹出气泡、接口文案换行后宽度
 
-- (web) 已 push 的 tag/顶栏/加载态等在 `origin/feat/data-scope-secret-tag`；**未做**真实浏览器联调（含 `getSecretButtonTip` 与 tag 渲染）；本地无测试登录态时无法完整自测
-- (web) `pnpm format` 本地 prettier 缺失（非本次引入），需本地补齐依赖后再跑
-- (android) 已选名字/头像 + 两行气泡等已 push（`1b65e8aff` 一带）；旁路：`basis_function_api/em_camera_switch_normal.9.png` **勿提交**
-- (ios) tag/顶栏/已选 chip 等已 push；旁路：combine 引用快照约 6 文件（`20260730`）**勿当本功能提交**
+- (web) **未做**真实浏览器联调（含接口文案与 tag 渲染）
+- (web) `pnpm format` 本地 prettier 缺失，需补齐依赖后再跑
+- (android) 旁路：`basis_function_api/em_camera_switch_normal.9.png` **勿提交**
+- (ios) 旁路：combine（`ZXMarkdownManager.m` / `ZXGroupRobotCell.m`）**勿当本功能提交**
 - (web/desktop) 涉密顶栏 + 气泡朝下弹出**未做**浏览器/dev 视觉验证
-- (desktop) 顶栏对齐等已 push；旁路：`.env.test` / `electron-builder.yml` / `package.json` **勿提交**
-- (context) 旁路：`hideChat`/`saveAgentSetInfo`/`getAgentSetInfo` 契约改动未提交，勿并入本功能 docs
+- (desktop) 旁路：`.env.test` / `electron-builder.yml` / `package.json` **勿提交**
+- (context) 旁路：`hideChat`/`saveAgentSetInfo`/`getAgentSetInfo` 契约、以及 `/code-status` 指令改动，勿并入本功能 docs
 
 ## 关键决策记录
 
