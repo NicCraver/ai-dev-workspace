@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13（android 本轮改动代码审查，3 个问题已修并提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13（stop-hook 收尾：apps 脏工作区均为旁路，与本功能无关；矩阵不变）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -9,6 +9,8 @@
 | Tag 接入（全部/群组/搜索/组织架构/已选） | ✅ | ✅ | ✅ | ✅ |
 | 涉密说明气泡（底部图标按钮） | ✅ | ✅ | ✅ | ✅ |
 | 自测通过 | 🚧 | ✅ | 🚧 | 🚧 |
+
+> 本功能代码侧：web 在 `feat/data-scope-secret-tag` 工作区干净；android/ios/desktop 功能改动均已 commit 到各自 `personal-ai-chat-hotfix`（ahead 未 push）。apps 当前未提交改动均为**旁路**，不记入上表格子。
 
 ## 视觉验收发现的问题（2026-08-12，均已修复，待用户统一复验）
 
@@ -58,11 +60,14 @@
 
 - (web) `vue-tsc --noEmit` 已过、`dataScopeModel` 单测 20/20 过；**未做**真实浏览器联调可视化验证——本地环境 `getAllImDialogue` 走真实接口（无 mock），未接入测试后端/登录态，无法起 `pnpm dev` 跑通真实弹窗看涉密/已离职 tag 实际渲染效果。建议开发者本地连测试环境跑一遍再合并。
 - (web) `pnpm format` 本地环境 `node_modules` 里 prettier 缺失（非本次改动引入的问题），跳过自动格式化，靠手工对齐现有代码风格；如需要请本地补齐依赖后跑一次 `pnpm format`。
-- (android) `/port android` 已提交 commit `0f6100be3`（`personal-ai-chat-hotfix`，未 push）；`./gradlew :smart_message:assembleDevelopDebug` BUILD SUCCESSFUL，`DataScopeModelTest` 单测全过；底栏窄屏（如 320pt 级）拥挤情况未做真机视觉核对，气泡垂直偏移量为测量高度+8dp 固定间距估算，非像素级对齐设计稿；未碰原有两个不相关未提交资源文件
-- (ios) `/port ios` 已提交 commit `0646ddd6`（`personal-ai-chat-hotfix`，未 push）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建验证**，需要人工用 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build 一次确认；说明气泡宽度/定位为自行设计（无设计稿像素级比对），窄屏（iPhone SE）底栏拥挤未单独适配测试；未碰原有 11 个不相关未提交文件
+- (android) `/port android` 已提交（含审查修复 `a3204ec46`，`personal-ai-chat-hotfix` ahead 7 未 push）；`assembleDevelopDebug` + `DataScopeModelTest` 已过；真机像素级核对仍缺
+- (android) 旁路（非本功能）：工作区仍有打正式包留下的资源补丁未提交——`base_util` 增 `color_F0F5FF`、`basis_function_api` 拷贝 `em_camera_switch_normal.9.png`；**勿当本功能提交**
+- (ios) `/port ios` 及后续顶栏/箭头改动已提交（`personal-ai-chat-hotfix` ahead 6 未 push）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建 + 真机验证**；尤其要确认「点击弹出气泡」
+- (ios) 旁路（非本功能）：工作区仍有合并详情引用快照全链路改动约 11 文件未提交（属 `20260730`），**勿当本功能提交** → 详见该功能 status
 - (web/desktop) 涉密入口挪顶栏后**未做浏览器/dev 真机视觉验证**（气泡朝下弹出的定位、标题栏拥挤度），只过了 `vue-tsc` / eslint；建议本地各起一次看一眼
-- (ios) 涉密入口已挪到顶部标题栏右侧（commit `7b74ce6b8`），**未做真机验证**，尤其要重点确认「点击弹出气泡」这个之前反馈失效的交互这次是否正常
-- (desktop) `/port desktop` 已提交 commit `443a4e85`（`personal-ai-chat-hotfix`，未 push）；eslint + 模板编译通过，**未跑 `npm run dev` 真机交互验证**（弹窗五个落点 + 说明气泡实际点击行为、popover 定位），建议本地起一次 dev 环境走查；说明气泡按钮尺寸/间距为估算值；未碰 `.env.test`/`electron-builder.yml`/`package.json`/`package-lock.json` 禁忌文件
+- (desktop) `/port desktop` 及顶栏对齐改动已提交（`personal-ai-chat-hotfix` ahead 6 未 push）；**未跑 `npm run dev` 真机交互验证**
+- (desktop) 旁路（非本功能）：工作区仅有 `.env.test` / `electron-builder.yml` / `package.json` 本地调试配置改动，**勿提交**
+- (context) 旁路：工作区另有 `hideChat`/`saveAgentSetInfo`/`getAgentSetInfo` 契约改动未提交，不属于本功能，勿并入本次 docs 提交
 
 ## 关键决策记录
 
@@ -95,3 +100,5 @@
 审查中确认**没问题、未改动**的点：`ignoreChatType` 用 `isFlagOne` 判定（Integer 拆箱比较，Gson 对字符串 "1" 已按数值解析，逻辑与契约一致）；箭头 `marginEnd` / 气泡 `xOff` 的几何推导逐项验算正确；`item_friend_content.xml` 里姓名 `wrap_content + weight=1` 处在 **wrap_content 的父容器**中，多余空间为 0、溢出时负 delta 只压缩姓名，tag 既不会被推到行尾也不会被挤丢（与 desktop 那个 `flex:1` bug 不同源，此前判断正确）；`SelectContactActivity` 只渲染企业行、无人员行，不是遗漏的 tag 落点；`color_FFF3DA`/`color_FEAC00`/`color_8F959E` 三个色值均已在 `base_color.xml` 既有定义中（工作区里 `base_color.xml` 那条未提交改动是无关的 `color_F0F5FF`，未动）。
 
 > 仍未做：真机走查（本仓库无 UI 自动化），顶栏「涉密」在 5 个页面的实际位置/气泡箭头对齐需实测。
+
+- 2026-08-13：stop-hook 收尾；确认 apps(android/desktop/ios) 脏文件均为旁路，本功能矩阵与自测状态不变；无 web 新联调，impl-notes 不变；未提交无关契约改动
