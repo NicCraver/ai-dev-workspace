@@ -1,16 +1,14 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13（收尾：矩阵更正标题栏入口表述；impl-notes 同步顶栏方案）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13（ios 长名称把涉密 tag 挤出屏幕，列表行 + 已选 chip 已修，未跑 xcodebuild）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | Tag 接入（全部/群组/搜索/组织架构/已选） | ✅ | ✅ | ✅ | ✅ |
-| 涉密说明入口+气泡（标题栏，非底栏） | ✅ | ✅ | ✅ | ✅ |
+| 涉密说明气泡（底部图标按钮） | ✅ | ✅ | ✅ | ✅ |
 | 自测通过 | 🚧 | ✅ | 🚧 | 🚧 |
-
-> 本功能代码侧：web 在 `feat/data-scope-secret-tag` 工作区干净；android/ios/desktop 功能改动均已 commit 到各自 `personal-ai-chat-hotfix`（android ahead 7、ios/desktop ahead 6，均未 push）。apps 工作区未提交改动均为**旁路**（android 资源补丁 / ios 合并详情快照 / desktop 本地调试配置），不记入上表。
 
 ## 视觉验收发现的问题（2026-08-12，均已修复，待用户统一复验）
 
@@ -52,6 +50,12 @@
 
 - (ios) 用户复验：加了新行是错的，「放到选择数据范围这一行的右侧」（标题栏本行，不要另起一行）—— **已撤回**（commit `b247e8605`）：5 个页面全部撤掉 `secretEntryBar`，改回 `self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.secretEntry.button]`，`searchHeaderView`/`breadcrumbScroll`/`tableView`/`searchBarContainer` 的顶部约束还原成直接贴 `self.view`。箭头逻辑（`ZXDataScopeSecretEntry.m`）不受影响，保留。大括号/圆括号计数核对后跟撤回前的版本完全一致（确认改动只是去掉新增部分，没有引入新问题）
 
+- (ios) 用户反馈：选择数据范围列表长群名把行内「涉密」tag 挤出右边缘（点「已选」再关闭后尤其明显），只剩一条黄缝 —— **已改**（ios 未提交，未跑 xcodebuild）：
+  - 根因：`ZXForwardCell` 姓名压缩优先级写成了 `DefaultHigh`（750，UILabel 默认值），注释却说要低于 tag；长名称和 tag 一起被压，徽标被压成一条缝。trailing 只挂在人数 label 上，群人数为空时人数宽为 0，更留不住 tag
+  - 修法：姓名改为 `DefaultLow` + 尾部省略，tag 增加 `right ≤ contentView-15`；`updateTagStackView` 里 `invalidateIntrinsicContentSize`（UIStackView 只改 `hidden` 经常不刷新固有宽，对应「已选关闭后」）
+  - 「已选」chip 同步修：原先按姓名全文宽度再叠加 tag，chip 会宽过屏幕；改为先扣掉头像/删除/tag 占位再量姓名，并 cap 在 `kMaxWidth`；`ZXUserCollectionCell` 姓名同样低压缩优先级
+  - 大括号/圆括号计数校验通过；未碰仓库里其它未提交文件
+
 ## 待办 / 阻塞
 
 - (android) 气泡宽度 180dp / 箭头位置 / 右侧 12dp 留白均为估算值，仅编译验证，**未做真机像素级核对**；箭头 marginEnd 依赖顶栏按钮实际测量宽度，窄屏或系统字体放大时需实测确认箭头仍指在按钮上
@@ -60,21 +64,19 @@
 
 - (web) `vue-tsc --noEmit` 已过、`dataScopeModel` 单测 20/20 过；**未做**真实浏览器联调可视化验证——本地环境 `getAllImDialogue` 走真实接口（无 mock），未接入测试后端/登录态，无法起 `pnpm dev` 跑通真实弹窗看涉密/已离职 tag 实际渲染效果。建议开发者本地连测试环境跑一遍再合并。
 - (web) `pnpm format` 本地环境 `node_modules` 里 prettier 缺失（非本次改动引入的问题），跳过自动格式化，靠手工对齐现有代码风格；如需要请本地补齐依赖后跑一次 `pnpm format`。
-- (android) `/port android` 已提交（含审查修复 `a3204ec46`，`personal-ai-chat-hotfix` ahead 7 未 push）；`assembleDevelopDebug` + `DataScopeModelTest` 已过；真机像素级核对仍缺
-- (android) 旁路（非本功能）：工作区仍有打正式包留下的资源补丁未提交——`base_util` 增 `color_F0F5FF`、`basis_function_api` 拷贝 `em_camera_switch_normal.9.png`；**勿当本功能提交**
-- (ios) `/port ios` 及后续顶栏/箭头改动已提交（`personal-ai-chat-hotfix` ahead 6 未 push）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建 + 真机验证**；尤其要确认「点击弹出气泡」
-- (ios) 旁路（非本功能）：工作区仍有合并详情引用快照全链路改动约 11 文件未提交（属 `20260730`），**勿当本功能提交** → 详见该功能 status
+- (android) `/port android` 已提交 commit `0f6100be3`（`personal-ai-chat-hotfix`，未 push）；`./gradlew :smart_message:assembleDevelopDebug` BUILD SUCCESSFUL，`DataScopeModelTest` 单测全过；底栏窄屏（如 320pt 级）拥挤情况未做真机视觉核对，气泡垂直偏移量为测量高度+8dp 固定间距估算，非像素级对齐设计稿；未碰原有两个不相关未提交资源文件
+- (ios) `/port ios` 已提交 commit `0646ddd6`（`personal-ai-chat-hotfix`，未 push）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建验证**，需要人工用 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build 一次确认；说明气泡宽度/定位为自行设计（无设计稿像素级比对），窄屏（iPhone SE）底栏拥挤未单独适配测试；未碰原有 11 个不相关未提交文件
 - (web/desktop) 涉密入口挪顶栏后**未做浏览器/dev 真机视觉验证**（气泡朝下弹出的定位、标题栏拥挤度），只过了 `vue-tsc` / eslint；建议本地各起一次看一眼
-- (desktop) `/port desktop` 及顶栏对齐改动已提交（`personal-ai-chat-hotfix` ahead 6 未 push）；**未跑 `npm run dev` 真机交互验证**
-- (desktop) 旁路（非本功能）：工作区仅有 `.env.test` / `electron-builder.yml` / `package.json` 本地调试配置改动，**勿提交**
-- (context) 旁路：工作区另有 `hideChat`/`saveAgentSetInfo`/`getAgentSetInfo` 契约改动未提交，不属于本功能，勿并入本次 docs 提交
+- (ios) 涉密入口已挪到顶部标题栏右侧（commit `7b74ce6b8`），**未做真机验证**，尤其要重点确认「点击弹出气泡」这个之前反馈失效的交互这次是否正常
+- (ios) 长名称挤掉行内涉密 tag 已改代码（列表 `ZXForwardCell` + 已选 chip），**未跑 xcodebuild / 真机**；请用长群名走一遍：全部列表 → 点已选看 chip → 关闭已选再看列表行，确认 tag 完整可见、名称省略
+- (desktop) `/port desktop` 已提交 commit `443a4e85`（`personal-ai-chat-hotfix`，未 push）；eslint + 模板编译通过，**未跑 `npm run dev` 真机交互验证**（弹窗五个落点 + 说明气泡实际点击行为、popover 定位），建议本地起一次 dev 环境走查；说明气泡按钮尺寸/间距为估算值；未碰 `.env.test`/`electron-builder.yml`/`package.json`/`package-lock.json` 禁忌文件
 
 ## 关键决策记录
 
 - 2026-08-12：涉密判定复用契约里已上线的 `getAllImDialogue.ignoreChatType`（`Number(x)===1`），不新增/等待后端；契约文件本身已提前加好该字段说明，无需再改
 - 2026-08-12：已离职由「姓名后缀（已离职）」改造为与涉密同款独立 tag，不再用括号写法；两者可共存，涉密在前
 - 2026-08-12：涉密/已离职配色 `#FFF3DA`/`#FEAC00`（涉密）、`#E5E5E6`/`#8F959E`（已离职，取自截图采样，非精确设计稿值）
-- 2026-08-12：说明气泡入口最终挂在标题栏（底栏只保留「已选」）；行内 tag 本身不可点；纯前端静态文案，无需请求接口
+- 2026-08-12：说明气泡只挂在弹窗底部工具栏图标按钮，行内 tag 本身不可点；纯前端静态文案，无需请求接口
 - 2026-08-12：组织架构 tab 数据源不带涉密/离职字段，前端用已拉取的候选清单（getAllImDialogue 全量人+群）按账号 id 本地建查找表回填，不改组织树接口
 - 2026-08-12：移动端「选择数据范围」现状 100% 走 wnsdk 桥接原生页面，本期不新建 mobile web 页面，只改 android/ios 原生
 - 2026-08-12：工作区另有一批与本功能无关、未提交的 `hideChat`/`saveAgentSetInfo`/`getAgentSetInfo` 契约改动（Agent 设置域），经确认不属于本功能范围，未合并处理，留给对应负责人
@@ -100,5 +102,3 @@
 审查中确认**没问题、未改动**的点：`ignoreChatType` 用 `isFlagOne` 判定（Integer 拆箱比较，Gson 对字符串 "1" 已按数值解析，逻辑与契约一致）；箭头 `marginEnd` / 气泡 `xOff` 的几何推导逐项验算正确；`item_friend_content.xml` 里姓名 `wrap_content + weight=1` 处在 **wrap_content 的父容器**中，多余空间为 0、溢出时负 delta 只压缩姓名，tag 既不会被推到行尾也不会被挤丢（与 desktop 那个 `flex:1` bug 不同源，此前判断正确）；`SelectContactActivity` 只渲染企业行、无人员行，不是遗漏的 tag 落点；`color_FFF3DA`/`color_FEAC00`/`color_8F959E` 三个色值均已在 `base_color.xml` 既有定义中（工作区里 `base_color.xml` 那条未提交改动是无关的 `color_F0F5FF`，未动）。
 
 > 仍未做：真机走查（本仓库无 UI 自动化），顶栏「涉密」在 5 个页面的实际位置/气泡箭头对齐需实测。
-
-- 2026-08-13：收尾同步——矩阵「涉密说明」行改为标题栏入口表述（底栏方案已废弃）；impl-notes 说明气泡章节对齐顶栏落点与四端箭头差异；apps 脏区仍为旁路，自测状态不变；无关契约改动未提交
