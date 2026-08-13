@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13（android 涉密气泡强制两行，未真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13（ios 已选 chip 名字被截成 ... + 接口头像未展示，已改，未跑 xcodebuild）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -59,8 +59,12 @@
 - (ios) 用户反馈：选择数据范围列表长群名把行内「涉密」tag 挤出右边缘（点「已选」再关闭后尤其明显），只剩一条黄缝 —— **已改**（ios 未提交，未跑 xcodebuild）：
   - 根因：`ZXForwardCell` 姓名压缩优先级写成了 `DefaultHigh`（750，UILabel 默认值），注释却说要低于 tag；长名称和 tag 一起被压，徽标被压成一条缝。trailing 只挂在人数 label 上，群人数为空时人数宽为 0，更留不住 tag
   - 修法：姓名改为 `DefaultLow` + 尾部省略，tag 增加 `right ≤ contentView-15`；`updateTagStackView` 里 `invalidateIntrinsicContentSize`（UIStackView 只改 `hidden` 经常不刷新固有宽，对应「已选关闭后」）
-  - 「已选」chip 同步修：原先按姓名全文宽度再叠加 tag，chip 会宽过屏幕；改为先扣掉头像/删除/tag 占位再量姓名，并 cap 在 `kMaxWidth`；`ZXUserCollectionCell` 姓名同样低压缩优先级
+  - 「已选」chip 同步修：原先按姓名全文宽度再叠加 tag，chip 会宽过屏幕；改为先扣掉头像/删除/tag 占位再量姓名，并 cap 在 `kMaxWidth`（chip 姓名压缩优先级后来撤回 DefaultLow，见下条）
   - 大括号/圆括号计数校验通过；未碰仓库里其它未提交文件
+
+- (ios) 用户反馈点「已选」后：① chip 名字几乎全是 `...`；② `privateInfo.avatar` 有 URL 却显示文字头像（如「连佳康」粉底「佳康」）—— **已改**（ios 未提交，未跑 xcodebuild）：
+  - 名字：上一轮给 `ZXUserCollectionCell` 姓名加了 `DefaultLow`，无 tag 的 chip 被隐藏态 tag 容器把姓名压成省略号（有双 tag 的「连佳康」反而正常）。撤回 DefaultLow；无 tag 时把 stack 宽度显式收成 0
+  - 头像：`readAvatarWithUser` 无本地缓存时会生成文字头像并直接返回，`picUrl`（来自 `privateInfo.avatar`）走不到。已选 chip 改走 `setAvatarByAccountId:name:avatar:`（文字头像只当占位，有 URL 继续加载）；列表行 `ZXForwardCell` 同样改为有 `avatarURL` 就 `sd_setImage`
 
 ## 待办 / 阻塞
 
@@ -74,7 +78,7 @@
 - (android) `/port android` 已提交（含审查修复 `a3204ec46`，`personal-ai-chat-hotfix` ahead 7 未 push）；本轮已选弹层/气泡两行修复尚未 commit
 - (android) 旁路（非本功能）：工作区仍有打正式包留下的资源补丁未提交——`base_util` 增 `color_F0F5FF`、`basis_function_api` 拷贝 `em_camera_switch_normal.9.png`；**勿当本功能提交**
 - (ios) `/port ios` 及后续顶栏/箭头改动已提交（`personal-ai-chat-hotfix` ahead 6 未 push）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建 + 真机验证**；尤其要确认「点击弹出气泡」
-- (ios) 长名称挤掉行内涉密 tag 已改代码（列表 `ZXForwardCell` + 已选 chip），**未跑 xcodebuild / 真机**；请用长群名走一遍：全部列表 → 点已选看 chip → 关闭已选再看列表行，确认 tag 完整可见、名称省略
+- (ios) 长名称挤掉行内涉密 tag + 已选 chip 名字 `...` / 接口头像，均已改代码，**未跑 xcodebuild / 真机**；请重点复验：已选面板短名字完整、长名字才省略、有 `privateInfo.avatar` 的人显示照片（可先看「连佳康」）
 - (ios) 旁路（非本功能）：工作区仍有合并详情引用快照全链路改动约 11 文件未提交（属 `20260730`），**勿当本功能提交** → 详见该功能 status
 - (web/desktop) 涉密入口挪顶栏后**未做浏览器/dev 真机视觉验证**（气泡朝下弹出的定位、标题栏拥挤度），只过了 `vue-tsc` / eslint；建议本地各起一次看一眼
 - (desktop) `/port desktop` 及顶栏对齐改动已提交（`personal-ai-chat-hotfix` ahead 6 未 push）；**未跑 `npm run dev` 真机交互验证**
