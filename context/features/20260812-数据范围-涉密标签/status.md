@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13（ios 长名称把涉密 tag 挤出屏幕，列表行 + 已选 chip 已修，未跑 xcodebuild）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-13（android 已选弹层名字显示成 id、头像没用 privateInfo.avatar，已修，单测过，未真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -10,7 +10,7 @@
 | 涉密说明入口+气泡（标题栏，非底栏） | ✅ | ✅ | ✅ | ✅ |
 | 自测通过 | 🚧 | ✅ | 🚧 | 🚧 |
 
-> 本功能代码侧：web 在 `feat/data-scope-secret-tag` 工作区干净；android/ios/desktop 功能改动均已 commit 到各自 `personal-ai-chat-hotfix`（android ahead 7、ios/desktop ahead 6，均未 push）。apps 工作区未提交改动均为**旁路**（android 资源补丁 / ios 合并详情快照 / desktop 本地调试配置），不记入上表。
+> 本功能代码侧：web 在 `feat/data-scope-secret-tag` 工作区干净；android/desktop 功能改动均已 commit 到各自 `personal-ai-chat-hotfix`（android ahead 7、desktop ahead 6，均未 push）。ios `personal-ai-chat-hotfix` ahead 6 未 push，另有本轮「长名称挤掉 tag」改动尚未 commit（勿把旁路的合并详情快照一并提交）。android/desktop 工作区未提交改动仍为旁路（资源补丁 / 本地调试配置），不记入上表。
 
 ## 视觉验收发现的问题（2026-08-12，均已修复，待用户统一复验）
 
@@ -52,6 +52,9 @@
 
 - (ios) 用户复验：加了新行是错的，「放到选择数据范围这一行的右侧」（标题栏本行，不要另起一行）—— **已撤回**（commit `b247e8605`）：5 个页面全部撤掉 `secretEntryBar`，改回 `self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:self.secretEntry.button]`，`searchHeaderView`/`breadcrumbScroll`/`tableView`/`searchBarContainer` 的顶部约束还原成直接贴 `self.view`。箭头逻辑（`ZXDataScopeSecretEntry.m`）不受影响，保留。大括号/圆括号计数核对后跟撤回前的版本完全一致（确认改动只是去掉新增部分，没有引入新问题）
 
+- (android) 用户反馈已选弹层：① chip 名字显示成长数字 id，但列表行是真人名；② 接口 `privateInfo.avatar` 有 URL，chip/列表却是默认灰头像 —— **已修**（android 未提交；`DataRangeSelectedDisplayTest` 5/5 + `DataScopeModelTest` 22/22 过）：
+  - 名字：记忆返显 `resolve()` 找不到本地资料时把 `name` 填成 `scopeDataId`；已选回填原先只在 `name` 为空时才抄候选清单，id 占位不算空，清单里的 `targetName` 抄不进去（tag 却总能抄上，所以会出现「涉密/已离职对、名字是 id」）。改成候选清单命中后 **覆盖** name/avatar
+  - 头像：本地通讯录有这条人但没头像文件/URL 时，`bindPrivateAvatar` 找到 user 就 return，把接口 `privateInfo.avatar` 丢掉。改成本地文件仍优先，没有再用接口 URL
 - (ios) 用户反馈：选择数据范围列表长群名把行内「涉密」tag 挤出右边缘（点「已选」再关闭后尤其明显），只剩一条黄缝 —— **已改**（ios 未提交，未跑 xcodebuild）：
   - 根因：`ZXForwardCell` 姓名压缩优先级写成了 `DefaultHigh`（750，UILabel 默认值），注释却说要低于 tag；长名称和 tag 一起被压，徽标被压成一条缝。trailing 只挂在人数 label 上，群人数为空时人数宽为 0，更留不住 tag
   - 修法：姓名改为 `DefaultLow` + 尾部省略，tag 增加 `right ≤ contentView-15`；`updateTagStackView` 里 `invalidateIntrinsicContentSize`（UIStackView 只改 `hidden` 经常不刷新固有宽，对应「已选关闭后」）
@@ -66,7 +69,8 @@
 
 - (web) `vue-tsc --noEmit` 已过、`dataScopeModel` 单测 20/20 过；**未做**真实浏览器联调可视化验证——本地环境 `getAllImDialogue` 走真实接口（无 mock），未接入测试后端/登录态，无法起 `pnpm dev` 跑通真实弹窗看涉密/已离职 tag 实际渲染效果。建议开发者本地连测试环境跑一遍再合并。
 - (web) `pnpm format` 本地环境 `node_modules` 里 prettier 缺失（非本次改动引入的问题），跳过自动格式化，靠手工对齐现有代码风格；如需要请本地补齐依赖后跑一次 `pnpm format`。
-- (android) `/port android` 已提交（含审查修复 `a3204ec46`，`personal-ai-chat-hotfix` ahead 7 未 push）；`assembleDevelopDebug` + `DataScopeModelTest` 已过；真机像素级核对仍缺
+- (android) 已选弹层「名字=id / 头像没用接口 URL」已改代码，**未提交、未真机**；请装包后打开已选，确认记忆返显的人显示姓名而不是一长串数字，且 `privateInfo.avatar` 有值的人不再是默认灰头像
+- (android) `/port android` 已提交（含审查修复 `a3204ec46`，`personal-ai-chat-hotfix` ahead 7 未 push）；本轮已选弹层修复尚未 commit；真机像素级核对仍缺
 - (android) 旁路（非本功能）：工作区仍有打正式包留下的资源补丁未提交——`base_util` 增 `color_F0F5FF`、`basis_function_api` 拷贝 `em_camera_switch_normal.9.png`；**勿当本功能提交**
 - (ios) `/port ios` 及后续顶栏/箭头改动已提交（`personal-ai-chat-hotfix` ahead 6 未 push）；按仓库规定 AI 不擅自跑 `xcodebuild`，**未做真实 Xcode 构建 + 真机验证**；尤其要确认「点击弹出气泡」
 - (ios) 长名称挤掉行内涉密 tag 已改代码（列表 `ZXForwardCell` + 已选 chip），**未跑 xcodebuild / 真机**；请用长群名走一遍：全部列表 → 点已选看 chip → 关闭已选再看列表行，确认 tag 完整可见、名称省略
