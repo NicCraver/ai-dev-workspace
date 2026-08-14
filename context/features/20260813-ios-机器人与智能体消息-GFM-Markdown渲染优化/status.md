@@ -1,6 +1,6 @@
 # Status：ios-机器人与智能体消息-GFM-Markdown渲染优化
 
-> 最后更新：2026-08-14 00:40（T0-T11 完成，模拟器包已编译；运行时自测未开始）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-14 01:10（T0-T11 完成并编译通过；自测页补真实用例；运行时自测未开始，只能真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -18,7 +18,7 @@
 | T5 ZXMarkdownParser 块序列 + 流式降级 | — | — | ✅ | — |
 | T6 ZXMarkdownTableView 横滚表格 | — | — | ✅ | — |
 | T7 ZXMarkdownContentView 段栈 + 高度/收起态 | — | — | ✅ | — |
-| T8 Debug 摇一摇自测页（30 条用例） | — | — | ✅ | — |
+| T8 Debug 摇一摇自测页（31 条用例） | — | — | ✅ | — |
 | T9 ZXMarkdownManager 切换 + 三重兜底 | — | — | ✅ | — |
 | T10 接入机器人气泡 | — | — | ✅ | — |
 | T11 接入智能体气泡 + 流式 | — | — | ✅ | — |
@@ -38,14 +38,14 @@
 | context | `main` | ahead 99 | 脏 9 | 本功能 spec/plan/status/impl-notes 已提交 | 其余脏区是 hooks/skills/README/`.pi/`，与本功能无关 |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | 不涉及 | 停在涉密标签功能 |
 | android | `personal-ai-chat-hotfix` | synced | 脏 1 | 不涉及 | 仅一张相机图标资源未跟踪，历史遗留 |
-| ios | `personal-ai-chat-hotfix` | **ahead 4** | 干净 | **本功能全部产出** | `a67d3d364` 内联 HTML → `a973897d2` 渲染层 → `dd9051b0c` 机器人气泡 → `ee7108d63` 智能体气泡。**未 push** |
+| ios | `personal-ai-chat-hotfix` | **ahead 5** | 干净 | **本功能全部产出** | `a67d3d364` 内联 HTML → `a973897d2` 渲染层 → `dd9051b0c` 机器人气泡 → `ee7108d63` 智能体气泡 → `482998e1a` 自测页全链路+真实用例。**未 push** |
 | desktop | `personal-ai-chat-hotfix` | synced | 脏 3 | 不涉及 | `.env.test`/`electron-builder.yml`/`package.json` 本地调试配置，按规矩**禁止提交** |
 
 本次功能代码量（`a67d3d364..HEAD`）：**28 文件，+1956 / -83**。新建 `Markdown/` 渲染层 13 个文件约 1100 行、Debug 用例页 3 个文件约 250 行；改既有文件只有 4 个（`ZXMarkdownManager`、`ZXIMCellLogic`、`ZXGroupRobotCell`、`ZXIMAgentStreamReplyCell`），其余是 `project.pbxproj`。
 
 ## 待办 / 阻塞
 
-- (ios) **下一步全是运行时自测**：模拟器包已编译成功（iPhone 15 / iOS 17，`build/DerivedData/Build/Products/Debug-iphonesimulator/zhixinAppTest.app`），安装启动那步被中断，尚未跑起来看过一眼。跑起来 → 摇一摇（⌃⌘Z）打开 GFM 用例对照页 → 按 30 条用例逐条看。大概率要调的是缩进量、段间距、表格列宽/内边距这类观感参数，改 `ZXMarkdownStyle` 一个文件即可。
+- (ios) **下一步全是运行时自测，且只能真机**：M 芯片上模拟器走不通（融云无 arm64 模拟器 slice，链接报 `ld: library 'Pods-zhixinApp' not found`），已试过并放弃。真机跑起来 → 摇一摇打开 GFM 用例对照页 → 按 31 条用例逐条看。大概率要调的是缩进量、段间距、表格列宽/内边距这类观感参数，改 `ZXMarkdownStyle` 一个文件即可。
 - (ios) 会话页实测清单：机器人气泡含表格 / 智能体流式（盯表格从纯文本变成表格视图、高度只跳一次）/ 引用角标点击 / 插图与表格共存 / 长消息收起展开 / 纯文本消息与改造前无差异。
 - (ios) T12+13：聚合弹窗与合并转发详情页复用同两个 cell，代码无需改，只需实测；若宽度不对，改成按容器实际宽度推导（现在写死 `kChatMsgContentW - 32`）。
 - (ios) T14：真机 Debug + `zhixinAppProd` archive 两档还没验；archive 后记 App Thinning Size Report 的包体增量。

@@ -49,6 +49,18 @@
 2. 解析异常 或 正文超长（阈值 20000 字符）→ 回退老实现
 3. 全局开关（iOS 为 `ZXMarkdownUseCMark`）→ 线上出问题一行关掉
 
+## 内联 HTML 为什么必须自己实现（跨端通用结论）
+
+后端正文会混用 Markdown 与 HTML，典型：`**<span style="color:blue;">值班总负责人：赵富文</span>**`。
+
+- 这是**合法 GFM**：CommonMark 允许正文内嵌 raw HTML，行内 HTML 只匹配「标签本身」，标签之间的文字照常按 Markdown 解析。
+- 但规范对 HTML 的规定仅是**原样透传到 HTML 输出**，不解析属性、不配对开闭标签、不管嵌套。所以任何 Markdown 解析器（cmark-gfm 也一样）给到的都只是一坨字面量字符串。
+- web / PC 渲染目标就是 HTML，透传给浏览器就自动上色，零成本；**原生端没有浏览器接盘，必须自己写一个 mini HTML 渲染器**。
+- 后端用 HTML 上色不是乱来 —— Markdown 本身没有颜色语法，内嵌 HTML 是唯一出路。
+- 补充事实：GitHub 站点自己的 sanitizer 会剥掉 `style` 属性（这层不在 GFM 规范里），所以同样内容在 GitHub 上并不会变蓝；web 端能变蓝是因为没接 sanitizer。
+
+**结论：换任何 Markdown 库都省不掉内联 HTML 这套自实现代码。** 想更稳（嵌套同名标签、属性里含 `>`），方向是用 HTML 解析器（如系统自带 libxml2）替换正则，而不是换 Markdown 库。
+
 ## 与自定义标签共存
 
 正文里混有非 Markdown 的自定义标签（引用角标 `reference`、插图 `illustration`）。解析器不认识它们。
@@ -79,7 +91,8 @@
 3. **本机 CocoaPods Specs 仓只有 `.git` 没有工作树**（`~/.cocoapods/repos/cocoapods` 空目录 + 1.5G `.git`，本地分支 `main` 无提交），导致任何 pod 都找不到 spec。修复：`git -C ~/.cocoapods/repos/cocoapods checkout -B master origin/master`。
 4. `Pods/` 与 `Podfile.lock` 都在 `.gitignore` 里 —— 依赖变更只提交 `Podfile`，其他人必须自己跑 `pod install`（会踩坑 1）。
 5. 新文件必须写进 `project.pbxproj`（工程 `objectVersion = 48`，不支持文件夹同步组）。批量加可用 CocoaPods 自带的 `xcodeproj` gem，注意挂 `zhixinApp` / `zhixinAppProd` / `zhixinAppTest` 三个 target（`NOtificationService` / `ZXShare` 不挂，与既有 `ZXMarkdownManager.m` 一致）。
-6. cmark-gfm 头文件落在 `Pods/Headers/Public/libcmark_gfm/`，导入写 `<libcmark_gfm/cmark-gfm.h>`。为兼容源码内置等其它集成方式，统一走 `ZXMarkdownCMark.h` 的 `__has_include` 兜底，未集成时宏 `ZX_MARKDOWN_CMARK_AVAILABLE=0`，解析器返回空、调用方自动回退老正则。
+6. **M 芯片上模拟器这条路走不通，只能真机**。融云 5.3.7 的 xcframework 模拟器 slice 只有 `ios-i386_x86_64-simulator`，没有 arm64。Apple Silicon 默认 arm64 模拟器构建会在链接阶段报 `ld: library 'Pods-zhixinApp' not found`；强制 `ARCHS=x86_64` 能编过但跑不起来。**验证一律走真机 Debug（generic/platform=iOS 只能验编译，不能验运行）**。
+7. cmark-gfm 头文件落在 `Pods/Headers/Public/libcmark_gfm/`，导入写 `<libcmark_gfm/cmark-gfm.h>`。为兼容源码内置等其它集成方式，统一走 `ZXMarkdownCMark.h` 的 `__has_include` 兜底，未集成时宏 `ZX_MARKDOWN_CMARK_AVAILABLE=0`，解析器返回空、调用方自动回退老正则。
 
 ## 联调坑（实际接口 ≠ 文档之处）
 
