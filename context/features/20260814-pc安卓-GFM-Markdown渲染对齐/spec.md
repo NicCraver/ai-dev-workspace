@@ -154,12 +154,16 @@ ImagesPlugin + Glide3ImagePlugin + TablePlugin + HtmlPlugin(SpanTagHandler)
 | web 端对齐 | 见第 1 节 |
 | 老渲染路径退休 | 两端都是就地增强，无并行双管线，不涉及 |
 
-## 8. 待实现阶段核实
+## 8. 核实结论（2026-08-14 实现阶段查清）
 
-1. 安卓 ActionCard 链路的 AI 卡片判定是否真的不依赖 `ga_` 前缀（行为 spec 第 8 节的坑是否存在）
-2. Markwon `HtmlPlugin` 默认是否注册 `<sup>` / `<sub>` Handler
-3. 安卓软换行 I8 当前实际表现（是否已按换行显示）
-4. PC `message-info.vue` / `msg-reply-poll.vue` 两个复用点是否需要同样的表格横滚容器样式
+| # | 待核实项 | 结论 |
+|---|---------|------|
+| 1 | 安卓 AI 卡片判定是否依赖 `ga_` 前缀 | **不依赖**。`ActionCardMessageItemProvider` 用的判据是 `agentKnowledgeList != null && size() > 0`，正是行为 spec 第 8 节推荐的判据。安卓不存在这个坑，无需改 |
+| 2 | Markwon `HtmlPlugin` 是否默认注册 `<sup>`/`<sub>` | **已默认注册**。反编译 `html:4.6.2` 的 `HtmlPlugin` 确认内置 `SuperScriptHandler` / `SubScriptHandler` / `StrikeHandler` / `UnderlineHandler`，无需 `addHandler` |
+| 3 | 安卓软换行 I8 当前表现 | **当前按空格处理**（CommonMark 原义）。`SoftBreakAddsNewLinePlugin` 存在即证明默认非换行，已加进 `ZXMarkwonFactory` |
+| 4 | PC `message-info.vue` / `msg-reply-poll.vue` 是否需同样表格样式 | 两者与 `msg-actioncard.vue` 共用同一个 `convertMarkdownToHtml`，横滚容器 div 已在渲染产物里；**样式在非 scoped style 中定义，实测时确认是否覆盖到这两个组件**，未覆盖则把 `.md-table-wrap` / `table` 那段样式提到全局 scss |
+| 5 | 安卓 `ext-tables` 表格 API | plan 里预设的手写 AST 遍历**不需要**。Markwon 自带 `Table.parse(Markwon, TableBlock)`，直接给 `rows()` / `header()` / `alignment()` / 已渲染的 `content()`（`Spanned`），`ZXMarkdownTableView` 据此实现 |
+| 6 | 安卓布局锚点 | `rc_item_action_card_message.xml` 根是 `LinearLayout`，里面的 `layout_below` 是无效遗留属性，段栈直接插在 `tv_content` 之后即可 |
 
 ## 依赖的接口
 
