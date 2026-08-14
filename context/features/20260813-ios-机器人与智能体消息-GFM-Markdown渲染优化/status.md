@@ -1,6 +1,6 @@
 # Status：ios-机器人与智能体消息-GFM-Markdown渲染优化
 
-> 最后更新：2026-08-14 01:10（T0-T11 完成并编译通过；自测页补真实用例；运行时自测未开始，只能真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-14 01:45（T0-T11 完成并编译通过；跑完两轮精简共删 382 行；运行时自测未开始，只能真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -38,10 +38,17 @@
 | context | `main` | ahead 99 | 脏 9 | 本功能 spec/plan/status/impl-notes 已提交 | 其余脏区是 hooks/skills/README/`.pi/`，与本功能无关 |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | 不涉及 | 停在涉密标签功能 |
 | android | `personal-ai-chat-hotfix` | synced | 脏 1 | 不涉及 | 仅一张相机图标资源未跟踪，历史遗留 |
-| ios | `personal-ai-chat-hotfix` | **ahead 5** | 干净 | **本功能全部产出** | `a67d3d364` 内联 HTML → `a973897d2` 渲染层 → `dd9051b0c` 机器人气泡 → `ee7108d63` 智能体气泡 → `482998e1a` 自测页全链路+真实用例。**未 push** |
+| ios | `personal-ai-chat-hotfix` | **ahead 7** | 干净 | **本功能全部产出** | `a67d3d364` 内联 HTML → `a973897d2` 渲染层 → `dd9051b0c` 机器人气泡 → `ee7108d63` 智能体气泡 → `482998e1a` 自测页全链路+真实用例 → `ffce3b99f` + `f4c08c11b` 两轮精简。**未 push** |
 | desktop | `personal-ai-chat-hotfix` | synced | 脏 3 | 不涉及 | `.env.test`/`electron-builder.yml`/`package.json` 本地调试配置，按规矩**禁止提交** |
 
-本次功能代码量（`a67d3d364..HEAD`）：**28 文件，+1956 / -83**。新建 `Markdown/` 渲染层 13 个文件约 1100 行、Debug 用例页 3 个文件约 250 行；改既有文件只有 4 个（`ZXMarkdownManager`、`ZXIMCellLogic`、`ZXGroupRobotCell`、`ZXIMAgentStreamReplyCell`），其余是 `project.pbxproj`。
+本次迭代代码量（`a67d3d364^..HEAD`，含 T0 内联 HTML）：**28 文件，+2228 / -191**。两轮精简共删 382 行：
+
+| 轮次 | commit | 删掉的东西 |
+|------|--------|-----------|
+| 一 | `ffce3b99f` | 解析器/构建器的 `#if ZX_MARKDOWN_CMARK_AVAILABLE` 降级空实现与 `isAvailable`；`ZXMarkdownCMark.h` 三条 `__has_include` 分支收成一条；死属性 `quoteBarColor` / `firstTextView`；两个 cell 各写一遍的 hasTable / flatten 上提到 `ZXMarkdownBlock` |
+| 二 | `f4c08c11b` | `ZXIMCellLogic` 里零调用方的 `agentReplyRenderedContent:` 4 个重载 + `agentReplyAttributedContent:`；零调用方的异步 `renderMarkdownBy:param:completion:`；CSS 命名色表 158 行字典字面量 → 19 行单串解析（148 个颜色一个不少） |
+
+**有意留下的**：老正则 markdown 管线（`renderMarkdown:` + 13 个 `process*`，约 600 行）是 `ZXMarkdownUseCMark=NO` 的落点，删了就失去不发版回退的能力。
 
 ## 待办 / 阻塞
 
@@ -51,6 +58,7 @@
 - (ios) T14：真机 Debug + `zhixinAppProd` archive 两档还没验；archive 后记 App Thinning Size Report 的包体增量。
 - (ios) ⚠️ **`pod install` 会拆掉 `zhixinAppTest`/`zhixinAppProd` 的 Pods xcconfig 挂载**，之后编译报 `'AFNetworking/AFNetworking.h' file not found`。本次已通过还原 `project.pbxproj` 修好；其他人拉到这个分支跑 `pod install` 会再踩一次。根治要把三个 target 都写进 Podfile（需团队决定，本次未做）。详见 impl-notes「工程坑」。
 - (ios) 本机 `pod` 需 `RUBYOPT="-rlogger"` 前缀才能跑（Ruby 3.2 + activesupport 7.0.8 的 Logger 常量问题）。
+- (ios) **老正则管线退休排期**（下个迭代，不是现在）：cmark 路径线上跑稳一版后，删 `renderMarkdown:` 及其 13 个 `process*` 方法与 `ZXMarkdownUseCMark` 开关，白赚约 600 行。现在删等于放弃回滚手段。
 
 > 已了结：T0 那 505 行内联 HTML 改动已提交（`a67d3d364`）；合并转发详情页链路已查清（复用会话页 cell，见 impl-notes）。
 
