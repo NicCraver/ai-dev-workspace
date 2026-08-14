@@ -7,12 +7,16 @@
   "bin": {
     "zhixin-run-android": "./scripts/zhixin-run-android.mjs",
     "pc-build-test": "./scripts/pc-build-test.mjs",
-    "anzhuo-build-test": "./scripts/anzhuo-build-test.mjs"
+    "anzhuo-build-test": "./scripts/anzhuo-build-test.mjs",
+    "prod-pc-build": "./scripts/prod-pc-build.mjs",
+    "prod-android-build": "./scripts/prod-android-build.mjs"
   },
   "scripts": {
     "zhixin-run-android": "node scripts/zhixin-run-android.mjs",
     "pc-build-test": "node scripts/pc-build-test.mjs",
-    "anzhuo-build-test": "node scripts/anzhuo-build-test.mjs"
+    "anzhuo-build-test": "node scripts/anzhuo-build-test.mjs",
+    "prod:pc-build": "node scripts/prod-pc-build.mjs",
+    "prod:android-build": "node scripts/prod-android-build.mjs"
   },
   "engines": {
     "node": ">=18"

@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-14 14:20（两端代码全部完成并编译通过，**未做任何运行时验证**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-14 15:10（功能代码无变化；本次仅在工作区加 prod 打包脚本工具，desktop 脏区修正为 2）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -48,7 +48,9 @@
 | web | `feat/data-scope-secret-tag` | synced | 干净 | 不涉及 | 停在涉密标签功能 |
 | android | **`feat/gfm-markdown`** | **未 push** | 干净 | **本功能** | 基点 `f5f2d0ce3`；最新 `e92542ee3` |
 | ios | `feat/ios-gfm-markdown` | synced | 干净 | 上一轮已完成 | `c4d50e28b` |
-| desktop | **`feat/gfm-markdown`** | **未 push** | 脏 3 | **本功能** | 基点 `763cd15e`；最新 `f2a7d5f6`。脏的是 `.env.test`/`electron-builder.yml`/`package.json` 本地调试配置，切分支带过来的，**禁止提交** |
+| desktop | **`feat/gfm-markdown`** | **未 push** | 脏 2 | **本功能** | 基点 `763cd15e`；最新 `f2a7d5f6`。脏的是 `electron-builder.yml`/`package.json` 本地调试配置（`.env.test` 已还原），切分支带过来的，**禁止提交** |
+
+> **工具脚本（与本功能无关，记录备查）**：2026-08-14 在工作区新增 `scripts/prod-pc-build.mjs`（Mac arm64 正式 DMG，`npm run prod:pc-build`）与 `scripts/prod-android-build.mjs`（`:smart_message:assemblePublishRelease` 正式 APK，`npm run prod:android-build`），构建完各自重命名产物并 `open` 目录。安卓任务**必须带 `:smart_message:` 模块前缀**——无前缀会给 IM / basis_function_api 等 library 也打 release，触发 `verifyPublishReleaseResources` 孤立资源校验，library 引用 app 模块 drawable 必挂。
 
 ## 待办 / 阻塞
 
