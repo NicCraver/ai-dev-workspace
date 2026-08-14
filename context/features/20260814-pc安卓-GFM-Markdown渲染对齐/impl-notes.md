@@ -38,6 +38,18 @@ Table.rows() -> List<Table.Row>
 
 注意 `org.commonmark.ext.gfm.tables.TableBlock` 来自 commonmark 传递依赖，不在 `io.noties.markwon.ext.tables` 包里。
 
+## 3.1 ⚠️ `Table.parse` 不能用带 `TablePlugin` 的实例
+
+**真机自测踩到的第一个坑，表现是「表格有格子没文字」。**
+
+`TablePlugin` 注册了 `NodeVisitor<TableCell>`，它把单元格文本渲染进 builder 之后**又从 builder 里抽走**，存进 `TableRowSpan.Cell`——span 表格就是这么拼出来的。而 `Table.parse` 内部对每个 `TableCell` 调 `markwon.render(cell)`，若这个实例带 `TablePlugin`，拿回来的 `Spanned` 一律为空。
+
+结论：**自绘表格必须准备两个 Markwon 实例**——正文那个带 `TablePlugin`（用于切段判定与非表格内容），单元格那个不带。其余插件（html / strikethrough / tasklist / linkify / softbreak）两边保持一致，否则单元格里的行内样式会和正文不一致。
+
+## 3.2 ⚠️ 自绘表格要自己画边框
+
+`TableTheme` 的 `tableBorderColor` / `tableBorderWidth` **只作用于 Markwon 的 span 表格**。一旦改成自绘的 `TableLayout`，这套主题就完全绕开了，边框得自己画（每格一个带 stroke 的 `GradientDrawable` 最省事，相邻格两条 1px 线视觉上就是一条稍重的线）。
+
 ## 4. Markwon `HtmlPlugin` 默认注册的 Handler 比想象中多
 
 反编译 `html:4.6.2` 确认默认已含 `SuperScriptHandler` / `SubScriptHandler` / `StrikeHandler` / `UnderlineHandler` / `LinkHandler` / `EmphasisHandler` / `StrongEmphasisHandler` / `BlockquoteHandler` / `HeadingHandler` / `ImageHandler` / `ListHandler`。
@@ -57,25 +69,46 @@ CommonMark 原义把单换行当空格。聊天场景必须按换行显示：
 
 两端原来都是按像素硬切（PC `max-height: 400px`，安卓 `setMaxHeight(dp2px(480))`），切到表格第 3 行中间就是切一半。
 
-判据两端一致：**累加块高度，第一个放不下的块整体不显示；若第一块就超限高则整块显示不切**。
+**⚠️ 「第一块超限高则整块显示不切」这条规则只对「不可分割的块」成立**，照搬到粒度更粗的段上会出大问题：
 
-- PC 抽成纯函数 `pickFoldHeight(blocks, limit)`（`src/lib/markdownFoldModel.js`），DOM 量测留在组件里，逻辑可单测（5 条用例）。对应分支是 `picked === 0`。
-- 安卓在 `ZXMarkdownContentView.applyFold()` 里，对应判据是 `i > 0`。
+- PC 的 block 是 `<p>` / `<ul>` / `<table>` **单个元素**，粒度细，规则成立。抽成纯函数 `pickFoldHeight(blocks, limit)`（`src/lib/markdownFoldModel.js`），DOM 量测留组件里，逻辑可单测（5 条用例），对应分支 `picked === 0`
+- 安卓的段是**连续多个块合并成的一个 TextView**，AI 长回复的典型结构就是「一大段正文 + 表格」，第一段动辄几千 px。照搬会让第一段**免疫折叠**——真机上表现为「收起了一部分内容，但卡片还是极高，滚很久才到消息顶部」
+
+**正确判据：按段是否可切分类处理。**
+
+| 段类型 | 放不下时 |
+|--------|---------|
+| 富文本段（TextView）——**可切** | `setMaxHeight(剩余高度)` 截断 |
+| 表格段 / 图片段——**不可切** | 整段隐藏；仅当它是第一段且超限时才整块显示 |
+
+展开时记得把 `maxHeight` 复原成 `MAX_VALUE`。
 
 段栈天然是块级列表，所以安卓做完段栈，折叠这条是**附带解决**的，不是额外工作。
 
 阈值三端不统一（PC 400px / 安卓 480dp / iOS 另有一套），有意为之：字号行距屏宽都不同，对齐数值反而不对齐观感。
 
-## 7. 段栈子 View 必须关掉文本选中
+## 7. ⚠️ 段栈子 View 必须禁获焦，且顺序不能反
 
-`TextView` 一旦装上文本选择手势就会抢走气泡长按（转发/回复菜单）。段栈里每个子 View 一律：
+**真机自测踩到的最严重一个坑：消息列表无法往上滚，一直被拽回底部。**
 
-```
-setTextIsSelectable(false)
-setLongClickable(false)
-```
+两个来源叠加：
 
-iOS 上一轮就是栽在同一条（`UITextView` 默认可选中）。表格单元格同理，横滚容器本身也要 `setLongClickable(false)`。
+1. `TextView.setMovementMethod()` 内部会执行 `fixFocusableAndClickableSettings()`，把 `focusable` / `clickable` / `longClickable` **一并强制设回 true**。在它之前设的 false 全部作废。
+2. `HorizontalScrollView` 的构造函数自带 `setFocusable(true)`。
+
+于是段栈里每个子 View 都可获焦。**RecyclerView 在布局时会 `requestChildFocus` 把获焦子 View 滚进可视区**——往上滚，上面的 item 一绑定就抢焦点，列表被拽回去。
+
+同一根因的第二个后果：`longClickable` 被打回 true → 正文吞掉气泡长按 → 转发/回复菜单弹不出来（iOS 上一轮栽的也是这条，那边是 `UITextView` 默认可选中）。
+
+**做法**：
+
+- 段栈容器 `setDescendantFocusability(FOCUS_BLOCK_DESCENDANTS)` —— 一刀切断所有子 View 获焦，最省事也最可靠
+- 横滚容器额外 `setFocusable(false)` + `setScrollContainer(false)`
+- TextView 的 `setFocusable(false)` / `setClickable(false)` / `setLongClickable(false)` **必须写在 `setMovementMethod()` 之后**
+
+**链接点击不受影响**：`LinkMovementMethod` 在 `TextView.onTouchEvent` 里先于 clickable 判定处理事件——按在链接上会消费事件（链接可点），按在空白处返回 false（事件冒泡给气泡，长按正常）。这正是想要的行为。
+
+> 通用教训：**往列表 item 里放任何滚动容器或带 MovementMethod 的 TextView 之前，先想清楚焦点归属。**
 
 ## 8. 段栈要能接住业务后处理
 

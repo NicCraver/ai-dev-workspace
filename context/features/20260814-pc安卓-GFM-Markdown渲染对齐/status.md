@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-14 15:10（功能代码无变化；本次仅在工作区加 prod 打包脚本工具，desktop 脏区修正为 2）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-14 15:40（安卓真机首轮自测暴露 3 个问题，已修完并出包，**待复验**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -46,13 +46,34 @@
 |----|------|------|------|--------------|------|
 | context | `main` | ahead 110 | 脏 11 | spec/plan/status/impl-notes | 其余脏区是 hooks/skills/README/`.pi/`，与本功能无关 |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | 不涉及 | 停在涉密标签功能 |
-| android | **`feat/gfm-markdown`** | **未 push** | 干净 | **本功能** | 基点 `f5f2d0ce3`；最新 `e92542ee3` |
+| android | **`feat/gfm-markdown`** | **未 push** | 干净 | **本功能** | 基点 `f5f2d0ce3`；最新 `7b9f7872c`（8 commit：6 个实现 + 2 个真机自测修复） |
 | ios | `feat/ios-gfm-markdown` | synced | 干净 | 上一轮已完成 | `c4d50e28b` |
 | desktop | **`feat/gfm-markdown`** | **未 push** | 脏 2 | **本功能** | 基点 `763cd15e`；最新 `f2a7d5f6`。脏的是 `electron-builder.yml`/`package.json` 本地调试配置（`.env.test` 已还原），切分支带过来的，**禁止提交** |
 
 > **工具脚本（与本功能无关，记录备查）**：2026-08-14 在工作区新增 `scripts/prod-pc-build.mjs`（Mac arm64 正式 DMG，`npm run prod:pc-build`）与 `scripts/prod-android-build.mjs`（`:smart_message:assemblePublishRelease` 正式 APK，`npm run prod:android-build`），构建完各自重命名产物并 `open` 目录。安卓任务**必须带 `:smart_message:` 模块前缀**——无前缀会给 IM / basis_function_api 等 library 也打 release，触发 `verifyPublishReleaseResources` 孤立资源校验，library 引用 app 模块 drawable 必挂。
 
+## 安卓真机首轮自测暴露的问题（2026-08-14，已修复，待复验）
+
+| # | 症状 | 根因 | 处理 | commit |
+|---|------|------|------|--------|
+| 1 | 表格**有格子没文字**（表头背景色可见、单元格被 padding 撑出大小，文字全空） | `Table.parse(markwon, block)` 传的是**带 `TablePlugin` 的实例**。该插件注册的 `NodeVisitor<TableCell>` 会把单元格文本渲进 builder 后**再抽走**存成 `TableRowSpan.Cell`（span 表格的拼法），于是 `markwon.render(tableCell)` 拿回来永远是空 | 新增 `ZXMarkwonFactory.createForTableCell()`：同样插件表但**不装 TablePlugin**，专供 `Table.parse` 渲染单元格 | `df460e27c` |
+| 2 | 表格无边框线 | `TABLE_BORDER` 常量定义了却从未使用，只设了表头背景色。`TableTheme` 的 border 只作用于 Markwon 的 span 表格，段栈路径完全绕开 | 每格一个 `GradientDrawable` 带 1px stroke；顺带补显式 `TableRow.LayoutParams`（原来吃默认的 `MATCH_PARENT`） | `df460e27c` |
+| 3 | 卡片高度失控：收起了一部分内容，但卡片仍极高，滚很久才到消息顶部 | `applyFold()` 里的 `i > 0` 守卫。「第一块超限高则整块显示不切」这条规则的本意是**不可分割的块**（表格/图片）不切一半，我对所有段一律套用；而安卓的富文本段是**多个块合并成的一个 TextView**，AI 长回复第一段就几千 px，于是整段免疫折叠，只收起了后面的表格和知识来源 | 折叠区分两类段：富文本段（TextView）**可切**，按剩余高度 `setMaxHeight` 截断；表格段**不可切**，放不下整段隐藏（仅当它是第一段且超限时才整块显示） | `df460e27c` |
+| 4 | **消息列表无法往上滚，一直被拽回底部**（严重） | `TextView.setMovementMethod()` 内部执行 `fixFocusableAndClickableSettings()`，把 focusable / clickable / longClickable **一并强制设回 true**。我在 `newSegmentTextView()` 里设的 false 在 `setMovementMethod()` **之前**，全部作废。加上 `HorizontalScrollView` 构造函数自带 `setFocusable(true)` → 段栈每个子 View 都可获焦 → RecyclerView 布局时 `requestChildFocus` 把它滚进可视区 → 往上滚被反复拽回 | 段栈 `setDescendantFocusability(FOCUS_BLOCK_DESCENDANTS)` 一刀切断；表格控件显式 `setFocusable(false)` + `setScrollContainer(false)`；TextView 抽出 `disableFocusAndLongClick()`，**在 `setMovementMethod()` 之后**调用 | `7b9f7872c` |
+
+> 第 4 条**顺带修掉了另一个还没测到的问题**：`longClickable` 被打回 true 后，含表格的消息长按弹不出转发/回复菜单——正是先前标为「段栈最容易翻车」的那条。
+>
+> 链接点击不受影响：`LinkMovementMethod` 在 `onTouchEvent` 里先于 clickable 判定处理事件，按在链接上会被消费，按在空白处冒泡给气泡。
+
 ## 待办 / 阻塞
+
+### 安卓复验清单（新包 `smart_message-develop-debug_v3.6.18.apk`，`7b9f7872c`）
+
+1. **消息列表上下滚动流畅**，尤其滚过含表格的消息（第 4 条）
+2. 含表格消息**长按能弹转发/回复菜单**（第 4 条顺带修的）
+3. 表格里的链接还能点（验证 `setClickable(false)` 没把链接点击一起关掉）
+4. 表格文字与边框（第 1、2 条）
+5. 长回复的折叠高度（第 3 条）
 
 ### 下一步全是运行时自测（我做不了，需要你跑）
 
