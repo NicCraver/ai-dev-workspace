@@ -1,23 +1,32 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-14 13:16（spec 定稿并提交，两端分支已切，等用户过 spec 后出 plan）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-14 13:30（spec + plan 定稿，两端分支已切，等开工）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
 本功能**只动 PC（desktop）与安卓**，web 与 iOS 不涉及（iOS 上一轮已完成，web 的 `marked` 管线只服务 AI 卡片弹窗、不是消息气泡）。
 
+行号对应 `plan.md` 的 Task。
+
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 现状勘察（两端管线与差距） | — | ✅ | — | ✅ |
 | spec 定稿 | — | ✅ | — | ✅ |
+| plan 拆解（13 个 Task） | — | ✅ | — | ✅ |
 | 切分支 `feat/gfm-markdown` | — | ✅ | — | ✅ |
-| plan 拆解 | — | ⬜ | — | ⬜ |
-| markdown 配置补齐（插件/选项/兜底） | — | ⬜ | — | ⬜ |
-| 表格横滚 + 配色 | — | ⬜ | — | ⬜ |
-| 折叠不切块 | — | ⬜ | — | ⬜ |
-| AI 卡片判定放宽 | — | ⬜ | — | ⬜ |
-| debug 用例页（30 条，验完删） | — | ⬜ | — | ⬜ |
-| 自测通过 | — | ⬜ | — | ⬜ |
+| T1 markdown-it 选项 + 兜底 + 开关 | — | — | — | ⬜ |
+| T2 任务列表 core rule | — | — | — | ⬜ |
+| T3 表格横滚容器 + 配色 | — | — | — | ⬜ |
+| T4 AI 卡片判定放宽 | — | — | — | ⬜ |
+| T5 折叠不切块（`pickFoldHeight`） | — | — | — | ⬜ |
+| T6 30 条用例页 + 全量自测 | — | — | — | ⬜ |
+| T7 依赖补齐 + `ZXMarkwonFactory` 收敛 | — | ⬜ | — | — |
+| T8 AST 切段器 | — | ⬜ | — | — |
+| T9 可横滚表格控件 | — | ⬜ | — | — |
+| T10 段栈容器 + 按段折叠 | — | ⬜ | — | — |
+| T11 气泡接段栈 + 折叠改造 | — | ⬜ | — | — |
+| T12 30 条用例页 + 全量自测 | — | ⬜ | — | — |
+| T13 收尾（impl-notes + status） | — | ⬜ | — | ⬜ |
 
 ## 各端工作区现状（2026-08-14 13:16，`scripts/code-status.sh`）
 
@@ -31,7 +40,8 @@
 
 ## 待办 / 阻塞
 
-- (全部) **等用户过 spec**：`spec.md` 已提交，用户确认后进 writing-plans 出 `plan.md`
+- (全部) **plan 已出**（13 个 Task，desktop 6 个 / android 6 个 / 收尾 1 个），可开工。两端无依赖，可并行
+- (android) plan 里有 3 处**运行时才能定的细节**：`ext-tables` 4.6.2 的表格节点类名与 `TableCell.getAlignment()` 签名（T9）、`rc_item_action_card_message.xml` 里 `tv_content` 的实际 `layout_below` 锚点（T10）、以及 `<sup>`/`<sub>` 与软换行现状（T7 Step 6）。plan 给了排查方法，不是死值
 - (desktop) `breaks: true` 是本轮唯一会影响**存量消息排版**的改动（当前单换行被吞成空格）。上线前必须拿至少 5 条真实存量消息对比开关前后
 - (desktop) 禁 `npm install` → 任务列表只能自写 renderer rule，脚注本轮直接不做
 - (android) `ext-strikethrough` / `ext-tasklist` 不在本机 gradle 缓存里，需一次联网 sync
