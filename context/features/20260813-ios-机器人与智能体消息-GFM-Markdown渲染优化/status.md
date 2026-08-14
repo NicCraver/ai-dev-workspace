@@ -1,6 +1,6 @@
 # Status：ios-机器人与智能体消息-GFM-Markdown渲染优化
 
-> 最后更新：2026-08-14 01:45（T0-T11 完成并编译通过；跑完两轮精简共删 382 行；运行时自测未开始，只能真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-14 02:40（真机首轮自测暴露 8 个问题，已修，未提交；分支改为 feat/ios-gfm-markdown）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -38,7 +38,7 @@
 | context | `main` | ahead 99 | 脏 9 | 本功能 spec/plan/status/impl-notes 已提交 | 其余脏区是 hooks/skills/README/`.pi/`，与本功能无关 |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | 不涉及 | 停在涉密标签功能 |
 | android | `personal-ai-chat-hotfix` | synced | 脏 1 | 不涉及 | 仅一张相机图标资源未跟踪，历史遗留 |
-| ios | `personal-ai-chat-hotfix` | **ahead 7** | 干净 | **本功能全部产出** | `a67d3d364` 内联 HTML → `a973897d2` 渲染层 → `dd9051b0c` 机器人气泡 → `ee7108d63` 智能体气泡 → `482998e1a` 自测页全链路+真实用例 → `ffce3b99f` + `f4c08c11b` 两轮精简。**未 push** |
+| ios | **`feat/ios-gfm-markdown`**（新建，无 upstream） | 7 commit | 脏 8（首轮自测修复，**按你要求未提交**） | **本功能全部产出** | `a67d3d364` 内联 HTML → `a973897d2` 渲染层 → `dd9051b0c` 机器人气泡 → `ee7108d63` 智能体气泡 → `482998e1a` 自测页全链路+真实用例 → `ffce3b99f` + `f4c08c11b` 两轮精简。**未 push** |
 | desktop | `personal-ai-chat-hotfix` | synced | 脏 3 | 不涉及 | `.env.test`/`electron-builder.yml`/`package.json` 本地调试配置，按规矩**禁止提交** |
 
 本次迭代代码量（`a67d3d364^..HEAD`，含 T0 内联 HTML）：**28 文件，+2228 / -191**。两轮精简共删 382 行：
@@ -51,6 +51,21 @@
 **有意留下的**：老正则 markdown 管线（`renderMarkdown:` + 13 个 `process*`，约 600 行）是 `ZXMarkdownUseCMark=NO` 的落点，删了就失去不发版回退的能力。
 
 ## 待办 / 阻塞
+
+### 真机首轮自测暴露的问题（2026-08-14，已修完待复验，改动在工作区未提交）
+
+| # | 症状 | 根因 | 处理 |
+|---|------|------|------|
+| 1 | 列表、引用块、代码块**缩进全部无效** | `agentMessageBodyTextAttributes` 返回的属性自带 `NSParagraphStyle`（lineSpacing），而 `zx_applyParagraphStyleTo` 判据写成「已有段落样式就跳过」→ 缩进一次都没设上 | 判据改成「已有缩进才跳过」。三个症状同一根因 |
+| 2 | 引用块无视觉标识、嵌套看不出层级 | 只染了灰色，没有左侧竖条（`UITextView` 段落样式画不了左边框） | 每行行首加 `▎` 字符，嵌套自然叠成多根 |
+| 3 | 上标下标无效果 | GFM **无此语法**，只能走 HTML `<sup>`/`<sub>` | 加进 `processHTMLTags`（缩小字号 + baselineOffset） |
+| 4 | 脚注无效果 | 扩展没开 | cmark-gfm 的 `footnotes` 扩展加进注册列表 |
+| 5 | 数学公式无效果 | GFM 无公式语法，GitHub 是渲染层另接 MathJax | **未做**，需单独定方案（先确认后端发的格式） |
+| 6 | **含表格的消息里 illustration 图片不显示** | 含表格走段栈，正文在 `ZXMarkdownContentView` 内部 textView 上，而两个 cell 的异步图片回调只往 `contentLab` 打，那视图是空的 → early return | 段栈加 `applyLoadedImageFromNotification:` 遍历内部 textView 回填 + 重排；两个 cell 回调改成段栈优先 |
+| 7 | 表格单元格内的角标/插图留下不可见字符 | 后处理只作用于富文本块，没管表格单元格 | 抽出 `zx_postProcessRichText:`，表格单元格一并过 |
+| 8 | **个人 AI 卡片的角标 / 知识来源 / 折叠全失效** | `isAgentCardMessage:` 只认 `senderUserId` 带 `ga_` 前缀；个人 AI 框回复推送到本人会话时发送人是**本人 id**，判定为普通卡片 → `parseReference=NO`、知识来源传 `@[]`、折叠判据直接 NO | `isAgentCardMessage:` 增加判据：`ZXGroupRobotMessage` 且 `agentKnowledgeList` 非空也算 AI 卡片。cell 渲染分支与正文字号一并改用它。**注：这条在改造前也是坏的（老代码非 agent 分支连 markdown 都不渲染），不是本次回归** |
+
+> 子代理审查（`cavecrew-reviewer`）跑过一轮：8 条发现里 4 条经核对为误报（parser 泄漏、表格间距重复计算、lineSpacing 被覆盖、两个正文视图可能同时可见），其余 4 条属实但不值得现在改（共享测量单例无线程保护是既有写法、tableModel 就地改属性当前无共享持有者、图片回填与动画竞争无具体触发路径、lineRangeForRange 模式脆）。**无必须修复项**。
 
 - (ios) **下一步全是运行时自测，且只能真机**：M 芯片上模拟器走不通（融云无 arm64 模拟器 slice，链接报 `ld: library 'Pods-zhixinApp' not found`），已试过并放弃。真机跑起来 → 摇一摇打开 GFM 用例对照页 → 按 31 条用例逐条看。大概率要调的是缩进量、段间距、表格列宽/内边距这类观感参数，改 `ZXMarkdownStyle` 一个文件即可。
 - (ios) 会话页实测清单：机器人气泡含表格 / 智能体流式（盯表格从纯文本变成表格视图、高度只跳一次）/ 引用角标点击 / 插图与表格共存 / 长消息收起展开 / 纯文本消息与改造前无差异。
