@@ -1,6 +1,6 @@
 # Status：ios-机器人与智能体消息-GFM-Markdown渲染优化
 
-> 最后更新：2026-08-14 02:40（真机首轮自测暴露 8 个问题，已修，未提交；分支改为 feat/ios-gfm-markdown）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-14 11:20（首轮自测修复已提交并 push；分支 feat/ios-gfm-markdown）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -38,7 +38,7 @@
 | context | `main` | ahead 99 | 脏 9 | 本功能 spec/plan/status/impl-notes 已提交 | 其余脏区是 hooks/skills/README/`.pi/`，与本功能无关 |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | 不涉及 | 停在涉密标签功能 |
 | android | `personal-ai-chat-hotfix` | synced | 脏 1 | 不涉及 | 仅一张相机图标资源未跟踪，历史遗留 |
-| ios | **`feat/ios-gfm-markdown`**（新建，无 upstream） | 7 commit | 脏 8（首轮自测修复，**按你要求未提交**） | **本功能全部产出** | `a67d3d364` 内联 HTML → `a973897d2` 渲染层 → `dd9051b0c` 机器人气泡 → `ee7108d63` 智能体气泡 → `482998e1a` 自测页全链路+真实用例 → `ffce3b99f` + `f4c08c11b` 两轮精简。**未 push** |
+| ios | **`feat/ios-gfm-markdown`** | **已 push，synced** | 干净 | **本功能全部产出** | `a67d3d364` 内联 HTML → `a973897d2` 渲染层 → `dd9051b0c` 机器人气泡 → `ee7108d63` 智能体气泡 → `482998e1a` 自测页全链路+真实用例 → `ffce3b99f` + `f4c08c11b` 两轮精简。**未 push** |
 | desktop | `personal-ai-chat-hotfix` | synced | 脏 3 | 不涉及 | `.env.test`/`electron-builder.yml`/`package.json` 本地调试配置，按规矩**禁止提交** |
 
 本次迭代代码量（`a67d3d364^..HEAD`，含 T0 内联 HTML）：**28 文件，+2228 / -191**。两轮精简共删 382 行：
@@ -52,7 +52,7 @@
 
 ## 待办 / 阻塞
 
-### 真机首轮自测暴露的问题（2026-08-14，已修完待复验，改动在工作区未提交）
+### 真机首轮自测暴露的问题（2026-08-14，已修复并提交 `f37f66326`，待复验）
 
 | # | 症状 | 根因 | 处理 |
 |---|------|------|------|
@@ -65,12 +65,16 @@
 | 7 | 表格单元格内的角标/插图留下不可见字符 | 后处理只作用于富文本块，没管表格单元格 | 抽出 `zx_postProcessRichText:`，表格单元格一并过 |
 | 8 | **个人 AI 卡片的角标 / 知识来源 / 折叠全失效** | `isAgentCardMessage:` 只认 `senderUserId` 带 `ga_` 前缀；个人 AI 框回复推送到本人会话时发送人是**本人 id**，判定为普通卡片 → `parseReference=NO`、知识来源传 `@[]`、折叠判据直接 NO | `isAgentCardMessage:` 增加判据：`ZXGroupRobotMessage` 且 `agentKnowledgeList` 非空也算 AI 卡片。cell 渲染分支与正文字号一并改用它。**注：这条在改造前也是坏的（老代码非 agent 分支连 markdown 都不渲染），不是本次回归** |
 
+| 9 | 长按不弹转发/回复菜单，只有标题能长按 | 段栈里新建的 `UITextView` 漏了 `selectable = NO`（`contentLab` 一直有这句），默认 YES 时 UITextView 装上文本选择长按手势，抢走气泡长按。标题头没被段栈覆盖故不受影响 | 段栈 textView 补 `selectable = NO`；表格 scrollView 补 `delaysContentTouches = NO` |
+| 10 | 自己发的消息里表格与「查看更多」遮罩发白、与淡蓝气泡不搭 | 表头/边框写死浅灰白；遮罩用的是白色渐变图 `zx_chat_mask_up`。折叠功能是第 8 条放宽判据后才对这类消息生效，白遮罩因此才暴露 | 表格改半透明黑（表头 4%、边框 12%），叠任意气泡底色都协调；遮罩改成按 `getBubbleColor:` 现算的 `CAGradientLayer` |
+
 > 子代理审查（`cavecrew-reviewer`）跑过一轮：8 条发现里 4 条经核对为误报（parser 泄漏、表格间距重复计算、lineSpacing 被覆盖、两个正文视图可能同时可见），其余 4 条属实但不值得现在改（共享测量单例无线程保护是既有写法、tableModel 就地改属性当前无共享持有者、图片回填与动画竞争无具体触发路径、lineRangeForRange 模式脆）。**无必须修复项**。
 
 - (ios) **下一步全是运行时自测，且只能真机**：M 芯片上模拟器走不通（融云无 arm64 模拟器 slice，链接报 `ld: library 'Pods-zhixinApp' not found`），已试过并放弃。真机跑起来 → 摇一摇打开 GFM 用例对照页 → 按 31 条用例逐条看。大概率要调的是缩进量、段间距、表格列宽/内边距这类观感参数，改 `ZXMarkdownStyle` 一个文件即可。
 - (ios) 会话页实测清单：机器人气泡含表格 / 智能体流式（盯表格从纯文本变成表格视图、高度只跳一次）/ 引用角标点击 / 插图与表格共存 / 长消息收起展开 / 纯文本消息与改造前无差异。
 - (ios) T12+13：聚合弹窗与合并转发详情页复用同两个 cell，代码无需改，只需实测；若宽度不对，改成按容器实际宽度推导（现在写死 `kChatMsgContentW - 32`）。
-- (ios) T14：真机 Debug + `zhixinAppProd` archive 两档还没验；archive 后记 App Thinning Size Report 的包体增量。
+- (ios) T14：`zhixinAppProd` archive 那档还没验；archive 后记 App Thinning Size Report 的包体增量。
+- (ios) **数学公式未做**（spec 里就列在「本期不做」）。原因：①GFM 规范无数学语法，GitHub 是前端另挂 MathJax，换解析器不自动带来；②真做需引 LaTeX 排版引擎（推荐 iosMath，纯 OC、MIT，渲成 `NSTextAttachment`；WKWebView+KaTeX 逐条渲染会卡；服务端转图片要后端改）；③**尚无带公式的真实样本**，不知道后端发的是 `$...$` / `$$...$$` / `\(...\)` 还是 `<math>`。推进前先要样本 + 确认出现频率。
 - (ios) ⚠️ **`pod install` 会拆掉 `zhixinAppTest`/`zhixinAppProd` 的 Pods xcconfig 挂载**，之后编译报 `'AFNetworking/AFNetworking.h' file not found`。本次已通过还原 `project.pbxproj` 修好；其他人拉到这个分支跑 `pod install` 会再踩一次。根治要把三个 target 都写进 Podfile（需团队决定，本次未做）。详见 impl-notes「工程坑」。
 - (ios) 本机 `pod` 需 `RUBYOPT="-rlogger"` 前缀才能跑（Ruby 3.2 + activesupport 7.0.8 的 Logger 常量问题）。
 - (ios) **老正则管线退休排期**（下个迭代，不是现在）：cmark 路径线上跑稳一版后，删 `renderMarkdown:` 及其 13 个 `process*` 方法与 `ZXMarkdownUseCMark` 开关，白赚约 600 行。现在删等于放弃回滚手段。
