@@ -1,6 +1,6 @@
 # Status：ios-机器人与智能体消息-GFM-Markdown渲染优化
 
-> 最后更新：2026-08-14 11:20（首轮自测修复已提交并 push；分支 feat/ios-gfm-markdown）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-14 11:50（真机验证通过，自测页已移除；9 commit 全部 push；已出 PC/安卓移植 spec）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -18,11 +18,11 @@
 | T5 ZXMarkdownParser 块序列 + 流式降级 | — | — | ✅ | — |
 | T6 ZXMarkdownTableView 横滚表格 | — | — | ✅ | — |
 | T7 ZXMarkdownContentView 段栈 + 高度/收起态 | — | — | ✅ | — |
-| T8 Debug 摇一摇自测页（31 条用例） | — | — | ✅ | — |
+| T8 Debug 摇一摇自测页（31 条用例，验完已移除 `c4d50e28b`） | — | — | ✅ | — |
 | T9 ZXMarkdownManager 切换 + 三重兜底 | — | — | ✅ | — |
 | T10 接入机器人气泡 | — | — | ✅ | — |
 | T11 接入智能体气泡 + 流式 | — | — | ✅ | — |
-| T12+13 验证聚合弹窗 / 合并转发详情页（纯验证） | — | — | 🚧 | — |
+| T12+13 验证聚合弹窗 / 合并转发详情页（纯验证） | — | — | ✅ | — |
 | T14 三档构建 + 全量自测 + 收尾 | — | — | 🚧 | — |
 
 > ✅ 的判据是**代码写完 + `xcodebuild` 编译通过**（`zhixinAppTest` Debug、generic/platform=iOS、BUILD SUCCEEDED），
@@ -74,6 +74,7 @@
 - (ios) 会话页实测清单：机器人气泡含表格 / 智能体流式（盯表格从纯文本变成表格视图、高度只跳一次）/ 引用角标点击 / 插图与表格共存 / 长消息收起展开 / 纯文本消息与改造前无差异。
 - (ios) T12+13：聚合弹窗与合并转发详情页复用同两个 cell，代码无需改，只需实测；若宽度不对，改成按容器实际宽度推导（现在写死 `kChatMsgContentW - 32`）。
 - (ios) T14：`zhixinAppProd` archive 那档还没验；archive 后记 App Thinning Size Report 的包体增量。
+- (pc / android) **移植 spec 已出**：`spec-port-pc-android.md`。两端解析器本就是真 GFM（marked / Markwon），移植重点不是换解析器，而是对齐本轮踩出来的行为规则：内联 HTML 着色、角标与插图的占位符预处理、表格横滚、流式表格降级、缓存 key 带 streaming、裁剪不切表格、遮罩与表格配色跟随气泡底色、AI 卡片判定不能只看发送人前缀、长按不被正文控件吞掉。开工时按 `/new-feature` 建独立迭代目录。
 - (ios) **数学公式未做**（spec 里就列在「本期不做」）。原因：①GFM 规范无数学语法，GitHub 是前端另挂 MathJax，换解析器不自动带来；②真做需引 LaTeX 排版引擎（推荐 iosMath，纯 OC、MIT，渲成 `NSTextAttachment`；WKWebView+KaTeX 逐条渲染会卡；服务端转图片要后端改）；③**尚无带公式的真实样本**，不知道后端发的是 `$...$` / `$$...$$` / `\(...\)` 还是 `<math>`。推进前先要样本 + 确认出现频率。
 - (ios) ⚠️ **`pod install` 会拆掉 `zhixinAppTest`/`zhixinAppProd` 的 Pods xcconfig 挂载**，之后编译报 `'AFNetworking/AFNetworking.h' file not found`。本次已通过还原 `project.pbxproj` 修好；其他人拉到这个分支跑 `pod install` 会再踩一次。根治要把三个 target 都写进 Podfile（需团队决定，本次未做）。详见 impl-notes「工程坑」。
 - (ios) 本机 `pod` 需 `RUBYOPT="-rlogger"` 前缀才能跑（Ruby 3.2 + activesupport 7.0.8 的 Logger 常量问题）。
