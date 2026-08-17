@@ -28,6 +28,7 @@ bash scripts/bootstrap.sh
 | "开始执行"                         | Superpowers 写 plan（你**审核**）→ 执行 → wrapup 技能自动更新 status.md 并提交 |
 | `/sync-contract 语音接口更新了，字段如下…` | 更新契约 → 分析四端影响面 → 待办进 status.md                                |
 | `/port ios`                    | 按 impl-notes + 契约 + iOS 约定移植，完成后自动收尾                          |
+| `/code-status`                 | 脚本汇总五端 git 事实 + **AI 六列表格总结**（`scripts/code-status.sh`） |
 
 
 其余全自动：每次会话开头 SessionStart hook 注入活跃功能状态；每次结束 Stop hook 检查"改了代码必须更新文档"，没更新会强制 Claude 补齐；每周跑一次 `/distill` 把 claude-mem 的碎片知识结晶回 `context/platforms/`。
@@ -39,11 +40,11 @@ CLAUDE.md                  全局规则（路由、契约、移植、收尾）
 .claude/                   Claude Code 配置（hooks / commands / skills）
 .cursor/                   Cursor 配置（hooks / commands / skills / rules）
 context/                   文档（见 context/README.md）
-scripts/                   new-feature.sh / bootstrap.sh
+scripts/                   new-feature.sh / bootstrap.sh / code-status.sh
 apps/                      四个项目仓库挂载点（被 gitignore）
 ```
 
-两套配置内容对齐：`.claude/commands/` 与 `.cursor/commands/` 提供相同的 `/new-feature`、`/port`、`/sync-contract`、`/distill`、`/codebase` 斜杠命令；wrapup 技能在两边均有注册。
+两套配置内容对齐：`.claude/commands/` 与 `.cursor/commands/` 提供相同的 `/new-feature`、`/port`、`/sync-contract`、`/distill`、`/codebase`、`/code-status` 斜杠命令；Pi 用 `.pi/prompts/code-status.md`（`/code-status`）；wrapup 技能在两边均有注册。
 
 ## 约定速查
 

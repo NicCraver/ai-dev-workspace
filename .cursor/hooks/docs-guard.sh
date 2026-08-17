@@ -64,7 +64,7 @@ if [[ -f "$STATUS_MD" ]]; then
 fi
 
 if [[ -z "$docs_touched" ]]; then
-  reason="检测到 apps 下有代码改动（${apps_dirty# }），但活跃功能 [$FEATURE] 的 $STATUS_MD_REL 没有更新。请先：1) 更新 status.md 的平台矩阵与「待办/阻塞」；2) 若本次是 web 端联调完成，生成/更新 impl-notes.md；3) 在工作区根目录 git commit context 的变更。完成后回复「收尾完成」。"
+  reason="检测到 apps 下有代码改动（${apps_dirty# }），但活跃功能 [$FEATURE] 的 $STATUS_MD_REL 没有更新。请先：1) 运行 bash scripts/code-status.sh，由 AI 根据输出与会话上下文总结各端现状；2) 据此更新 status.md 的平台矩阵与「待办/阻塞」；3) 若本次是 web 端联调完成，生成/更新 impl-notes.md；4) 在工作区根目录 git commit context 的变更。完成后回复「收尾完成」。"
   python3 -c 'import json,sys; print(json.dumps({"followup_message": sys.stdin.read()}))' <<<"$reason"
   exit 0
 fi
