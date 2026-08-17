@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-17（安卓登录崩溃**已定位并修复**，真机验证通过；与本功能无关，代码落 `personal-ai-chat-hotfix` 并合进 GFM 分支）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-17（**三端样式一致性审计完成**，只读代码、未改任何代码；结论见下「三端 UI 样式一致性审计」一节，等我确认后再动手）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -44,13 +44,75 @@
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 119 | 干净 | 本功能 status 仅刷新工作区表 | 上一笔 `8288cbc`（记 desktop/ios 预存脏区非本功能） |
+| context | `main` | ahead 122 | 干净 | 本次落样式审计结论 | 上一笔 `772116c`（安卓登录崩溃修复归档） |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 标题栏涉密按钮黄色已 push `749d1f3`，属 `20260812-数据范围-涉密标签` |
-| android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 最新 `856b176cc`（merge `personal-ai-chat-hotfix`）。本会话只改了登录崩溃（base_data 转换器），**没碰任何 GFM 代码**；`personal-ai-chat-hotfix` 停在 `1b97741e4`。两条分支均未 push |
-| ios | `master-3.5.30` | synced | 脏 1 | **不涉及** | 脏的是 `project.pbxproj`（本地工程文件，非本功能、本会话未改） |
+| android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 最新仍 `856b176cc`（merge `personal-ai-chat-hotfix`）。**本会话零代码改动**；`personal-ai-chat-hotfix` 停在 `1b97741e4`。两条分支均未 push |
+| ios | `master-3.5.30` | synced | 脏 1 | **不涉及**（但样式代码在别的分支） | 脏的是 `project.pbxproj`（本地工程文件，本会话未改）。**iOS 的 markdown 代码在未合并的 `feat/ios-gfm-markdown` 分支上**，当前 checkout 看不到这些文件，审计是用 `git show` 读的 |
 | desktop | **`feat/gfm-markdown`** | **无 upstream** | 脏 2 | **本功能分支，脏区不是 GFM** | 最新仍 `f2a7d5f6`。脏的是 `electron-builder.yml`/`package.json` 本地调试配置，**禁止提交** |
 
 > **工具脚本（与本功能无关，记录备查）**：2026-08-14 新增 `scripts/prod-pc-build.mjs` / `prod-android-build.mjs`。2026-08-17 优化 `scripts/pc-build-test.mjs`：TTY 阶段进度条、webpack/electron-builder 实时流式输出、默认 `compression=normal`、Electron 已是 arm64 则跳过重装、sqlite3/leveldown 并行编译。安卓正式包任务**必须带 `:smart_message:` 模块前缀**——无前缀会给 IM / basis_function_api 等 library 也打 release，触发 `verifyPublishReleaseResources` 孤立资源校验，library 引用 app 模块 drawable 必挂。
+
+## 三端 UI 样式一致性审计（2026-08-17，只读代码，未改任何代码）
+
+三端 GFM 语法都能识别、表格都能横滚之后，样式观感仍不统一。**根因：三端各自吃了各自框架的默认值**，当初只刻意对齐过表格配色（4% 黑表头 / 12% 黑边框）。正文色三端一致（`#1F2329`，iOS `Color_H1` = `1F2329`）。
+
+### drift 的三个源头
+
+| # | 源头 | 落点 | 带来的默认值 |
+|---|------|------|-------------|
+| 1 | **PC 挂着 `prose`**（UnoCSS `presetTypography` 0.50） | `msg-actioncard.vue:58` | `:not(pre) > code::before/after { content: "\`" }` → **行内代码带反引号**；`tr:nth-child(2n)` → **表格斑马纹**；`blockquote{font-style:italic}` → **引用斜体**；`p,ul,ol,pre{line-height:1.75}`；h1/h2 一堆 em 边距（h5/h6 没有，标题间距不匀）。**另两端都没有前三条** |
+| 2 | **安卓从没配 `MarkwonTheme`** | `ZXMarkwonFactory.java:85` 只设了 table 主题 | 反编译 `core-4.6.2` 确认：`HEADING_SIZES={2,1.5,1.17,1,.83,.67}` → 15sp 正文下 **H1=30sp、H6=10sp**；H1/H2 自带 `headingBreakHeight=1` 横线；行内代码/代码块底色 = 正文色 25% alpha；引用竖条 25% alpha 且不变字色；链接色 = 主题 `textColorLink`（从没显式设过） |
+| 3 | **安卓段栈丢了行距（这条算 bug）** | `ZXMarkdownContentView.java:117` `newSegmentTextView()` | `rc_item_action_card_message.xml:72` 的 `tv_content` 有 `lineSpacingExtra=5dp`，段栈新建的 TextView 没设，`addView` 也没给 margin → **同一会话里含表格的消息行距比不含表格的窄，段间无间距** |
+
+### 逐项差异（基准：PC 13px / 安卓 15sp / iOS 16pt）
+
+| 项 | PC | 安卓 | iOS |
+|---|---|---|---|
+| 标题 H1–H6 | 18/17/16/15/14/13 px | 30/22.5/17.6/15/12.5/10 sp（默认倍率） | 22/20/18/16/15/14 pt |
+| H1/H2 下横线 | 无 | **有** | 无 |
+| 行距 | 1.75em | 1.33em（**段栈里 1.0**） | +6pt ≈ 1.37em |
+| 段间距 | 1em | Markwon 空行 + 段栈 0 | 6pt（`paragraphSpacing`） |
+| 行内代码 | **带反引号**、.875em、600、透明底 | 25% alpha 底 | `#F5F6F7` 底、Menlo、base−1 |
+| 代码块 | padding 1.25rem/1.5rem、圆角 6、透明底 | 25% alpha 底、8dp margin | `#F5F6F7` 底、缩进 12 |
+| 引用 | .25em 左边框 + **斜体** + 1em padding | 2dp 竖条、字色不变 | `▎` 字符 + 45% 白字色 + 缩进 12 |
+| 列表缩进 / marker | 1.25em、各级同 disc | Markwon span、圆/空心/方 | 18pt/级、`•`/`◦`/`▪` |
+| 任务列表 | 原生 `<input type=checkbox disabled>`（系统灰方框） | `TaskListPlugin` drawable（主题色） | `☑`/`☐` 字符 |
+| 链接 | `#3E7EFF` 无下划线 | 主题 `textColorLink`（未设） | `#006AFF` |
+| hr | 1px `#e7e7e7` + 2em margin | 25% alpha 黑 | 空行画删除线，12% 黑 |
+| 表格 cell padding | 4/8 px | **8/4 dp（横竖反了）** | 8/8 pt |
+| 表格边框 | 1px 无圆角 | 每格 1px → **相邻格叠成 2px**，无圆角 | 0.5px 外框 + 圆角 4 |
+| 最大列宽 | 无上限 + `white-space:nowrap`（**永不换行**） | 220dp 后换行 | 160pt 后换行 |
+| 斑马纹 | **有** | 无 | 无 |
+
+### 建议方案（**未开工，等确认**）
+
+**绝对数值不对齐**（13px/15sp/16pt 是各端既有正文规格，硬对齐反而不对齐观感），对齐的是**相对基准字号的倍率 + 颜色 + 结构**。
+
+拟新建 `context/design/markdown-style-tokens.md` 作唯一事实来源，三端照抄：
+
+| token | 值 |
+|---|---|
+| 标题倍率 | 1.40 / 1.25 / 1.15 / 1.08 / 1.00 / 1.00，全部粗体（H5/H6 不缩小，靠加粗区分——现在 iOS/安卓的 H5/H6 比正文还小，像降级正文） |
+| 标题横线 / 边距 | 无横线（安卓 `headingBreakHeight(0)`）；上 0.75em 下 0.35em |
+| 行距 / 段间距 | 1.4em / 0.5em |
+| 正文色 / 链接色 | `#1F2329` / `#3E7EFF` 无下划线（iOS 从 `#006AFF` 改，安卓显式设） |
+| 行内代码 | 底 `rgba(0,0,0,.06)`、圆角 2、0.92em、等宽、**无反引号** |
+| 代码块 | 底 `rgba(0,0,0,.04)`、圆角 4、padding 8/10、0.92em、不做高亮 |
+| 引用 | 左竖条 2px `rgba(0,0,0,.2)`、字色 `#5D616B`、**不斜体**、左内边距 8 |
+| 列表 | 缩进 1.2em/级，marker 三级 disc / circle / square |
+| 任务列表 | 1em 蓝色勾选方框（primary）——三端都做成勾选框外观，iOS 的字符染 primary |
+| hr | 1px `rgba(0,0,0,.12)`，上下 0.75em |
+| 表格 | cell padding 竖 0.35em 横 0.6em；表头 4% 黑 + 粗体；边框 1px 12% 黑；**无圆角、无斑马纹**；最大列宽 12em 后换行 |
+
+各端落点：
+
+- **PC**（2 文件）：`msg-actioncard.vue:58` **去掉 `prose`**，把 `:700–768` 的非 scoped style 扩成完整一套（约 +50 行）。留 prose 再逐条覆盖也行，但 preset 升版还会飘。顺带解决 spec 第 8 节遗留第 4 条：这段样式提到全局 scss，让 `message-info.vue` / `msg-reply-poll.vue` 一起吃到。`th/td` 去掉 `nowrap`，改 `max-width:12em` + 允许换行
+- **安卓**（3 文件）：`ZXMarkwonFactory` 加 `AbstractMarkwonPlugin.configureTheme()` 设标题倍率 / `headingBreakHeight(0)` / code 与 blockQuote 配色 / `linkColor` / `bulletWidth`，`TaskListPlugin.create(...)` 传 primary；`ZXMarkdownContentView:117` 补行距 + 段间 `topMargin`；`ZXMarkdownTableView:95` padding 横竖改回来，边框改成每格只画右+下、容器画左+上（消双线）
+- **iOS**（1 文件，在 `feat/ios-gfm-markdown` 分支）：`ZXMarkdownStyle.m` 本来就是集中式样式表，改常量即可——`headerFontSizes` 按倍率重算（16pt 基准 → 22/20/18/17/16/16）、`linkColor` 改 primary、引用字色改 `#5D616B`、`tableCellPadding` 拆横/竖两个、表格去圆角、`tableMaxColumnWidth` 160→192
+
+> iOS 的 `ZXMarkdownStyle` 是三端里结构最好的，建议当模板：安卓与 PC 也各收敛出一个「样式常量入口」（安卓一个 `configureTheme` 块、PC 一段 scss 变量），以后改一处不用翻三处。
+
+**顺序**：先跑完下面「下一步全是运行时自测」那批，**再动样式**。现在两端改动只到「编译通过」，样式与功能混一起改，回归时分不清谁的锅。样式改完后三端用例页各截一遍并排比对，再一起删用例页。
 
 ## 安卓真机首轮自测暴露的问题（2026-08-14，已修复，待复验）
 
@@ -113,6 +175,13 @@ java.lang.IllegalArgumentException: the bind value at index 71 is null
 - **(android)** View 复用验证：含表格消息与纯文本消息**交替滚动**，看有没有留白或串内容
 - **(两端)** 真实样本三条：值班播报（内联 HTML 上色）、含表格 + 插图 + 角标的长回复、普通机器人卡片。两种气泡底色（自己发的淡蓝 / 收到的白）都看
 - **(两端)** 自测通过后**删用例页**：PC 删 `components/debug/MarkdownGfmCases.vue` + router 那条；安卓删 `com/im/debug/MarkdownGfmCasesActivity.java` + manifest 那条
+
+### 待确认：三端样式统一是否开工（2026-08-17 新增）
+
+审计已完成（见上「三端 UI 样式一致性审计」），token 表与各端落点都列好了，**等确认后再动代码**。两个待定项：
+
+1. 先落 `context/design/markdown-style-tokens.md` 文档、等运行时自测跑完再改代码；还是直接开工改三端
+2. iOS 要一起改的话，`feat/ios-gfm-markdown` 分支未合并（当前 checkout `master-3.5.30`），得先决定在哪条分支上动
 
 ### 已知未做
 
