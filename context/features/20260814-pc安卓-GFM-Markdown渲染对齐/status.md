@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-17（**三端样式一致性审计完成**，只读代码、未改任何代码；结论见下「三端 UI 样式一致性审计」一节，等我确认后再动手）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-17（**三端样式统一已落码**：PC lint + 23 单测绿、安卓 `assembleDevelopDebug` 通过、iOS 只改代码未构建。**全部运行时观感待你自测**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -25,6 +25,7 @@
 | T11 气泡接段栈 + 折叠改造 | — | ✅ | — | — |
 | T12 31 条用例页（已建，**待自测**） | — | 🚧 | — | — |
 | T13 收尾（impl-notes + status） | — | ✅ | — | ✅ |
+| T14 三端样式统一（token 表落地，**运行时未验**） | — | ✅ | ✅ | ✅ |
 
 > ✅ 的判据是**代码写完 + 编译通过**（PC：`npm run lint` 干净 + vitest 23 条全绿；安卓：`assembleDevelopDebug` BUILD SUCCESSFUL）。
 > **不含任何运行时验证**——表格横滚、折叠不切块、长按不被吞、配色观感，一眼都没看过。
@@ -44,11 +45,11 @@
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 122 | 干净 | 本次落样式审计结论 | 上一笔 `772116c`（安卓登录崩溃修复归档） |
+| context | `main` | ahead 123 | 干净 | 本次落 token 表 + 样式改动清单 | 新增 `context/design/markdown-style-tokens.md`（三端样式唯一事实来源） |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 标题栏涉密按钮黄色已 push `749d1f3`，属 `20260812-数据范围-涉密标签` |
-| android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 最新仍 `856b176cc`（merge `personal-ai-chat-hotfix`）。**本会话零代码改动**；`personal-ai-chat-hotfix` 停在 `1b97741e4`。两条分支均未 push |
-| ios | `master-3.5.30` | synced | 脏 1 | **不涉及**（但样式代码在别的分支） | 脏的是 `project.pbxproj`（本地工程文件，本会话未改）。**iOS 的 markdown 代码在未合并的 `feat/ios-gfm-markdown` 分支上**，当前 checkout 看不到这些文件，审计是用 `git show` 读的 |
-| desktop | **`feat/gfm-markdown`** | **无 upstream** | 脏 2 | **本功能分支，脏区不是 GFM** | 最新仍 `f2a7d5f6`。脏的是 `electron-builder.yml`/`package.json` 本地调试配置，**禁止提交** |
+| android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 最新 `a092b0c3c`（样式统一）。`personal-ai-chat-hotfix` 停在 `1b97741e4`。两条分支均未 push |
+| ios | **`feat/ios-gfm-markdown`** | ahead 1 | 干净 | **本轮一起改了样式** | 最新 `9e5437ee3`（样式统一，未 push）。本会话从 `master-3.5.30` 切过来的，切前把本地脏的 `project.pbxproj` 排序噪声 **stash 了，回主干记得 pop** |
+| desktop | **`feat/gfm-markdown`** | **无 upstream** | 脏 2 | **本功能分支，脏区不是 GFM** | 最新 `884ff628`（样式统一）。脏的是 `electron-builder.yml`/`package.json` 本地调试配置，**禁止提交**，本次提交已排除 |
 
 > **工具脚本（与本功能无关，记录备查）**：2026-08-14 新增 `scripts/prod-pc-build.mjs` / `prod-android-build.mjs`。2026-08-17 优化 `scripts/pc-build-test.mjs`：TTY 阶段进度条、webpack/electron-builder 实时流式输出、默认 `compression=normal`、Electron 已是 arm64 则跳过重装、sqlite3/leveldown 并行编译。安卓正式包任务**必须带 `:smart_message:` 模块前缀**——无前缀会给 IM / basis_function_api 等 library 也打 release，触发 `verifyPublishReleaseResources` 孤立资源校验，library 引用 app 模块 drawable 必挂。
 
@@ -84,11 +85,11 @@
 | 最大列宽 | 无上限 + `white-space:nowrap`（**永不换行**） | 220dp 后换行 | 160pt 后换行 |
 | 斑马纹 | **有** | 无 | 无 |
 
-### 建议方案（**未开工，等确认**）
+### 落地情况（2026-08-17 已按下述方案改完，见文末「样式统一改动清单」）
 
 **绝对数值不对齐**（13px/15sp/16pt 是各端既有正文规格，硬对齐反而不对齐观感），对齐的是**相对基准字号的倍率 + 颜色 + 结构**。
 
-拟新建 `context/design/markdown-style-tokens.md` 作唯一事实来源，三端照抄：
+已建 `context/design/markdown-style-tokens.md` 作唯一事实来源，三端照抄：
 
 | token | 值 |
 |---|---|
@@ -176,12 +177,24 @@ java.lang.IllegalArgumentException: the bind value at index 71 is null
 - **(两端)** 真实样本三条：值班播报（内联 HTML 上色）、含表格 + 插图 + 角标的长回复、普通机器人卡片。两种气泡底色（自己发的淡蓝 / 收到的白）都看
 - **(两端)** 自测通过后**删用例页**：PC 删 `components/debug/MarkdownGfmCases.vue` + router 那条；安卓删 `com/im/debug/MarkdownGfmCasesActivity.java` + manifest 那条
 
-### 待确认：三端样式统一是否开工（2026-08-17 新增）
+### 样式统一改动清单（2026-08-17 已提交，运行时全未验）
 
-审计已完成（见上「三端 UI 样式一致性审计」），token 表与各端落点都列好了，**等确认后再动代码**。两个待定项：
+| 端 | commit | 文件 | 内容 | 验证到什么程度 |
+|----|--------|------|------|---------------|
+| desktop | `884ff628` | 4 | 新增全局 `assets/styles/markdown.scss` + `main.js` 引入；`msg-actioncard.vue` / `msg-reply-poll.vue` 去掉 `prose` 类并删掉组件内那份样式 | `npm run lint` 干净 + markdown 相关 23 条单测全绿 |
+| android | `a092b0c3c` | 4 | `ZXMarkwonFactory` 加 `configureTheme` + `configureSpansFactory`（引用字色）；`ZXMarkdownContentView` 补行距 6dp / 段间距 7dp、折叠计入 topMargin；`ZXMarkdownTableView` padding 9/5、列宽 180dp、边框换 `EdgeLineDrawable`；布局 `tv_content` 行距 5dp→6dp | `:IM:assembleDevelopDebug` 与 `:smart_message:assembleDevelopDebug` 均 BUILD SUCCESSFUL |
+| ios | `9e5437ee3` | 4 | `ZXMarkdownStyle` 标题改倍率、链接 primary、代码/引用配色拆开、缩进与段间距按字号折算、表格 padding 拆横竖 + 去圆角；`ZXMarkdownAttributedBuilder` / `ZXMarkdownTableView` 跟着改引用 | **未构建**（本仓库 CLAUDE.md 规定 AI 不跑 xcodebuild），只做了属性引用静态核对 |
 
-1. 先落 `context/design/markdown-style-tokens.md` 文档、等运行时自测跑完再改代码；还是直接开工改三端
-2. iOS 要一起改的话，`feat/ios-gfm-markdown` 分支未合并（当前 checkout `master-3.5.30`），得先决定在哪条分支上动
+**iOS 分支处理**：为改这些文件把 ios 仓库从 `master-3.5.30` 切到了 **`feat/ios-gfm-markdown`**（样式代码只在这条分支上）。切之前把本地脏的 `project.pbxproj` 用 `git stash push` 暂存了（那 16 行是 Xcode 的 entry 排序噪声）——**要回 `master-3.5.30` 时记得 `git stash pop`**。
+
+**新增的三端样式自测项**（并入下面的运行时自测批次）：
+
+1. **(PC 专项)** 去掉 `prose` 是本轮回归面最大的改动——`prose` 还提供了 `img/video max-width`、`figure`、`kbd`、`abbr` 等零散规则。真实消息里过一遍：行内代码**不再有反引号**、表格**没有斑马纹**、引用**不斜体**、长表格单元格**换行而不是把表格撑爆**
+2. **(安卓)** 表格边框：任意两格之间只有一条线、整表四周也只有一条线（原来相邻格叠 2px）
+3. **(安卓)** 含表格消息与纯文本消息**行距一致**（这次修的 bug）
+4. **(安卓)** 折叠高度：段间距计入后，折叠态实际高度没超过 480dp
+5. **(三端)** 同一条含 H1~H6 / 任务列表 / 引用 / 行内代码 / 表格的消息，三端并排截图比对
+6. **(iOS)** iOS 的 GFM 用例页已在 `c4d50e28b` 删掉了，比对得用真实消息或临时再建一个
 
 ### 已知未做
 

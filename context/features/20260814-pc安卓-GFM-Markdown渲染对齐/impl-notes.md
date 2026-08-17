@@ -158,6 +158,30 @@ interface SegmentPostProcessor { CharSequence process(Spanned rendered); }
 
 安卓 AI 分支外层本来就有 `try/catch` 回退纯文本，`renderSafely` 是给另外两条渲染路径补的。
 
+## 12.1 样式一致的前提：不吃框架默认值
+
+「语法都支持了但三端观感不一样」的根因**不是漏配某一项，是三端各自吃了各自框架的默认值**：
+
+| 端 | 默认值来源 | 典型坑 |
+|----|-----------|--------|
+| PC | UnoCSS `presetTypography` 的 `prose` 类 | 行内代码自动加反引号（`code::before/after`）、表格斑马纹、引用斜体、行高 1.75。**升版还会再飘** |
+| 安卓 | `MarkwonTheme` 默认 | 标题倍率 `{2, 1.5, 1.17, 1, .83, .67}`（H1 是正文两倍、H6 只有 0.67 倍）、H1/H2 底下自带横线、代码与引用配色取正文色 25% alpha、链接色吃系统 `textColorLink` |
+| iOS | 自绘，无框架默认 | 反倒最可控——`ZXMarkdownStyle` 一个集中式样式表，改常量即可 |
+
+**做法**：一张 token 表（`context/design/markdown-style-tokens.md`）+ 每端一个显式的样式入口。**对齐倍率与颜色，不对齐绝对数值**——三端正文基准字号本来就是 13px / 15sp / 16pt，硬对齐数值反而不对齐观感。
+
+三条踩到的实现细节：
+
+- **`MarkwonTheme` 管不到引用文字颜色**，它只管竖条颜色。要压文字色得 `configureSpansFactory` 里 `appendFactory(BlockQuote.class, …)` 追加一个 `ForegroundColorSpan`
+- **Markwon 的引用缩进与列表缩进共用 `blockMargin`**，拆不开。取列表要的值，引用就会偏深，只能接受
+- **自绘表格的边框不能每格画四边**（相邻格叠成 2px，比外框粗一倍）。正确做法：每格只画右 + 下线，容器补左 + 上线。也**不能**用「底层铺边框色 + 上层内缩填充」的 LayerDrawable 取巧——单元格底色是透明的（要透出气泡底色），底层会整格露出来
+
+## 12.2 段栈里 new 出来的 View 不继承 XML 的文本属性
+
+安卓段栈的 TextView 是 `new` 的，布局文件 `tv_content` 上的 `lineSpacingExtra` 一点都带不过来。表现是**同一会话里含表格的消息行距比纯文本消息窄**——两条渲染路径的文本属性必须逐项对齐（字号、字色是通过参数传的，行距当时漏了）。
+
+顺带：给段加了 `topMargin` 之后，折叠的高度累加必须改成「measuredHeight + topMargin」，否则折叠态实际高度会超过限高。
+
 ## 13. 工程坑
 
 - **本机 `grep` / `find` 被 shell 函数包装过**，某些会话里会报 `Unexpected argument '-G'` / `'-S'`。用 `command grep` / `command find` 绕开。
