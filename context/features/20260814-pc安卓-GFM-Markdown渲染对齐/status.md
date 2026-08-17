@@ -45,8 +45,8 @@
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 124 | 干净 | 本次落自测反馈与修复 | `context/design/markdown-style-tokens.md` 是三端样式唯一事实来源 |
-| web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 标题栏涉密按钮黄色已 push `749d1f3`，属 `20260812-数据范围-涉密标签` |
+| context | `main` | ahead 125 | 干净 | 本次落自测反馈与修复 | `context/design/markdown-style-tokens.md` 是三端样式唯一事实来源 |
+| web | `feat/data-scope-secret-tag` | synced | 脏 2 | **不涉及** | 标题栏涉密按钮黄色已 push `749d1f3`，属 `20260812-数据范围-涉密标签`。脏区是下方「旁路改动」的 `hideChat` 显隐，**未提交** |
 | android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 最新 `d175966e7`（表格列宽）。会话中途该仓库曾被切到 `personal-ai-chat-hotfix`（停在 `1b97741e4`），我切回 GFM 分支才改的。两条分支均未 push |
 | ios | **`feat/ios-gfm-markdown`** | ahead 2 | 干净 | **本轮一起改了样式** | 最新 `0e37761d3`（自测修复，未 push）。从 `master-3.5.30` 切过来的，切前把本地脏的 `project.pbxproj` 排序噪声 **stash 了，回主干记得 pop** |
 | desktop | **`feat/gfm-markdown`** | **无 upstream** | 脏 3 | **本功能分支，脏区不是 GFM** | 最新 `bf06e013`（自测修复）。脏的是 `.env.test`/`electron-builder.yml`/`package.json` 本地调试配置，**禁止提交**，本次提交已排除 |
@@ -129,6 +129,15 @@
 > 链接点击不受影响：`LinkMovementMethod` 在 `onTouchEvent` 里先于 clickable 判定处理事件，按在链接上会被消费，按在空白处冒泡给气泡。
 
 ## 待办 / 阻塞
+
+### 旁路改动：web 设置页 `hideChat` 显隐（2026-08-17，与本功能无关，勿并入本功能）
+
+问答设置「知识可调用范围」按 `getAgentSetInfo` 回参 `hideChat === 1` 隐藏「调用聊天记录」「调用聊天文件」两项 **与「全部」勾选框**（只前端显隐，`dataRangeList` 已保存 status 与保存 payload 都不动）。
+
+- `useSettingData.js` 的 `getAgentBelongs` 补透出 `hideChat`（原来这字段在回参里被丢掉）；`KnowledgeQASet.vue` 加 `hideChat` / `visibleRanges` computed
+- 契约 `contracts/personalAiFrame/getAgentSetInfo.d.ts` 早已有 `hideChat`，无需改契约
+- 验证：`vue-tsc --noEmit` 干净；**未运行时验证**（需后端给 `hideChat=1` 的数据）。`pnpm format` 跑不了——web 仓库 `node_modules` 里没装 prettier
+- 归属：Agent 设置域，属于 `hideChat` 那批遗留改动（见 `20260812-数据范围-涉密标签/status.md` 的旁路记录），**未 commit**，留给对应负责人
 
 ### ✅ 已解决：安卓「点击登录后崩溃退出」（2026-08-17，与本功能无关）
 
