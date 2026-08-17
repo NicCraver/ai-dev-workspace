@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-17（安卓登录崩溃排查第 2 轮：混淆假设已证伪，仍卡在缺堆栈；本会话未改任何 GFM 代码，矩阵不变）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-17（安卓登录崩溃**已定位并修复**，真机验证通过；与本功能无关，代码落 `personal-ai-chat-hotfix` 并合进 GFM 分支）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -46,7 +46,7 @@
 |----|------|------|------|--------------|------|
 | context | `main` | ahead 119 | 干净 | 本功能 status 仅刷新工作区表 | 上一笔 `8288cbc`（记 desktop/ios 预存脏区非本功能） |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 标题栏涉密按钮黄色已 push `749d1f3`，属 `20260812-数据范围-涉密标签` |
-| android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 已切回 GFM 分支，最新 `fd67e05d3`（Linkify 去 PHONE_NUMBERS + 临时耗时日志）。本会话只读排查登录崩溃，未改代码 |
+| android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 最新 `856b176cc`（merge `personal-ai-chat-hotfix`）。本会话只改了登录崩溃（base_data 转换器），**没碰任何 GFM 代码**；`personal-ai-chat-hotfix` 停在 `1b97741e4`。两条分支均未 push |
 | ios | `master-3.5.30` | synced | 脏 1 | **不涉及** | 脏的是 `project.pbxproj`（本地工程文件，非本功能、本会话未改） |
 | desktop | **`feat/gfm-markdown`** | **无 upstream** | 脏 2 | **本功能分支，脏区不是 GFM** | 最新仍 `f2a7d5f6`。脏的是 `electron-builder.yml`/`package.json` 本地调试配置，**禁止提交** |
 
@@ -67,35 +67,33 @@
 
 ## 待办 / 阻塞
 
-### ❌ 阻塞中：安卓「点击登录后崩溃退出」（2026-08-17 用户反馈，排查未完成）
+### ✅ 已解决：安卓「点击登录后崩溃退出」（2026-08-17，与本功能无关）
 
-**当前状态：缺堆栈，无法定根因。** `adb devices` 为空，本会话没能复现，**没有改任何代码**。
+**结论：不是 GFM 改动引起的，是 greenDAO 转换器的既有 bug。** 真机验证已通过（修复包装机后登录不再崩）。
 
-已排除/已确认的事实：
-- `feat/gfm-markdown` 分支（基点 `f5f2d0ce3` → `fd67e05d3`，8 commit）**没有一行改动碰登录逻辑**。改动面只有：`ActionCardMessageItemProvider`（AI 卡片消息渲染）、4 个新增 `ZXMarkdown*/ZXMarkwonFactory` 类、`rc_item_action_card_message.xml`、`basis_function_api/build.gradle` 加 2 个 markwon 扩展依赖、`IM/AndroidManifest.xml` 注册临时 debug Activity
-- `rc_item_action_card_message.xml` 全工程**只有一份、只有一处 inflate**，`md_content_stack` 不存在「某个 layout 变体缺这个 id 导致 findViewById 返回 null」的风险
-- 新加的 `ext-strikethrough` / `ext-tasklist` 均为 `4.6.2`，与既有 `core`/`ext-tables`/`linkify`/`html` **同版本**，无版本冲突
-- 临时 debug Activity 声明了 `android:exported="true"`，不是 targetSdk 31+ 的 exported 缺失崩溃
+**崩溃**
+```
+java.lang.IllegalArgumentException: the bind value at index 71 is null
+  at greendao.bean_dao.ChatMessageAsRouteDao.bindValues(ChatMessageAsRouteDao.java:887)
+  at greendao.util.DataCenter.saveDialogueLastMessageFromServer(DataCenter.java:2041)
+  at com.cnmts.smart_message.login.InitPersonalDataActivity$5.onSuccess(InitPersonalDataActivity.java:334)
+```
 
-**用户已确认的复现条件**（2026-08-17 第 2 轮）：崩的是 `scripts/prod-android-build.mjs` 出的 `zx-android-prod_v3.6.18.apk`（`publish`+`release`），卸载后全新安装；`zhixin-run-android` 装的包**不崩**。
+**根因**：greenDAO 生成的 `bindValues` 只判 `list != null` 就调 `bindString`，而 `KnowledgeDocConverter.convertToDatabaseValue` 对**非 null 的空列表**返回 null（`if (entityProperty == null || entityProperty.size() == 0) return null;`），空列表穿过 null 守卫后 `bindString(71, null)` 直接抛。登录后 `InitPersonalDataActivity` 拉会话最后一条消息入库时触发。
 
-**混淆假设已证伪**：`smart_message/build.gradle:93-97` release 里 `minifyEnabled false` + `shrinkResources false`（`proguardFiles` 配了但不生效），R8 根本没跑，不存在类被裁。签名也排除——release 与 debug 用同一个 `key/iotchat.jks`。flavor 的 `src/*/assets` 五份结构一致，排除资源缺失。
+**为什么只有正式包崩**：与 buildType / 混淆 / 签名全都无关（release 的 `minifyEnabled` 本就是 false）。纯粹是正式环境某条会话的最后一条消息带了**空的** `knowledgeDocList`，测试环境的样本不为空，碰不到这条边界。
 
-**关键澄清：这次对比同时换了两个变量，不能直接推成「release 的锅」**
+**为什么难查**：App 自己的 `com.cnmts.smart_message.common.crash_handler.CrashHandler` 捕获后直接 `App.killProcess()`，非 debug 分支**不打堆栈**，logcat 里连 `FATAL EXCEPTION` 都没有，只有一行 `Process is going to kill itself!`。真堆栈落在手机 `/sdcard/ZhiXin/Log/crash/crash-<yyyyMMdd_HHmmss>.txt`（路径来自 `SDCardUtils.getCrashReportPath()`）。**这条排查经验已写进 `context/platforms/android.md`。**
 
-| | 崩的包 | 不崩的包 |
-|---|---|---|
-| flavor | `publish` | `onTest`（`zhixin-run-android` 默认） |
-| 后端 | `https://zhixin.zhiguaniot.com/`（**正式**，`IS_HTTPS=true`） | `http://192.168.10.25/`（内网测试） |
-| buildType | release | debug |
-| applicationId | `com.cnmts.smart_message` | `com.cnmts.smart_message.test` |
+**修复**（commit `1b97741e4` on `personal-ai-chat-hotfix`，已 merge 进 `feat/gfm-markdown` = `856b176cc`，**两条分支都未 push**）：
+- `KnowledgeDocConverter`：空列表序列化成 `"[]"`，只有 null 才返回 null
+- `AccountStartConverter`：同源隐患一并修（`AccountAppraisingDao.bindValues` 同样只判 null，尚未爆但迟早）
+- 新增两个转换器单测共 8 条（先写先跑红：3 条空列表断言 FAILED → 改完全绿）；`base_data/build.gradle` 补 `testImplementation 'junit:junit:4.12'`（该模块原先无 test 依赖）
+- 已审计 `base_data` 下全部 19 个 `PropertyConverter`，有此 bug 的**只有这两个**；`BtnDataConverter`（管 69/70 两列）等其余均只在入参为 null 时返回 null，安全
 
-因此当前最大嫌疑改为**正式后端返回的数据与测试环境不同导致解析崩溃**（正式环境可能还没上线这轮的新接口，如 `getSecretButtonTip`，返回 404 或缺字段），而不是 buildType。
+**验证**：`:base_data:testDebugUnitTest` 8/8 绿；`:smart_message:assembleDevelopDebug` 与 `:smart_message:assemblePublishRelease` 均 BUILD SUCCESSFUL；正式包装真机复测登录**不再崩溃**。
 
-下一步（等用户，三选一）：
-1. `adb logcat -b crash`（最快）
-2. **Bugly 控制台**：publish 上报到 appId `61840551c9`，按版本 `v3.6.18` 筛，崩溃应已自动上传
-3. 拿不到堆栈就打 2×2 隔离包：`assemblePublishDebug`（正式后端+debug，还崩=数据问题）、`assembleOnTestRelease`（测试后端+release，崩=buildType 问题）
+**遗留**：排查期间为绕开 MIUI 覆盖安装限制，**卸载过一次** `com.cnmts.smart_message`，手机本地聊天缓存已清（登录后服务端重新同步）。合并 hotfix 后 GFM 分支版本号从 `295/v3.6.18` 跟到 `297/v3.6.20`。
 
 ### 安卓复验清单（新包 `smart_message-develop-debug_v3.6.18.apk`，`7b9f7872c`）
 

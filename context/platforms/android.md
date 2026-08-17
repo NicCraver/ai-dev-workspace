@@ -108,3 +108,7 @@
 - 全量构建慢、内存大（`-Xmx10240m`、`dexOptions.javaMaxHeapSize 7g`）；改单模块可加速。
 - X5 内核需联网下载，首次启动可能回退系统 WebView，联调注意内核差异。
 - 巨型类（尤其 `ConversationFragment`）合并冲突多：新逻辑务必外置，降低与 liuyiling 并行改动的冲突面。
+- **崩溃堆栈不在 logcat 里**（排查必读）：`com.cnmts.smart_message.common.crash_handler.CrashHandler` 接管了 `UncaughtExceptionHandler`，非 debug 分支**不打印 throwable**，收集完设备信息就 `App.killProcess()`。所以 App 崩了 logcat 只有一行 `Process is going to kill itself!`，**没有 `FATAL EXCEPTION`**，`adb logcat -b crash` 也是空的。真堆栈落在手机 `/sdcard/ZhiXin/Log/crash/crash-<yyyyMMdd_HHmmss>.txt`（`SDCardUtils.getCrashReportPath()`），文件头是设备信息、之后才是堆栈；用 `adb shell ls -lt /sdcard/ZhiXin/Log/crash/` 取最新那个。Bugly 也会收（正式 appId `61840551c9`，测试/开发 `74a66c7d99`）。
+- **greenDAO `PropertyConverter` 不能对空集合返回 null**：生成的 `XxxDao.bindValues` 只判 `list != null` 就调 `stmt.bindString(i, converter.convertToDatabaseValue(list))`，转换器若对**非 null 的空列表**返回 null，会抛 `IllegalArgumentException: the bind value at index i is null`。空集合要序列化成 `"[]"`，只有入参为 null 才返回 null。2026-08-17 正式包登录后必崩就是这个（`KnowledgeDocConverter`、`AccountStartConverter`，已修）。这类 bug 高度依赖数据边界——测试环境样本不为空就永远碰不到，容易被误判成「release/混淆的锅」。
+- **对比「正式包崩、测试包不崩」时先拆变量**：`publish`+`release` 与 `onTest`+`debug` 同时差了 flavor（后端 `zhixin.zhiguaniot.com` vs `192.168.10.25`）、buildType、applicationId 三项，不能直接归因给 buildType。需要隔离就打 `assemblePublishDebug`（正式后端+debug）与 `assembleOnTestRelease`（测试后端+release）。
+- **MIUI 挡 adb 覆盖安装**：`adb install -r` 报 `INSTALL_FAILED_USER_RESTRICTED: Install canceled by user`，首装能过、更新过不去。先 `adb uninstall` 再全新装，或在手机上手动点确认。
