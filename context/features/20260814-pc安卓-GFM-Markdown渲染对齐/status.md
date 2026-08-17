@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-17 10:42（本会话未动 GFM 代码；stop hook 因 desktop/ios 预存脏区触发，矩阵不变）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-17（用户报「安卓点登录后崩溃」，排查中、卡在缺堆栈；本会话未改任何 GFM 代码，矩阵不变）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -40,13 +40,13 @@
 
 **安卓新增 4 个类**：`ZXMarkwonFactory`（配置收敛 + 兜底 + 开关）、`ZXMarkdownSegment` / `ZXMarkdownSegmenter`（AST 切段）、`ZXMarkdownTableView`（横滚表格）、`ZXMarkdownContentView`（段栈 + 按段折叠）。
 
-## 各端工作区现状（2026-08-17 10:42，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-17，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 118 | 干净 | 本功能 status 仅刷新工作区表 | 刚提交 `a89069b` code-status、`7154de7` pc-build、`15c0d30` 上一笔 status |
+| context | `main` | ahead 119 | 干净 | 本功能 status 仅刷新工作区表 | 上一笔 `8288cbc`（记 desktop/ios 预存脏区非本功能） |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 标题栏涉密按钮黄色已 push `749d1f3`，属 `20260812-数据范围-涉密标签` |
-| android | `personal-ai-chat-hotfix` | synced | 干净 | **当前不在 GFM 分支** | 最新 `4d45a80a3`（message「1」）。GFM 代码在 `feat/gfm-markdown`，本工作区已切走 |
+| android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 已切回 GFM 分支，最新 `fd67e05d3`（Linkify 去 PHONE_NUMBERS + 临时耗时日志）。本会话只读排查登录崩溃，未改代码 |
 | ios | `master-3.5.30` | synced | 脏 1 | **不涉及** | 脏的是 `project.pbxproj`（本地工程文件，非本功能、本会话未改） |
 | desktop | **`feat/gfm-markdown`** | **无 upstream** | 脏 2 | **本功能分支，脏区不是 GFM** | 最新仍 `f2a7d5f6`。脏的是 `electron-builder.yml`/`package.json` 本地调试配置，**禁止提交** |
 
@@ -66,6 +66,23 @@
 > 链接点击不受影响：`LinkMovementMethod` 在 `onTouchEvent` 里先于 clickable 判定处理事件，按在链接上会被消费，按在空白处冒泡给气泡。
 
 ## 待办 / 阻塞
+
+### ❌ 阻塞中：安卓「点击登录后崩溃退出」（2026-08-17 用户反馈，排查未完成）
+
+**当前状态：缺堆栈，无法定根因。** `adb devices` 为空，本会话没能复现，**没有改任何代码**。
+
+已排除/已确认的事实：
+- `feat/gfm-markdown` 分支（基点 `f5f2d0ce3` → `fd67e05d3`，8 commit）**没有一行改动碰登录逻辑**。改动面只有：`ActionCardMessageItemProvider`（AI 卡片消息渲染）、4 个新增 `ZXMarkdown*/ZXMarkwonFactory` 类、`rc_item_action_card_message.xml`、`basis_function_api/build.gradle` 加 2 个 markwon 扩展依赖、`IM/AndroidManifest.xml` 注册临时 debug Activity
+- `rc_item_action_card_message.xml` 全工程**只有一份、只有一处 inflate**，`md_content_stack` 不存在「某个 layout 变体缺这个 id 导致 findViewById 返回 null」的风险
+- 新加的 `ext-strikethrough` / `ext-tasklist` 均为 `4.6.2`，与既有 `core`/`ext-tables`/`linkify`/`html` **同版本**，无版本冲突
+- 临时 debug Activity 声明了 `android:exported="true"`，不是 targetSdk 31+ 的 exported 缺失崩溃
+
+三个待验假设（按嫌疑排序，需堆栈裁决）：
+1. **release 包混淆**：若用户装的是 `prod-android-build` 出的正式包，R8 可能裁掉新增 commonmark 扩展类 → `NoClassDefFoundError`。debug 包则可直接排除
+2. **崩点其实在登录之后**：登录 → 主页 → 消息列表渲染 AI 卡片时崩在 `ActionCardMessageItemProvider`，表现上像「点登录就崩」
+3. **与本分支无关**：本地脏包 / 其它分支改动 / 后端返回变化
+
+下一步（等用户）：① `adb logcat -c` 后复现，取 `adb logcat -d -b crash`；② 确认装的是 develop debug / onTest debug / publish release 哪一个。
 
 ### 安卓复验清单（新包 `smart_message-develop-debug_v3.6.18.apk`，`7b9f7872c`）
 
