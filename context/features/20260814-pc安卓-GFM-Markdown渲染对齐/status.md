@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-17（用户报「安卓点登录后崩溃」，排查中、卡在缺堆栈；本会话未改任何 GFM 代码，矩阵不变）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-17（安卓登录崩溃排查第 2 轮：混淆假设已证伪，仍卡在缺堆栈；本会话未改任何 GFM 代码，矩阵不变）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -77,12 +77,25 @@
 - 新加的 `ext-strikethrough` / `ext-tasklist` 均为 `4.6.2`，与既有 `core`/`ext-tables`/`linkify`/`html` **同版本**，无版本冲突
 - 临时 debug Activity 声明了 `android:exported="true"`，不是 targetSdk 31+ 的 exported 缺失崩溃
 
-三个待验假设（按嫌疑排序，需堆栈裁决）：
-1. **release 包混淆**：若用户装的是 `prod-android-build` 出的正式包，R8 可能裁掉新增 commonmark 扩展类 → `NoClassDefFoundError`。debug 包则可直接排除
-2. **崩点其实在登录之后**：登录 → 主页 → 消息列表渲染 AI 卡片时崩在 `ActionCardMessageItemProvider`，表现上像「点登录就崩」
-3. **与本分支无关**：本地脏包 / 其它分支改动 / 后端返回变化
+**用户已确认的复现条件**（2026-08-17 第 2 轮）：崩的是 `scripts/prod-android-build.mjs` 出的 `zx-android-prod_v3.6.18.apk`（`publish`+`release`），卸载后全新安装；`zhixin-run-android` 装的包**不崩**。
 
-下一步（等用户）：① `adb logcat -c` 后复现，取 `adb logcat -d -b crash`；② 确认装的是 develop debug / onTest debug / publish release 哪一个。
+**混淆假设已证伪**：`smart_message/build.gradle:93-97` release 里 `minifyEnabled false` + `shrinkResources false`（`proguardFiles` 配了但不生效），R8 根本没跑，不存在类被裁。签名也排除——release 与 debug 用同一个 `key/iotchat.jks`。flavor 的 `src/*/assets` 五份结构一致，排除资源缺失。
+
+**关键澄清：这次对比同时换了两个变量，不能直接推成「release 的锅」**
+
+| | 崩的包 | 不崩的包 |
+|---|---|---|
+| flavor | `publish` | `onTest`（`zhixin-run-android` 默认） |
+| 后端 | `https://zhixin.zhiguaniot.com/`（**正式**，`IS_HTTPS=true`） | `http://192.168.10.25/`（内网测试） |
+| buildType | release | debug |
+| applicationId | `com.cnmts.smart_message` | `com.cnmts.smart_message.test` |
+
+因此当前最大嫌疑改为**正式后端返回的数据与测试环境不同导致解析崩溃**（正式环境可能还没上线这轮的新接口，如 `getSecretButtonTip`，返回 404 或缺字段），而不是 buildType。
+
+下一步（等用户，三选一）：
+1. `adb logcat -b crash`（最快）
+2. **Bugly 控制台**：publish 上报到 appId `61840551c9`，按版本 `v3.6.18` 筛，崩溃应已自动上传
+3. 拿不到堆栈就打 2×2 隔离包：`assemblePublishDebug`（正式后端+debug，还崩=数据问题）、`assembleOnTestRelease`（测试后端+release，崩=buildType 问题）
 
 ### 安卓复验清单（新包 `smart_message-develop-debug_v3.6.18.apk`，`7b9f7872c`）
 
