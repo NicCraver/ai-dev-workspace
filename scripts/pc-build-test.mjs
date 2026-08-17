@@ -4,11 +4,12 @@
  * 流程对照 apps/desktop/docs/Mac ARM64 test 包构建流程.md
  * 工作区根目录入口，desktop 工程在 apps/desktop
  */
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stripVTControlCharacters } from 'node:util';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WORKSPACE_ROOT = path.resolve(__dirname, '..');
@@ -39,6 +40,7 @@ const ELECTRON_CACHE = path.join(
   'Library/Caches/electron',
   `electron-v${ELECTRON}-darwin-arm64.zip`,
 );
+const MAX_CAPTURE = 256 * 1024;
 
 const SYMPTOMS = [
   {
@@ -71,17 +73,29 @@ const SYMPTOMS = [
   },
 ];
 
-function printHelp() {
-  console.log(`用法: pc-build-test [--dmg-only|--check|--recover|--native] [--proxy] [--no-open]
+const NOISE_RE =
+  /^(Hash:|Version: webpack|Time:|Built at:|Entrypoint |Child |WARNING in chunk)|\b\[(emitted|built|from \d+ modules)\]|^\+\s+\d+ hidden|Hidden modules|^\s*Asset\s+Size|lets-build|^-{5,}(after pack|afterAllArtifactBuild)|^\s*\[.+\d+\/\d+\]/;
 
-  （无）        完整流程：检查 → 按需编原生 → 构建 → 验证 → 恢复本地 dev → 打开产物
+/** @type {ReturnType<typeof parseArgs> | null} */
+let cliOpts = null;
+/** @type {ReturnType<typeof createCli>} */
+let cli;
+/** @type {import('node:child_process').ChildProcess | null} */
+let currentChild = null;
+
+function printHelp() {
+  console.log(`用法: pc-build-test [--dmg-only|--check|--recover|--native] [选项]
+
+  （无）        完整流程：检查 → 按需编原生 → webpack → DMG → 验证 → 恢复本地 → 打开产物
   --dmg-only   webpack 已编过，只打 DMG
   --check      仅前置检查
-  --recover    仅构建后恢复本地 dev
+  --recover    仅构建后恢复本地 dev（强制重装 Electron）
   --native     检查后强制重编译 sqlite3 / leveldown
 
   --proxy      全程走 127.0.0.1:7890（下载失败时脚本也会自动重试一次）
   --no-open    成功后不打开 build/ 目录
+  --verbose    子进程日志全量输出（默认只留关键行 + 进度）
+  --compress=  electron-builder 压缩：normal（默认，更快）| maximum | store
 `);
 }
 
@@ -91,6 +105,8 @@ function parseArgs(argv) {
     proxy: false,
     open: true,
     help: false,
+    verbose: false,
+    compress: 'normal',
   };
   let modeSet = false;
 
@@ -116,23 +132,42 @@ function parseArgs(argv) {
       case '--no-open':
         opts.open = false;
         break;
-      default:
+      case '-v':
+      case '--verbose':
+        opts.verbose = true;
+        break;
+      default: {
+        const compress = arg.match(/^--compress=(normal|maximum|store)$/);
+        if (compress) {
+          opts.compress = compress[1];
+          break;
+        }
         die(`未知参数: ${arg}\n跑 --help 看用法`);
+      }
     }
   }
   return opts;
 }
 
-function die(msg, extra) {
-  console.error(`错误: ${msg}`);
-  if (extra) console.error(extra);
-  process.exit(1);
+function colorEnabled() {
+  if (process.env.NO_COLOR) return false;
+  if (process.env.FORCE_COLOR === '0') return false;
+  return Boolean(process.stdout.isTTY);
 }
 
-function fail(msg, extra) {
-  if (extra) console.error(extra);
-  throw new Error(msg);
+function paint(code, text) {
+  return colorEnabled() ? `\x1B[${code}m${text}\x1B[0m` : text;
 }
+
+const ink = {
+  bold: (s) => paint('1', s),
+  dim: (s) => paint('2', s),
+  red: (s) => paint('31', s),
+  green: (s) => paint('32', s),
+  yellow: (s) => paint('33', s),
+  cyan: (s) => paint('36', s),
+  gray: (s) => paint('90', s),
+};
 
 function formatElapsed(ms) {
   const totalSec = ms / 1000;
@@ -145,19 +180,264 @@ function formatElapsed(ms) {
   return `${m}m ${s}s`;
 }
 
-function trackElapsed() {
+function bar(width, ratio, pulse = 0) {
+  const w = Math.max(8, width);
+  if (ratio == null) {
+    const pos = pulse % (w + 4) - 2;
+    let out = '';
+    for (let i = 0; i < w; i += 1) {
+      out += i >= pos && i < pos + 4 ? '█' : '░';
+    }
+    return out;
+  }
+  const filled = Math.round(Math.min(1, Math.max(0, ratio)) * w);
+  return '█'.repeat(filled) + '░'.repeat(w - filled);
+}
+
+function createCli() {
+  const tty = Boolean(process.stdout.isTTY);
   const startedAt = Date.now();
-  process.on('exit', () => {
-    console.log(`用时 ${formatElapsed(Date.now() - startedAt)}`);
-  });
+  let liveLines = 0;
+  let timer = null;
+  let pulse = 0;
+  let cursorHidden = false;
+  const state = {
+    total: 0,
+    index: 0,
+    label: '',
+    note: '',
+    fraction: null,
+    stepStartedAt: 0,
+  };
+
+  function hideCursor() {
+    if (tty && !cursorHidden) {
+      process.stdout.write('\x1B[?25l');
+      cursorHidden = true;
+    }
+  }
+
+  function showCursor() {
+    if (cursorHidden) {
+      process.stdout.write('\x1B[?25h');
+      cursorHidden = false;
+    }
+  }
+
+  function clearLive() {
+    if (!tty || liveLines <= 0) return;
+    process.stdout.write(`\x1B[${liveLines}A\x1B[0J`);
+    liveLines = 0;
+  }
+
+  function liveBlock() {
+    const cols = Math.max(40, Math.min(process.stdout.columns || 80, 88));
+    const barWidth = Math.min(28, cols - 18);
+    const overall =
+      state.total > 0
+        ? (state.index - 1 + (state.fraction ?? (pulse % 20) / 40)) / state.total
+        : 0;
+    const elapsed = formatElapsed(Date.now() - startedAt);
+    const stepMs = state.stepStartedAt
+      ? formatElapsed(Date.now() - state.stepStartedAt)
+      : '';
+    const head = `  ${ink.cyan(bar(barWidth, overall, pulse))}  ${ink.bold(`${state.index}/${state.total}`)}  ${elapsed}`;
+    const current = `  ${ink.cyan('▸')} ${state.label}${stepMs ? ink.dim(`  ${stepMs}`) : ''}`;
+    const note = state.note ? `  ${ink.gray(truncate(state.note, cols - 4))}` : '';
+    return [head, current, note].filter(Boolean).join('\n') + '\n';
+  }
+
+  function redraw() {
+    if (!tty || !state.label) return;
+    hideCursor();
+    clearLive();
+    const text = liveBlock();
+    process.stdout.write(text);
+    liveLines = text.split('\n').length - (text.endsWith('\n') ? 1 : 0);
+  }
+
+  function startPulse() {
+    stopPulse();
+    if (!tty) return;
+    timer = setInterval(() => {
+      pulse += 1;
+      redraw();
+    }, 90);
+    if (typeof timer.unref === 'function') timer.unref();
+  }
+
+  function stopPulse() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  return {
+    startedAt,
+    header(lines) {
+      console.log('');
+      for (const line of lines) console.log(`  ${line}`);
+      console.log('');
+    },
+    begin(index, total, label) {
+      stopPulse();
+      clearLive();
+      state.total = total;
+      state.index = index;
+      state.label = label;
+      state.note = '';
+      state.fraction = null;
+      state.stepStartedAt = Date.now();
+      if (tty) {
+        startPulse();
+        redraw();
+      } else {
+        console.log(`==> [${index}/${total}] ${label}`);
+      }
+    },
+    note(text, fraction) {
+      const next = String(text || '').replace(/\s+/g, ' ').trim();
+      if (!next) return;
+      if (typeof fraction === 'number' && Number.isFinite(fraction)) {
+        state.fraction = Math.min(1, Math.max(0, fraction));
+      }
+      state.note = next;
+      if (tty) redraw();
+      else console.log(`    ${next}`);
+    },
+    succeed(detail) {
+      const ms = Date.now() - state.stepStartedAt;
+      stopPulse();
+      clearLive();
+      const extra = detail || formatElapsed(ms);
+      console.log(`  ${ink.green('✓')} ${state.label}  ${ink.dim(extra)}`);
+      state.label = '';
+      state.note = '';
+      liveLines = 0;
+    },
+    skip(detail) {
+      this.succeed(detail || '跳过');
+    },
+    fail(detail) {
+      stopPulse();
+      clearLive();
+      console.log(`  ${ink.red('✕')} ${state.label || '失败'}  ${ink.red(detail || '')}`);
+      state.label = '';
+      liveLines = 0;
+    },
+    warn(msg) {
+      const restart = Boolean(state.label && tty);
+      if (restart) clearLive();
+      console.log(`  ${ink.yellow('⚠')} ${msg}`);
+      if (restart) redraw();
+    },
+    persist(msg) {
+      const restart = Boolean(state.label && tty);
+      if (restart) clearLive();
+      console.log(`  ${ink.dim(msg)}`);
+      if (restart) redraw();
+    },
+    error(msg) {
+      const restart = Boolean(state.label && tty);
+      if (restart) clearLive();
+      console.error(`  ${ink.red('错误')} ${msg}`);
+      if (restart) redraw();
+    },
+    close() {
+      stopPulse();
+      clearLive();
+      showCursor();
+    },
+  };
+}
+
+function truncate(text, max) {
+  if (text.length <= max) return text;
+  return `${text.slice(0, Math.max(0, max - 1))}…`;
+}
+
+function stripDangerousAnsi(text) {
+  return text
+    .replace(/\x1B\[[0-9;]*[Hf]/g, '')
+    .replace(/\x1B\[[0-3]?J/g, '')
+    .replace(/\x1B\[\?25[lh]/g, '')
+    .replace(/\x1B\[\d+[ABCD]/g, '')
+    .replace(/\x1B\[[su]/g, '');
+}
+
+function builderFraction(msg) {
+  if (/electron-builder/.test(msg)) return 0.08;
+  if (/loaded configuration|writing effective/.test(msg)) return 0.12;
+  if (/packaging/.test(msg)) return 0.45;
+  if (/building.*(?:dmg|nsis)|target=DMG/i.test(msg)) return 0.78;
+  if (/renamed|afterAllArtifactBuild/.test(msg)) return 0.96;
+  return null;
+}
+
+function classifyLine(raw, verbose) {
+  const cleaned = stripDangerousAnsi(raw);
+  const plain = stripVTControlCharacters(cleaned).trim();
+  if (!plain) return null;
+
+  if (/error|fail|gyp ERR!/i.test(plain) && !/0 error/i.test(plain)) {
+    return { text: plain, persist: true, fraction: null };
+  }
+
+  if (verbose) return { text: plain, persist: true, fraction: null };
+  if (NOISE_RE.test(plain)) return null;
+
+  const pct = plain.match(/(?:^|[^\d.])(\d{1,3}(?:\.\d+)?)\s*%/);
+  const fractionFromPct =
+    pct && Number(pct[1]) <= 100 ? Number(pct[1]) / 100 : null;
+
+  const bullet = plain.match(/^•\s+(.+)/);
+  if (bullet) {
+    return {
+      text: bullet[1],
+      persist: false,
+      fraction: builderFraction(bullet[1]) ?? fractionFromPct,
+    };
+  }
+
+  if (/take it away/.test(plain)) {
+    return { text: 'webpack 完成，交给 electron-builder', persist: false, fraction: 0.5 };
+  }
+  if (/building (main|renderer)/i.test(plain)) {
+    return { text: plain, persist: false, fraction: 0.22 };
+  }
+  if (/\[afterAllArtifactBuild\].*renamed/.test(plain)) {
+    return { text: plain, persist: true, fraction: 0.98 };
+  }
+  if (/SOLINK_MODULE|node-pre-gyp.*ok|built to |installing electron/i.test(plain)) {
+    return { text: plain, persist: false, fraction: fractionFromPct };
+  }
+  if (fractionFromPct != null) {
+    return { text: plain, persist: false, fraction: fractionFromPct };
+  }
+  return null;
+}
+
+function die(msg, extra) {
+  if (cli) cli.close();
+  console.error(`错误: ${msg}`);
+  if (extra) console.error(extra);
+  process.exit(1);
+}
+
+function fail(msg, extra) {
+  if (extra) console.error(extra);
+  throw new Error(msg);
 }
 
 function log(msg) {
-  console.log(`==> ${msg}`);
+  if (cli) cli.persist(msg);
+  else console.log(`==> ${msg}`);
 }
 
 function warn(msg) {
-  console.log(`警告: ${msg}`);
+  if (cli) cli.warn(msg);
+  else console.log(`警告: ${msg}`);
 }
 
 function read(file) {
@@ -173,39 +453,104 @@ function exists(file) {
 }
 
 function mergeEnv(extra = {}) {
-  const env = { ...process.env, ...extra };
-  return env;
+  return { ...process.env, ...extra };
 }
 
 function withProxy(env) {
   return { ...env, ...PROXY };
 }
 
+function packEnv() {
+  return mergeEnv({
+    MODE_ENV: 'test',
+    CI: '1',
+    CSC_IDENTITY_AUTO_DISCOVERY: 'false',
+    FORCE_COLOR: colorEnabled() ? '1' : '0',
+  });
+}
+
+function appendCapture(buf, chunk) {
+  const next = buf + chunk;
+  return next.length > MAX_CAPTURE ? next.slice(-MAX_CAPTURE) : next;
+}
+
 function run(cmd, args, options = {}) {
-  const result = spawnSync(cmd, args, {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, {
+      cwd: options.cwd ?? DESKTOP,
+      env: options.env ?? mergeEnv(),
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: options.shell ?? false,
+    });
+
+    let captured = '';
+    let stdout = '';
+    let stderr = '';
+    let stdoutBuf = '';
+    let stderrBuf = '';
+
+    const handleChunk = (chunk, stream) => {
+      captured = appendCapture(captured, chunk);
+      if (stream === 'stdout') stdout += chunk;
+      else stderr += chunk;
+
+      let buf = stream === 'stdout' ? stdoutBuf : stderrBuf;
+      buf += stripDangerousAnsi(chunk);
+      const parts = buf.split(/\r|\n/);
+      buf = parts.pop() ?? '';
+      if (stream === 'stdout') stdoutBuf = buf;
+      else stderrBuf = buf;
+
+      for (const line of parts) {
+        const classified = classifyLine(line, options.verbose ?? cliOpts?.verbose);
+        if (!classified) continue;
+        if (classified.persist) cli.persist(classified.text);
+        else cli.note(classified.text, classified.fraction);
+        if (options.onLine) options.onLine(classified);
+      }
+    };
+
+    currentChild = child;
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => handleChunk(chunk, 'stdout'));
+    child.stderr.on('data', (chunk) => handleChunk(chunk, 'stderr'));
+
+    child.on('error', (err) => {
+      if (currentChild === child) currentChild = null;
+      err.stdout = stdout;
+      err.stderr = stderr;
+      err.outputText = captured;
+      reject(err);
+    });
+
+    child.on('close', (status) => {
+      if (currentChild === child) currentChild = null;
+      for (const leftover of [stdoutBuf, stderrBuf]) {
+        if (!leftover.trim()) continue;
+        const classified = classifyLine(leftover, options.verbose ?? cliOpts?.verbose);
+        if (!classified) continue;
+        if (classified.persist) cli.persist(classified.text);
+        else cli.note(classified.text, classified.fraction);
+      }
+      resolve({
+        status: status ?? 1,
+        stdout,
+        stderr,
+        outputText: captured,
+      });
+    });
+  });
+}
+
+function runSync(cmd, args, options = {}) {
+  return spawnSync(cmd, args, {
     cwd: options.cwd ?? DESKTOP,
     env: options.env ?? mergeEnv(),
     encoding: 'utf8',
-    stdio: options.stdio ?? ['inherit', 'pipe', 'pipe'],
+    stdio: options.stdio ?? ['ignore', 'pipe', 'pipe'],
     shell: options.shell ?? false,
   });
-
-  if (result.error) {
-    const err = result.error;
-    err.stdout = result.stdout ?? '';
-    err.stderr = result.stderr ?? '';
-    throw err;
-  }
-
-  if (result.stdout && options.stdio !== 'inherit' && !options.quiet) {
-    process.stdout.write(result.stdout);
-  }
-  if (result.stderr && options.stdio !== 'inherit' && !options.quiet) {
-    process.stderr.write(result.stderr);
-  }
-
-  result.outputText = `${result.stdout ?? ''}${result.stderr ?? ''}`;
-  return result;
 }
 
 function vp(args, options = {}) {
@@ -215,9 +560,18 @@ function vp(args, options = {}) {
 function diagnose(output) {
   const hits = SYMPTOMS.filter((s) => s.test.test(output));
   if (hits.length === 0) return;
-  console.error('\n对照文档 §7：');
+  console.error(`\n  ${ink.yellow('对照文档 §7：')}`);
   for (const hit of hits) {
-    console.error(`  - ${hit.hint}`);
+    console.error(`  ${ink.dim('·')} ${hit.hint}`);
+  }
+}
+
+function killCurrentChild() {
+  if (!currentChild || currentChild.killed) return;
+  try {
+    currentChild.kill('SIGTERM');
+  } catch {
+    // 进程可能已退出
   }
 }
 
@@ -227,9 +581,9 @@ function isDownloadFailure(output) {
   );
 }
 
-function runVpRetry(args, options = {}) {
+async function runVpRetry(args, options = {}) {
   const env = options.env ?? mergeEnv();
-  let result = vp(args, { ...options, env });
+  let result = await vp(args, { ...options, env });
   if (result.status === 0) return result;
 
   const output = result.outputText;
@@ -241,11 +595,13 @@ function runVpRetry(args, options = {}) {
       fs.unlinkSync(ELECTRON_CACHE);
       log(`已删除损坏缓存 ${ELECTRON_CACHE}`);
     }
-    result = vp(args, { ...options, env: withProxy(env), proxyTried: true });
+    result = await vp(args, { ...options, env: withProxy(env), proxyTried: true });
     if (result.status === 0) return result;
     diagnose(result.outputText);
   }
 
+  const tail = result.outputText.trim().split(/\r?\n/).slice(-40).join('\n');
+  if (tail) console.error(`\n${ink.dim(tail)}\n`);
   const err = new Error(`${args.join(' ')} 失败 (exit ${result.status})`);
   err.outputText = result.outputText;
   throw err;
@@ -253,7 +609,7 @@ function runVpRetry(args, options = {}) {
 
 function fileCmd(target) {
   if (!exists(target)) return '';
-  const result = spawnSync('file', [target], { encoding: 'utf8' });
+  const result = runSync('file', [target]);
   return (result.stdout ?? '').trim();
 }
 
@@ -279,11 +635,16 @@ function findSqlite3Node() {
   return [...new Set(candidates)].find((p) => exists(p)) ?? null;
 }
 
+function findLeveldownNode() {
+  const p = path.join(DESKTOP, 'node_modules/leveldown/build/Release/leveldown.node');
+  return exists(p) ? p : null;
+}
+
 function findPython() {
   for (const p of PYTHON_CANDIDATES) {
     if (exists(p)) return p;
   }
-  const which = spawnSync('which', ['python3.9'], { encoding: 'utf8' });
+  const which = runSync('which', ['python3.9']);
   const found = (which.stdout ?? '').trim();
   return found && exists(found) ? found : null;
 }
@@ -370,21 +731,58 @@ function findDmgs() {
     .filter((name) => /^zx-mac-test_v.*\.dmg$/.test(name))
     .map((name) => {
       const fullPath = path.join(dir, name);
-      return { fullPath, size: fs.statSync(fullPath).size, mtimeMs: fs.statSync(fullPath).mtimeMs };
+      const st = fs.statSync(fullPath);
+      return { fullPath, size: st.size, mtimeMs: st.mtimeMs };
     })
     .sort((a, b) => b.mtimeMs - a.mtimeMs);
 }
 
 function findUnpackedSqlite3() {
-  const root = path.join(DESKTOP, 'build');
-  if (!exists(root)) return null;
-  const result = spawnSync(
-    'find',
-    [root, '-name', 'node_sqlite3.node'],
-    { encoding: 'utf8' },
+  const roots = [
+    path.join(
+      DESKTOP,
+      'build/mac-arm64/zhixin-test.app/Contents/Resources/app.asar.unpacked',
+    ),
+    path.join(
+      DESKTOP,
+      'build/mac/zhixin-test.app/Contents/Resources/app.asar.unpacked',
+    ),
+  ];
+  const rels = [
+    'node_modules/sqlite3/build/Release/node_sqlite3.node',
+    'node_modules/sqlite3/lib/binding/napi-v3-darwin-arm64/node_sqlite3.node',
+  ];
+  for (const root of roots) {
+    for (const rel of rels) {
+      const p = path.join(root, rel);
+      if (exists(p)) return p;
+    }
+    const bindingRoot = path.join(root, 'node_modules/sqlite3/lib/binding');
+    if (!exists(bindingRoot)) continue;
+    for (const dir of fs.readdirSync(bindingRoot)) {
+      const p = path.join(bindingRoot, dir, 'node_sqlite3.node');
+      if (exists(p)) return p;
+    }
+  }
+  return null;
+}
+
+function electronDistOk() {
+  const dist = path.join(DESKTOP, 'node_modules/electron/dist');
+  const bin = path.join(dist, 'Electron.app/Contents/MacOS/Electron');
+  const framework = path.join(
+    dist,
+    'Electron.app/Contents/Frameworks/Electron Framework.framework',
   );
-  const first = (result.stdout ?? '').split('\n').map((s) => s.trim()).find(Boolean);
-  return first || null;
+  if (!exists(bin) || !exists(framework)) return false;
+  return isArm64(fileCmd(bin));
+}
+
+function electronBinPath() {
+  return path.join(
+    DESKTOP,
+    'node_modules/electron/dist/Electron.app/Contents/MacOS/Electron',
+  );
 }
 
 function assertDesktop() {
@@ -397,14 +795,14 @@ function assertDesktop() {
 }
 
 function assertVp() {
-  const result = spawnSync('which', ['vp'], { encoding: 'utf8' });
+  const result = runSync('which', ['vp']);
   if (result.status !== 0) {
     die('找不到 vp，无法切换 Node 14.21.3');
   }
 }
 
-function checkNode() {
-  const result = vp(['node', '-v'], { stdio: ['ignore', 'pipe', 'pipe'], quiet: true });
+async function checkNode() {
+  const result = await vp(['node', '-v'], { verbose: false });
   const version = (result.stdout ?? '').trim();
   if (result.status !== 0 || !version.includes('v14.')) {
     fail(`Node 版本不对：${version || '(空)'}，期望 v14.21.3`);
@@ -412,8 +810,7 @@ function checkNode() {
   return version;
 }
 
-function preflight() {
-  log('§1 前置检查');
+async function preflight() {
   const issues = [];
   const fixes = [];
 
@@ -424,12 +821,13 @@ function preflight() {
   if (!exists(envPath)) issues.push('缺少 .env.test');
   if (!exists(pkgPath)) issues.push('缺少 package.json');
   if (!exists(ymlPath)) issues.push('缺少 electron-builder.yml');
-  if (issues.length) return { ok: false, issues, fixes, sqlite3Arm64: false };
+  if (issues.length) {
+    return { ok: false, issues, fixes, sqlite3Arm64: false, leveldownArm64: false };
+  }
 
   const envValues = parseDotenv(read(envPath));
   for (const [key, packValue] of Object.entries(PACK_ENV)) {
     const current = envValues[key] ?? '';
-    console.log(`${key}=${current}`);
     if (current.includes('localhost')) {
       fixes.push(`.env.test ${key} 是 localhost，打包时会改成 ${packValue}`);
     } else if (current !== packValue) {
@@ -438,11 +836,6 @@ function preflight() {
   }
 
   const pkg = readJson(pkgPath);
-  console.log(`name=${pkg.name}`);
-  console.log(`volta.node=${pkg.volta?.node}`);
-  console.log(`leveldown=${pkg.dependencies?.leveldown}`);
-  console.log(`sqlite3=${pkg.dependencies?.sqlite3}`);
-
   if (!String(pkg.name || '').includes('test')) {
     issues.push(`package.json name=${pkg.name}，应含 -test`);
   }
@@ -474,15 +867,21 @@ function preflight() {
     fixes.push('electron-builder.yml 将补 asarUnpack: **/node_modules/sqlite3/**（本地改，不提交）');
   }
 
-  const nodeVersion = checkNode();
-  console.log(`node ${nodeVersion}`);
-
+  const nodeVersion = await checkNode();
   const sqlite3Path = findSqlite3Node();
   const sqlite3File = sqlite3Path ? fileCmd(sqlite3Path) : '';
-  console.log(sqlite3File || 'sqlite3.node: 未找到');
   const sqlite3Arm64 = isArm64(sqlite3File);
-  if (!sqlite3Arm64) {
-    fixes.push('sqlite3 不是 arm64，将执行 §2 原生编译');
+  const leveldownPath = findLeveldownNode();
+  const leveldownFile = leveldownPath ? fileCmd(leveldownPath) : '';
+  const leveldownArm64 = isArm64(leveldownFile);
+
+  cli.persist(
+    `${nodeVersion}  ·  sqlite3 ${sqlite3Arm64 ? 'arm64' : '需编译'}  ·  leveldown ${leveldownArm64 ? 'arm64' : '需编译'}  ·  ${pkg.name}`,
+  );
+
+  if (!sqlite3Arm64) fixes.push('sqlite3 不是 arm64，将执行 §2 原生编译');
+  if (!leveldownArm64 && leveldownPath) {
+    fixes.push('leveldown 不是 arm64，将执行 §2 原生编译');
   }
 
   const ok = issues.length === 0;
@@ -490,15 +889,12 @@ function preflight() {
     for (const f of fixes) warn(f);
   }
   if (!ok) {
-    for (const i of issues) console.error(`检查失败: ${i}`);
-  } else {
-    log('前置检查通过');
+    for (const i of issues) cli.error(i);
   }
-  return { ok, issues, fixes, sqlite3Arm64, envValues };
+  return { ok, issues, fixes, sqlite3Arm64, leveldownArm64, envValues };
 }
 
 function applyPackConfig(envValues) {
-  log('应用打包配置（本地临时，不提交）');
   const envPath = path.join(DESKTOP, '.env.test');
   const ymlPath = path.join(DESKTOP, 'electron-builder.yml');
 
@@ -508,18 +904,19 @@ function applyPackConfig(envValues) {
   let envContent = read(envPath);
   envContent = setDotenvVars(envContent, PACK_ENV);
   write(envPath, envContent);
-  log('.env.test 已切到 192.168.10.25');
 
   let yml = read(ymlPath);
   const arch = patchMacArm64(yml);
   yml = arch.yml;
   const unpack = ensureAsarUnpack(yml);
   yml = unpack.yml;
+  const bits = ['.env.test → 192.168.10.25'];
   if (arch.changed || unpack.changed) {
     write(ymlPath, yml);
-    if (arch.changed) log('electron-builder.yml mac.arch → arm64');
-    if (unpack.changed) log('electron-builder.yml 已补 asarUnpack sqlite3');
+    if (arch.changed) bits.push('mac.arch → arm64');
+    if (unpack.changed) bits.push('补 asarUnpack sqlite3');
   }
+  return bits.join('  ·  ');
 }
 
 function nativeEnv(python) {
@@ -535,12 +932,11 @@ function nativeEnv(python) {
   });
 }
 
-function rebuildSqlite3(python) {
-  log('§2.2 编译 sqlite3（node-pre-gyp）');
+async function rebuildSqlite3(python) {
   const sqliteDir = path.join(DESKTOP, 'node_modules/sqlite3');
   if (!exists(sqliteDir)) fail('没有 node_modules/sqlite3，先在 apps/desktop 安装依赖');
 
-  runVpRetry(
+  await runVpRetry(
     [
       'npx',
       'node-pre-gyp',
@@ -565,16 +961,15 @@ function rebuildSqlite3(python) {
   const dest = path.join(destDir, 'node_sqlite3.node');
   fs.copyFileSync(found, dest);
   const info = fileCmd(dest);
-  console.log(info);
   if (!isArm64(info)) fail(`sqlite3 仍不是 arm64：${info}`);
+  return info;
 }
 
-function rebuildLeveldown(python) {
-  log('§2.3 编译 leveldown（node-gyp@9）');
+async function rebuildLeveldown(python) {
   const dir = path.join(DESKTOP, 'node_modules/leveldown');
   if (!exists(dir)) {
     warn('没有 node_modules/leveldown，跳过');
-    return;
+    return '';
   }
 
   const env = mergeEnv({
@@ -583,7 +978,7 @@ function rebuildLeveldown(python) {
     npm_config_arch: 'arm64',
   });
 
-  runVpRetry(
+  await runVpRetry(
     [
       'npx',
       'node-gyp@9',
@@ -598,75 +993,84 @@ function rebuildLeveldown(python) {
 
   const nodePath = path.join(dir, 'build/Release/leveldown.node');
   const info = fileCmd(nodePath);
-  console.log(info || 'leveldown.node: 未找到');
   if (!isArm64(info)) warn(`leveldown 未检测到 arm64：${info}`);
+  return info;
 }
 
-function rebuildNative() {
+async function rebuildNative({ force = false, sqlite3Arm64 = false, leveldownArm64 = false } = {}) {
   const python = findPython();
   if (!python) {
     fail('找不到 Python 3.9', '期望 /opt/homebrew/bin/python3.9');
   }
-  log(`PYTHON=${python}`);
-  rebuildSqlite3(python);
-  rebuildLeveldown(python);
+
+  const needSqlite = force || !sqlite3Arm64;
+  const needLevel = force || !leveldownArm64;
+  if (!needSqlite && !needLevel) {
+    return '已是 arm64，跳过';
+  }
+
+  cli.note(`PYTHON=${python}`);
+  const jobs = [];
+  if (needSqlite) jobs.push(['sqlite3', rebuildSqlite3(python)]);
+  if (needLevel) jobs.push(['leveldown', rebuildLeveldown(python)]);
+
+  const results = await Promise.allSettled(jobs.map(([, p]) => p));
+  const failed = results
+    .map((r, i) => (r.status === 'rejected' ? `${jobs[i][0]}: ${r.reason?.message ?? r.reason}` : null))
+    .filter(Boolean);
+  if (failed.length) fail(failed.join('；'));
+
+  const done = jobs.map(([name]) => name).join(' + ');
+  return `已编译 ${done}`;
 }
 
-function buildFull() {
-  log('§3 完整构建 pack:mac-test');
-  runVpRetry([
-    'npm',
-    'run',
-    'pack:mac-test',
-    '--',
+function builderArgs() {
+  return [
+    'npx',
+    'electron-builder',
+    '-c',
+    './electron-builder.yml',
+    '-m',
     '--config.npmRebuild=false',
-  ]);
+    '--publish',
+    'never',
+    `--config.compression=${cliOpts.compress}`,
+  ];
 }
 
-function buildDmgOnly() {
-  log('§3 仅 electron-builder 打 DMG');
-  runVpRetry(
-    [
-      'npx',
-      'electron-builder',
-      '-c',
-      './electron-builder.yml',
-      '-m',
-      '--config.npmRebuild=false',
-    ],
-    { env: mergeEnv({ MODE_ENV: 'test' }) },
+async function buildWebpack() {
+  await runVpRetry(
+    ['node', '--max-old-space-size=4096', '.electron-vue/build.js'],
+    { env: packEnv() },
   );
 }
 
+async function buildDmg() {
+  await runVpRetry(builderArgs(), { env: packEnv() });
+}
+
 function verify() {
-  log('§4 验证产物');
   const dmgs = findDmgs();
   if (dmgs.length === 0) fail('未找到 build/zx-mac-test_v*.dmg');
-  for (const dmg of dmgs) {
-    console.log(`${dmg.fullPath}  ${formatSize(dmg.size)}`);
-  }
-
   const unpacked = findUnpackedSqlite3();
   const info = unpacked ? fileCmd(unpacked) : '';
-  console.log(info || 'app 内 sqlite3.node: 未找到');
   if (unpacked && !isArm64(info)) {
     fail(`产物 sqlite3 不是 arm64：${info}`);
   }
   return { dmg: dmgs[0], sqlite3File: info };
 }
 
-function recover() {
-  log('§6 恢复本地 dev');
-
+async function recover({ forceElectron = false } = {}) {
   const envPath = path.join(DESKTOP, '.env.test');
   const pkgPath = path.join(DESKTOP, 'package.json');
   const snapshot = loadSnapshot();
   const envValues = exists(envPath) ? parseDotenv(read(envPath)) : {};
   const recoverEnv = snapshot?.env ?? recoverTargetsFromCurrentEnv(envValues);
+  const bits = [];
 
   if (exists(envPath)) {
     write(envPath, setDotenvVars(read(envPath), recoverEnv));
-    log(`.env.test 已还原 ${recoverEnv.APP_ACTIONCENTER} / ${recoverEnv.APP_AICHAT}`);
+    bits.push('.env.test 已还原 localhost');
   }
 
   if (exists(pkgPath)) {
@@ -676,78 +1080,105 @@ function recover() {
     if (version.endsWith('-test')) {
       const next = version.slice(0, -5);
       write(pkgPath, pkgText.replace(versionMatch[0], `"version": "${next}"`));
-      log(`package.json version 已去掉 -test → ${next}`);
-    } else {
-      log(`package.json version=${version}（无需改）`);
+      bits.push(`version → ${next}`);
     }
   }
 
-  log('§6.3 重装 Electron 二进制');
   const dist = path.join(DESKTOP, 'node_modules/electron/dist');
-  fs.rmSync(dist, { recursive: true, force: true });
-  runVpRetry(['node', 'node_modules/electron/install.js'], {
-    env: mergeEnv({ npm_config_arch: 'arm64' }),
-  });
-
-  const electronBin = path.join(dist, 'Electron.app/Contents/MacOS/Electron');
-  const electronFile = fileCmd(electronBin);
-  console.log(electronFile || 'Electron: 未找到');
-  if (!isArm64(electronFile)) {
-    fail(`Electron 不是 arm64：${electronFile}`);
+  let electronFile = fileCmd(electronBinPath());
+  if (!forceElectron && electronDistOk()) {
+    bits.push('Electron 已是 arm64，跳过重装');
+  } else {
+    cli.note('重装 Electron 二进制');
+    fs.rmSync(dist, { recursive: true, force: true });
+    await runVpRetry(['node', 'node_modules/electron/install.js'], {
+      env: mergeEnv({ npm_config_arch: 'arm64' }),
+    });
+    electronFile = fileCmd(electronBinPath());
+    if (!isArm64(electronFile)) {
+      fail(`Electron 不是 arm64：${electronFile}`);
+    }
+    bits.push('Electron 已重装');
   }
 
   const sqlite3 = findSqlite3Node();
   const sqlite3File = sqlite3 ? fileCmd(sqlite3) : '';
-  const leveldown = path.join(
-    DESKTOP,
-    'node_modules/leveldown/build/Release/leveldown.node',
-  );
-  const leveldownFile = fileCmd(leveldown);
-  console.log(sqlite3File || 'sqlite3.node: 未找到');
-  console.log(leveldownFile || 'leveldown.node: 未找到');
   if (sqlite3 && !isArm64(sqlite3File)) {
     warn('sqlite3 恢复后不是 arm64，需要 --native');
   }
 
   if (exists(SNAPSHOT)) fs.unlinkSync(SNAPSHOT);
-  log('§6 完成；dev:test 请手动：vp env exec --node 14.21.3 -- npm run dev:test');
-  return { electronFile, sqlite3File };
+  return { electronFile, sqlite3File, detail: bits.join('  ·  ') };
 }
 
 function openBuild() {
   const dir = path.join(DESKTOP, 'build');
   if (!exists(dir)) {
     warn('没有 build/，跳过 open');
-    return;
+    return false;
   }
-  log('打开产物目录');
-  spawnSync('open', [dir], { stdio: 'inherit' });
+  runSync('open', [dir], { stdio: 'inherit' });
+  return true;
 }
 
 function summarize({ mode, ok, dmg, sqlite3File, electronFile, opened }) {
+  const elapsed = formatElapsed(Date.now() - cli.startedAt);
   console.log('');
-  console.log(`模式: ${mode}`);
-  console.log(`结果: ${ok ? '成功' : '失败'}`);
+  console.log(`  ${ink.dim('─'.repeat(42))}`);
+  console.log(`  模式    ${mode}`);
+  console.log(`  结果    ${ok ? ink.green('成功') : ink.red('失败')}  ${ink.dim(elapsed)}`);
   if (dmg) {
-    console.log(`产物: ${dmg.fullPath}  ${formatSize(dmg.size)}${opened ? '（已 open build）' : ''}`);
+    console.log(
+      `  产物    ${path.basename(dmg.fullPath)}  ${formatSize(dmg.size)}${opened ? ink.dim('  已打开 build/') : ''}`,
+    );
+    console.log(`  ${ink.dim(dmg.fullPath)}`);
   }
-  if (sqlite3File) console.log(`校验 sqlite3: ${sqlite3File}`);
-  if (electronFile) console.log(`校验 Electron: ${electronFile}`);
+  if (sqlite3File) console.log(`  sqlite3 ${ink.dim(sqlite3File)}`);
+  if (electronFile) console.log(`  Electron ${ink.dim(electronFile)}`);
   if (ok && (mode === 'full' || mode === 'dmg-only')) {
-    console.log('§6 恢复: .env.test / version / Electron 已处理；dev:test 需手动验证');
+    console.log(`  ${ink.dim('dev:test 请手动：vp env exec --node 14.21.3 -- npm run dev:test')}`);
   }
+  console.log('');
 }
 
-function main() {
+function planSteps(opts) {
+  if (opts.mode === 'recover') return ['恢复本地'];
+  if (opts.mode === 'check') return ['前置检查'];
+  if (opts.mode === 'native') return ['前置检查', '原生模块'];
+  const steps = ['前置检查', '打包配置', '原生模块'];
+  if (opts.mode === 'dmg-only') steps.push('electron-builder');
+  else steps.push('webpack', 'electron-builder');
+  steps.push('验证产物', '恢复本地');
+  if (opts.open) steps.push('打开产物');
+  return steps;
+}
+
+async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  cliOpts = opts;
   if (opts.help) {
     printHelp();
     process.exit(0);
   }
 
-  trackElapsed();
+  cli = createCli();
+  process.on('exit', () => cli.close());
+
   assertDesktop();
   assertVp();
+
+  const steps = planSteps(opts);
+  let stepIndex = 0;
+  const total = steps.length;
+  const next = (label) => {
+    stepIndex += 1;
+    cli.begin(stepIndex, total, label);
+  };
+
+  cli.header([
+    ink.bold('PC test 包') + ink.dim('  ·  Mac ARM64'),
+    ink.dim(`Node ${NODE}  ·  Electron ${ELECTRON}  ·  compress=${opts.compress}`),
+  ]);
 
   if (opts.proxy) {
     log('使用代理 127.0.0.1:7890');
@@ -755,32 +1186,64 @@ function main() {
   }
 
   let mutated = false;
+  let recovering = false;
   let dmg;
   let sqlite3File;
   let electronFile;
   let opened = false;
 
+  const recoverOnce = async (forceElectron = false) => {
+    if (recovering) return null;
+    recovering = true;
+    next('恢复本地');
+    const recovered = await recover({ forceElectron });
+    cli.succeed(recovered.detail);
+    return recovered;
+  };
+
+  const onSignal = async () => {
+    killCurrentChild();
+    if (mutated && !recovering) {
+      cli.warn('收到中断，执行 §6 恢复，避免本机 dev:test 起不来');
+      try {
+        await recoverOnce(false);
+      } catch (err) {
+        cli.error(`恢复失败: ${err.message}`);
+      }
+    }
+    cli.close();
+    process.exit(130);
+  };
+  process.on('SIGINT', onSignal);
+  process.on('SIGTERM', onSignal);
+
   try {
     if (opts.mode === 'recover') {
-      const recovered = recover();
+      const recovered = await recoverOnce(true);
       electronFile = recovered.electronFile;
       sqlite3File = recovered.sqlite3File;
       summarize({ mode: opts.mode, ok: true, sqlite3File, electronFile, opened });
       return;
     }
 
-    const check = preflight();
-    if (!check.ok) {
-      fail('前置检查未通过，已停止');
-    }
+    next('前置检查');
+    const check = await preflight();
+    if (!check.ok) fail('前置检查未通过，已停止');
+    cli.succeed('通过');
 
     if (opts.mode === 'check') {
-      summarize({ mode: opts.mode, ok: true, sqlite3File: findSqlite3Node() ? fileCmd(findSqlite3Node()) : '' });
+      summarize({
+        mode: opts.mode,
+        ok: true,
+        sqlite3File: findSqlite3Node() ? fileCmd(findSqlite3Node()) : '',
+      });
       return;
     }
 
     if (opts.mode === 'native') {
-      rebuildNative();
+      next('原生模块');
+      const detail = await rebuildNative({ force: true });
+      cli.succeed(detail);
       const sqlite3 = findSqlite3Node();
       summarize({
         mode: opts.mode,
@@ -790,32 +1253,50 @@ function main() {
       return;
     }
 
-    applyPackConfig(check.envValues);
+    next('打包配置');
+    const configDetail = applyPackConfig(check.envValues);
     mutated = true;
+    cli.succeed(configDetail);
 
-    if (!check.sqlite3Arm64 || opts.mode === 'native') {
-      rebuildNative();
+    next('原生模块');
+    const nativeDetail = await rebuildNative({
+      force: false,
+      sqlite3Arm64: check.sqlite3Arm64,
+      leveldownArm64: check.leveldownArm64,
+    });
+    cli.succeed(nativeDetail);
+
+    if (opts.mode === 'dmg-only') {
+      next('electron-builder');
+      await buildDmg();
+      cli.succeed();
     } else {
-      log('sqlite3 已是 arm64，跳过 §2');
+      next('webpack');
+      await buildWebpack();
+      cli.succeed();
+      next('electron-builder');
+      await buildDmg();
+      cli.succeed();
     }
 
-    if (opts.mode === 'dmg-only') buildDmgOnly();
-    else buildFull();
-
+    next('验证产物');
     const verified = verify();
     dmg = verified.dmg;
     sqlite3File = verified.sqlite3File;
+    cli.succeed(`${path.basename(dmg.fullPath)}  ${formatSize(dmg.size)}`);
   } catch (err) {
-    diagnose(err.outputText ?? err.message ?? '');
-    console.error(`错误: ${err.message}`);
+    if (err.outputText) diagnose(err.outputText);
+    cli.fail(err.message);
     if (mutated) {
       warn('构建失败，仍执行 §6 恢复，避免本机 dev:test 起不来');
       try {
-        const recovered = recover();
-        electronFile = recovered.electronFile;
-        sqlite3File = sqlite3File ?? recovered.sqlite3File;
+        const recovered = await recoverOnce(false);
+        if (recovered) {
+          electronFile = recovered.electronFile;
+          sqlite3File = sqlite3File ?? recovered.sqlite3File;
+        }
       } catch (recoverErr) {
-        console.error(`恢复也失败: ${recoverErr.message}`);
+        cli.error(`恢复也失败: ${recoverErr.message}`);
       }
     }
     summarize({ mode: opts.mode, ok: false, dmg, sqlite3File, electronFile, opened });
@@ -823,20 +1304,27 @@ function main() {
   }
 
   try {
-    const recovered = recover();
-    electronFile = recovered.electronFile;
-    sqlite3File = sqlite3File ?? recovered.sqlite3File;
+    const recovered = await recoverOnce(false);
+    if (recovered) {
+      electronFile = recovered.electronFile;
+      sqlite3File = sqlite3File ?? recovered.sqlite3File;
+    }
   } catch (err) {
-    diagnose(err.outputText ?? err.message ?? '');
+    if (err.outputText) diagnose(err.outputText);
     die(`§6 恢复失败: ${err.message}`);
   }
 
   if (opts.open && dmg) {
-    openBuild();
-    opened = true;
+    next('打开产物');
+    opened = openBuild();
+    cli.succeed(opened ? path.join(DESKTOP, 'build') : '跳过');
   }
 
   summarize({ mode: opts.mode, ok: true, dmg, sqlite3File, electronFile, opened });
 }
 
-main();
+main().catch((err) => {
+  if (cli) cli.close();
+  console.error(`错误: ${err.message}`);
+  process.exit(1);
+});
