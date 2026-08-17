@@ -45,7 +45,7 @@
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
 | context | `main` | ahead 113 | 脏 9+ | 本功能 status 只改了「最后更新/工作区表」 | 其余脏区是 hooks/skills/README/`.pi/`/code-status，与本功能无关 |
-| web | `feat/data-scope-secret-tag` | synced | 脏 1 | **不涉及** | 本会话改的是标题栏「涉密」按钮颜色（`#FEAC00`），属 `20260812-数据范围-涉密标签` |
+| web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 标题栏涉密按钮黄色已 push `749d1f3`，属 `20260812-数据范围-涉密标签` |
 | android | **`feat/gfm-markdown`** | **未 push** | 干净 | **本功能** | 最新 `fd67e05d3`（较 8-14 记录又多了 Linkify 耗时日志那笔） |
 | ios | `master-3.5.30` | synced | 脏 1 | 不涉及本会话 | `project.pbxproj`；GFM 上一轮在 `feat/ios-gfm-markdown` |
 | desktop | **`feat/gfm-markdown`** | **未 push** | 脏 2 | **本功能** | 最新仍 `f2a7d5f6`。脏的是 `electron-builder.yml`/`package.json` 本地调试配置，**禁止提交** |
