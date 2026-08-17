@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-14 15:40（安卓真机首轮自测暴露 3 个问题，已修完并出包，**待复验**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-17 09:05（本会话未动 GFM；web 在 `feat/data-scope-secret-tag` 改了标题栏涉密按钮颜色）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -40,15 +40,15 @@
 
 **安卓新增 4 个类**：`ZXMarkwonFactory`（配置收敛 + 兜底 + 开关）、`ZXMarkdownSegment` / `ZXMarkdownSegmenter`（AST 切段）、`ZXMarkdownTableView`（横滚表格）、`ZXMarkdownContentView`（段栈 + 按段折叠）。
 
-## 各端工作区现状（2026-08-14 14:20，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-17 09:05，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 110 | 脏 11 | spec/plan/status/impl-notes | 其余脏区是 hooks/skills/README/`.pi/`，与本功能无关 |
-| web | `feat/data-scope-secret-tag` | synced | 干净 | 不涉及 | 停在涉密标签功能 |
-| android | **`feat/gfm-markdown`** | **未 push** | 干净 | **本功能** | 基点 `f5f2d0ce3`；最新 `7b9f7872c`（8 commit：6 个实现 + 2 个真机自测修复） |
-| ios | `feat/ios-gfm-markdown` | synced | 干净 | 上一轮已完成 | `c4d50e28b` |
-| desktop | **`feat/gfm-markdown`** | **未 push** | 脏 2 | **本功能** | 基点 `763cd15e`；最新 `f2a7d5f6`。脏的是 `electron-builder.yml`/`package.json` 本地调试配置（`.env.test` 已还原），切分支带过来的，**禁止提交** |
+| context | `main` | ahead 113 | 脏 9+ | 本功能 status 只改了「最后更新/工作区表」 | 其余脏区是 hooks/skills/README/`.pi/`/code-status，与本功能无关 |
+| web | `feat/data-scope-secret-tag` | synced | 脏 1 | **不涉及** | 本会话改的是标题栏「涉密」按钮颜色（`#FEAC00`），属 `20260812-数据范围-涉密标签` |
+| android | **`feat/gfm-markdown`** | **未 push** | 干净 | **本功能** | 最新 `fd67e05d3`（较 8-14 记录又多了 Linkify 耗时日志那笔） |
+| ios | `master-3.5.30` | synced | 脏 1 | 不涉及本会话 | `project.pbxproj`；GFM 上一轮在 `feat/ios-gfm-markdown` |
+| desktop | **`feat/gfm-markdown`** | **未 push** | 脏 2 | **本功能** | 最新仍 `f2a7d5f6`。脏的是 `electron-builder.yml`/`package.json` 本地调试配置，**禁止提交** |
 
 > **工具脚本（与本功能无关，记录备查）**：2026-08-14 在工作区新增 `scripts/prod-pc-build.mjs`（Mac arm64 正式 DMG，`npm run prod:pc-build`）与 `scripts/prod-android-build.mjs`（`:smart_message:assemblePublishRelease` 正式 APK，`npm run prod:android-build`），构建完各自重命名产物并 `open` 目录。安卓任务**必须带 `:smart_message:` 模块前缀**——无前缀会给 IM / basis_function_api 等 library 也打 release，触发 `verifyPublishReleaseResources` 孤立资源校验，library 引用 app 模块 drawable 必挂。
 

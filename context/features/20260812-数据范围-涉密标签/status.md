@@ -1,6 +1,6 @@
 # Status：数据范围-涉密标签
 
-> 最后更新：2026-08-13 18:20（四端 getSecretButtonTip 已 commit+push；仍未联调/自测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-17 09:05（web 标题栏「涉密」按钮文字改黄色，与图标/tag 同色 `#FEAC00`；未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -11,7 +11,7 @@
 | 气泡文案改走 getSecretButtonTip | 🚧 | 🚧 | 🚧 | 🚧 |
 | 自测通过 | 🚧 | 🚧 | 🚧 | 🚧 |
 
-> 本功能代码侧：web `origin/feat/data-scope-secret-tag` `e2640d6`；android/ios/desktop 各自 `origin/personal-ai-chat-hotfix`（android `f5f2d0ce3`、ios `8b6dbf809`、desktop `763cd15e`）。四端 `getSecretButtonTip` 已 push。旁路脏区仍在：android 相机资源、ios combine、desktop `electron-builder.yml`/`package.json`。
+> 本功能代码侧：web `feat/data-scope-secret-tag` 基点 `e2640d6`，本地脏 1（`SelectDataRangeDialog.vue` 标题栏按钮 `text-#5D616B` → `text-#FEAC00`）；android/ios/desktop 各自 `origin/personal-ai-chat-hotfix`（android `f5f2d0ce3`、ios `8b6dbf809`、desktop `763cd15e`）。四端 `getSecretButtonTip` 已 push。旁路脏区仍在：android 相机资源、ios combine、desktop `electron-builder.yml`/`package.json`。
 
 ## 视觉验收发现的问题（2026-08-12，均已修复，待用户统一复验）
 
@@ -78,6 +78,7 @@
 - (四端) 箭头形态仍不统一：android/iOS 有向上箭头，web/desktop 无箭头——是否统一由用户定
 - (ios) 未跑 `xcodebuild`；复测点击弹出气泡、接口文案换行后宽度
 
+- (web) 2026-08-17：标题栏「涉密」按钮原先图标黄、文字灰（`#5D616B`），已改成整颗按钮 `text-#FEAC00`（与行内 tag / `secret.svg` 同色）。**未提交、未浏览器复验**
 - (web) **未做**真实浏览器联调（含接口文案与 tag 渲染）
 - (web) `pnpm format` 本地 prettier 缺失，需补齐依赖后再跑
 - (android) 旁路：`basis_function_api/em_camera_switch_normal.9.png` **勿提交**
