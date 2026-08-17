@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-17（**三端样式统一已落码**：PC lint + 23 单测绿、安卓 `assembleDevelopDebug` 通过、iOS 只改代码未构建。**全部运行时观感待你自测**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-17（**第一轮样式自测已打回并修完 4 条**：PC 勾选框配色 / 表格挤压，iOS 引用竖线 / marker 与勾选框尺寸；安卓预防性同步表格列宽。**待二次自测**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -45,11 +45,11 @@
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 123 | 干净 | 本次落 token 表 + 样式改动清单 | 新增 `context/design/markdown-style-tokens.md`（三端样式唯一事实来源） |
+| context | `main` | ahead 124 | 干净 | 本次落自测反馈与修复 | `context/design/markdown-style-tokens.md` 是三端样式唯一事实来源 |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 标题栏涉密按钮黄色已 push `749d1f3`，属 `20260812-数据范围-涉密标签` |
-| android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 最新 `a092b0c3c`（样式统一）。`personal-ai-chat-hotfix` 停在 `1b97741e4`。两条分支均未 push |
-| ios | **`feat/ios-gfm-markdown`** | ahead 1 | 干净 | **本轮一起改了样式** | 最新 `9e5437ee3`（样式统一，未 push）。本会话从 `master-3.5.30` 切过来的，切前把本地脏的 `project.pbxproj` 排序噪声 **stash 了，回主干记得 pop** |
-| desktop | **`feat/gfm-markdown`** | **无 upstream** | 脏 2 | **本功能分支，脏区不是 GFM** | 最新 `884ff628`（样式统一）。脏的是 `electron-builder.yml`/`package.json` 本地调试配置，**禁止提交**，本次提交已排除 |
+| android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 最新 `d175966e7`（表格列宽）。会话中途该仓库曾被切到 `personal-ai-chat-hotfix`（停在 `1b97741e4`），我切回 GFM 分支才改的。两条分支均未 push |
+| ios | **`feat/ios-gfm-markdown`** | ahead 2 | 干净 | **本轮一起改了样式** | 最新 `0e37761d3`（自测修复，未 push）。从 `master-3.5.30` 切过来的，切前把本地脏的 `project.pbxproj` 排序噪声 **stash 了，回主干记得 pop** |
+| desktop | **`feat/gfm-markdown`** | **无 upstream** | 脏 3 | **本功能分支，脏区不是 GFM** | 最新 `bf06e013`（自测修复）。脏的是 `.env.test`/`electron-builder.yml`/`package.json` 本地调试配置，**禁止提交**，本次提交已排除 |
 
 > **工具脚本（与本功能无关，记录备查）**：2026-08-14 新增 `scripts/prod-pc-build.mjs` / `prod-android-build.mjs`。2026-08-17 优化 `scripts/pc-build-test.mjs`：TTY 阶段进度条、webpack/electron-builder 实时流式输出、默认 `compression=normal`、Electron 已是 arm64 则跳过重装、sqlite3/leveldown 并行编译。安卓正式包任务**必须带 `:smart_message:` 模块前缀**——无前缀会给 IM / basis_function_api 等 library 也打 release，触发 `verifyPublishReleaseResources` 孤立资源校验，library 引用 app 模块 drawable 必挂。
 
@@ -186,6 +186,21 @@ java.lang.IllegalArgumentException: the bind value at index 71 is null
 | ios | `9e5437ee3` | 4 | `ZXMarkdownStyle` 标题改倍率、链接 primary、代码/引用配色拆开、缩进与段间距按字号折算、表格 padding 拆横竖 + 去圆角；`ZXMarkdownAttributedBuilder` / `ZXMarkdownTableView` 跟着改引用 | **未构建**（本仓库 CLAUDE.md 规定 AI 不跑 xcodebuild），只做了属性引用静态核对 |
 
 **iOS 分支处理**：为改这些文件把 ios 仓库从 `master-3.5.30` 切到了 **`feat/ios-gfm-markdown`**（样式代码只在这条分支上）。切之前把本地脏的 `project.pbxproj` 用 `git stash push` 暂存了（那 16 行是 Xcode 的 entry 排序噪声）——**要回 `master-3.5.30` 时记得 `git stash pop`**。
+
+### 样式第一轮自测反馈与修复（2026-08-17，第二轮待验）
+
+| # | 端 | 反馈 | 根因 | commit |
+|---|----|------|------|--------|
+| 1 | PC | 待办勾选框颜色不对（灰的） | `<input disabled>` 被浏览器整体画灰，`accent-color` 在 disabled 态不生效 | `bf06e013` |
+| 2 | PC | 窄表格挤，要横滚不要换行 | 上一轮把 `nowrap` 换成 `max-width: 12em` + 换行，方向错了 | `bf06e013` |
+| 3 | iOS | 引用只有**第一行**左侧有竖线，应整段都有 | 竖条是 `▎` 字符逐行前缀，按逻辑行切，段落软换行后面几行没有行首 | `0e37761d3` |
+| 4 | iOS | 无序列表一二级 marker 太小、三四级太大 | `•`/`◦`/`▪` 字面大小差得多，一律用正文字号 | `0e37761d3` |
+| 5 | iOS | 待办勾选态比未勾选态大一圈 | `☐` 在系统字体里比 `☑` 小一圈 | `0e37761d3` |
+| 6 | android | （你未测，预防性同步）表格列宽上限 180dp → 360dp | 与 PC / iOS 的「尽量不换行」同取向 | `d175966e7` |
+
+**iOS 第 3 条的做法有结构性影响**：引用升格成独立块类型 `ZXMarkdownBlockTypeQuote`，用真视图画通高竖条。段栈进入判据从「含表格」扩成「含表格**或引用**」——**回归面从「含表格消息」扩到「含引用消息」**，二次自测要专门覆盖含引用的消息（折叠、长按菜单、图片回填、流式）。
+
+**安卓分支提醒**：本会话开始时安卓仓库被切到 `personal-ai-chat-hotfix`，我切回了 `feat/gfm-markdown` 才改的。
 
 **新增的三端样式自测项**（并入下面的运行时自测批次）：
 

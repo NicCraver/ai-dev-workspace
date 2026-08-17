@@ -25,13 +25,14 @@
 | 代码块 | 底 `rgba(0,0,0,.04)`、圆角 4、padding 竖 8 横 10、0.92em 等宽、**不做语法高亮** | | | |
 | 引用块 | 左竖条 2px `rgba(0,0,0,.2)`、字色 `#5D616B`、左内边距 8、**不斜体** | 须干掉 prose 的 `font-style: italic` | | |
 | 列表缩进 | 1.2em / 级 | | | 19pt |
-| 列表 marker | 三级 disc / circle / square | | Markwon 默认即此 | `•` / `◦` / `▪` |
-| 任务列表 | 1em 方框 + 勾，选中色 `#3E7EFF` | | `TaskListPlugin` 传 primary | 字符染 primary |
+| 列表 marker | 三级 disc / circle / square，视觉重量要一致 | | Markwon 默认即此（自绘，尺寸统一） | `•` / `◦` / `▪` 字面大小差得多，按 `listMarkerFontScales` = 1.2 / 1.4 / 0.85 拉平 |
+| 引用竖条实现 | 必须覆盖整段，不能只覆盖第一行 | `border-left` | Markwon `BlockQuoteSpan`（leading margin） | **真视图画**（独立引用块）。字符 `▎` 逐行前缀只能落在逻辑行首，软换行后面几行就没有了 |
+| 任务列表 | 1em 方框 + 勾，选中色 `#3E7EFF` | `appearance: none` 自绘（**不能靠 `accent-color`**，disabled 的原生 checkbox 会被整个画成灰色） | `TaskListPlugin` 传 primary | 字符染 primary；`☐` 放大 1.15 拉平（它比 `☑` 小一圈） |
 | hr | 1px `rgba(0,0,0,.12)`，上下 0.75em | | | |
 | 表格 · 表头底 | `rgba(0,0,0,.04)` + 粗体 | ✅ 已一致 | ✅ | ✅ |
 | 表格 · 边框 | 1px `rgba(0,0,0,.12)`，**单线、无圆角** | | 每格只画右+下，容器画左+上（否则相邻格叠成 2px） | 去圆角 |
 | 表格 · cell padding | 竖 0.35em 横 0.6em | 5/8 px | 5/9 dp | 6/10 pt |
-| 表格 · 最大列宽 | 12em，超出则单元格内换行 | 156px（须去掉 `white-space: nowrap`） | 180dp | 192pt |
+| 表格 · 换行 | **单元格文字尽量不换行**，表格宽出气泡由横滚兜住。允许换行的话窄表格会被挤成一列一个字 | `white-space: nowrap`（无列宽上限） | 列宽上限 360dp | 列宽上限 24em（384pt） |
 | 表格 · 斑马纹 | **无**（prose 默认有，须干掉） | | | |
 
 ## 有意不统一的项
