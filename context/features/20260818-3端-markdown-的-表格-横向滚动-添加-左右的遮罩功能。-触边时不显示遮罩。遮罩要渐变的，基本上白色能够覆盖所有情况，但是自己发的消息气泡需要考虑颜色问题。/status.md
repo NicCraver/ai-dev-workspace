@@ -1,6 +1,6 @@
 # Status：三端 markdown 表格横滚左右渐变遮罩
 
-> 最后更新：2026-08-18（PC 自测无渐变：伪元素未贴视口，已改外侧罩；T4 待再验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-18（自测微调：安卓横滑出滚动条 + 表格上边距 16dp；iOS 非首块表格上收 10pt；T7/T10 待再验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,17 +26,17 @@
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 129 | 本提交 | **本功能文档** | 记 PC 伪元素看不见、已改外侧罩 |
+| context | `main` | ahead 131 | 本提交 | **本功能文档** | 记安卓滚动条 / 两边距微调 |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 涉密标签旁路 |
-| android | **`feat/gfm-markdown`** | ahead 3 | 干净 | **本功能** | `086041049` 同色透明端；未 push |
-| ios | **`feat/ios-gfm-markdown`** | ahead 4 | 干净 | **本功能** | `b9e384bfc` 下发 `getBubbleColor`；未 push |
+| android | **`feat/gfm-markdown`** | ahead 3 | 脏 3 | **本功能** | 滚动条 + 表格段上边距 16dp；`assembleDevelopDebug` 绿；未 commit |
+| ios | **`feat/ios-gfm-markdown`** | ahead 4 | 脏 1 | **本功能** | 非首块表格上收 10pt；未 commit |
 | desktop | **`feat/gfm-markdown`** | ahead 5 | 脏 3（禁提交调试文件） | **本功能** | `60ce92b3` 外侧罩；`.env.test` 等勿 stage |
 
 ## 待办 / 阻塞
 
 - (desktop T4) 已改成滚动容器**外侧**绝对定位罩（伪元素看不见）。请再验 `#/debug/markdown` 宽表 T7：贴左只右罩、中间双侧、贴右只左罩；窄表无罩。真实会话白气泡 / 自己发 `#d7e5ff`。热更新若没带上，重启 `npm run dev:test`。
-- (android T7) 组织白 / `#DEE8FF`、外链 `#99F0CB` / `#EFF2F6`；复用换色；长按与纵滚。
-- (ios T10) 必须真机。组织白 / `#DEE8FF`、微信 `#B3ECCF`；流式结束才出罩；聚合 / 合并转发看一眼。
+- (android T7) 组织白 / `#DEE8FF`、外链 `#99F0CB` / `#EFF2F6`；复用换色；长按与纵滚。**再验**：宽表横滑时出滚动条、松手淡出；正文下方表格上边距是否够松。
+- (ios T10) 必须真机。组织白 / `#DEE8FF`、微信 `#B3ECCF`；流式结束才出罩；聚合 / 合并转发看一眼。**再验**：正文与表格之间是否还偏空。
 - (desktop) 本地调试三文件保持脏、勿 stage
 - (ios) `project.pbxproj` 排序噪声若还在 stash 里，回主干记得 pop——与本功能无关
 
@@ -51,3 +51,4 @@
 - 2026-08-18：渐变透明端必须是**同色 alpha=0**。安卓 `Color.TRANSPARENT`（`#00000000`）会往黑插值发灰，已改 `Color.argb(0, r, g, b)`，与 iOS `colorWithAlphaComponent:0` 对齐
 - 2026-08-18：PC 回复列表 `reply-msg-list.vue` 补了同一套 `--md-table-fade-color`（plan 只写了 `msg-list.vue`）
 - 2026-08-18：PC 伪元素（float+sticky）自测看不见罩。右罩在宽表后面、初始视口外；空伪元素 height:100% 在 auto 容器上为 0。改为滚动容器外侧兄弟 + 实色条 mask 渐变
+- 2026-08-18：自测微调——安卓宽表横滑显示 overlay 滚动条（不占高度）；非首段表格上边距 7→16dp 对齐 iOS 松一点的观感；iOS 非首块表格上收 10pt（吃掉上一段段间距 / 文本框底空）
