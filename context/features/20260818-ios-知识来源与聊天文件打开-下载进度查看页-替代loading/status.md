@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-18（T1–T8 代码完成；iOS 未编译、未真机自测，web 单测 6/6 + `vue-tsc` 0）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-18（T1–T8 代码完成 + 两端代码审查修复；iOS 未编译、未真机自测，web 单测 7/7 + `vue-tsc` 0）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,16 +26,40 @@
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
 | context | `main` | ahead 137 | 脏 17 | 文档已提交 | 打包脚本改动与上个功能残留未提交；**不 push main** |
-| web | **`feat/knowledge-file-progress`** | ahead 1（基线 `origin/release`） | 干净 | **本功能** | `a9e78ae`；未 push |
+| web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`（含审查修复）；单测 7/7；未 push |
 | android | `feat/gfm-markdown` | synced | 脏 1 | **不涉及** | 上个功能（markdown 表格遮罩）残留 |
-| ios | **`feat/ios-file-download-progress`** | ahead 7（基线 `origin/release`） | 干净 | **本功能** | `6a9ac02ae`；未 push、未编译 |
+| ios | **`feat/ios-file-download-progress`** | ahead 9（基线 `origin/release`） | 干净 | **本功能** | `c12fe5b6e`（含审查修复）；未 push、未编译 |
 | desktop | `feat/gfm-markdown` | synced | 脏 3（禁提交） | **不涉及** | `.env.test` 等勿 stage |
+
+## 代码审查（2026-08-18，两个子代理并行）
+
+web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实并修复的要点：
+
+| 严重度 | 问题 | 处理 |
+|--------|------|------|
+| 🔴 ios | **取消后 handler 一次都不回调** → 上游 HUD 永久残留 + web promise 永久 pending（3 处：解密链路、`openLocalFile` 两个下载分支） | 定义 `ZXMediaPreviewCancelledCode`，取消时回一次 handler；各出口包 `handleOnce` 幂等（`c12fe5b6e`） |
+| 🔴 web | **`agentId` 恒为空** —— `knowledgeList` 的 item 没有 agentId（在 `Assistant.agentId` 上），原生必报错 | 分流时补 `agentId` / `agentVersionId`（`8bd8db7`） |
+| 🔴 web | 老版本 iOS 客户端没注册该桥 → 点了完全没反应 | 分流条件加 `typeof === "function"`，否则回落 web 逻辑 |
+| 🟡 ios | `cancel` 删的是**最终缓存路径**，会毁掉上次下好的完整文件 | 去掉删除（系统下载完成才 move，无半成品可删） |
+| 🟡 ios | 浮层是全局单例，两个会话并发时互相覆盖取消回调 / 互关浮层 / 串写进度 | 浮层加弱引用 `owner`，`update`/`finish`/`dismiss` 按归属隔离 |
+| 🟡 ios | 取消句柄装在下载发起之后，中间点取消不会中止下载 | `onCancel` setter 补发 + 拿到句柄后复查 `isCancelled` |
+| 🟡 ios | 无 `Content-Length` 时进度恒 0，卡在 8% | 下载层回 -1 通知不确定态，假进度上限放宽到 90% |
+| 🟡 ios | `cancelled`/`finished`/下载句柄跨线程无同步；`report` 判重无锁 | 改 `atomic` + `@synchronized` |
+| 🟡 ios | 新公开 API 标 `completion` 可空却裸调 | 全部改 `!completion ?:`（16 处） |
+| 🟡 ios | 下载浮层与上游「加载中…」小圈叠着显示 | 进下载前补 `[ZXProgressHUD dismiss]` |
+| 🟡 web | 失败只 `console.warn`、iframe 路径被误伤、UA 判定重复、未知状态当成功 | 分别补 toast、`!inIframe`、判定单点化、状态严格化 |
+| 🟡 web | 分流点太深（web 已发过元数据请求、授权走了 web 弹窗） | 分流上移到 `AcMarkdown.vue` 取元数据之前 |
+
+**未改（有意为之，自测时留意）**：
+
+- (ios) `finishWithCompletion` 先关浮层再弹预览，`openZXPreview` 慢时有短暂空窗——原实现是预览呈现后才关，观感待真机判断
+- (ios) 飞书 / WPS 授权分支回 `cancel` 后没有第二次通知，web 不知道可以重试；授权本身在原生内闭环，重试靠用户再点一次
+- (ios) `fileNoAuth` 打开的是「无权限」提示页却回 `success`（页面确实打开了）
+- (web) `KnowledgeListTable.vue`（PC 设置页）不传 `isWnsdkEnable`，本期不覆盖
 
 ## 待办 / 阻塞
 
-**进行中**：已开两个子代理并行审查代码（iOS `feat/ios-file-download-progress` 7 commit；web `feat/knowledge-file-progress` 1 commit）。审查结论未回，两个分支暂不 push。iOS 关注编译错误 / block 循环引用 / 线程 / 回调漏洞 / 老调用点回归；web 关注安卓与 PC 老路径回归、`agentId` 来源、老版本客户端无该桥时的降级。
-
-**iOS 首次编译（必须先做）**：7 个提交全部没经过编译器。在 Xcode 打开 `zhixinApp.xcworkspace`，选 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build。重点看 `ZXFilePreviewLoadHUD`（新增 `ZXFileLoadingSession` 同文件双类）、`ZXFileClient`（新增 `ZXFileDownloadTask`、方法返回值由 void 改为对象）、`ZXAgentKnowledgeOpenLogic`（私有方法签名都加了 `session:` / `report:`）。
+**iOS 首次编译（必须先做）**：9 个提交全部没经过编译器。在 Xcode 打开 `zhixinApp.xcworkspace`，选 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build。重点看 `ZXFilePreviewLoadHUD`（新增 `ZXFileLoadingSession` 同文件双类）、`ZXFileClient`（新增 `ZXFileDownloadTask`、方法返回值由 void 改为对象）、`ZXAgentKnowledgeOpenLogic`（私有方法签名都加了 `session:` / `report:`）。
 
 **iOS 真机 / 模拟器自测清单**：
 
@@ -46,7 +70,8 @@
 - (ios) 图片类知识来源：仍走图片浏览器，浮层正常消失
 - (ios) 飞书 / WPS 未授权：浮层关闭后弹授权页
 - (ios) 本地已缓存文件：**不应**出现浮层，秒开
-- (ios) H5 内点知识来源（移动端 AI 会话页）：走新桥 `openKnowledgeDoc`、有进度、可取消
+- (ios) H5 内点知识来源（移动端 AI 会话页）：走新桥 `openKnowledgeDoc`、有进度、可取消；**注意 iOS 上飞书/WPS 授权已改由原生弹**（不再走 web 弹窗），要专门验一遍
+- (ios) 取消后确认：上游没有残留的「加载中…」小圈，且 web 侧不会卡住（H5 入口）
 - (ios) 弱网 / 断网：失败 toast 文案正确，浮层不残留
 
 **web 自测**：
