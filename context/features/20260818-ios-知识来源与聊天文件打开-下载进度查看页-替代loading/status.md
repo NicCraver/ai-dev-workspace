@@ -33,6 +33,8 @@
 
 ## 待办 / 阻塞
 
+**进行中**：已开两个子代理并行审查代码（iOS `feat/ios-file-download-progress` 7 commit；web `feat/knowledge-file-progress` 1 commit）。审查结论未回，两个分支暂不 push。iOS 关注编译错误 / block 循环引用 / 线程 / 回调漏洞 / 老调用点回归；web 关注安卓与 PC 老路径回归、`agentId` 来源、老版本客户端无该桥时的降级。
+
 **iOS 首次编译（必须先做）**：7 个提交全部没经过编译器。在 Xcode 打开 `zhixinApp.xcworkspace`，选 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build。重点看 `ZXFilePreviewLoadHUD`（新增 `ZXFileLoadingSession` 同文件双类）、`ZXFileClient`（新增 `ZXFileDownloadTask`、方法返回值由 void 改为对象）、`ZXAgentKnowledgeOpenLogic`（私有方法签名都加了 `session:` / `report:`）。
 
 **iOS 真机 / 模拟器自测清单**：
