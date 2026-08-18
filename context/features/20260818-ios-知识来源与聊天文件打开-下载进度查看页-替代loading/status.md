@@ -28,12 +28,12 @@
 | context | `main` | ahead 137 | 脏 17 | 文档已提交 | 打包脚本改动与上个功能残留未提交；**不 push main** |
 | web | **`feat/knowledge-file-progress`** | ahead 1（基线 `origin/release`） | 干净 | **本功能** | `a9e78ae`；未 push |
 | android | `feat/gfm-markdown` | synced | 脏 1 | **不涉及** | 上个功能（markdown 表格遮罩）残留 |
-| ios | **`feat/ios-file-download-progress`** | ahead 6（基线 `origin/release`） | 干净 | **本功能** | `ed1a1f851`；未 push、未编译 |
+| ios | **`feat/ios-file-download-progress`** | ahead 7（基线 `origin/release`） | 干净 | **本功能** | `6a9ac02ae`；未 push、未编译 |
 | desktop | `feat/gfm-markdown` | synced | 脏 3（禁提交） | **不涉及** | `.env.test` 等勿 stage |
 
 ## 待办 / 阻塞
 
-**iOS 首次编译（必须先做）**：6 个提交全部没经过编译器。在 Xcode 打开 `zhixinApp.xcworkspace`，选 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build。重点看 `ZXFilePreviewLoadHUD`（新增 `ZXFileLoadingSession` 同文件双类）、`ZXFileClient`（新增 `ZXFileDownloadTask`、方法返回值由 void 改为对象）、`ZXAgentKnowledgeOpenLogic`（私有方法签名都加了 `session:` / `report:`）。
+**iOS 首次编译（必须先做）**：7 个提交全部没经过编译器。在 Xcode 打开 `zhixinApp.xcworkspace`，选 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build。重点看 `ZXFilePreviewLoadHUD`（新增 `ZXFileLoadingSession` 同文件双类）、`ZXFileClient`（新增 `ZXFileDownloadTask`、方法返回值由 void 改为对象）、`ZXAgentKnowledgeOpenLogic`（私有方法签名都加了 `session:` / `report:`）。
 
 **iOS 真机 / 模拟器自测清单**：
 
