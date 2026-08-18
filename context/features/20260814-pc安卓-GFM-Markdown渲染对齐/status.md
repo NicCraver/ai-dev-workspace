@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-17（**第一轮样式自测已打回并修完 4 条**：PC 勾选框配色 / 表格挤压，iOS 引用竖线 / marker 与勾选框尺寸；安卓预防性同步表格列宽。**待二次自测**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-18（PC `feat/gfm-markdown` 已本地 merge `origin/release`；冲突只在 `msg-actioncard.vue`，保留本分支全局 `markdown.scss`，release 的 h2 `17x→17px` 已被 token 表覆盖。**待二次自测**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -49,7 +49,7 @@
 | web | `feat/data-scope-secret-tag` | synced | 脏 2 | **不涉及** | 标题栏涉密按钮黄色已 push `749d1f3`，属 `20260812-数据范围-涉密标签`。脏区是下方「旁路改动」的 `hideChat` 显隐，**未提交** |
 | android | **`feat/gfm-markdown`** | **无 upstream** | 干净 | **本功能分支** | 最新 `d175966e7`（表格列宽）。会话中途该仓库曾被切到 `personal-ai-chat-hotfix`（停在 `1b97741e4`），我切回 GFM 分支才改的。两条分支均未 push |
 | ios | **`feat/ios-gfm-markdown`** | ahead 2 | 干净 | **本轮一起改了样式** | 最新 `0e37761d3`（自测修复，未 push）。从 `master-3.5.30` 切过来的，切前把本地脏的 `project.pbxproj` 排序噪声 **stash 了，回主干记得 pop** |
-| desktop | **`feat/gfm-markdown`** | **无 upstream** | 脏 3 | **本功能分支，脏区不是 GFM** | 最新 `bf06e013`（自测修复）。脏的是 `.env.test`/`electron-builder.yml`/`package.json` 本地调试配置，**禁止提交**，本次提交已排除 |
+| desktop | **`feat/gfm-markdown`** | **ahead 10**（含 merge `origin/release`，未 push） | 干净（merge 当下） | **本功能分支** | 最新 `5dc75dbc` 合入 `origin/release`（版本号跟到 `3.4.25`）。冲突只在 `msg-actioncard.vue`：release 的 h2 `17x→17px` 被本分支全局 `markdown.scss` 覆盖。本地调试文件仍**禁止提交** |
 
 > **工具脚本（与本功能无关，记录备查）**：2026-08-14 新增 `scripts/prod-pc-build.mjs` / `prod-android-build.mjs`。2026-08-17 优化 `scripts/pc-build-test.mjs`：TTY 阶段进度条、webpack/electron-builder 实时流式输出、默认 `compression=normal`、Electron 已是 arm64 则跳过重装、sqlite3/leveldown 并行编译。安卓正式包任务**必须带 `:smart_message:` 模块前缀**——无前缀会给 IM / basis_function_api 等 library 也打 release，触发 `verifyPublishReleaseResources` 孤立资源校验，library 引用 app 模块 drawable 必挂。
 
@@ -129,6 +129,16 @@
 > 链接点击不受影响：`LinkMovementMethod` 在 `onTouchEvent` 里先于 clickable 判定处理事件，按在链接上会被消费，按在空白处冒泡给气泡。
 
 ## 待办 / 阻塞
+
+### PC 已本地合入 `origin/release`（2026-08-18，未 push）
+
+GitLab「把 release 合进 feat/gfm-markdown」已做完：`git fetch origin` + `git merge --no-ff origin/release`。
+
+- 唯一冲突：`msg-actioncard.vue` 的 `.md-html-wrapper` 样式块。release 只修了 h2 笔误 `17x → 17px`；本分支早已把整套样式迁到 `assets/styles/markdown.scss`（h2 = `1.25em`，相对 13px 正文）。**保留本分支**，没有把旧样式块写回去。
+- 顺带吃进 release 的 `package.json` 版本号 `3.4.24 → 3.4.25`。
+- 验证：冲突标记已清；该 vue 文件 eslint 通过；markdown 相关 23 条单测全绿。
+- **未执行** `git push origin feat/gfm-markdown`（等你确认后再推）。
+
 
 ### 旁路改动：web 设置页 `hideChat` 显隐（2026-08-17，与本功能无关，勿并入本功能）
 
