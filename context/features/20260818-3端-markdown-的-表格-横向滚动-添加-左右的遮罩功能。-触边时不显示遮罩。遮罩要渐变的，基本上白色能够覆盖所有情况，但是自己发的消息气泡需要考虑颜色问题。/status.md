@@ -30,7 +30,7 @@
 | web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 涉密标签旁路 |
 | android | **`feat/gfm-markdown`** | ahead 3 | 干净 | **本功能** | `086041049` 同色透明端；未 push |
 | ios | **`feat/ios-gfm-markdown`** | ahead 4 | 干净 | **本功能** | `b9e384bfc` 下发 `getBubbleColor`；未 push |
-| desktop | **`feat/gfm-markdown`** | ahead 4+ | 脏 3（禁提交调试文件） | **本功能** | 外侧罩修复待提交；`.env.test` 等勿 stage |
+| desktop | **`feat/gfm-markdown`** | ahead 5 | 脏 3（禁提交调试文件） | **本功能** | `60ce92b3` 外侧罩；`.env.test` 等勿 stage |
 
 ## 待办 / 阻塞
 
