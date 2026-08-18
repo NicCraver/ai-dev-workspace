@@ -1,6 +1,6 @@
 # Status：三端 markdown 表格横滚左右渐变遮罩
 
-> 最后更新：2026-08-18（spec / plan / token 已落盘，**三端代码均未动**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-18（T1–T3 / T5–T6 / T8–T9 代码已提交；T4 / T7 / T10 运行时自测未做）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -8,35 +8,36 @@
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| T1 显隐公式纯函数 + 单测 | — | — | — | ⬜ |
-| T2 CSS 伪元素 + 气泡色变量 | — | — | — | ⬜ |
-| T3 三个消费方挂 bind | — | — | — | ⬜ |
-| T4 运行时自测 | — | — | — | ⬜ |
-| T5 TableView 自绘左右渐变 | — | ⬜ | — | — |
-| T6 气泡色传入表格 | — | ⬜ | — | — |
-| T7 真机自测 | — | ⬜ | — | — |
-| T8 外壳 CAGradientLayer | — | — | ⬜ | — |
-| T9 段栈 + 两 cell 下发气泡色 | — | — | ⬜ | — |
-| T10 真机自测 | — | — | ⬜ | — |
+| T1 显隐公式纯函数 + 单测 | — | — | — | ✅ |
+| T2 CSS 伪元素 + 气泡色变量 | — | — | — | ✅ |
+| T3 三个消费方挂 bind | — | — | — | ✅ |
+| T4 运行时自测 | — | — | — | 🚧 |
+| T5 TableView 自绘左右渐变 | — | ✅ | — | — |
+| T6 气泡色传入表格 | — | ✅ | — | — |
+| T7 真机自测 | — | 🚧 | — | — |
+| T8 外壳 CAGradientLayer | — | — | ✅ | — |
+| T9 段栈 + 两 cell 下发气泡色 | — | — | ✅ | — |
+| T10 真机自测 | — | — | 🚧 | — |
 | T11 token 表补遮罩宽 | — | ✅ | ✅ | ✅ |
 
-> T11 只改了 `context/design/markdown-style-tokens.md`，三端代码仍是 ⬜。
+> T1–T3 / T5–T6 / T8–T9 是代码完成（PC 单测 6/6 + lint；安卓 `assembleDevelopDebug` 绿；iOS 未跑 xcodebuild）。T4 / T7 / T10 必须人工自测，未跑过所以是 🚧。
 
 ## 各端工作区现状（2026-08-18，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 127 | 脏 2 | **本功能文档** | `ACTIVE` 已指向本目录；功能目录未提交 |
+| context | `main` | ahead 128+ | 本提交 | **本功能文档** | 代码落地后更新 status / impl-notes |
 | web | `feat/data-scope-secret-tag` | synced | 干净 | **不涉及** | 涉密标签旁路 |
-| android | **`feat/gfm-markdown`** | synced | 干净 | **本功能继续叠在 GFM 分支上**（横滚容器只在这里） | `d175966e7` 表格列宽 |
-| ios | **`feat/ios-gfm-markdown`** | ahead 2 | 干净 | **同上** | `0e37761d3` 自测修复，未 push |
-| desktop | **`feat/gfm-markdown`** | synced | 脏 3 | **同上** | 脏的是 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
+| android | **`feat/gfm-markdown`** | ahead 3 | 干净 | **本功能** | `086041049` 同色透明端；未 push |
+| ios | **`feat/ios-gfm-markdown`** | ahead 4 | 干净 | **本功能** | `b9e384bfc` 下发 `getBubbleColor`；未 push |
+| desktop | **`feat/gfm-markdown`** | ahead 4 | 脏 3 | **本功能** | `4f82ed87` mixin 接入；脏的是 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
 
 ## 待办 / 阻塞
 
-- (三端) 代码未开工。建议按 plan 先 PC（有单测）再安卓再 iOS
+- (desktop T4) `npm run dev:test` → `#/debug/markdown` 宽表 T7：贴左只右罩、中间双侧、贴右只左罩；窄表无罩。真实会话白气泡 / 自己发 `#d7e5ff`。若伪元素把表挤歪，按 plan 改成 sticky span。
+- (android T7) 组织白 / `#DEE8FF`、外链 `#99F0CB` / `#EFF2F6`；复用换色；长按与纵滚。
+- (ios T10) 必须真机。组织白 / `#DEE8FF`、微信 `#B3ECCF`；流式结束才出罩；聚合 / 合并转发看一眼。
 - (desktop) 本地调试三文件保持脏、勿 stage
-- (ios) 自测必须真机（融云无 arm64 模拟器 slice）
 - (ios) `project.pbxproj` 排序噪声若还在 stash 里，回主干记得 pop——与本功能无关
 
 ## 关键决策记录
@@ -47,3 +48,5 @@
 - 2026-08-18：同一套管线的 markdown 表格都做（会话 / 详情 / 合并 / 引用）
 - 2026-08-18：宽 24、触边阈值 1px；差值 ≤1px 当不溢出
 - 2026-08-18：继续叠在 `feat/gfm-markdown` / `feat/ios-gfm-markdown`，不另切分支
+- 2026-08-18：渐变透明端必须是**同色 alpha=0**。安卓 `Color.TRANSPARENT`（`#00000000`）会往黑插值发灰，已改 `Color.argb(0, r, g, b)`，与 iOS `colorWithAlphaComponent:0` 对齐
+- 2026-08-18：PC 回复列表 `reply-msg-list.vue` 补了同一套 `--md-table-fade-color`（plan 只写了 `msg-list.vue`）
