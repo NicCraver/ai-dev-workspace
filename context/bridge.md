@@ -66,6 +66,7 @@
 | `openChat` | `openChat` | web→原生 | `{ id:string, type:'group'\|'chat', name?:string, avatar?:string, corpId?:string, groupType?:number }`（`id`=belongId；`type`='group' 群 / 其它私聊；`name`/`avatar` 供列表无会话时重建） | 无（fire-and-forget）；主窗口 `openConversationById`（缺失则 PushDialogue 重建）选中左侧会话 | desktop | 已有（个人 AI 列表「打开私聊/群聊」） |
 | `selectAiAgent` | —（wnsdk `aiChat.selectAiAgent`） | web→原生 | — | 见下「selectAiAgent 回传」 | ios / android | ios 已落地；android 已落地（真机 E2E 通过） |
 | `selectDataRangeScope` | —（wnsdk `aiChat.selectDataRangeScope` / 安卓 `window.WebView.selectDataRangeScope`） | web→原生 | `{ agentId:string, accountId?:string }`（安卓为该对象的 JSON 字符串；**禁止**传 `initialScopes`） | 见下「selectDataRangeScope 回传」 | ios / android | 原生落库 ACK 改造中（见 plan-数据范围原生落库） |
+| `openKnowledgeDoc` | —（wnsdk `aiChat.openKnowledgeDoc`） | web→原生 | `{ docId:string, agentId:string, agentVersionId?:number, docName?:string, fromType?:number }` | 见下「openKnowledgeDoc 回传」 | **仅 ios** | 新增（知识来源文件下载进度与取消） |
 
 ### `selectAiAgent` 回传（ios → web）
 
@@ -118,6 +119,31 @@ web 收到 `ok` → `getAgentDataRange` 刷本地（不在此路径 save）。
 
 web 分流：`payload.ok` → 新；有 `payload.scopes` → 老。取消：`code=-1`（android 亦可空串）。PC 仍 H5 + web save。
 
+### `openKnowledgeDoc` 回传（ios → web）
+
+H5（移动端 AI 会话页）点知识来源具体链接时调用。**整条链路交给原生**：拉 `agentFileDataByDocId` 元数据 → 飞书/WPS 授权兜底 → OSS 签名 → 下载（带环形进度浮层，可取消）→ 预览（文档 / 图片 / 智文 Web 页 / 外链）。web 不再自行拼 url。
+
+入参：
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `docId` | string | 是 | 知识文档 ID |
+| `agentId` | string | 是 | 智能体 ID |
+| `agentVersionId` | number | 否 | 默认 0 |
+| `docName` | string | 否 | 文件名（缓存目录与预览标题） |
+| `fromType` | number | 否 | 0/1 本地文件、2 智文、3 飞书、4 公开链接、6 WPS；原生以接口返回为准，此字段仅兜底 |
+
+回参：
+
+| 场景 | code | result |
+|------|------|--------|
+| 打开成功 | 0 | `{"status":"success"}` |
+| 用户取消下载 | 0 | `{"status":"cancel"}` |
+| 飞书 / WPS 未授权（原生已拉起授权页，本次打开未完成） | 0 | `{"status":"cancel"}` |
+| 失败（原生已 toast） | -1 | — |
+
+**平台降级**：安卓**未实现**该桥。web 侧按 UA 判断（`MTCoreApi` + iPhone/iPad/iPod，见 `knowledgeNativeOpen.js` 的 `shouldOpenKnowledgeOnIosNative`），非 iOS 客户端继续走 web 自己的 `previewKnowledgeFile`（`multimediaPreview` / `window.open`）。
+
 **统一字段约定**（与 `apps/web/src/components/views/home/personalAiAgentAdapter.js` 对齐）：
 - 人员主键 `accountId`、群主键 `id`、AI 框名 `agentName`、最近对话时间 `lastChatAt`（毫秒时间戳）
 - `ownerType` ∈ `group`（群） / `private`（私聊）
@@ -131,6 +157,7 @@ web 分流：`payload.ok` → 新；有 `payload.scopes` → 老。取消：`cod
 
 ## Changelog
 
+- 2026-08-18 新增 `openKnowledgeDoc`（仅 ios）：H5 点知识来源链接改由原生全包（元数据 + 授权 + OSS 签名 + 下载进度 + 预览），回传 `{status:success|cancel}`，失败 `code=-1`；安卓未实现，web 按 UA 降级。
 - 2026-08-05 登记 `personal-ai:ready`（web → AiBrowser，fire-and-forget）：web 首屏挂载完成信号，宿主据此撤个人 AI 框首屏假 loading；宿主 8s 超时兜底兼容老版本 web。
 - 2026-07-31 web 选择 AI 框组织架构改直调 contact（`getContract` / `sub_dept_user_pagelistV3`），不再调桥 `getOrgCompanies`/`getDeptUsers`；desktop 桥 handler 保留不动。
 - 2026-07-23 web 兼容老 iOS：开页同时传 `agentId`+`initialScopes`；回传按 `ok`（新）/ `scopes`（老）分流。
