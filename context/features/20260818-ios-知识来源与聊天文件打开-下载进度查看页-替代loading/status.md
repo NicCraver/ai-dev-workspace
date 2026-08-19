@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-19（iOS 已人工编译 + 真机自测七轮，反馈全部闭环）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-19（工作区快照刷新：本回合未改本功能代码；PC 脏区是 markdown 表格罩色）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,15 +26,15 @@
 
 > ✅ = 代码完成并提交。iOS 已由人工 clean build 通过并真机自测四轮，反馈见下方「自测反馈闭环」。
 
-## 各端工作区现状（2026-08-19，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-19 14:35，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 147 | 脏 15 | 文档已提交 | 打包脚本改动与上个功能残留未提交；**不 push main** |
-| web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`；单测 7/7；未 push |
-| android | `feat/gfm-markdown` | synced | 脏 1 | **不涉及** | 上个功能（markdown 表格遮罩）残留 |
-| ios | **`feat/ios-file-download-progress`** | ahead 18（基线 `origin/release`） | **脏 5** | **本功能** | HEAD `d48c63df8`；工作区被人工回退到 `edbf24258` + 本轮轻提示改动，**未编译未提交** |
-| desktop | `feat/gfm-markdown` | synced | 脏 3（禁提交） | **不涉及** | `.env.test` 等勿 stage |
+| context | `main` | ahead 152 | 脏 16 | 本次只补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
+| web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`；单测 7/7；未 push。本回合无 web 改动 |
+| android | `feat/gfm-markdown` | synced | 脏 1 | **不涉及** | `ZXMarkdownTableView.java` 属 markdown 表格遮罩，勿与本功能混提 |
+| ios | **`feat/ios-file-download-progress`** | ahead 20（基线 `origin/release`） | **脏 7** | **本功能** | HEAD `d48c63df8`；HUD / 知识来源 / 聊天预览 / 智问入口仍未提交，**未编译**。本回合未改这些文件 |
+| desktop | `feat/gfm-markdown` | synced | 脏 4 | **不涉及** | 本回合改了 `chat-box.vue` / `winbox-wrapper.vue`（自己发表格罩色跟 `#cce0fe`/`#b3eccf`）；另 `electron-builder.yml` / `package.json` 禁提交 |
 
 ## 代码审查（2026-08-18，两个子代理并行）
 
@@ -107,9 +107,9 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 
 **其它**：
 
-- (android / desktop) 工作区脏区属上一个功能（markdown 表格遮罩），其 T4 / T7 / T10 真机自测仍欠；勿与本功能混提交
-- (desktop) `.env.test` / `electron-builder.yml` / `package.json` 保持脏、勿 stage
-- 两个分支均**未 push**，自测通过后再推
+- (android / desktop) 脏区属 markdown 表格遮罩，不是本功能。PC 本回合已把自己发的罩色改成跟会话真实气泡底（组织 `#cce0fe`、外链 `#b3eccf`），T4 仍待眼看；安卓仍是横滚条自绘残留。勿与本功能混提交
+- (desktop) `electron-builder.yml` / `package.json` 保持脏、勿 stage（`.env.test` 本回合已不在脏区）
+- web / ios 两个功能分支均**未 push**，自测通过后再推
 
 ## 关键决策记录
 
