@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-19（本回合旁路修了定时群 AI 框误显「知识来源」；进度浮层代码未动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-19（旁路：三端 markdown 表格去掉左右渐变罩、横滚条改常驻；进度浮层代码未动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,15 +26,15 @@
 
 > ✅ = 代码完成并提交。iOS 已由人工 clean build 通过并真机自测四轮，反馈见下方「自测反馈闭环」。
 
-## 各端工作区现状（2026-08-19 15:45，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-19 17:15，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 157 | 脏 17 | 本次只补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
-| web | `dev-knowledge-not-found` | synced（`42bdce9`） | 脏 1（`src/assets/index.ts`，非本功能） | **本期不做** | 原功能分支已删，见「web 撤销记录」；现切到别的迭代分支 |
-| android | `feat/gfm-markdown` | synced | 脏 2 | **不涉及** | 右侧「收起内容」+ 表格横滚条自绘，勿跟本功能混提 |
-| ios | **`feat/ios-file-download-progress`** | ahead 47（基线 `origin/release`） | 脏 3（旁路） | **本功能 + 旁路** | 本功能 10 文件已提交 `56fab29b6`（另含 gfm-markdown 合并 `9f82cb155`），**未编译未 push**；脏的 3 个是定时群 AI 框误显知识来源的修复（`ZXAgentKnowledgeItem` / `ZXMarkdownManager`），不属本功能 |
-| desktop | `feat/gfm-markdown` | synced | 脏 6 | **不涉及** | 本回合折叠改为超限一律 400px（同高）。`.env.test` / `electron-builder.yml` / `package.json` 禁提交 |
+| context | `main` | ahead 160 | 脏 19 | 本次旁路补文档 | 表格罩撤销写在另一条 feature status；打包脚本 / 命令文件仍脏、不进提交；**不 push main** |
+| web | `dev-knowledge-not-found` | synced（`42bdce9`） | 干净 | **本期不做** | |
+| android | `feat/gfm-markdown` | synced | 脏 6 | **旁路** | 本回合去表格左右罩 + 横条常驻。旁路另有 `ConversationFragment` / `AgentAnswerGetManager` / `ReferenceMessageItemProvider`，勿跟本功能混提 |
+| ios | **`feat/ios-file-download-progress`** | ahead 48（基线 `origin/release`） | 脏 6 | **本功能已提交 + 旁路表格** | 文件进度 10 文件已提交 `56fab29b6`，**未编译未 push**；脏区是 markdown 去罩 + 常驻横条（`ZXMarkdownTableView` 等 6 文件） |
+| desktop | `feat/gfm-markdown` | synced | 脏 16 | **旁路** | 删表格 fade JS/mixin；横条常驻。`.env.test` / `electron-builder.yml` / `package.json` 禁提交 |
 
 ## 代码审查（2026-08-18，两个子代理并行）
 
@@ -75,7 +75,7 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 
 | 群公告里点「查看」没有「正在打开...」 | 轻提示只挂在聊天 / 知识来源两个调用点上；群公告是 H5，走 `multimediaPreview` 桥 → `ZXJSMediaAPI._previewFileWithURL` → `multiMediaPreviewFile`，那条链上没人弹 | 轻提示**下沉到 `multiMediaPreviewFile` 入口**：所有预览入口（聊天 / 知识来源 / H5 群公告 / 行动中心 / WebView 文件链接）统一弹；同时把 handler 包一层，任何分支结束都收掉提示。桥入口再补一次 `show`，把取签名地址那趟网络也盖住（视频分支不弹，它用自己的「视频加载中...」）（未提交） |
 
-| 定时群 AI 框新闻消息误显「知识来源」 | 消息带智能体知识库整表 `agentKnowledgeList`，正文却是联网搜索标签 `<reference data-ref="toutiao_article">`。iOS 把对不上的 data-ref 凭空加成列表项，角标编号也走兜底 | 知识来源改成「知识库 ∩ 正文真实文档引用」；`toutiao_article` 这类搜索来源剥掉标签、不造列表项（未提交，与进度浮层分文件） |
+| 定时群 AI 框新闻误显引用条 +「回复 @刘馨琪：」 | 定时推送没有 `referMsg`。iOS 对所有 `ga_` 卡片从会话近 30 条里找最近一次 @智能体，把别人的「@Eric 出差报销规则」安到本条上，再拼回复前缀 | 定时任务（`fixTaskMessage=1`）不再解析引用、不拼「回复 @」；行动卡片也不再从附近历史猜引用（未提交） |
 
 **未改（有意为之，自测时留意）**：
 
@@ -117,7 +117,8 @@ web 工作区当前切到 `dev-knowledge-not-found`（别的迭代：已删除�
 - (ios) 行动中心文件卡片失败分支：toast 正常，提示不残留
 - (ios) H5 加密文件（`encryptType=1`）：下载段没有进度浮层，全程只有「正在打开...」且**不可取消**——大文件会显得久，先确认能开
 - (ios) 智问「预览」：仍是它自己的 HUD + `UIDocumentInteractionController`，行为应与改动前一致
-- (ios) **定时群 AI 框新闻消息**（`fixTaskMessage=1` + 正文 `<reference data-ref="toutiao_article">`）：底部**不应**出现「知识来源」，正文也不该有 `[1]` 角标；普通智能体问答引用了真实知识库文档的仍要显示
+- (ios) **定时群 AI 框新闻消息**：不应出现顶部引用条（「刘馨琪：@Eric …」）和正文「回复 @刘馨琪：」；底部「来自群 AI 框」保留；普通 @智能体问答的引用条不受影响
+- (ios) 同上这条新闻：底部**不应**出现「知识来源」/ `toutiao_article` 角标
 
 **iOS 真机 / 模拟器自测清单（回归用）**：
 
@@ -137,6 +138,7 @@ web 工作区当前切到 `dev-knowledge-not-found`（别的迭代：已删除�
 - (android / desktop) 脏区属 markdown，不是本功能。安卓本回合多了 `ActionCardMessageItemProvider`（右侧「收起内容」补段栈折叠），另 `ZXMarkdownTableView` 仍是横滚条自绘；桌面仅本地调试三文件。勿与本功能混提交
 - (desktop) `electron-builder.yml` / `package.json` / `.env.test` 保持脏、勿 stage
 - ios 功能分支 `feat/ios-file-download-progress` **未 push**，自测通过后再推；web 分支已删
+- **旁路（2026-08-19）**：三端 markdown 表格去掉左右渐变罩、横滚条改常驻。进度浮层代码未动。详情见 `20260818-3端-markdown-的-表格-横向滚动-.../status.md`
 
 ## 关键决策记录
 
@@ -165,4 +167,4 @@ web 工作区当前切到 `dev-knowledge-not-found`（别的迭代：已删除�
 - 2026-08-18：web 仓库无本地 prettier 且无配置，`npx prettier@3` 默认 `trailingComma: all` 会制造整文件噪声——格式化新文件须加 `--trailing-comma none` 对齐既有风格
 - 2026-08-18：web 与 ios 各自从 `release` 切独立新分支，不叠在现有功能分支上
 - 2026-08-19：审查去掉 `destinationPath` 后赋值没删干净，首次编译报 `Property 'destinationPath' not found`；已删该行，取消仍只中止 sessionTask、不碰目标缓存
-- 2026-08-19：定时群 AI 框（联网搜索新闻）的 `agentKnowledgeList` 是智能体知识库整表，正文 `<reference data-ref="toutiao_article">` 不是知识文档。知识来源只展示「知识库 ∩ 正文真实文档引用」，对不上的标签剥掉，禁止凭空造列表项
+- 2026-08-19：定时群 AI 框没有 `referMsg`。不能从会话近期历史里找最近一次 @智能体来充当引用，否则会把无关提问（如「出差报销规则」）显示成这条定时新闻的回复对象。`fixTaskMessage=1` 不展示引用条、不拼「回复 @xx：」

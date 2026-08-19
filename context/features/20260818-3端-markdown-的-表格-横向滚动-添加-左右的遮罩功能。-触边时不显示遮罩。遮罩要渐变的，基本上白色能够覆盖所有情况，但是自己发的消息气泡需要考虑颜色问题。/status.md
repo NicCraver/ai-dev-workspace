@@ -1,6 +1,6 @@
-# Status：三端 markdown 表格横滚左右渐变遮罩
+# Status：三端 markdown 表格横滚（已撤左右渐变罩，条改常驻）
 
-> 最后更新：2026-08-19（PC 自己发的表格罩色跟会话真实气泡底，不再用列表默认的 `#d7e5ff`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-19（产品改口：去掉左右渐变，溢出即常驻横滚条）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -8,50 +8,47 @@
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| T1 显隐公式纯函数 + 单测 | — | — | — | ✅ |
-| T2 CSS 伪元素 + 气泡色变量 | — | — | — | ✅ |
-| T3 三个消费方挂 bind | — | — | — | ✅ |
-| T4 运行时自测 | — | — | — | 🚧 |
-| T5 TableView 自绘左右渐变 | — | ✅ | — | — |
-| T6 气泡色传入表格 | — | ✅ | — | — |
-| T7 真机自测 | — | 🚧 | — | — |
-| T8 外壳 CAGradientLayer | — | — | ✅ | — |
-| T9 段栈 + 两 cell 下发气泡色 | — | — | ✅ | — |
-| T10 真机自测 | — | — | 🚧 | — |
-| T11 token 表补遮罩宽 | — | ✅ | ✅ | ✅ |
+| T1 显隐公式纯函数 + 单测 | — | — | — | ~~✅~~ 已撤 |
+| T2 CSS 伪元素 + 气泡色变量 | — | — | — | ~~✅~~ 已撤 |
+| T3 三个消费方挂 bind | — | — | — | ~~✅~~ 已撤 |
+| T4 运行时自测 | — | — | — | 🚧 改验常驻条 |
+| T5 TableView 自绘左右渐变 | — | ~~✅~~ 已撤 | — | — |
+| T6 气泡色传入表格 | — | ~~✅~~ 已撤 | — | — |
+| T7 真机自测 | — | 🚧 改验常驻条 | — | — |
+| T8 外壳 CAGradientLayer | — | — | ~~✅~~ 已撤 | — |
+| T9 段栈 + 两 cell 下发气泡色 | — | — | ~~✅~~ 已撤 | — |
+| T10 真机自测 | — | — | 🚧 改验常驻条 | — |
+| T11 token 表 | — | ✅ | ✅ | ✅ |
+| T12 去掉左右罩 + 横条常驻 | — | ✅ 代码 | ✅ 代码 | ✅ 代码 |
 
-> T1–T3 / T5–T6 / T8–T9 是代码完成（PC 单测 8/8；安卓 `assembleDevelopDebug` 绿；iOS 未跑 xcodebuild）。T4 / T7 / T10 必须人工自测。
+> T12 代码已写、未提交、未编译。PC 折叠单测 12/12；安卓 / iOS 需人工装包。T4 / T7 / T10 改为验常驻条，不再验罩。
 
 ## 各端工作区现状（2026-08-19，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 152 | 脏（scripts / 命令 / status） | 文档待补记 | ACTIVE 已切走；本功能 status 仍在此更新。**不 push main** |
-| web | `feat/knowledge-file-progress` | ahead 2 | 干净 | **不涉及** | 知识文件进度旁路 |
-| android | **`feat/gfm-markdown`** | synced | 脏 1 | **本功能** | 横滚条自绘细胶囊；未 commit |
-| ios | `feat/ios-file-download-progress` | ahead 20 | 脏 7 | 旁路 | 主干在做文件进度；markdown 罩已在 `feat/ios-gfm-markdown` |
-| desktop | **`feat/gfm-markdown`** | synced | 脏 4 | **本功能** | 本次：`chat-box.vue` / `winbox-wrapper.vue` 罩色跟真实气泡。`electron-builder.yml` / `package.json` 勿 stage |
+| context | `main` | ahead 160 | 脏 19 | 本次补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
+| web | `dev-knowledge-not-found` | synced | 干净 | **不涉及** | |
+| android | **`feat/gfm-markdown`** | synced | 脏 6 | **本功能** + 旁路 | 本功能：`ZXMarkdownTableView` / `ZXMarkdownContentView` / `ActionCardMessageItemProvider` 去罩+常驻条。旁路勿混提：`ConversationFragment` / `AgentAnswerGetManager` / `ReferenceMessageItemProvider` |
+| ios | `feat/ios-file-download-progress` | ahead 48 | 脏 6 | **本功能叠在文件进度分支上** | markdown 去罩+自绘常驻条；文件进度主干已提交 `56fab29b6`。另有 `feat/ios-gfm-markdown` 未带这笔 |
+| desktop | **`feat/gfm-markdown`** | synced | 脏 16 | **本功能** | 删 `markdownTableFade.js` / mixin / 单测；`.md-table-wrap` 强制 webkit 横条常驻。`.env.test` / `electron-builder.yml` / `package.json` 勿 stage |
 
 ## 待办 / 阻塞
 
-- (desktop T4) **优先再验自己发的宽表**：组织会话罩应是 `#cce0fe`、外链 `#b3eccf`，不能再是偏白的 `#d7e5ff`。热更新若没带上，重启 `npm run dev:test`。顺带再看触边显隐、表底 8px 空隙。
-- (android T7) 组织白 / `#DEE8FF`、外链 `#99F0CB` / `#EFF2F6`；复用换色；长按与纵滚。**再验**：宽表横滑时出 **iOS 风格细胶囊**（不是系统粗条）、松手淡出；正文下方表格上边距是否够松。
-- (ios T10) 必须真机。组织白 / `#DEE8FF`、微信 `#B3ECCF`；流式结束才出罩；聚合 / 合并转发看一眼。**再验**：正文与表格之间是否还偏空。
+- (desktop T4) 宽表一出现就有 6px 横条，贴左/滑到中间/贴右条都在，窄表没有条。表底 8px 空隙还在。热更新若没带上，重启 `npm run dev:test`
+- (android T7) 宽表一出现就有细胶囊，不等滑、松手不淡出；窄表没有。长按与纵滚不受影响。旁路文件勿跟这笔混提
+- (ios T10) 必须真机。系统 indicator 已关，自绘 3pt 胶囊溢出即常驻。流式结束成表后才出条；聚合 / 合并转发看一眼
 - (desktop) 本地调试三文件保持脏、勿 stage
+- (ios) 这笔改在 `feat/ios-file-download-progress` 上；若还要合回 `feat/ios-gfm-markdown`，需另 cherry-pick
 - (ios) `project.pbxproj` 排序噪声若还在 stash 里，回主干记得 pop——与本功能无关
 
 ## 关键决策记录
 
+- 2026-08-19：**去掉左右渐变罩。** 宽表改靠常驻横滚条提示可滑。罩色跟气泡、触边显隐、PC `--md-table-fade-color` 全部作废
+- 2026-08-19：**滚动条默认直接显示、常驻。** 溢出立刻画，不等用户先滑；松手不淡出。窄表（差值 ≤1px）不画。安卓 / iOS 自绘 3dp/3pt 胶囊（35% 黑、贴底 overlay）；PC 给 `.md-table-wrap` 写死 `::-webkit-scrollbar { height: 6px }`，否则 Chromium overlay 条只在滑/悬停时出现
 - 2026-08-18：3 端 = PC + 安卓 + iOS，web 不做
-- 2026-08-18：遮罩方案 = 左右叠渐变层（不 mask 表格内容、不写死两套图）
-- 2026-08-18：实色跟随当前气泡真实底色（含安卓外链 / iOS 微信）
 - 2026-08-18：同一套管线的 markdown 表格都做（会话 / 详情 / 合并 / 引用）
-- 2026-08-18：宽 24、触边阈值 1px；差值 ≤1px 当不溢出
-- 2026-08-18：继续叠在 `feat/gfm-markdown` / `feat/ios-gfm-markdown`，不另切分支
-- 2026-08-18：渐变透明端必须是**同色 alpha=0**。安卓 `Color.TRANSPARENT`（`#00000000`）会往黑插值发灰，已改 `Color.argb(0, r, g, b)`，与 iOS `colorWithAlphaComponent:0` 对齐
-- 2026-08-18：PC 回复列表 `reply-msg-list.vue` 补了同一套 `--md-table-fade-color`（plan 只写了 `msg-list.vue`）
-- 2026-08-18：PC 伪元素（float+sticky）自测看不见罩。右罩在宽表后面、初始视口外；空伪元素 height:100% 在 auto 容器上为 0。改为滚动容器外侧兄弟 + 实色条 mask 渐变
-- 2026-08-18：自测微调——安卓宽表横滑显示 overlay 滚动条（不占高度）；非首段表格上边距 7→16dp 对齐 iOS 松一点的观感；iOS 非首块表格上收 10pt（吃掉上一段段间距 / 文本框底空）
-- 2026-08-18：安卓横滚条不要用系统 scrollbar（各 ROM 又粗又黑）。对齐 iOS 默认 UIScrollView indicator：3dp 圆角胶囊、黑 35%、贴底 overlay、滑时出现、停 800ms 后 250ms 淡出。compileSdk 28 没有 `setHorizontalScrollbarThumbDrawable`，在 `dispatchDraw` 里自绘，画在左右罩下面。
-- 2026-08-18：PC 表格横滚条离表底要**真留空**。槽加高 + thumb 透明上边在 Chromium 里仍贴着表的下边框（4px 在槽内部）。改为 `.md-table-wrap` `padding-bottom: 8px`，条高继续用全局 6px；左右罩 `bottom: 6px` 只让开条本身。
-- 2026-08-19：PC 自己发的罩色不能写在消息列表的默认蓝上。会话外壳会用 `!important` 把气泡改成组织 `#cce0fe` / 外链 `#b3eccf`，罩色变量必须跟这套最终底，否则右侧会糊一层偏白渐变。
+- 2026-08-18：继续叠在 `feat/gfm-markdown`；iOS 当时在 `feat/ios-gfm-markdown`，本回合实际改的是当前 checkout 的 `feat/ios-file-download-progress`（该分支已含表格代码）
+- 2026-08-18：安卓横滚条不要用系统 scrollbar（各 ROM 又粗又黑）。compileSdk 28 没有 `setHorizontalScrollbarThumbDrawable`，在 `dispatchDraw` 里自绘
+- 2026-08-18：PC 表格横滚条离表底要**真留空**。`.md-table-wrap` `padding-bottom: 8px`
+- 2026-08-18：（已作废）遮罩方案 / 罩跟气泡底 / 同色 alpha=0 / 触边 24 宽——见 git 历史，代码已删
