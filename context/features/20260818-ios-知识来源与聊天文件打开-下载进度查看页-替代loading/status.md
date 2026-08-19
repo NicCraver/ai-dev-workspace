@@ -20,9 +20,9 @@
 | T5e 缓存命中秒开 + 跳过解密判定 + 延迟展示 | — | — | ✅ | — |
 | T5f 缓存命中弹「正在打开...」轻提示（`ZXFileOpeningTip`） | — | — | 🚧 | — |
 | T6 新桥 `openKnowledgeDoc` | — | — | ✅ | — |
-| T7 平台分流 + 单测 | ✅ | — | — | — |
-| T8 文档（bridge.md / impl-notes / status） | ✅ | — | ✅ | — |
-| 真机自测 | ⬜ | — | 🚧 | — |
+| T7 平台分流 + 单测 | ~~✅~~ 已撤 | — | — | — |
+| T8 文档（bridge.md / impl-notes / status） | ~~✅~~ 已撤 | — | ✅ | — |
+| 真机自测 | — | — | 🚧 | — |
 
 > ✅ = 代码完成并提交。iOS 已由人工 clean build 通过并真机自测四轮，反馈见下方「自测反馈闭环」。
 
@@ -31,7 +31,7 @@
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
 | context | `main` | ahead 157 | 脏 17 | 本次只补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
-| web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`；本回合无 web 改动 |
+| web | `dev-knowledge-not-found` | synced（`42bdce9`） | 脏 1（`src/assets/index.ts`，非本功能） | **本期不做** | 原功能分支已删，见「web 撤销记录」；现切到别的迭代分支 |
 | android | `feat/gfm-markdown` | synced | 脏 2 | **不涉及** | 右侧「收起内容」+ 表格横滚条自绘，勿跟本功能混提 |
 | ios | **`feat/ios-file-download-progress`** | ahead 46（基线 `origin/release`） | **脏 10** | **本功能** | HUD / 知识来源 / 聊天预览仍未提交。本回合未改这些文件 |
 | desktop | `feat/gfm-markdown` | synced | 脏 6 | **不涉及** | 本回合折叠改为超限一律 400px（同高）。`.env.test` / `electron-builder.yml` / `package.json` 禁提交 |
@@ -79,7 +79,22 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 
 - (ios) 飞书 / WPS 授权分支回 `cancel` 后没有第二次通知，web 不知道可以重试；授权本身在原生内闭环，重试靠用户再点一次
 - (ios) `fileNoAuth` 打开的是「无权限」提示页却回 `success`（页面确实打开了）
-- (web) `KnowledgeListTable.vue`（PC 设置页）不传 `isWnsdkEnable`，本期不覆盖
+- ~~(web) `KnowledgeListTable.vue`（PC 设置页）不传 `isWnsdkEnable`~~ —— web 已整体撤销
+
+## web 撤销记录（2026-08-19）
+
+本期**只交付 iOS**，web 侧改动按用户要求撤掉：删除本地分支 `feat/knowledge-file-progress`（从未 push）。
+
+| 项 | 值 |
+|---|---|
+| 删除的分支 | `feat/knowledge-file-progress`（tip = `8bd8db7`） |
+| 两个提交 | `8bd8db7` 分流上移到取元数据前并补 agentId；`a9e78ae` iOS 客户端内知识来源交由原生打开 |
+| 涉及文件 | `AcMarkdown.vue`、`knowledgeDialogUtils.js`、`knowledgeNativeOpen.js`(新)、`tests/knowledgeNativeOpen.test.mjs`(新) |
+| 找回方式 | `git reflog` 中仍可见 `8bd8db7`（默认约 90 天），`git branch <名> 8bd8db7` 可复活；过期即永久丢失 |
+
+**后果**：H5（移动端 AI 会话页）点知识来源**不再走**新桥 `openKnowledgeDoc`，回到原来的 web 逻辑。iOS 侧该桥仍注册，只是暂无调用方；原生页面内的知识来源 / 聊天文件进度提示不受影响。
+
+web 工作区当前切到 `dev-knowledge-not-found`（别的迭代：已删除知识提示 / PC 打开文件前提示），与本功能无关。
 
 ## 待办 / 阻塞
 
@@ -114,16 +129,11 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 - (ios) 取消后确认：上游没有残留的「加载中…」小圈，且 web 侧不会卡住（H5 入口）
 - (ios) 弱网 / 断网：失败 toast 文案正确，浮层不残留
 
-**web 自测**：
-
-- (web) 安卓客户端内点 H5 知识来源：行为与改动前**完全一致**（回归，未走新桥）
-- (web) PC 浏览器 / 桌面端点知识来源：行为不变
-
 **其它**：
 
 - (android / desktop) 脏区属 markdown，不是本功能。安卓本回合多了 `ActionCardMessageItemProvider`（右侧「收起内容」补段栈折叠），另 `ZXMarkdownTableView` 仍是横滚条自绘；桌面仅本地调试三文件。勿与本功能混提交
 - (desktop) `electron-builder.yml` / `package.json` / `.env.test` 保持脏、勿 stage
-- web / ios 两个功能分支均**未 push**，自测通过后再推
+- ios 功能分支 `feat/ios-file-download-progress` **未 push**，自测通过后再推；web 分支已删
 
 ## 关键决策记录
 
