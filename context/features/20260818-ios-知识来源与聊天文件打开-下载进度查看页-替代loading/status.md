@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-19（工作区快照刷新：本回合未改本功能代码；PC 脏区是 markdown 表格罩色）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-19（本回合未改本功能代码；旁路修了安卓 markdown 右侧「收起内容」高度）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,15 +26,15 @@
 
 > ✅ = 代码完成并提交。iOS 已由人工 clean build 通过并真机自测四轮，反馈见下方「自测反馈闭环」。
 
-## 各端工作区现状（2026-08-19 14:35，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-19 14:51，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 152 | 脏 16 | 本次只补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
+| context | `main` | ahead 154 | 脏 14 | 本次只补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
 | web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`；单测 7/7；未 push。本回合无 web 改动 |
-| android | `feat/gfm-markdown` | synced | 脏 1 | **不涉及** | `ZXMarkdownTableView.java` 属 markdown 表格遮罩，勿与本功能混提 |
-| ios | **`feat/ios-file-download-progress`** | ahead 20（基线 `origin/release`） | **脏 7** | **本功能** | HEAD `d48c63df8`；HUD / 知识来源 / 聊天预览 / 智问入口仍未提交，**未编译**。本回合未改这些文件 |
-| desktop | `feat/gfm-markdown` | synced | 脏 4 | **不涉及** | 本回合改了 `chat-box.vue` / `winbox-wrapper.vue`（自己发表格罩色跟 `#cce0fe`/`#b3eccf`）；另 `electron-builder.yml` / `package.json` 禁提交 |
+| android | `feat/gfm-markdown` | synced | 脏 2 | **不涉及** | 本回合修了 `ActionCardMessageItemProvider` 右侧「收起内容」；`ZXMarkdownTableView.java` 仍是表格横滚条自绘，勿与本功能混提 |
+| ios | **`feat/ios-file-download-progress`** | ahead 20（基线 `origin/release`） | **脏 7** | **本功能** | HUD / 知识来源 / 聊天预览 / 智问入口仍未提交。本回合未改这些文件 |
+| desktop | `feat/gfm-markdown` | synced | 脏 3 | **不涉及** | 仅 `electron-builder.yml` / `package.json` / `.env.test`，禁提交 |
 
 ## 代码审查（2026-08-18，两个子代理并行）
 
@@ -70,6 +70,8 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 | 人工回退工作区到 `edbf24258`（撤掉「80ms 即出 + 最短停留 200ms」「缓存命中跳过解密判定 + 延迟 150ms」两笔），只留 4 处文案改动 | — | 沿用回退后的状态；`ZXFileLoadingTitle` 半落地（无定义）本轮补上 |
 | 已下载好的文件再点开全程无提示，不知道点上没 | 缓存命中不下载 → 浮层 300ms 延迟内就结束，不弹；但解密判定 + present 仍要时间 | 新增 `ZXFileOpeningTip`：缓存命中路径**点击那一刻**弹无进度、无取消的「正在打开...」，预览呈现时收，最短停留 200ms（未提交） |
 | 点聊天里的文件，「正在打开...」闪一下就没、文件没打开，**再点一次就好** | 预览关闭回调是**共享单例**上的一个 block（`previewDismiss`）：上一轮预览的关闭（`previewControllerWillDismiss` / `ZXFilePreviewNavController` 的 dismissBlock / 侧滑触发的 `forceCompleteDismissIfNeeded`）晚到时，执行的已经是**新一轮**的回调 → 新流程被当成「已关闭」提前结束（回 nil、不报错，所以连 toast 都没有）。同一窗口内 present 又常被系统静默丢弃（上一个模态还在关闭动画里） | ① 三处关闭回调都加**实例认门 + 一次性**（`controller != self.previewController` 直接忽略；取出 block 后置 nil）；② present 统一走 `zx_presentPreview:retry:handler:`：转场未结束就每 50ms 重试、最多 10 次，仍不行回错 `11117`，保证 handler 必回调一次；③ `QLPreviewController` 改为**每次新建**（原来是懒加载单例，被外部强行 dismiss 后状态脏，再 present 会被忽略）（未提交） |
+
+| 上一轮修完后改成弹「查看文件失败」toast，还是打不开 | 上一版把「找不到 presenter」当硬失败：`self.controller` 为空 / 不在窗口上就直接回错（`11116`），重试 0.5s 到头也回错；`previewFileByParams` 又把任何 error 统一改写成「查看文件失败」，看不出真实原因 | 改成**不放弃**：presenter 找不到就兜底用 `getCurrentController` → keyWindow 顶层控制器；present 后下一拍**校验 `presentingViewController`**，被系统丢弃就重试（最多 20 × 50ms = 1s）；删掉入口的 `11116` 硬失败；各失败点补 `NSLog`（`文件预览 - ...` / `聊天文件预览 - 失败：code=...`）便于定位（未提交） |
 
 **未改（有意为之，自测时留意）**：
 
@@ -111,8 +113,8 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 
 **其它**：
 
-- (android / desktop) 脏区属 markdown 表格遮罩，不是本功能。PC 本回合已把自己发的罩色改成跟会话真实气泡底（组织 `#cce0fe`、外链 `#b3eccf`），T4 仍待眼看；安卓仍是横滚条自绘残留。勿与本功能混提交
-- (desktop) `electron-builder.yml` / `package.json` 保持脏、勿 stage（`.env.test` 本回合已不在脏区）
+- (android / desktop) 脏区属 markdown，不是本功能。安卓本回合多了 `ActionCardMessageItemProvider`（右侧「收起内容」补段栈折叠），另 `ZXMarkdownTableView` 仍是横滚条自绘；桌面仅本地调试三文件。勿与本功能混提交
+- (desktop) `electron-builder.yml` / `package.json` / `.env.test` 保持脏、勿 stage
 - web / ios 两个功能分支均**未 push**，自测通过后再推
 
 ## 关键决策记录
