@@ -69,6 +69,7 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 | 点击完「加载中...」秒关，要延迟 | 快路径（缓存命中、小文件）浮层弹一下就关，闪 | 浮层**延迟 300ms 展示**，期间只记账；未展示过则 finish/dismiss 都不弹（`97aa052b2`） |
 | 人工回退工作区到 `edbf24258`（撤掉「80ms 即出 + 最短停留 200ms」「缓存命中跳过解密判定 + 延迟 150ms」两笔），只留 4 处文案改动 | — | 沿用回退后的状态；`ZXFileLoadingTitle` 半落地（无定义）本轮补上 |
 | 已下载好的文件再点开全程无提示，不知道点上没 | 缓存命中不下载 → 浮层 300ms 延迟内就结束，不弹；但解密判定 + present 仍要时间 | 新增 `ZXFileOpeningTip`：缓存命中路径**点击那一刻**弹无进度、无取消的「正在打开...」，预览呈现时收，最短停留 200ms（未提交） |
+| 点聊天里的文件，「正在打开...」闪一下就没、文件没打开，**再点一次就好** | 预览关闭回调是**共享单例**上的一个 block（`previewDismiss`）：上一轮预览的关闭（`previewControllerWillDismiss` / `ZXFilePreviewNavController` 的 dismissBlock / 侧滑触发的 `forceCompleteDismissIfNeeded`）晚到时，执行的已经是**新一轮**的回调 → 新流程被当成「已关闭」提前结束（回 nil、不报错，所以连 toast 都没有）。同一窗口内 present 又常被系统静默丢弃（上一个模态还在关闭动画里） | ① 三处关闭回调都加**实例认门 + 一次性**（`controller != self.previewController` 直接忽略；取出 block 后置 nil）；② present 统一走 `zx_presentPreview:retry:handler:`：转场未结束就每 50ms 重试、最多 10 次，仍不行回错 `11117`，保证 handler 必回调一次；③ `QLPreviewController` 改为**每次新建**（原来是懒加载单例，被外部强行 dismiss 后状态脏，再 present 会被忽略）（未提交） |
 
 **未改（有意为之，自测时留意）**：
 
@@ -86,6 +87,9 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 - (ios) 连着快速点两个不同文件：提示不会被上一轮的延迟收尾提前关掉
 - (ios) 知识来源缓存命中现在**又走绿盾解密判定**了（跳过判定那笔已被回退）：绿盾企业里打开是否变慢、是否正常
 - (ios) 浮层出现前点返回 / 切页，会不会出现「浮层晚到、盖在别的页面上」
+- (ios) **关掉一个预览后立刻点下一个文件**（本轮修的就是这条）：第二个必须能打开，不再「闪一下没反应、再点一次才行」
+- (ios) 侧滑返回退出会话页后再进来点文件：`forceCompleteDismissIfNeeded` 触发的旧回调不该影响新一轮
+- (ios) 预览关闭后 Done 按钮、绿盾预览页返回：只通知一次上游，不重复回调
 
 **iOS 真机 / 模拟器自测清单（回归用）**：
 
@@ -122,6 +126,9 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 - 2026-08-19：缓存命中改为**弹「正在打开...」轻提示**（`ZXFileOpeningTip`，写在 `ZXFilePreviewLoadHUD.h/.m`）：无进度环、无取消，点击那一刻就出，最短停留 200ms，预览发起呈现时收（提示在上滑动画里消失）。原因：缓存命中没有进度可报，但解密判定 + present 仍要时间，全程无提示用户不知道点上没
 - 2026-08-19：轻提示与带进度浮层**互斥交接**——浮层真正露面（延迟 300ms 到点）时会 `dismissImmediately` 收掉轻提示；`ZXMultiMediaClient` 里原本裸调的 `[ZXProgressHUD dismiss]` 改成 `dismissForeignHUD`（提示开着就别动，否则照常收掉调用方自己的 HUD）
 - 2026-08-19：文案统一常量 `ZXFileLoadingTitle = @"正在打开..."`，浮层、轻提示、`ZXMultiMediaClient` 三处共用（此前半落地：调用点引用了常量但没定义，编译不过）
+- 2026-08-19：预览呈现收口到 `zx_presentPreview:retry:handler:`——presenter 取「顺着 presentedViewController 往上找到的最顶层」，遇到正在关闭的模态就等 50ms 重试（最多 10 次 = 0.5s），重试到头回错误码 `11117`。理由：UIKit 对转场中的 present 是**静默丢弃**，handler 不回调 → 上游永久挂起（web promise / HUD / 轻提示）
+- 2026-08-19：预览关闭回调改为**认实例 + 一次性**（`previewControllerWillDismiss` / `previewControllerDidDismiss` / `ZXFilePreviewNavController` dismissBlock / `forceCompleteDismissIfNeeded`）。理由：`previewDismiss` 挂在共享单例上，旧预览的关闭回调晚到会执行新一轮的 block，把新流程当成「已关闭」提前收尾
+- 2026-08-19：`QLPreviewController` 由懒加载单例改为**每次打开新建**。理由：被外部强行 dismiss 后代理不回调、实例状态脏；且懒加载让 `forceCompleteDismissIfNeeded` 的空判恒真
 - 2026-08-19：聊天入口不再弹无进度的普通 HUD，由 `previewFileByModel` 决定「无提示秒开」还是「起带进度浮层」
 - 2026-08-18：取消 = 中止下载任务 + 删半成品 + 关浮层 + 丢弃在途回调，不做断点续传 / 暂停继续
 - 2026-08-18：进度能力加在下载层（`ZXFileClient writeToFile:progress:`），旧 `writeToFile:completion:` 转调新方法，老调用点零改动
