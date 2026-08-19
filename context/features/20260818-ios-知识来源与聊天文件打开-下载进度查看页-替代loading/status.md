@@ -73,6 +73,8 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 
 | 上一轮修完后改成弹「查看文件失败」toast，还是打不开 | 上一版把「找不到 presenter」当硬失败：`self.controller` 为空 / 不在窗口上就直接回错（`11116`），重试 0.5s 到头也回错；`previewFileByParams` 又把任何 error 统一改写成「查看文件失败」，看不出真实原因 | 改成**不放弃**：presenter 找不到就兜底用 `getCurrentController` → keyWindow 顶层控制器；present 后下一拍**校验 `presentingViewController`**，被系统丢弃就重试（最多 20 × 50ms = 1s）；删掉入口的 `11116` 硬失败；各失败点补 `NSLog`（`文件预览 - ...` / `聊天文件预览 - 失败：code=...`）便于定位（未提交） |
 
+| 群公告里点「查看」没有「正在打开...」 | 轻提示只挂在聊天 / 知识来源两个调用点上；群公告是 H5，走 `multimediaPreview` 桥 → `ZXJSMediaAPI._previewFileWithURL` → `multiMediaPreviewFile`，那条链上没人弹 | 轻提示**下沉到 `multiMediaPreviewFile` 入口**：所有预览入口（聊天 / 知识来源 / H5 群公告 / 行动中心 / WebView 文件链接）统一弹；同时把 handler 包一层，任何分支结束都收掉提示。桥入口再补一次 `show`，把取签名地址那趟网络也盖住（视频分支不弹，它用自己的「视频加载中...」）（未提交） |
+
 **未改（有意为之，自测时留意）**：
 
 - (ios) 飞书 / WPS 授权分支回 `cancel` 后没有第二次通知，web 不知道可以重试；授权本身在原生内闭环，重试靠用户再点一次
@@ -92,6 +94,9 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 - (ios) **关掉一个预览后立刻点下一个文件**（本轮修的就是这条）：第二个必须能打开，不再「闪一下没反应、再点一次才行」
 - (ios) 侧滑返回退出会话页后再进来点文件：`forceCompleteDismissIfNeeded` 触发的旧回调不该影响新一轮
 - (ios) 预览关闭后 Done 按钮、绿盾预览页返回：只通知一次上游，不重复回调
+- (ios) **群公告 / 其它 H5 页点文件**：点击瞬间出「正在打开...」，取签名地址那趟网络也被盖住
+- (ios) 行动中心文件卡片、WebView 里点文件链接：原来的无文案转圈变成「正在打开...」，收尾正常
+- (ios) 视频（聊天 / H5）：仍是「视频加载中...」，不受影响
 
 **iOS 真机 / 模拟器自测清单（回归用）**：
 
@@ -130,6 +135,7 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 - 2026-08-19：文案统一常量 `ZXFileLoadingTitle = @"正在打开..."`，浮层、轻提示、`ZXMultiMediaClient` 三处共用（此前半落地：调用点引用了常量但没定义，编译不过）
 - 2026-08-19：预览呈现收口到 `zx_presentPreview:retry:handler:`——presenter 取「顺着 presentedViewController 往上找到的最顶层」，遇到正在关闭的模态就等 50ms 重试（最多 10 次 = 0.5s），重试到头回错误码 `11117`。理由：UIKit 对转场中的 present 是**静默丢弃**，handler 不回调 → 上游永久挂起（web promise / HUD / 轻提示）
 - 2026-08-19：预览关闭回调改为**认实例 + 一次性**（`previewControllerWillDismiss` / `previewControllerDidDismiss` / `ZXFilePreviewNavController` dismissBlock / `forceCompleteDismissIfNeeded`）。理由：`previewDismiss` 挂在共享单例上，旧预览的关闭回调晚到会执行新一轮的 block，把新流程当成「已关闭」提前收尾
+- 2026-08-19：轻提示**下沉到 `ZXMultiMediaClient multiMediaPreviewFile:` 入口**（不再只挂在聊天 / 知识来源两个调用点）：那里是所有文件预览的唯一必经之路，入口 `show` + handler 包一层统一 `dismiss`，新入口天然覆盖。智问走自己的预览控制器、不经过该方法，保持原样
 - 2026-08-19：`QLPreviewController` 由懒加载单例改为**每次打开新建**。理由：被外部强行 dismiss 后代理不回调、实例状态脏；且懒加载让 `forceCompleteDismissIfNeeded` 的空判恒真
 - 2026-08-19：聊天入口不再弹无进度的普通 HUD，由 `previewFileByModel` 决定「无提示秒开」还是「起带进度浮层」
 - 2026-08-18：取消 = 中止下载任务 + 删半成品 + 关浮层 + 丢弃在途回调，不做断点续传 / 暂停继续
