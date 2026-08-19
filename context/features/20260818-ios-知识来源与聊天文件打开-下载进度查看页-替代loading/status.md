@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-19（修 iOS 编译：审查删掉 `destinationPath` 后赋值残留；仍未真机自测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-19（iOS 已人工编译 + 真机自测四轮，反馈全部闭环）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -21,16 +21,18 @@
 | T8 文档（bridge.md / impl-notes / status） | ✅ | — | ✅ | — |
 | 真机自测 | 🚧 | 🚧 | 🚧 | — |
 
-> ✅ = 代码完成并提交。iOS 首次编译已暴露一处残留赋值（见待办），其余仍待 clean build；真机自测未做。
+| T5d 浮层与预览同帧收尾（去空窗） | — | — | ✅ | — |
+
+> ✅ = 代码完成并提交。iOS 已由人工 clean build 通过并真机自测四轮，反馈见下方「自测反馈闭环」。
 
 ## 各端工作区现状（2026-08-19，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 141 | 脏 15 | 文档待补本条 | 打包脚本改动与上个功能残留未提交；**不 push main** |
+| context | `main` | ahead 146 | 脏 15 | 文档已提交 | 打包脚本改动与上个功能残留未提交；**不 push main** |
 | web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`；单测 7/7；未 push |
 | android | `feat/gfm-markdown` | synced | 脏 1 | **不涉及** | 上个功能（markdown 表格遮罩）残留 |
-| ios | **`feat/ios-file-download-progress`** | ahead 8（基线 `origin/release`） | 脏 1 | **本功能** | 修 `ZXFileClient.m` 残留 `destinationPath` 赋值；未 push |
+| ios | **`feat/ios-file-download-progress`** | ahead 12（基线 `origin/release`） | 干净 | **本功能** | `342981d32`；已 clean build + 真机自测；未 push |
 | desktop | `feat/gfm-markdown` | synced | 脏 3（禁提交） | **不涉及** | `.env.test` 等勿 stage |
 
 ## 代码审查（2026-08-18，两个子代理并行）
@@ -52,23 +54,36 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 | 🟡 web | 失败只 `console.warn`、iframe 路径被误伤、UA 判定重复、未知状态当成功 | 分别补 toast、`!inIframe`、判定单点化、状态严格化 |
 | 🟡 web | 分流点太深（web 已发过元数据请求、授权走了 web 弹窗） | 分流上移到 `AcMarkdown.vue` 取元数据之前 |
 
+## 自测反馈闭环（2026-08-19，四轮）
+
+| 反馈 | 原因 | 处理 |
+|------|------|------|
+| 首次 build 报 `Property 'destinationPath' not found` | 审查修取消逻辑时删了该属性，`writeToFile:` 里的赋值没一起删 | 删掉残留赋值（`45f1270` 记录） |
+| 聊天中的文件没有进度效果 | 聊天不走 `openLocalFile`；`ZXRCIMChatLogic previewFileByModel:` 自己 readFile→签名→下载，只把本地路径交给预览器 | 在该方法内接会话；加密文件给 `ZXEncryptLogic` 加 `downloadTmpFile:progress:` 重载（`2d1388ba9`） |
+| 解密会再转一次圈 | 下载段 finish 关掉浮层后，解密段又新建会话 | 会话可跨阶段复用 `startOrReuseWithTitle:`，只换文案不重置进度（`f699628ee`） |
+| 92% 之后直接就打开了 | 终点是「预览弹出时直接关浮层」，100% 没机会出现 | 呈现前先 `finishWithCompletion` 补满；阶段余量 0.9→0.97（`7aa6ac6af`） |
+| 100% 后浮层先消失、才打开，中间有空窗 | `finish` 收尾顺序是先 dismiss（0.15s 淡出）再 present | 改同帧：先发起呈现、紧接着淡出，预览从下往上盖住浮层（`342981d32`） |
+
 **未改（有意为之，自测时留意）**：
 
-- (ios) `finishWithCompletion` 先关浮层再弹预览，`openZXPreview` 慢时有短暂空窗——原实现是预览呈现后才关，观感待真机判断
 - (ios) 飞书 / WPS 授权分支回 `cancel` 后没有第二次通知，web 不知道可以重试；授权本身在原生内闭环，重试靠用户再点一次
 - (ios) `fileNoAuth` 打开的是「无权限」提示页却回 `success`（页面确实打开了）
 - (web) `KnowledgeListTable.vue`（PC 设置页）不传 `isWnsdkEnable`，本期不覆盖
 
 ## 待办 / 阻塞
 
-**iOS 首次编译（必须先做）**：审查修取消逻辑时去掉了 `ZXFileDownloadTask.destinationPath`（取消不再删目标缓存），但 `writeToFile:` 里 `cancelToken.destinationPath = filePath` 没一起删，首次 build 报 `Property 'destinationPath' not found`。2026-08-19 已删该赋值。其余 8 个提交仍未过编译器。在 Xcode 打开 `zhixinApp.xcworkspace`，选 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build。重点看 `ZXFilePreviewLoadHUD`（新增 `ZXFileLoadingSession` 同文件双类）、`ZXFileClient`（新增 `ZXFileDownloadTask`）、`ZXAgentKnowledgeOpenLogic`（私有方法签名都加了 `session:` / `report:`）。
+**下一轮自测重点**：
 
-**iOS 真机 / 模拟器自测清单**：
+- (ios) 补满 100% 后停 0.25s 是否拖沓（嫌慢调 `ZXFilePreviewLoadHUDFinishDuration`）
+- (ios) 同帧收尾后浮层淡出与预览呈现是否真的无空窗
+- (ios) 小文件秒开时浮层会不会「闪一下」——真闪就加延迟展示（200ms 内完成则不弹）
+
+**iOS 真机 / 模拟器自测清单（回归用）**：
 
 - (ios) 知识来源大文件（>50MB）：百分比连续爬升、与实际吻合、不回退
 - (ios) 下载中点「取消」：立即关浮层、不弹预览、再次点击能重新下载
 - (ios) 聊天文件消息：普通文件 / 加密文件 / 微应用分享文件各开一次
-- (ios) 绿盾加密文件：5%→65% 轮询后接下载段；**观察二段浮层**（65% 段结束关浮层后是否又起一个从 2% 开始的新浮层，刺眼则改成同一会话贯穿，见 impl-notes）
+- (ios) 绿盾加密文件：下载段走到 ~97% 后切「文件解密中...」继续到 99%，**全程只有一个浮层**
 - (ios) 图片类知识来源：仍走图片浏览器，浮层正常消失
 - (ios) 飞书 / WPS 未授权：浮层关闭后弹授权页
 - (ios) 本地已缓存文件：**不应**出现浮层，秒开
@@ -91,7 +106,8 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 
 - 2026-08-18：放弃复刻安卓 `FileLoadActivity` 独立页——真实痛点是「看不到进度、无法取消」，独立页改动面与回归面不划算
 - 2026-08-18：浮层 = 环形进度 + 中心百分比 + 取消，替换 `ZXFilePreviewLoadHUD` 原横条；绿盾解密链路共用同一套
-- 2026-08-18：进度映射 0→8% 前置假进度（0.5s 步进）、8%→100% 真实字节；加密链路 5%→65% 轮询后下载段起点改 65%；展示层取 max 保证单调
+- 2026-08-19：进度改为**阶段区间模型**（取代 8/65 那套硬编码）：显示值 = `bandStart + p×(1-bandStart)×0.97`，`bandStart` 为进入本阶段时的已显示值；前置假进度 0→8%，下载真实字节到 ~97%，解密轮询 97→99%，呈现预览前补 100%
+- 2026-08-19：浮层跨阶段复用（`startOrReuseWithTitle:`），全程只有一个；收尾与预览呈现同帧，避免空窗
 - 2026-08-18：取消 = 中止下载任务 + 删半成品 + 关浮层 + 丢弃在途回调，不做断点续传 / 暂停继续
 - 2026-08-18：进度能力加在下载层（`ZXFileClient writeToFile:progress:`），旧 `writeToFile:completion:` 转调新方法，老调用点零改动
 - 2026-08-19：**修正前一条的误判**——聊天文件不经过 `openLocalFile`，`ZXRCIMChatLogic previewFileByModel:` 自己做 readFile→签名→下载，只把本地路径交给预览器，所以第一版聊天文件毫无进度效果。已在该方法内接会话；加密文件另给 `ZXEncryptLogic downloadTmpFile:progress:` 重载
