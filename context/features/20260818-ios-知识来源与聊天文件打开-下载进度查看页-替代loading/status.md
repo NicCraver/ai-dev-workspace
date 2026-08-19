@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-19（旁路：三端 markdown 表格去掉左右渐变罩、横滚条改常驻；进度浮层代码未动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-19（旁路：安卓修「翻历史被拽回最新 AI 卡片」，根因=段栈折叠异步导致 item 高度暴涨；进度浮层代码未动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,15 +26,46 @@
 
 > ✅ = 代码完成并提交。iOS 已由人工 clean build 通过并真机自测四轮，反馈见下方「自测反馈闭环」。
 
-## 各端工作区现状（2026-08-19 17:15，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-19 18:05，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
 | context | `main` | ahead 160 | 脏 19 | 本次旁路补文档 | 表格罩撤销写在另一条 feature status；打包脚本 / 命令文件仍脏、不进提交；**不 push main** |
 | web | `dev-knowledge-not-found` | synced（`42bdce9`） | 干净 | **本期不做** | |
-| android | `feat/gfm-markdown` | synced | 脏 6 | **旁路** | 本回合去表格左右罩 + 横条常驻。旁路另有 `ConversationFragment` / `AgentAnswerGetManager` / `ReferenceMessageItemProvider`，勿跟本功能混提 |
+| android | `feat/gfm-markdown` | synced | 脏 6 | **旁路** | 本回合修「翻历史被拽回最新 AI 卡片」：`ZXMarkdownContentView` 新增同步限高 + `ActionCardMessageItemProvider` bind 当帧设限；另含去表格左右罩、`ConversationFragment` / `AgentAnswerGetManager` / `ReferenceMessageItemProvider` 三处旁路。**未提交、待真机验收**，勿跟本功能混提 |
 | ios | **`feat/ios-file-download-progress`** | ahead 48（基线 `origin/release`） | 脏 6 | **本功能已提交 + 旁路表格** | 文件进度 10 文件已提交 `56fab29b6`，**未编译未 push**；脏区是 markdown 去罩 + 常驻横条（`ZXMarkdownTableView` 等 6 文件） |
 | desktop | `feat/gfm-markdown` | synced | 脏 16 | **旁路** | 删表格 fade JS/mixin；横条常驻。`.env.test` / `electron-builder.yml` / `package.json` 禁提交 |
+
+## 旁路记录：安卓消息列表翻历史被拽回（2026-08-19，未提交）
+
+现象：群聊快速下滑翻历史，滑到群 AI 框消息后被定位到最新一条 AI 卡片，历史看不了。
+
+定位过程（前两轮结论均被日志推翻，留档避免重走）：
+
+| 轮次 | 假设 | 结果 |
+|------|------|------|
+| 1 | `ReferenceMessageItemProvider` 假流式打字机每 150ms 调 `scrollToShowItemBottom` 拽列表 | ❌ 真机现象与流式无关；`uiautomator dump` 显示气泡是 `rc_item_action_card_message`（`ZX:ActionCardMsg`），根本不走该 provider |
+| 2 | RecyclerView 获焦子 View 导致布局锚点被拽（历史上修过 `ZXMarkdownTableView` 同类问题） | ❌ 埋点显示全程 `focusedChildPos=-1`，无任何焦点变化 |
+| 3 | **含表格的 AI 卡片段栈折叠是异步的，item 高度先暴涨再塌回** | ✅ 埋点实证 |
+
+关键日志（prod 包 + 临时探针，验完已删）：
+
+```
+stackBind     pos=16 h=0      maxH=1440      ← bind 当帧段栈无高度上限
+stackPostFold pos=16 h=48351  maxH=1440      ← 折叠前以 48351px（约 25 屏）参与布局
+onScrolled ... off=813066 range=973980       ← 列表内容总高 2.7万px → 97万px
+onScrolled dy=0 ... first=16 last=16         ← 视口被顶飞（dy=0，非滚动，是重排）
+```
+
+修法（`apps/android`，三处）：
+
+1. `ZXMarkdownContentView.setHeightCap()` + `onMeasure` 夹外框；子 View 仍按完整高度测量，`isFoldNeeded` / `applyFold` 判定不变。
+2. `ActionCardMessageItemProvider` bind 当帧设限高，异步 `post` 里的按段折叠只做精修；展开 / 收起 / 快捷收起三处同步维护，holder 复用时清零。
+3. 同回合另修两个同源但非本现象的缺陷：历史 AI 回答不再重演打字机（`ReferenceMessageItemProvider`）；`scrollToShowItemBottom` 加「仅列表最后一条 + 非滑动中」护栏；退出会话停掉智能体回答轮询（`AgentAnswerGetManager.removeAllPolling`）。
+
+已知未修：打字机 Runnable 仍捕获 `holder` / `position`，条目回收后可能把 AI 正文写进别的气泡（`ReferenceMessageItemProvider`）。
+
+状态：正式包已装机（`zx-android-prod_v3.6.20.apk`），**等真机验收后再提交**。
 
 ## 代码审查（2026-08-18，两个子代理并行）
 
