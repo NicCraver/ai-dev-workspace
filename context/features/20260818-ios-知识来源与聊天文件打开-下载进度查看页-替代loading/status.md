@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-19（本回合未改本功能代码；旁路修了 PC markdown 折叠同高）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-19（本回合旁路修了定时群 AI 框误显「知识来源」；进度浮层代码未动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -18,7 +18,7 @@
 | T5c 下载与解密合并为一个浮层（进度接续） | — | — | ✅ | — |
 | T5d 浮层与预览同帧收尾（去空窗） | — | — | ✅ | — |
 | T5e 缓存命中秒开 + 跳过解密判定 + 延迟展示 | — | — | ✅ | — |
-| T5f 缓存命中弹「正在打开...」轻提示（`ZXFileOpeningTip`） | — | — | 🚧 | — |
+| T5f 打开文件统一「正在打开...」轻提示 + 修点了不开（`56fab29b6`） | — | — | ✅ | — |
 | T6 新桥 `openKnowledgeDoc` | — | — | ✅ | — |
 | T7 平台分流 + 单测 | ~~✅~~ 已撤 | — | — | — |
 | T8 文档（bridge.md / impl-notes / status） | ~~✅~~ 已撤 | — | ✅ | — |
@@ -33,7 +33,7 @@
 | context | `main` | ahead 157 | 脏 17 | 本次只补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
 | web | `dev-knowledge-not-found` | synced（`42bdce9`） | 脏 1（`src/assets/index.ts`，非本功能） | **本期不做** | 原功能分支已删，见「web 撤销记录」；现切到别的迭代分支 |
 | android | `feat/gfm-markdown` | synced | 脏 2 | **不涉及** | 右侧「收起内容」+ 表格横滚条自绘，勿跟本功能混提 |
-| ios | **`feat/ios-file-download-progress`** | ahead 46（基线 `origin/release`） | **脏 10** | **本功能** | HUD / 知识来源 / 聊天预览仍未提交。本回合未改这些文件 |
+| ios | **`feat/ios-file-download-progress`** | ahead 47（基线 `origin/release`） | 脏 3（旁路） | **本功能 + 旁路** | 本功能 10 文件已提交 `56fab29b6`（另含 gfm-markdown 合并 `9f82cb155`），**未编译未 push**；脏的 3 个是定时群 AI 框误显知识来源的修复（`ZXAgentKnowledgeItem` / `ZXMarkdownManager`），不属本功能 |
 | desktop | `feat/gfm-markdown` | synced | 脏 6 | **不涉及** | 本回合折叠改为超限一律 400px（同高）。`.env.test` / `electron-builder.yml` / `package.json` 禁提交 |
 
 ## 代码审查（2026-08-18，两个子代理并行）
@@ -75,6 +75,8 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 
 | 群公告里点「查看」没有「正在打开...」 | 轻提示只挂在聊天 / 知识来源两个调用点上；群公告是 H5，走 `multimediaPreview` 桥 → `ZXJSMediaAPI._previewFileWithURL` → `multiMediaPreviewFile`，那条链上没人弹 | 轻提示**下沉到 `multiMediaPreviewFile` 入口**：所有预览入口（聊天 / 知识来源 / H5 群公告 / 行动中心 / WebView 文件链接）统一弹；同时把 handler 包一层，任何分支结束都收掉提示。桥入口再补一次 `show`，把取签名地址那趟网络也盖住（视频分支不弹，它用自己的「视频加载中...」）（未提交） |
 
+| 定时群 AI 框新闻消息误显「知识来源」 | 消息带智能体知识库整表 `agentKnowledgeList`，正文却是联网搜索标签 `<reference data-ref="toutiao_article">`。iOS 把对不上的 data-ref 凭空加成列表项，角标编号也走兜底 | 知识来源改成「知识库 ∩ 正文真实文档引用」；`toutiao_article` 这类搜索来源剥掉标签、不造列表项（未提交，与进度浮层分文件） |
+
 **未改（有意为之，自测时留意）**：
 
 - (ios) 飞书 / WPS 授权分支回 `cancel` 后没有第二次通知，web 不知道可以重试；授权本身在原生内闭环，重试靠用户再点一次
@@ -98,7 +100,7 @@ web 工作区当前切到 `dev-knowledge-not-found`（别的迭代：已删除�
 
 ## 待办 / 阻塞
 
-**下一轮自测重点**（本轮改动未编译、未提交，需人工 clean build）：
+**下一轮自测重点**（代码已提交 `56fab29b6`，**仍未编译**，需人工 clean build）：
 
 - (ios) 已下载过的知识来源 / 聊天文件再点开：**点击瞬间**出现「正在打开...」（无进度环、无取消），预览滑出来时消失，不闪
 - (ios) 未缓存的文件：轻提示顶到 300ms 浮层露面时被自动收掉，**两个提示不叠着**
@@ -115,6 +117,7 @@ web 工作区当前切到 `dev-knowledge-not-found`（别的迭代：已删除�
 - (ios) 行动中心文件卡片失败分支：toast 正常，提示不残留
 - (ios) H5 加密文件（`encryptType=1`）：下载段没有进度浮层，全程只有「正在打开...」且**不可取消**——大文件会显得久，先确认能开
 - (ios) 智问「预览」：仍是它自己的 HUD + `UIDocumentInteractionController`，行为应与改动前一致
+- (ios) **定时群 AI 框新闻消息**（`fixTaskMessage=1` + 正文 `<reference data-ref="toutiao_article">`）：底部**不应**出现「知识来源」，正文也不该有 `[1]` 角标；普通智能体问答引用了真实知识库文档的仍要显示
 
 **iOS 真机 / 模拟器自测清单（回归用）**：
 
@@ -162,3 +165,4 @@ web 工作区当前切到 `dev-knowledge-not-found`（别的迭代：已删除�
 - 2026-08-18：web 仓库无本地 prettier 且无配置，`npx prettier@3` 默认 `trailingComma: all` 会制造整文件噪声——格式化新文件须加 `--trailing-comma none` 对齐既有风格
 - 2026-08-18：web 与 ios 各自从 `release` 切独立新分支，不叠在现有功能分支上
 - 2026-08-19：审查去掉 `destinationPath` 后赋值没删干净，首次编译报 `Property 'destinationPath' not found`；已删该行，取消仍只中止 sessionTask、不碰目标缓存
+- 2026-08-19：定时群 AI 框（联网搜索新闻）的 `agentKnowledgeList` 是智能体知识库整表，正文 `<reference data-ref="toutiao_article">` 不是知识文档。知识来源只展示「知识库 ∩ 正文真实文档引用」，对不上的标签剥掉，禁止凭空造列表项
