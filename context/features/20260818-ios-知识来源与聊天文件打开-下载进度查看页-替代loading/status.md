@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-19（本回合未改本功能代码；旁路修了安卓 markdown 右侧「收起内容」高度）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-19（本回合未改本功能代码；旁路修了 PC markdown 折叠同高）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,15 +26,15 @@
 
 > ✅ = 代码完成并提交。iOS 已由人工 clean build 通过并真机自测四轮，反馈见下方「自测反馈闭环」。
 
-## 各端工作区现状（2026-08-19 14:51，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-19 15:45，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 154 | 脏 14 | 本次只补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
-| web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`；单测 7/7；未 push。本回合无 web 改动 |
-| android | `feat/gfm-markdown` | synced | 脏 2 | **不涉及** | 本回合修了 `ActionCardMessageItemProvider` 右侧「收起内容」；`ZXMarkdownTableView.java` 仍是表格横滚条自绘，勿与本功能混提 |
-| ios | **`feat/ios-file-download-progress`** | ahead 20（基线 `origin/release`） | **脏 7** | **本功能** | HUD / 知识来源 / 聊天预览 / 智问入口仍未提交。本回合未改这些文件 |
-| desktop | `feat/gfm-markdown` | synced | 脏 3 | **不涉及** | 仅 `electron-builder.yml` / `package.json` / `.env.test`，禁提交 |
+| context | `main` | ahead 157 | 脏 17 | 本次只补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
+| web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`；本回合无 web 改动 |
+| android | `feat/gfm-markdown` | synced | 脏 2 | **不涉及** | 右侧「收起内容」+ 表格横滚条自绘，勿跟本功能混提 |
+| ios | **`feat/ios-file-download-progress`** | ahead 46（基线 `origin/release`） | **脏 10** | **本功能** | HUD / 知识来源 / 聊天预览仍未提交。本回合未改这些文件 |
+| desktop | `feat/gfm-markdown` | synced | 脏 6 | **不涉及** | 本回合折叠改为超限一律 400px（同高）。`.env.test` / `electron-builder.yml` / `package.json` 禁提交 |
 
 ## 代码审查（2026-08-18，两个子代理并行）
 
