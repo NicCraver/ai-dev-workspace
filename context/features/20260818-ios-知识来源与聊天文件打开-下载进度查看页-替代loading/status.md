@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-18（T1–T8 代码完成 + 两端代码审查修复；iOS 未编译、未真机自测，web 单测 7/7 + `vue-tsc` 0）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-19（修 iOS 编译：审查删掉 `destinationPath` 后赋值残留；仍未真机自测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -19,16 +19,16 @@
 | T8 文档（bridge.md / impl-notes / status） | ✅ | — | ✅ | — |
 | 真机自测 | 🚧 | 🚧 | 🚧 | — |
 
-> ✅ = 代码完成并提交。**iOS 一次都没编译**（本仓库规定 AI 不跑 xcodebuild），编译错误风险由人工首次 build 兜底。
+> ✅ = 代码完成并提交。iOS 首次编译已暴露一处残留赋值（见待办），其余仍待 clean build；真机自测未做。
 
-## 各端工作区现状（2026-08-18，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-19，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 137 | 脏 17 | 文档已提交 | 打包脚本改动与上个功能残留未提交；**不 push main** |
-| web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`（含审查修复）；单测 7/7；未 push |
+| context | `main` | ahead 141 | 脏 15 | 文档待补本条 | 打包脚本改动与上个功能残留未提交；**不 push main** |
+| web | **`feat/knowledge-file-progress`** | ahead 2（基线 `origin/release`） | 干净 | **本功能** | `8bd8db7`；单测 7/7；未 push |
 | android | `feat/gfm-markdown` | synced | 脏 1 | **不涉及** | 上个功能（markdown 表格遮罩）残留 |
-| ios | **`feat/ios-file-download-progress`** | ahead 9（基线 `origin/release`） | 干净 | **本功能** | `c12fe5b6e`（含审查修复）；未 push、未编译 |
+| ios | **`feat/ios-file-download-progress`** | ahead 8（基线 `origin/release`） | 脏 1 | **本功能** | 修 `ZXFileClient.m` 残留 `destinationPath` 赋值；未 push |
 | desktop | `feat/gfm-markdown` | synced | 脏 3（禁提交） | **不涉及** | `.env.test` 等勿 stage |
 
 ## 代码审查（2026-08-18，两个子代理并行）
@@ -59,7 +59,7 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 
 ## 待办 / 阻塞
 
-**iOS 首次编译（必须先做）**：9 个提交全部没经过编译器。在 Xcode 打开 `zhixinApp.xcworkspace`，选 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build。重点看 `ZXFilePreviewLoadHUD`（新增 `ZXFileLoadingSession` 同文件双类）、`ZXFileClient`（新增 `ZXFileDownloadTask`、方法返回值由 void 改为对象）、`ZXAgentKnowledgeOpenLogic`（私有方法签名都加了 `session:` / `report:`）。
+**iOS 首次编译（必须先做）**：审查修取消逻辑时去掉了 `ZXFileDownloadTask.destinationPath`（取消不再删目标缓存），但 `writeToFile:` 里 `cancelToken.destinationPath = filePath` 没一起删，首次 build 报 `Property 'destinationPath' not found`。2026-08-19 已删该赋值。其余 8 个提交仍未过编译器。在 Xcode 打开 `zhixinApp.xcworkspace`，选 `zhixinAppTest` + iPhone 15(iOS 17) 模拟器 clean build。重点看 `ZXFilePreviewLoadHUD`（新增 `ZXFileLoadingSession` 同文件双类）、`ZXFileClient`（新增 `ZXFileDownloadTask`）、`ZXAgentKnowledgeOpenLogic`（私有方法签名都加了 `session:` / `report:`）。
 
 **iOS 真机 / 模拟器自测清单**：
 
@@ -98,3 +98,4 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 - 2026-08-18：安卓不实现该桥，web 按 UA（`MTCoreApi` + iPhone/iPad/iPod）降级，安卓 H5 行为零变化
 - 2026-08-18：web 仓库无本地 prettier 且无配置，`npx prettier@3` 默认 `trailingComma: all` 会制造整文件噪声——格式化新文件须加 `--trailing-comma none` 对齐既有风格
 - 2026-08-18：web 与 ios 各自从 `release` 切独立新分支，不叠在现有功能分支上
+- 2026-08-19：审查去掉 `destinationPath` 后赋值没删干净，首次编译报 `Property 'destinationPath' not found`；已删该行，取消仍只中止 sessionTask、不碰目标缓存
