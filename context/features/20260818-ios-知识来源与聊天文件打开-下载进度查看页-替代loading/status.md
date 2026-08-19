@@ -14,6 +14,7 @@
 | T3 加载会话（假进度 + 阶段映射 + 取消聚合） | — | — | ✅ | — |
 | T4 知识来源入口接线 | — | — | ✅ | — |
 | T5 聊天文件 / H5 文件 / 解密链路接线 | — | — | ✅ | — |
+| T5b 聊天文件真正的下载点（`ZXRCIMChatLogic`）补接线 | — | — | ✅ | — |
 | T6 新桥 `openKnowledgeDoc` | — | — | ✅ | — |
 | T7 平台分流 + 单测 | ✅ | — | — | — |
 | T8 文档（bridge.md / impl-notes / status） | ✅ | — | ✅ | — |
@@ -91,7 +92,9 @@ web 8 条（2🔴 5🟡 1❓）、iOS 22 条（4🔴 15🟡 3❓）。已核实�
 - 2026-08-18：浮层 = 环形进度 + 中心百分比 + 取消，替换 `ZXFilePreviewLoadHUD` 原横条；绿盾解密链路共用同一套
 - 2026-08-18：进度映射 0→8% 前置假进度（0.5s 步进）、8%→100% 真实字节；加密链路 5%→65% 轮询后下载段起点改 65%；展示层取 max 保证单调
 - 2026-08-18：取消 = 中止下载任务 + 删半成品 + 关浮层 + 丢弃在途回调，不做断点续传 / 暂停继续
-- 2026-08-18：三入口收敛于 `ZXFileClient writeToFile:`，进度能力加在下载层；旧 `writeToFile:completion:` 转调新方法，老调用点零改动
+- 2026-08-18：进度能力加在下载层（`ZXFileClient writeToFile:progress:`），旧 `writeToFile:completion:` 转调新方法，老调用点零改动
+- 2026-08-19：**修正前一条的误判**——聊天文件不经过 `openLocalFile`，`ZXRCIMChatLogic previewFileByModel:` 自己做 readFile→签名→下载，只把本地路径交给预览器，所以第一版聊天文件毫无进度效果。已在该方法内接会话；加密文件另给 `ZXEncryptLogic downloadTmpFile:progress:` 重载
+- 2026-08-19：聊天文件取消回 `handler(nil)`（不是取消错误码），这样 6 个调用点零改动、也不会弹错误 toast；知识来源侧仍用 `ZXMediaPreviewCancelledCode` 区分，因为要回传给 web
 - 2026-08-18：`ZXFileLoadingSession` 写进 `ZXFilePreviewLoadHUD.h/.m`（同文件双类），**不新建文件**以避开 `project.pbxproj` 排序噪声
 - 2026-08-18：H5 知识来源改走新桥 `openKnowledgeDoc`，原生全包元数据 / 授权 / 签名 / 下载 / 预览
 - 2026-08-18：桥结束状态三态 success / cancel / fail，幂等只回一次；**飞书 / WPS 未授权回 cancel**（原生已接管授权）

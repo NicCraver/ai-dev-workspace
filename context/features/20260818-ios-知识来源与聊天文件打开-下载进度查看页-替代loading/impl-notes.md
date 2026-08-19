@@ -8,17 +8,22 @@
 
 结论：**不需要安卓那样的独立「文件查看页」**。真正缺的是两件事——① 真实百分比；② 取消。把已有的加载浮层升级即可。
 
-## 关键结构：所有入口收敛到一个下载点
+## 关键结构：底层下载点只有一个，但**上层各写各的下载编排**
 
-三条链路（AI 卡片知识来源 / 聊天文件消息 / H5 知识来源）最终都调同一个「下载到沙盒再预览」的方法。因此**进度与取消能力加在下载层**，各入口只负责创建会话、接回调。移植到其它端时先找到这个收敛点，别在每个入口各写一套。
+进度与取消能力加在**下载层**（一个方法），这点没错；但**别以为接了下载层就自动覆盖所有入口**——这是本次踩的坑：原以为聊天文件会经过通用的「预览时按需下载」分支，实际上聊天有自己一套「先 readFile → 拿签名 → 下载 → 只把本地路径交给预览器」的编排，通用分支根本不会执行，改完后聊天文件**完全没有进度效果**。
 
-iOS 对应关系：
+正确做法：**逐个入口去追它自己的下载调用点**，凡是自己发起下载的地方都要接会话。
 
-| 链路 | 入口 | 收敛点 |
-|------|------|--------|
-| AI 卡片知识来源 | `ZXAgentKnowledgeOpenLogic openItem:` | `ZXFileClient writeToFile:progress:completion:` |
-| 聊天文件消息（普通 / 加密 / 微应用分享） | `ZXMultiMediaClient multiMediaPreviewFile:` → `openLocalFile:` | 同上 |
-| H5 知识来源 | 桥 `openKnowledgeDoc` → `openItem:` | 同上 |
+iOS 对应关系（修正后）：
+
+| 链路 | 入口 | 谁发起下载 |
+|------|------|-----------|
+| AI 卡片知识来源 | `ZXAgentKnowledgeOpenLogic openItem:` | 自己调 `ZXFileClient writeToFile:progress:` |
+| **聊天文件消息**（普通 / 加密 / 微应用分享） | `ZXRCIMChatLogic previewFileByModel:`（聊天页 3 个入口 + 聚合回复 3 个入口的共同收敛点） | **自己**调 `ZXFileClient writeToFile:progress:`；加密文件先走 `ZXEncryptLogic downloadTmpFile:progress:` |
+| H5 文件 / 其它 | `ZXMultiMediaClient multiMediaPreviewFile:` → `openLocalFile:` | 传的是远端 URL 时才由它下载 |
+| H5 知识来源 | 桥 `openKnowledgeDoc` → `openItem:` | 同第一行 |
+
+判据：调用预览器时传的是**本地路径**（`paramsWithPath:`）说明下载已经在上层做完了，进度要加在**那个上层**；传远端 URL 才由预览器自己下载。
 
 ## 三段式进度模型
 
