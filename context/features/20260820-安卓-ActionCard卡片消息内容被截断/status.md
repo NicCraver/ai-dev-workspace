@@ -16,7 +16,8 @@
 | T5 ~~按假设分支修 B~~ → **改为对齐 PC 重构** | — | ✅ `65f85f2f7` | — | — |
 | T6 全入口回归（会话 / 引用 / 合并转发） | — | ❌ **未做**，等真机 | — | — |
 | T7 清临时日志 + 文档收尾 | — | ✅ `grep ZXCardDiag` 归零 | — | — |
-| T8 正式包 `zx-android-prod_v3.6.21.apk`（82.4 MB） | — | ✅ | — | — |
+| T8 正式包 `zx-android-prod_v3.6.21.apk`（82.4 MB） | — | ✅ 重打（含审查修复） | — | — |
+| T9 子代理代码审查 + 修复 | — | ✅ `1b78853c5` | — | — |
 
 > T4 比 plan 多改一处：`referUnitPrimaryExpandOrFold`（展开聚合列表首条源消息）原来只放开 `tv_content`，含表格的源消息展不开。
 > T3 的 `foldApplied` 标志在 T5 重构后已删除：折叠不再改子段，测到的高度恒为内容全高。
@@ -34,7 +35,7 @@
 |----|------|------|------|--------------|------|
 | context | `main` | ahead 165 | 脏 21 | 本功能文档 | 打包脚本 / 命令文件长期脏，不进提交；**不 push main** |
 | web | `feat/gfm-markdown` | synced | 干净 | 不涉及 | |
-| android | **`fix/actioncard-content-truncate`** | 无 upstream | 干净 | **本功能** | tip `65f85f2f7`，**未 push**；临时日志已清空 |
+| android | **`fix/actioncard-content-truncate`** | 无 upstream | 干净 | **本功能** | tip `1b78853c5`，**未 push**；临时日志已清空 |
 | ios | `feat/ios-file-download-progress` | ahead 48 | 脏 6 | 不涉及 | markdown 旁路改动，属另一条 feature |
 | desktop | `feat/gfm-markdown` | synced | 脏 3 | 不涉及 | `.env.test` / `electron-builder.yml` / `package.json` **禁提交** |
 
@@ -76,6 +77,15 @@ preprocess 入参 docId=_agent_file_doc_id_2056623120894918872|…（5 个） �
 - **A 的失败模式从结构上消失**——折叠不再改子段，`rawContentHeight` 恒为真值，判定不会翻转。
 - `toutiao_article` 那条 docId 对不上的**不改**：PC 的 `replaceSingleTag` 未命中 `refMap` 时返回空串，知识来源同样不展示，两端行为一致。
 - 渲染异常兜底改为 `Log.w("ZXCard", ...)` 常驻日志 + 切回纯文本控件（段栈可能已挂半截内容）。
+
+## 代码审查结论（2026-08-20，子代理静态审查）
+
+| 结论 | 内容 |
+|------|------|
+| 已修 | `bind()` 换绑时没清 `foldStateListener`——holder 复用时并非每条路径都会重设监听（展开态、无知识来源卡片就不会），旧监听会打到新内容上 |
+| 已修 | 两处渲染失败兜底只把段栈设 GONE，没复位 `heightCap` / 监听，复用后残留的限高会夹死下一条消息 |
+| 不改 | 收起后监听仍在——回调只会重申同一状态（`true` 保持折叠+按钮，`false` 复位限高并隐按钮，都是正确行为），不会反复切换 |
+| 不改 | `appendExtraText` 去开头换行——那两个换行是 `addKnowledgeDocList` 先 append 的纯文本、其后才挂 Span，`subSequence` 只平移偏移，不截断 Span。已补注释 |
 
 ## 待办 / 阻塞
 
