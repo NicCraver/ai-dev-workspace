@@ -1,6 +1,6 @@
 # Status：三端 markdown 表格横滚（已撤左右渐变罩，条改常驻）
 
-> 最后更新：2026-08-19（产品改口：去掉左右渐变，溢出即常驻横滚条）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-20（PC：条上 4px、条下 20px；窄表仍 8px 无条）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -20,22 +20,23 @@
 | T10 真机自测 | — | — | 🚧 改验常驻条 | — |
 | T11 token 表 | — | ✅ | ✅ | ✅ |
 | T12 去掉左右罩 + 横条常驻 | — | ✅ 代码 | ✅ 代码 | ✅ 代码 |
+| T13 溢出时加大表底下边距 | — | — | — | ✅ 代码 |
 
-> T12 代码已写、未提交、未编译。PC 折叠单测 12/12；安卓 / iOS 需人工装包。T4 / T7 / T10 改为验常驻条，不再验罩。
+> T12 / T13 已提交并 push：`6d434ed9`。T4 仍待会话里看：条贴近表、条下空隙够不够。
 
-## 各端工作区现状（2026-08-19，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-20，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 160 | 脏 19 | 本次补文档 | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
+| context | `main` | ahead 163 | 脏 21 | 本次改 token / status / impl-notes | 打包脚本 / 命令文件仍脏、不进本功能提交；**不 push main** |
 | web | `dev-knowledge-not-found` | synced | 干净 | **不涉及** | |
-| android | **`feat/gfm-markdown`** | synced | 脏 6 | **本功能** + 旁路 | 本功能：`ZXMarkdownTableView` / `ZXMarkdownContentView` / `ActionCardMessageItemProvider` 去罩+常驻条。旁路勿混提：`ConversationFragment` / `AgentAnswerGetManager` / `ReferenceMessageItemProvider` |
-| ios | `feat/ios-file-download-progress` | ahead 48 | 脏 6 | **本功能叠在文件进度分支上** | markdown 去罩+自绘常驻条；文件进度主干已提交 `56fab29b6`。另有 `feat/ios-gfm-markdown` 未带这笔 |
-| desktop | **`feat/gfm-markdown`** | synced | 脏 16 | **本功能** | 删 `markdownTableFade.js` / mixin / 单测；`.md-table-wrap` 强制 webkit 横条常驻。`.env.test` / `electron-builder.yml` / `package.json` 勿 stage |
+| android | **`feat/gfm-markdown`** | synced | 干净 | **本功能已提交** | tip `9998908ea` 版本号 3.6.21；去罩/常驻条不在本工作区脏区 |
+| ios | `feat/ios-file-download-progress` | ahead 48 | 脏 6 | **本功能叠在文件进度分支上** | markdown 去罩+自绘常驻条；文件进度主干已提交。另有 `feat/ios-gfm-markdown` 未带这笔 |
+| desktop | **`feat/gfm-markdown`** | synced | 脏 3 | **本功能已 push** | `6d434ed9` 已上远端。残留 `.env.test` / `electron-builder.yml` / `package.json`，勿 stage |
 
 ## 待办 / 阻塞
 
-- (desktop T4) 宽表一出现就有 6px 横条，贴左/滑到中间/贴右条都在，窄表没有条。表底 8px 空隙还在。热更新若没带上，重启 `npm run dev:test`
+- (desktop T4) 宽表一出现就有 6px 横条；条贴近表底（上 4px），条到折叠按钮 / 后文约 20px。窄表仍是 8px、没有条。热更新若没带上，重启 `npm run dev:test`
 - (android T7) 宽表一出现就有细胶囊，不等滑、松手不淡出；窄表没有。长按与纵滚不受影响。旁路文件勿跟这笔混提
 - (ios T10) 必须真机。系统 indicator 已关，自绘 3pt 胶囊溢出即常驻。流式结束成表后才出条；聚合 / 合并转发看一眼
 - (desktop) 本地调试三文件保持脏、勿 stage
@@ -50,5 +51,7 @@
 - 2026-08-18：同一套管线的 markdown 表格都做（会话 / 详情 / 合并 / 引用）
 - 2026-08-18：继续叠在 `feat/gfm-markdown`；iOS 当时在 `feat/ios-gfm-markdown`，本回合实际改的是当前 checkout 的 `feat/ios-file-download-progress`（该分支已含表格代码）
 - 2026-08-18：安卓横滚条不要用系统 scrollbar（各 ROM 又粗又黑）。compileSdk 28 没有 `setHorizontalScrollbarThumbDrawable`，在 `dispatchDraw` 里自绘
-- 2026-08-18：PC 表格横滚条离表底要**真留空**。`.md-table-wrap` `padding-bottom: 8px`
+- 2026-08-19：PC 宽表横条出现后下边距再加大。窄表不加，避免无条表格底下空一截。溢出判定差值 ≤1px 当不溢出，与常驻条规则同一条
+- 2026-08-20：自测反馈条和表之间空太大、条下面不够。根因：Chromium 的 `padding-bottom` 在表和条之间。改为 `.is-h-scroll` padding-bottom 4px、margin-bottom 20px（原先 16 / 12 把空加反了）
+- 2026-08-18：PC 表格横滚条离表底要**真留空**。窄表 / 基线 `.md-table-wrap` `padding-bottom: 8px`
 - 2026-08-18：（已作废）遮罩方案 / 罩跟气泡底 / 同色 alpha=0 / 触边 24 宽——见 git 历史，代码已删

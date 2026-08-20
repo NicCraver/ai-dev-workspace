@@ -1,10 +1,10 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-08-20（代码已写、vue-tsc 绿、子代理审查无 Critical；待你真机验收）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-20（PC 列宽改为 min/max 375px）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
-行号对应 `plan.md` 的 Task。本期**只做 web**。
+行号对应 `plan.md` 的 Task。本期从「只做 web」扩到 **web + PC 会话表格列宽**（web 187.5px / PC 375px）。
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
@@ -15,6 +15,7 @@
 | T4 `vue-tsc --noEmit` | ✅ | — | — | — |
 | T5 status / impl-notes | ✅ | — | — | — |
 | 真机验收（宽表横滚 / 窄表无滑 / 输入框未回归） | 🚧 | — | — | — |
+| 列宽上限格内换行 | 187.5px（375/2）🚧 | — | — | min/max **375px** ✅ |
 
 > T0–T5 的 ✅ 是代码 + `vue-tsc`。真机格子在你看过之前保持 🚧。
 
@@ -22,21 +23,26 @@
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 |
 |----|------|------|------|--------------|
-| context | `main` ahead 172 | 脏 24 | 本功能 docs + token 表；**还有其他功能的脏文件，勿一并提交** |
-| web | **`feat/web-markdown-table-align-pc`**（无 upstream） | 脏 3 | **本功能**：`AcMarkdown.vue`、`EditorWrapper.vue`、`ExpandableContent.vue` |
-| android | `fix/md-table-fold-truncate` | 脏 2 | 不涉及 |
-| ios | `feat/ios-file-download-progress` ahead 48 | 脏 7 | 不涉及 |
-| desktop | `feat/gfm-markdown` synced | 脏 3 | 不涉及（PC 表格已在 GFM 分支） |
+| context | `main` ahead 173 | 脏 21 | 本功能 docs + **GFM 角标贴行笔记**；还有构建脚本等其他脏文件，勿一并提交 |
+| web | **`feat/web-markdown-table-align-pc`** | synced | 干净 | **本功能**（待真机验收） |
+| android | `fix/md-table-fold-truncate` | 无 upstream | 脏 4 | 不涉及 |
+| ios | `feat/ios-file-download-progress` | synced | 脏 6 | 不涉及 |
+| desktop | **`feat/gfm-markdown`** | synced | 脏 | **本功能**：`markdown.scss` 列 min/max 375px。另有角标贴行 + 本地调试文件（禁止提交） |
 
 ## 待办 / 阻塞
 
-- (web) **请你验收**：个人 AI 框宽表只在表内左右滑、标题不跟着走；2～3 列窄表没有有效滑块；无斑马纹、无写死白底；思考过程折叠卡里的表同样规则；输入框手插表与改前一致；「查看更多」仍约 240px。
-- (web) 代码在 `feat/web-markdown-table-align-pc`，**尚未 commit / push**。
+- (web) **请你验收**：窄屏长单元格应在约 **187.5px** 处折行，375 宽大约能看清两列。
+- (web) 列宽上限改动在 `feat/web-markdown-table-align-pc` 工作区，**尚未 commit / push**。
+- (desktop) 列宽改为 **min/max 375px**（不要 187.5）。热更新后看：一列大约一个 375 设计稿宽，长文格内折行，多列横滚。未 commit / push。
+- (desktop，旁路，属 `20260814-pc安卓-GFM-Markdown渲染对齐`) Eric「报销」消息里单独成行的 `<reference>` 会换行：已在 `feat/gfm-markdown` 把标签前换行折掉，角标贴前文。**请你热更新后看那条消息**。未 commit / push。
 
 ## 关键决策记录
 
 - 2026-08-20 场景 = 个人 AI 框 +「AI 优化文本」弹窗；只对齐表格，标题/代码/引用/列表不动。
 - 2026-08-20 单元格 nowrap + 表级左右横滚；不要左右渐变罩。
+- 2026-08-20 真机：纯 nowrap 窄屏滑过去看不见几个字 → 列宽上限改为 **187.5px**（375/2），手机上一屏大约两列。
+- 2026-08-20 同一 187.5px 上限接到 PC 会话后太窄；改成列 **min-width / max-width: 375px**（整段设计稿）。
 - 2026-08-20 方案 1：皮肤写在 `AcMarkdown`；`renderWrapper` 只闸 `getHTML()`。直播 DOM 在 `resizable: false` 时本来就有 `TableView` 的 `.tableWrapper`。
 - 2026-08-20 为让横滚在 flex 气泡里生效：`!max-w-unset` → `!max-w-full`，`ExpandableContent` / `AcMarkdown` 加 `min-w-0 max-w-full`。
 - 2026-08-20 子代理审查：无 Critical；status 已按真实进度改；`renderWrapper` 注释已写清 TableView vs getHTML。
+- 2026-08-20 旁路（PC GFM）：后端常把 `<reference>` 单独成行，解析器会当成独立块；PC 对齐安卓/iOS，解析前折掉标签前换行。表格后的标签必须塞进最后一格，否则 GFM 会丢掉。

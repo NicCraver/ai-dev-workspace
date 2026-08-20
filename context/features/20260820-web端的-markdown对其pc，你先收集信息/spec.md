@@ -9,18 +9,18 @@
 | | Web 个人 AI 框 | PC 会话 ActionCard |
 |---|---|---|
 | 解析 | `marked` → Tiptap / ProseMirror | `markdown-it` → `innerHTML` |
-| 表格样式 | `AcMarkdown.vue` 写死白底 / `#e7e7e7` 边 / `table-layout: fixed` / 单元格换行 | `markdown.scss` 抄 token 表：半透明黑边、表头 4% 黑、`nowrap`、`.md-table-wrap` 横滚 |
+| 表格样式 | `AcMarkdown.vue`：半透明边、列宽上限 187.5px 后换行、表级横滚 | `markdown.scss`：同一套配色；列 **min/max 375px**、`.md-table-wrap` 横滚 |
 
 上一轮 PC / 安卓 / iOS GFM 对齐**刻意排除 web**（当时认为 `AcMarkdown` 只是弹窗）。实际它就是个人 AI 框的回复气泡；从 AI 框转发到会话后，用户会看到「同一张表、两套样子」。
 
-**目标（本期收窄后）**：web 上所有走 `AcMarkdown` 的 markdown 表格，在**配色、单元格不换行、宽表左右横滚**上对齐 PC 会话卡片。标题、代码、引用、列表、折叠、单换行维持现状。
+**目标（本期收窄后）**：web 上所有走 `AcMarkdown` 的 markdown 表格，在**配色、列宽上限内换行、宽表左右横滚**上对齐 PC 会话卡片的表格观感。标题、代码、引用、列表、折叠、单换行维持现状。
 
 **成功标准**：
 
 1. 宽表可以左右滑完，不把整段 Markdown（标题/段落）一起拖走。
 2. 窄表不出现无意义的横滚。
 3. 表头底、边框是半透明黑，没有写死白底 / 实色浅灰、没有斑马纹。
-4. 单元格文字不换行；窄气泡里不再被挤成一列一个字。
+4. 单元格有列宽上限（`187.5px`，375 设计稿一半），长文在格内换行；多列仍可左右滑。
 5. 个人 AI 框回复气泡、设置「AI 优化文本」弹窗两处表现一致（共用 `AcMarkdown`）。
 6. 输入框、人格设定等可编辑 Tiptap **不变**。
 
@@ -40,7 +40,7 @@
   - `AiMsgCard.vue`（正文；思考过程 `reasoningContent` 若含表也走同一组件）
   - `AiTextOptimizerPopup.vue`
 - 横滚外壳：Tiptap Table 的 `renderWrapper`（DOM 为 `.tableWrapper`），**仅当** `flags.markdownAsHtml === true`（`AcMarkdown` 已这样传）时打开。
-- 配色与结构抄 `context/design/markdown-style-tokens.md` 的**表格行**（表头底 / 边框 / cell padding / nowrap / 无斑马纹 / 横滚条形态）。
+- 配色与结构抄 `context/design/markdown-style-tokens.md` 的**表格行**（表头底 / 边框 / cell padding / 无斑马纹 / 横滚条形态）。单元格换行上限：`187.5px`（375/2）。
 
 ### 本期不做
 
@@ -64,7 +64,7 @@
 - `EditorWrapper` 里 `Table.configure({ resizable: false, renderWrapper: isMarkdownAsHtml() })`。Tiptap 3.22 在 `resizable: false` 时直播 DOM **已经**由 `TableView` 包 `.tableWrapper`；`renderWrapper` 主要让 `getHTML()` 也带外壳。皮肤仍只写在 `AcMarkdown` 的 `.at-answer` 下，避免输入框表格吃到 nowrap/横滚条。
 - 气泡是 flex + `overflow-hidden`。展示态必须 `min-width: 0` 且 `max-width: 100%`（含 `ExpandableContent` 与把原来的 `!max-w-unset` 改成 `!max-w-full`），否则 nowrap 表会撑破宽度被裁掉、里面却滑不了。
 - `AcMarkdown` 用 `:deep(.tableWrapper)` 对齐 PC 的 `.md-table-wrap`：`max-width: 100%`、`overflow-x: auto`、`overscroll-behavior-x: contain`、6px 常驻细条（溢出才看得到滑块）。
-- 去掉现有 `width: 100%` / `table-layout: fixed` / `background: #fff` / `word-break: break-word`；单元格 `white-space: nowrap`。
+- 去掉现有 `width: 100%` / `table-layout: fixed` / `background: #fff`；单元格 `max-width: 187.5px`（375/2）后换行。
 - 显式关掉 `prose` 的斑马纹（`tr:nth-child(2n)` 透明）。
 
 不在 ProseMirror 根上开横滚（会把标题一起拖走）。不把 table 从 Tiptap DOM 里掏出来再包一层（会打坏 contentDOM）。
@@ -78,7 +78,7 @@
 | 表头底 | `rgba(0,0,0,.04)` + 粗体 |
 | 边框 | `1px solid rgba(0,0,0,.12)`，单线、无圆角 |
 | cell padding | 竖 `0.35em` 横 `0.6em` |
-| 单元格 | `white-space: nowrap`，无列宽上限 |
+| 单元格 | `max-width: 187.5px`（375 设计稿一半）后换行；短列仍随内容，多列靠横滚 |
 | 斑马纹 | 无 |
 | 表背景 | 透明（不写死 `#fff`） |
 | 横滚条 | 溢出常驻；高 6px；滑块约 35% 黑；窄表不画有效滑块 |
@@ -102,7 +102,7 @@
 
 | 差异点 | web | android | ios | desktop |
 |--------|-----|---------|-----|---------|
-| 本期是否改 | ✅ 仅表格展示 | ❌ | ❌ | ❌ |
+| 本期是否改 | ✅ 表格展示 | ❌ | ❌ | ✅ 表格列宽 min/max 375px |
 | 正文字号 | 14px / 15px（调用方原样） | 15sp | 16pt | 13px |
 | 折叠 | 240px 不改 | 480dp | 自有 | 400px |
 | 表格横滚外壳 | `.tableWrapper` | 段栈 `HorizontalScrollView` | 段栈 `UIScrollView` | `.md-table-wrap` |

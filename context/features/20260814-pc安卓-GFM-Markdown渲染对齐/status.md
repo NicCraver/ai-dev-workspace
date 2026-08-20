@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-18（PC `feat/gfm-markdown` 已本地 merge `origin/release`；冲突只在 `msg-actioncard.vue`，保留本分支全局 `markdown.scss`，release 的 h2 `17x→17px` 已被 token 表覆盖。**待二次自测**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-20（PC 角标 `<reference>` 贴着前文，不再另起一行；待会话复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -37,7 +37,7 @@
 | desktop | `180e0d6c` → `d7f27ca9` → `5c8f4cb8` → `cee18ade` → `f2c3ab8b` → `f2a7d5f6` | 6 个 |
 | android | `08a0a2c05` → `6553d4b19` → `786d1d50d` → `db3fc34dd` → `203f01126` → `e92542ee3` | 6 个 |
 
-**PC 新增单测 23 条**（`markdown-render.spec.js` 18 + `markdown-fold-model.spec.js` 5），全绿。安卓无单测（工程本来就没有）。
+**PC 新增单测 35 条**（`markdown-render.spec.js` 23 + `markdown-fold-model.spec.js` 12），全绿。安卓无单测（工程本来就没有）。
 
 **安卓新增 4 个类**：`ZXMarkwonFactory`（配置收敛 + 兜底 + 开关）、`ZXMarkdownSegment` / `ZXMarkdownSegmenter`（AST 切段）、`ZXMarkdownTableView`（横滚表格）、`ZXMarkdownContentView`（段栈 + 按段折叠）。
 
@@ -128,7 +128,34 @@
 >
 > 链接点击不受影响：`LinkMovementMethod` 在 `onTouchEvent` 里先于 clickable 判定处理事件，按在链接上会被消费，按在空白处冒泡给气泡。
 
+## 安卓自测反馈（2026-08-19）：右侧「收起内容」高度不对
+
+| # | 症状 | 根因 | 处理 |
+|---|------|------|------|
+| 5 | 展开含表格的 markdown 后，点会话页**右侧「收起内容」**，卡片几乎不矮（「查看更多」出现在超高气泡底部） | 气泡内收起走了 `mdContentStack.applyFold(true, 480dp)`，右侧快捷按钮走 `defaultModuleLongMessageContentExpandOrFold`，后者只 `tv_content.setMaxHeight`。含表格时 `tv_content` 是 GONE、正文在段栈上，所以高度不动 | 该方法按段栈是否可见分流，与气泡内展开/收起同一套 `applyFold`。`:IM:compileDevelopDebugJavaWithJavac` 绿。**未提交、未真机验** |
+
+> 无表格的 markdown 仍走单 `TextView`，这条路径原来就会收，观感应与改前一致。
+
+## PC 自测反馈（2026-08-19）：markdown 消息折叠高度过矮
+
+截图两条智能体卡片：「群内@我的消息整理」底部「二、我已回复」被遮罩削掉一截；「GitHub Trending」几乎只剩蓝标题 +「查看更多」，正文看不见。
+
+| # | 症状 | 根因 | 处理 |
+|---|------|------|------|
+| 6 | 折叠态高度远低于 400px：短标题/前言后面跟长列表或宽表时，卡片几乎被「查看更多」占满 | `pickFoldHeight` 把每个顶层 DOM 节点都当不可切整块。`<h2>` 很矮、后面整段 `<ol>` / 表格超限 → 整块藏掉，裁剪高度停在标题底（~80–96px）。安卓 issue #3 是同一条规则用在粗粒度段上卡片**过高**；PC 粒度细，同样的规则会卡片**过矮** | 先改成标题/列表可切。复验后仍不一致（见 #7） |
+| 7 | 第一条（带表）折叠卡片明显高于第二条（带列表） | 按块取舍：带表停在第一张表底边（~278px 或整表撑开），带列表裁到 400px。两条真实消息结构不同，折叠高度就不同 | **超限一律 `max-height: 400px`**，不再按块边界取不同高度。表格可能被切到。`markdown-fold-model` 12/12 绿。**未在会话里复验** |
+
+## PC 自测反馈（2026-08-20）：知识来源角标另起一行
+
+真实样本：Eric「报销」智能体回复（正文大量 `<reference data-ref="…"></reference>` 单独成行，例如白名单节末的 `_agent_file_doc_id_2056623120894918866`）。
+
+| # | 症状 | 根因 | 处理 |
+|---|------|------|------|
+| 8 | 角标应该贴着前文（行内 `[1]`），实际换到下一行；连续两个角标还被 `breaks: true` 拆成 `<br>` | 后端常把 `<reference>` 单独放一行。进解析器后自成 `<p>` 或变成 `<br>`。安卓 / iOS 解析前会把标签前的换行折掉，PC 漏了这一步。另外：折到表格行尾 `|` 后面时，GFM 当行尾垃圾丢掉，角标会消失 | 解析前折叠：标签贴到前一个非空白字符；连续标签之间的换行也吃掉；表格后的标签塞进最后一个单元格（吃掉行尾 `\|`）。`markdown-render` 23/23 绿。**待会话复验该条报销消息** |
+
 ## 待办 / 阻塞
+
+- (desktop) 2026-08-20 表格列 **min/max-width: 375px** 已写进 `markdown.scss`。热更新后看长单元格格内折行、多列横滚。
 
 ### PC 已本地合入 `origin/release`（2026-08-18，未 push）
 
@@ -187,11 +214,13 @@ java.lang.IllegalArgumentException: the bind value at index 71 is null
 
 ### 下一步全是运行时自测（我做不了，需要你跑）
 
+- **(desktop，本轮优先)** 热更新或重启后看 Eric「报销」那条：各节末尾的 `[n]` 角标应贴着前文（白名单流程末尾两个角标连在一起），不要另起一行；表格最后一格可以带角标。折叠态仍应一样高（都是 400px）
 - **(desktop)** `npm run dev:test` 起应用 → 访问 `#/debug/markdown` → 按 30 条用例逐条对照。重点：L4 checkbox 不显示原始括号、T4 三种对齐、T7 能横滚且不夺纵向滚动、I3 中文粘连不变斜体、I8 换行生效、H1 蓝字且保持粗体
 - **(desktop)** ⚠️ **`breaks: true` 专项**：这是本轮唯一会改变**存量消息**排版的改动（当前单换行被吞成空格）。上线前拿至少 5 条真实存量消息对比开关前后
 - **(desktop)** 复用点确认：`message-info.vue` / `msg-reply-poll.vue` 吃同一个 `convertMarkdownToHtml`，但表格样式写在 `msg-actioncard.vue` 的非 scoped style 里——**实测这两个组件里表格样式是否生效**，没生效就把 `.md-table-wrap` / `table` 那段提到全局 scss
 - **(android)** 装 `smart_message-develop-debug_v3.6.18.apk` → `adb shell am start -n com.cnmts.smart_message.develop/com.im.debug.MarkdownGfmCasesActivity` → 逐条对照（31 条，比 PC 多一条删除线）
 - **(android)** ⚠️ **段栈三个高风险点**，真实会话里必须验：①含表格的消息**长按能弹转发/回复菜单**（最容易翻车）；②表格横滚时上下滑动仍能滚会话列表；③折叠时表格不被切一半
+- **(android)** 含表格长回复：先点「查看更多」展开，再点右侧「收起内容」——高度应回到约 480dp，与气泡内折叠按钮一致，不能仍是展开态。无表格长回复回归一次（单 TextView 路径）
 - **(android)** View 复用验证：含表格消息与纯文本消息**交替滚动**，看有没有留白或串内容
 - **(两端)** 真实样本三条：值班播报（内联 HTML 上色）、含表格 + 插图 + 角标的长回复、普通机器人卡片。两种气泡底色（自己发的淡蓝 / 收到的白）都看
 - **(两端)** 自测通过后**删用例页**：PC 删 `components/debug/MarkdownGfmCases.vue` + router 那条；安卓删 `com/im/debug/MarkdownGfmCasesActivity.java` + manifest 那条
@@ -250,4 +279,4 @@ java.lang.IllegalArgumentException: the bind value at index 71 is null
 - 2026-08-14 PC 禁装包 → 任务列表**自写 core rule**（约 25 行），脚注直接不做
 - 2026-08-14 安卓表格用 Markwon 自带的 `Table.parse(Markwon, TableBlock)`，**不手写 commonmark AST 遍历**（plan 里的原方案代码量翻倍且没必要）
 - 2026-08-14 段栈暴露 `SegmentPostProcessor` 钩子接住 AI 卡片的角标/图片 Span 后处理；知识来源列表走单独的 `appendExtraText()` 挂最后（塞进 processor 的话，最后一段是表格时它没地方去）
-- 2026-08-14 验收走**两端各建临时 debug 用例页**，验完删，与 iOS 上一轮做法一致
+- 2026-08-20 表格列宽：web 187.5px（375/2）；PC 会话列 **min/max 375px**。横滚保留。归属 `20260820-web端的-markdown对其pc，你先收集信息`。

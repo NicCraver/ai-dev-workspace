@@ -16,14 +16,35 @@
 
 > ✅ 只代表「代码写完 + 编译过」。本仓库无单测，抖动是观感问题，**必须真机看**。
 
+## 第二轮（真机反馈后，2026-08-20 18:0x）
+
+用户实测反馈：**仍抖，形态是「列表上下跳」**；且**进行中的气泡超过阈值后不显示「查看更多」**。
+（进行中气泡 = ReferenceMessage 流式座位，确认改对了链路。）
+
+| 处理 | 状态 |
+|------|------|
+| 「查看更多」改成**每帧判**（原来只在一批追平后判，批中间超限时按钮迟迟不出现） | ✅ 代码 |
+| `setVisibility` 幂等（可见性没变就不设，省掉每帧一次 requestLayout） | ✅ 代码 |
+| 流式中途不再撤高度地板（撤了气泡会缩回去，列表跟着跳） | ✅ 代码 |
+| **每次 setText 后锁掉 focusable/clickable/longClickable** | ✅ 代码 |
+| preDraw 里加 `isComputingLayout()` 保护 | ✅ 代码 |
+| 临时打点 `ZX:Stream`（answerEvent / dispatch / rebind / refresh / tick / frame / foldCheck / follow / dead） | ✅ 待抓日志 |
+
+关键新证据（`javap` 反编译 markwon core 4.6.2 确认，不是猜）：
+`CorePlugin.afterSetText` 会在**每次 setText 后**调 `TextView.setMovementMethod(LinkMovementMethod)`，
+而 `setMovementMethod` 内部的 `fixFocusableAndClickableSettings()` 把
+focusable / clickable / longClickable 一并强制设回 true。流式每 150ms setText 一次，
+等于每 150ms 把气泡正文重新变成「可获焦 + 可长按」。同一坑 AI 卡片段栈已踩过
+（`ZXMarkdownContentView#disableFocusAndLongClick`），本次在流式渲染器里补同样的锁。
+
 ## 待办 / 阻塞
 
-- (android) **请你真机验收**：`bash apps/android/.cursor/commands/scripts/zhixin-run-android.sh`
-  或 `/anzhuo-build-test`（当前无设备连接，未装包）。看四点：
-  1. 群里 @智能体，回答吐字是否匀速（不再一顿一顿、不再突然蹦一大段）；
-  2. 吐字时列表是否连续跟到底部（不再走走停停）；
-  3. 回答很长时，后半段是否还卡；
-  4. 边吐字边往上翻历史，不被拽回；翻回来内容完整。
+- (android) **请你装第二轮的正式包并抓日志**（设备不在这台机器上，我抓不到）：
+  包：`apps/android/smart_message/build/outputs/apk/publish/release/zx-android-prod_v3.6.21.apk`
+  复现 @智能体 回答约 15 秒，然后 `adb logcat -s ZX:Stream` 把输出贴回来。
+  重点看：`dispatch` 打的 provider 是不是 `ReferenceMessageItemProvider`；
+  `follow` 里的 `offset=A->B` 是不是来回反复；`rebind` 是不是每秒好几次；
+  `foldCheck` 的 `h` 有没有到 `cap`。
 - (android) 代码改动**未 commit**，留在 `fix/md-table-fold-truncate` 工作区。
 - (android) 未覆盖：同屏两条智能体同时回答（本次专门为它做了按 uid 排队，但没有构造场景验证）。
 

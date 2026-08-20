@@ -1,6 +1,6 @@
 # Status：iOS 打开文件的下载进度与取消
 
-> 最后更新：2026-08-19（旁路：安卓修「翻历史被拽回最新 AI 卡片」，根因=段栈折叠异步导致 item 高度暴涨；进度浮层代码未动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-20（旁路：PC 宽表条上 4px / 条下 20px；进度浮层代码未动）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,15 +26,15 @@
 
 > ✅ = 代码完成并提交。iOS 已由人工 clean build 通过并真机自测四轮，反馈见下方「自测反馈闭环」。
 
-## 各端工作区现状（2026-08-19 18:05，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-20，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 160 | 脏 19 | 本次旁路补文档 | 表格罩撤销写在另一条 feature status；打包脚本 / 命令文件仍脏、不进提交；**不 push main** |
+| context | `main` | ahead 163 | 脏 21 | 本次旁路补文档 | 表格横滚间距写在另一条 feature；打包脚本 / 命令文件仍脏、不进提交；**不 push main** |
 | web | `dev-knowledge-not-found` | synced（`42bdce9`） | 干净 | **本期不做** | |
-| android | `feat/gfm-markdown` | synced | 脏 6 | **旁路** | 本回合修「翻历史被拽回最新 AI 卡片」：`ZXMarkdownContentView` 新增同步限高 + `ActionCardMessageItemProvider` bind 当帧设限；另含去表格左右罩、`ConversationFragment` / `AgentAnswerGetManager` / `ReferenceMessageItemProvider` 三处旁路。**未提交、待真机验收**，勿跟本功能混提 |
-| ios | **`feat/ios-file-download-progress`** | ahead 48（基线 `origin/release`） | 脏 6 | **本功能已提交 + 旁路表格** | 文件进度 10 文件已提交 `56fab29b6`，**未编译未 push**；脏区是 markdown 去罩 + 常驻横条（`ZXMarkdownTableView` 等 6 文件） |
-| desktop | `feat/gfm-markdown` | synced | 脏 16 | **旁路** | 删表格 fade JS/mixin；横条常驻。`.env.test` / `electron-builder.yml` / `package.json` 禁提交 |
+| android | `feat/gfm-markdown` | synced | 干净 | **旁路已不在脏区** | tip `9998908ea`；翻历史被拽回那笔不在本工作区 |
+| ios | **`feat/ios-file-download-progress`** | ahead 48（基线 `origin/release`） | 脏 6 | **本功能已提交 + 旁路表格** | 文件进度已提交 `56fab29b6` / 后续含 `91bb17ef5`，**未 push**；脏区是 markdown 去罩 + 常驻横条 |
+| desktop | `feat/gfm-markdown` | synced | 脏 3 | **旁路已 push** | `6d434ed9` 去罩+常驻条已上远端。残留 `.env.test` / `electron-builder.yml` / `package.json` 禁提交 |
 
 ## 旁路记录：安卓消息列表翻历史被拽回（2026-08-19，未提交）
 
@@ -166,10 +166,10 @@ web 工作区当前切到 `dev-knowledge-not-found`（别的迭代：已删除�
 
 **其它**：
 
-- (android / desktop) 脏区属 markdown，不是本功能。安卓本回合多了 `ActionCardMessageItemProvider`（右侧「收起内容」补段栈折叠），另 `ZXMarkdownTableView` 仍是横滚条自绘；桌面仅本地调试三文件。勿与本功能混提交
+- (android / desktop) markdown 旁路：PC `6d434ed9` 已 push 到 `feat/gfm-markdown`。残留本地调试三文件勿 stage。勿与本功能混提交
 - (desktop) `electron-builder.yml` / `package.json` / `.env.test` 保持脏、勿 stage
 - ios 功能分支 `feat/ios-file-download-progress` **未 push**，自测通过后再推；web 分支已删
-- **旁路（2026-08-19）**：三端 markdown 表格去掉左右渐变罩、横滚条改常驻。进度浮层代码未动。详情见 `20260818-3端-markdown-的-表格-横向滚动-.../status.md`
+- **旁路（2026-08-19）**：三端 markdown 表格去掉左右渐变罩、横滚条改常驻；PC 另加「溢出才加大下边距」。进度浮层代码未动。详情见 `20260818-3端-markdown-的-表格-横向滚动-.../status.md`
 
 ## 关键决策记录
 

@@ -1,6 +1,6 @@
 # Status：ios-机器人与智能体消息-GFM-Markdown渲染优化
 
-> 最后更新：2026-08-14 11:50（真机验证通过，自测页已移除；9 commit 全部 push；已出 PC/安卓移植 spec）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-20（补：顶层引用块内 `<reference>` 占位符未还原）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -79,6 +79,7 @@
 - (ios) ⚠️ **`pod install` 会拆掉 `zhixinAppTest`/`zhixinAppProd` 的 Pods xcconfig 挂载**，之后编译报 `'AFNetworking/AFNetworking.h' file not found`。本次已通过还原 `project.pbxproj` 修好；其他人拉到这个分支跑 `pod install` 会再踩一次。根治要把三个 target 都写进 Podfile（需团队决定，本次未做）。详见 impl-notes「工程坑」。
 - (ios) 本机 `pod` 需 `RUBYOPT="-rlogger"` 前缀才能跑（Ruby 3.2 + activesupport 7.0.8 的 Logger 常量问题）。
 - (ios) **老正则管线退休排期**（下个迭代，不是现在）：cmark 路径线上跑稳一版后，删 `renderMarkdown:` 及其 13 个 `process*` 方法与 `ZXMarkdownUseCMark` 开关，白赚约 600 行。现在删等于放弃回滚手段。
+- (ios) 2026-08-20 **引用块末尾 `<reference>` 显示方框 + `R0`**：根因是顶层 Quote 独立块没走进 `zx_postProcessRichText`，角标占位符未还原。已在 `ZXMarkdownManager blocksForText:` 给 Quote 补后处理，待真机复验该条消息。
 
 > 已了结：T0 那 505 行内联 HTML 改动已提交（`a67d3d364`）；合并转发详情页链路已查清（复用会话页 cell，见 impl-notes）。
 
