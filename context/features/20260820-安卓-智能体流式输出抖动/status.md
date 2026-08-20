@@ -37,6 +37,34 @@ focusable / clickable / longClickable 一并强制设回 true。流式每 150ms 
 等于每 150ms 把气泡正文重新变成「可获焦 + 可长按」。同一坑 AI 卡片段栈已踩过
 （`ZXMarkdownContentView#disableFocusAndLongClick`），本次在流式渲染器里补同样的锁。
 
+## 第三轮：闪烁真因 = 表格 span 每帧重建（2026-08-20，用户三张截图 + 反编译坐实）
+
+用户截图直接给出证据：流式开始时表格是**正常态**（有边框、行高大），抖动时是**另一种态**
+（无边框、行挤在一起），两态高度差一百多 px。
+
+反编译 `markwon ext-tables 4.6.2` 确认机制：
+- `TableRowSpan.getSize()` 读内部 `layouts` 缓存算高度；**新建的 span 还没有 layout**，
+  先按很矮的高度参与测量（= 无边框紧凑那一帧）；
+- `draw()` 里 `SpanUtils.width(canvas, text)` → `recreateLayouts(width)` 建好 layout，
+  再由 invalidator `textView.setText(getText())` 重排一次才变成正常表格。
+- 结论：**每新建一批 TableRowSpan 就闪一次「矮→高」**。
+
+而第二轮的缓存是「前缀长度 + 指纹」——表格后面每多一个字前缀就变，整段重新解析，
+于是每 150ms 新建一批表格 span，一直闪、列表一直上下跳。
+
+处理（都在 `AgentStreamMarkdownRenderer`）：
+1. 缓存改成**按块累积**（`committed` + `committedLen` + `committedHash`）：
+   空行闭合的块渲染一次就永久留着，之后每帧只把同一批 span 复制进新 builder，
+   layout 缓存还在，不再「矮→高」。
+2. 未闭合的块**只要带 `|` 就整块退回纯文本**（原来只挡「还没出现分隔行」的半张表）。
+   写表格的那两三秒显示 `| a | b |` 原文，空行闭合后一次性变成真表格——
+   **一次跳变，取代持续闪烁**。这是取舍，觉得原文太丑就改回来（一个判断条件）。
+3. 块之间补空行、尾巴接在空行后另起段，跟整篇渲染的块间距对齐。
+
+> 仍未根治的部分：流式座位是**单 TextView + Markwon 表格 span**，最终卡片是
+> **段栈 + 真表格控件**（`ZXMarkdownTableView`），两者表格样式本来就不一致（截图 1 vs 3）。
+> 要完全一致得让流式座位也走段栈，工作量更大，列为后备方案。
+
 ## 待办 / 阻塞
 
 - (android) **请你装第二轮的正式包并抓日志**（设备不在这台机器上，我抓不到）：
