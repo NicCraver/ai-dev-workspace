@@ -1,6 +1,6 @@
 # Status：安卓 ActionCard 卡片消息内容被截断
 
-> 最后更新：2026-08-20（审查修复已合入 `1b78853c5`，正式包重打；真机验收仍未做）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-20（**代码已撤回**：工作区切回 `feat/gfm-markdown`，改动全部留在 `fix/actioncard-content-truncate` 分支未合入；用户要重新组织方案）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -35,7 +35,7 @@
 |----|------|------|------|--------------|------|
 | context | `main` | ahead 168 | 脏 21 | 本功能文档 | 打包脚本 / 命令文件长期脏，不进提交；**不 push main** |
 | web | `feat/gfm-markdown` | synced | 干净 | 不涉及 | |
-| android | **`fix/actioncard-content-truncate`** | 无 upstream | 干净 | **本功能** | tip `1b78853c5`，**未 push**；临时日志已清空 |
+| android | 已切回 `feat/gfm-markdown`（`9998908ea`） | synced | 干净 | **本功能已撤回** | 改动保留在本地分支 `fix/actioncard-content-truncate`（tip `1b78853c5`，5 个提交，未 push、未合入）|
 | ios | `feat/ios-file-download-progress` | ahead 48 | 脏 6 | **不涉及** | markdown 旁路改动，属另一条 feature，本次一行未碰 |
 | desktop | `feat/gfm-markdown` | synced | 脏 3 | **不涉及** | 本次只读了 `msg-actioncard.vue` / `markdownFoldModel.js` 做对齐参考，未改动；脏的三个文件是本地调试配置，**禁提交** |
 
@@ -87,10 +87,25 @@ preprocess 入参 docId=_agent_file_doc_id_2056623120894918872|…（5 个） �
 | 不改 | 收起后监听仍在——回调只会重申同一状态（`true` 保持折叠+按钮，`false` 复位限高并隐按钮，都是正确行为），不会反复切换 |
 | 不改 | `appendExtraText` 去开头换行——那两个换行是 `addKnowledgeDocList` 先 append 的纯文本、其后才挂 Span，`subSequence` 只平移偏移，不截断 Span。已补注释 |
 
+## 撤回记录（2026-08-20）
+
+用户决定重新组织方案，工作区切回 `feat/gfm-markdown`，本次改动**未合入任何长期分支**。
+
+- 代码在本地分支 `fix/actioncard-content-truncate` 上完整保留，需要时可 `git cherry-pick` 或直接切回去看。
+- 产物目录里的 `zx-android-prod_v3.6.21.apk` 是**含这批改动**的构建，已作废；要干净的正式包需在当前分支重打。
+- 本文档记录的根因分析、PC 模型对照、审查结论**继续有效**，重新组织方案时可直接复用。
+
+关键结论留档（不随代码撤回而失效）：
+
+1. PC 的折叠是「一个容器 + overflow:hidden + max-height，超限一律裁到限高」，安卓原来是「两条渲染路径 + 按段取舍」，这是两端观感不一致的根。
+2. 按段取舍会在折叠后改变子段，导致「再测一次」的高度不再是内容全高，折叠判定可能自相矛盾。
+3. 知识来源在无表格路径上是拼进正文 SSB 的；日志证实文本与条数都对，问题在绘制层，真因未单独查明。
+4. `data-ref` 与 `agentKnowledgeList[].docId` 不保证同体系（实测 `toutiao_article`），PC 未命中时同样不展示，两端行为一致。
+
 ## 待办 / 阻塞
 
-- (android) **真机验收一次都没做**：改成 PC 模型后 A / B 是否真好了，未经验证。至少要过：含表格卡片折叠出按钮 + 展开完整、无表格卡片知识来源可见可点、翻历史不被拽回、气泡长按能弹菜单。
-- (android) 折叠态**表格会被裁一半**（PC 就是这个行为），若观感不可接受需回头讨论，不是 bug。
+- (android) **方案重做中**：等用户重新组织后再动代码。原 plan.md 的任务分解已不适用（T5 之后走的是重构而非按分支修补）。
+- (android) 两个原始缺陷 A / B **仍然存在于 `feat/gfm-markdown`**，撤回意味着线上问题未修。
 - (android) 设备连接不稳，两次 `adb devices` 掉线；`input swipe` 被系统拒（无 `INJECT_EVENTS` 权限），界面操作只能人工做。
 - (android) 本仓库无单测，T6 回归全靠真机人工过矩阵。
 
