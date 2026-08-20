@@ -2,7 +2,7 @@
 
 > 建立于 2026-08-17，来源：`context/features/20260814-pc安卓-GFM-Markdown渲染对齐` 的三端样式一致性审计。
 > 适用范围：机器人 / 智能体消息气泡里的 markdown 正文渲染（PC `markdown-it` / 安卓 Markwon / iOS 自绘 `ZXMarkdownStyle`）。
-> **不适用** web 端的 `AcMarkdown.vue`（那是 AI 卡片弹窗，不是消息气泡）。
+> web 端 `AcMarkdown.vue`（个人 AI 框 +「AI 优化文本」）**只对齐本表的表格行**；标题 / 代码 / 引用 / 列表仍是 AI 框自有皮肤，不要按本表改。
 
 ## 原则
 
@@ -34,7 +34,7 @@
 | 表格 · cell padding | 竖 0.35em 横 0.6em | 5/8 px | 5/9 dp | 6/10 pt |
 | 表格 · 换行 | **单元格文字尽量不换行**，表格宽出气泡由横滚兜住。允许换行的话窄表格会被挤成一列一个字 | `white-space: nowrap`（无列宽上限） | 列宽上限 360dp | 列宽上限 24em（384pt） |
 | 表格 · 斑马纹 | **无**（prose 默认有，须干掉） | | | |
-| 表格 · 横滚条 | 溢出即常驻（不等滑、不淡出）；窄表不画。细胶囊 overlay，约 35% 黑。**无左右渐变罩** | 6px 常驻 webkit 条 + 表底 8px 空隙 | 3dp 自绘胶囊 | 3pt 自绘胶囊 |
+| 表格 · 横滚条 | 溢出即常驻（不等滑、不淡出）；窄表不画。细胶囊 overlay，约 35% 黑。**无左右渐变罩** | 6px 常驻 webkit 条；窄表底 8px；溢出时条上 4px、条下 margin 20px | 3dp 自绘胶囊 | 3pt 自绘胶囊 |
 
 ## 有意不统一的项
 
@@ -54,3 +54,4 @@
 | PC | `apps/desktop/src/renderer/assets/styles/markdown.scss`（全局，`main.js` 引入；`.md-html-wrapper` 下一套规则，**不挂 `prose`**） |
 | 安卓 | `apps/android/IM/src/main/java/com/im/message_type/robot/ZXMarkwonFactory.java` 的 `configureTheme()`；表格控件 `ZXMarkdownTableView`；段栈 `ZXMarkdownContentView` |
 | iOS | `apps/ios/SmartMessage/ZX_Base/ZX_Manager/Markdown/ZXMarkdownStyle.m` 的 `defaultStyleWithBaseAttributes:` |
+| web（仅表格） | `apps/web/src/components/common/AcMarkdown.vue` 的 `.tableWrapper` / `table` 规则。直播 DOM 的外壳来自 Tiptap `TableView`（`resizable: false` 时总会包一层）；`EditorWrapper` 仅在 `markdownAsHtml` 时打开 `renderWrapper`，让 `getHTML()` 也带外壳。横滚条 6px、表底恒 8px，**不对齐** PC 列里溢出时 4px+20px 那套 gutter。 |
