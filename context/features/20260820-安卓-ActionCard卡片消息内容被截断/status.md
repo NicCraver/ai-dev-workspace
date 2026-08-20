@@ -1,6 +1,6 @@
 # Status：安卓 ActionCard 卡片消息内容被截断
 
-> 最后更新：2026-08-20（改为对齐 PC 的单容器 + 只裁不取舍；正式包已出，真机验收未做）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-20（审查修复已合入 `1b78853c5`，正式包重打；真机验收仍未做）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -29,15 +29,15 @@
 | A | 高度被夹到 480dp，无「查看更多」 | 段栈（含表格） | `D03K-9J2E-FFC7-TSGJ` |
 | B | 展开后知识来源仍不显示 | 单 TextView（无表格） | `D03K-EQ8P-HBSE-SIRP` |
 
-## 各端工作区现状（2026-08-20，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-20 收尾复核，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 165 | 脏 21 | 本功能文档 | 打包脚本 / 命令文件长期脏，不进提交；**不 push main** |
+| context | `main` | ahead 168 | 脏 21 | 本功能文档 | 打包脚本 / 命令文件长期脏，不进提交；**不 push main** |
 | web | `feat/gfm-markdown` | synced | 干净 | 不涉及 | |
 | android | **`fix/actioncard-content-truncate`** | 无 upstream | 干净 | **本功能** | tip `1b78853c5`，**未 push**；临时日志已清空 |
-| ios | `feat/ios-file-download-progress` | ahead 48 | 脏 6 | 不涉及 | markdown 旁路改动，属另一条 feature |
-| desktop | `feat/gfm-markdown` | synced | 脏 3 | 不涉及 | `.env.test` / `electron-builder.yml` / `package.json` **禁提交** |
+| ios | `feat/ios-file-download-progress` | ahead 48 | 脏 6 | **不涉及** | markdown 旁路改动，属另一条 feature，本次一行未碰 |
+| desktop | `feat/gfm-markdown` | synced | 脏 3 | **不涉及** | 本次只读了 `msg-actioncard.vue` / `markdownFoldModel.js` 做对齐参考，未改动；脏的三个文件是本地调试配置，**禁提交** |
 
 ## 定位结论（T2，真机 logcat）
 
