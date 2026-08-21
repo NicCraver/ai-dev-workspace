@@ -1,6 +1,6 @@
 # Status：安卓端 @智能体 / 个人AI框 流式输出抖动
 
-> 最后更新：2026-08-21（六轮全部真机通过，历史已压成一个提交 `5beba790f`，未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-21（六轮全部真机通过，本地 9 个提交压成一个 `8275a307c`，未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -15,7 +15,7 @@
 | `:IM:compileOnTestDebugJavaWithJavac` | — | ✅ 无 error | — | — |
 | 正式包装机（`adb install -r` Success，设备 `cbaf94cf` 小米 2509FPN0BC） | — | ✅ | — | — |
 | **真机验收**（不抖不闪、与卡片一致、前缀不重复） | — | ✅ 通过 | — | — |
-| 历史压成一个提交 `5beba790f` | — | ✅ | — | — |
+| 本地 9 个提交压成一个 `8275a307c` | — | ✅ | — | — |
 | push | — | ⬜ 待定目标分支 | — | — |
 
 > ✅ 只代表「代码写完 + 编译过 + 装上」。本仓库无单测，抖动是观感问题，**必须真机看**。
@@ -142,11 +142,15 @@ Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B�
 ## 待办 / 阻塞
 
 - (android) **已全部真机验收通过**（含占位阶段前缀不再重复）。
-- (android) 历史已整理：`e7ad6443a` + `6591514c0` + 未提交改动压成**一个** commit `5beba790f`
-  （`git reset --soft da339689c` 后重新提交，压缩前的 tip 在 reflog 里可找回）。
-- (android) **尚未 push**：分支 `fix/md-table-fold-truncate` 无 upstream、远端无同名分支，
-  且本地领先 `origin/release` 54 个提交（混着筛选条、合并详情等别的功能）。
-  推之前需确认目标分支。
+- (android) 历史已整理：**本地未推送的 9 个提交全部压成一个** `8275a307c`
+  （`git reset --soft 9998908ea` 后重新提交；压缩前的 tip 在 reflog 里可找回）。
+  9 个 = AI 卡片 markdown 渲染修复 7 个 + 表格列宽 1 个 + 流式抗抖与对齐 1 个。
+  **没有动**分支上另外 44 个提交——它们已经在 `origin/personal-ai-chat-hotfix`、
+  `origin/feat/gfm-markdown` 等远程分支上，压了就是改写已发布历史。
+- (android) **尚未 push**：分支 `fix/md-table-fold-truncate` 无 upstream、远端无同名分支。
+  推同名分支会把 54 个提交（含已在别处发布的 44 个）一起带上，需先定目标分支。
+- (android) `ActionCardMessageItemProvider` 里还留着两处 `ZXMarkwonCost` 绑定耗时打点
+  （注释写着「验完删」，251 / 609 行），下次动这个文件时顺手删。
 - (android) 未覆盖：同屏两条智能体同时回答（本次专门为它做了按 uid 排队，但没有构造场景验证）。
 
 ## 关键决策记录
