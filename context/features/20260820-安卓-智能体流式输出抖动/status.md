@@ -1,6 +1,6 @@
 # Status：安卓端 @智能体 / 个人AI框 流式输出抖动
 
-> 最后更新：2026-08-20 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-21（第三轮包已装机，正在抓 `ZX:Stream` 日志）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -8,13 +8,25 @@
 |------|-----|---------|-----|---------|
 | 定位抖动根因（4 条） | — | ✅ | — | — |
 | 打字机按 msgUid 独立排队（新 `AgentStreamPlayer`） | — | ✅ 代码 | — | — |
-| markdown 前缀渲染缓存（新 `AgentStreamMarkdownRenderer`） | — | ✅ 代码 | — | — |
 | 跟随滚动改 preDraw + 瞬时 `scrollBy` | — | ✅ 代码 | — | — |
 | holder 复用护栏（`boundUid` + 清高度地板） | — | ✅ 代码 | — | — |
+| 第二轮：「查看更多」每帧判 + 幂等显隐 + 锁 focusable | — | ✅ 代码 | — | — |
+| 第三轮：渲染缓存改**按块累积** + 未闭合表格块退回纯文本 | — | ✅ 代码 | — | — |
 | `:IM:compileOnTestDebugJavaWithJavac` | — | ✅ 无 error | — | — |
-| **真机验收** | — | 🚧 | — | — |
+| 正式包装机（`adb install -r` Success，设备 `cbaf94cf` 小米 2509FPN0BC） | — | ✅ | — | — |
+| **真机验收 + 日志分析** | — | 🚧 抓取中 | — | — |
 
-> ✅ 只代表「代码写完 + 编译过」。本仓库无单测，抖动是观感问题，**必须真机看**。
+> ✅ 只代表「代码写完 + 编译过 + 装上」。本仓库无单测，抖动是观感问题，**必须真机看**。
+
+## 各端工作区现状（2026-08-21，`scripts/code-status.sh --short`）
+
+| 端 | 分支 | 同步 | 脏区 | 与本功能关系 |
+|----|------|------|------|--------------|
+| context | `main` ahead 178 | 脏 15 | 本功能 docs + 其他功能遗留脏文件，勿一并提交 |
+| web | `feat/web-markdown-table-align-pc` | synced | 脏 1 | 不涉及（属 web markdown 对齐 PC 那个功能） |
+| android | `fix/md-table-fold-truncate` | 无 upstream | 脏 4 | **本功能**，未 commit |
+| ios | `feat/ios-file-download-progress` | synced | 脏 6 | 不涉及 |
+| desktop | `feat/gfm-markdown` | synced | 脏 6 | 不涉及 |
 
 ## 第二轮（真机反馈后，2026-08-20 18:0x）
 
@@ -67,12 +79,12 @@ focusable / clickable / longClickable 一并强制设回 true。流式每 150ms 
 
 ## 待办 / 阻塞
 
-- (android) **请你装第二轮的正式包并抓日志**（设备不在这台机器上，我抓不到）：
-  包：`apps/android/smart_message/build/outputs/apk/publish/release/zx-android-prod_v3.6.21.apk`
-  复现 @智能体 回答约 15 秒，然后 `adb logcat -s ZX:Stream` 把输出贴回来。
-  重点看：`dispatch` 打的 provider 是不是 `ReferenceMessageItemProvider`；
-  `follow` 里的 `offset=A->B` 是不是来回反复；`rebind` 是不是每秒好几次；
-  `foldCheck` 的 `h` 有没有到 `cap`。
+- (android) **进行中**：设备已连本机，第三轮正式包已装。用户在「报销答疑+员工手册」群
+  发 `@Eric 报销` 复现，我这边 `adb logcat -v time -s ZX:Stream:I` 抓日志。
+  待判定：`dispatch` 的 provider 是不是 `ReferenceMessageItemProvider`；
+  `commitBlock` 出现次数（表格块是否只渲染一次）；`follow` 的 `offset=A->B` 是否来回反复；
+  `rebind` 频率；`foldCheck` 的 `h` 是否到 `cap`。
+- (android) 打点是**临时**的（代码里标了 `TODO 临时打点`），定位完必须删掉再交付。
 - (android) 代码改动**未 commit**，留在 `fix/md-table-fold-truncate` 工作区。
 - (android) 未覆盖：同屏两条智能体同时回答（本次专门为它做了按 uid 排队，但没有构造场景验证）。
 
