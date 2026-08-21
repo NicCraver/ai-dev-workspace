@@ -126,6 +126,17 @@ Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B�
   段栈上场后锚点必须用代码切到 `md_content_stack`，否则按钮贴在一个 GONE 的 View 上。
 - 引用聚合弹窗里的首条源消息仍用 `maxReferUnitHeightDP` 限高，没被 480 一刀切。
 
+## 第六轮：修「回复 @xxx：」重复（2026-08-21）
+
+真机验收第五轮：**流式与卡片的呈现一致、不抖不闪，通过**。新缺陷：占位阶段显示成
+「回复 @李权泓：回复 李权泓：正在生成回答…」——前缀出现两次。
+
+原因：座位消息的**正文本身**就带「回复 李权泓：」（占位文案就是这种），
+第五轮又在渲染前拼了一遍带颜色的前缀。
+修法：渲染前先用现成的 `AgentReplyDisplayUtil.bodyByStrippingReplyPrefix()` 剥掉自带前缀
+（该工具的注释本来就写着「正文自带会重复」，合并详情那条链路早就在用），再拼样式前缀。
+已重新出包装机，待验收。
+
 ## 待办 / 阻塞
 
 - (android) **进行中**：设备已连本机，第三轮正式包已装。用户在「报销答疑+员工手册」群
@@ -133,9 +144,8 @@ Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B�
   待判定：`dispatch` 的 provider 是不是 `ReferenceMessageItemProvider`；
   `commitBlock` 出现次数（表格块是否只渲染一次）；`follow` 的 `offset=A->B` 是否来回反复；
   `rebind` 频率；`foldCheck` 的 `h` 是否到 `cap`。
-- (android) **设备已拔，包没装上**。重连后：
-  `adb install -r apps/android/smart_message/build/outputs/apk/publish/release/zx-android-prod_v3.6.21.apk`
-- (android) 第五轮改动**未 commit**（回退点是 `6591514c0`）。真机过了再提交。
+- (android) **待验收第六轮包**（已装机）：占位阶段应只剩一个「回复 @李权泓：」。
+- (android) 第五、六轮改动**未 commit**（回退点是 `6591514c0`）。这一条验完就提交。
 - (android) **待你验收第四轮包**（已 `adb install -r` Success）：流式中的标题字号、表格边框色、
   单换行是否已经和回答完成后的卡片一致。表格列宽/横滚仍不一致，属预期。
 - (android) **后备方案 B（未做，等你拍板）**：流式座位也改走段栈
