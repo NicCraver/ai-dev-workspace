@@ -1,6 +1,6 @@
 # Status：安卓端 @智能体 / 个人AI框 流式输出抖动
 
-> 最后更新：2026-08-21（第三轮包已装机，正在抓 `ZX:Stream` 日志）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-21（六轮全部真机通过，历史已压成一个提交 `5beba790f`，未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -14,7 +14,9 @@
 | 第三轮：渲染缓存改**按块累积** + 未闭合表格块退回纯文本 | — | ✅ 代码 | — | — |
 | `:IM:compileOnTestDebugJavaWithJavac` | — | ✅ 无 error | — | — |
 | 正式包装机（`adb install -r` Success，设备 `cbaf94cf` 小米 2509FPN0BC） | — | ✅ | — | — |
-| **真机验收 + 日志分析** | — | 🚧 抓取中 | — | — |
+| **真机验收**（不抖不闪、与卡片一致、前缀不重复） | — | ✅ 通过 | — | — |
+| 历史压成一个提交 `5beba790f` | — | ✅ | — | — |
+| push | — | ⬜ 待定目标分支 | — | — |
 
 > ✅ 只代表「代码写完 + 编译过 + 装上」。本仓库无单测，抖动是观感问题，**必须真机看**。
 
@@ -139,20 +141,12 @@ Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B�
 
 ## 待办 / 阻塞
 
-- (android) **进行中**：设备已连本机，第三轮正式包已装。用户在「报销答疑+员工手册」群
-  发 `@Eric 报销` 复现，我这边 `adb logcat -v time -s ZX:Stream:I` 抓日志。
-  待判定：`dispatch` 的 provider 是不是 `ReferenceMessageItemProvider`；
-  `commitBlock` 出现次数（表格块是否只渲染一次）；`follow` 的 `offset=A->B` 是否来回反复；
-  `rebind` 频率；`foldCheck` 的 `h` 是否到 `cap`。
-- (android) **待验收第六轮包**（已装机）：占位阶段应只剩一个「回复 @李权泓：」。
-- (android) 第五、六轮改动**未 commit**（回退点是 `6591514c0`）。这一条验完就提交。
-- (android) **待你验收第四轮包**（已 `adb install -r` Success）：流式中的标题字号、表格边框色、
-  单换行是否已经和回答完成后的卡片一致。表格列宽/横滚仍不一致，属预期。
-- (android) **后备方案 B（未做，等你拍板）**：流式座位也改走段栈
-  （`ZXMarkdownContentView` + `ZXMarkdownTableView`），表格才能完全一致。
-  代价：`rc_item_reference_message.xml` 加段栈容器、provider 流式分支重写、
-  折叠改用 `setHeightCap` / `isFoldNeeded`，回归面覆盖所有引用消息入口。
-- (android) 代码改动**未 commit**，留在 `fix/md-table-fold-truncate` 工作区。
+- (android) **已全部真机验收通过**（含占位阶段前缀不再重复）。
+- (android) 历史已整理：`e7ad6443a` + `6591514c0` + 未提交改动压成**一个** commit `5beba790f`
+  （`git reset --soft da339689c` 后重新提交，压缩前的 tip 在 reflog 里可找回）。
+- (android) **尚未 push**：分支 `fix/md-table-fold-truncate` 无 upstream、远端无同名分支，
+  且本地领先 `origin/release` 54 个提交（混着筛选条、合并详情等别的功能）。
+  推之前需确认目标分支。
 - (android) 未覆盖：同屏两条智能体同时回答（本次专门为它做了按 uid 排队，但没有构造场景验证）。
 
 ## 关键决策记录
