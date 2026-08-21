@@ -77,6 +77,31 @@ focusable / clickable / longClickable 一并强制设回 true。流式每 150ms 
 > **段栈 + 真表格控件**（`ZXMarkdownTableView`），两者表格样式本来就不一致（截图 1 vs 3）。
 > 要完全一致得让流式座位也走段栈，工作量更大，列为后备方案。
 
+## 第四轮：抖动已消除，转样式对齐（2026-08-21）
+
+用户真机确认：**不抖了**（第三轮的按块累积 + 表格延后成型生效）。
+> 说明：这轮结论来自肉眼，不是日志——`adb logcat -s ZX:Stream:I` 抓不到，
+> 因为 tag 里带冒号，`-s` 的 `tag:priority` 语法表达不了。要抓得用
+> `adb logcat -v time | grep "ZX:Stream"`。
+
+新问题：**流式中的表格与回答完成后卡片里的表格样式不一致**。原因是两套渲染器：
+
+| | 流式座位（进行中） | 最终 AI 卡片 |
+|---|---|---|
+| 载体 | 单 TextView | 段栈 `ZXMarkdownContentView` |
+| 表格实现 | Markwon `TableRowSpan`（span 自绘） | `ZXMarkdownTableView` 真控件 |
+| 表格样式来源 | **自建 Markwon**：边框 `#e7e7e7` / 2px，其余全默认 | `ZXMarkwonFactory` token：边框 `0x1F000000`、表头 `0x0A000000`、内边距 9dp/5dp |
+| 列宽 | 按可用宽度均分，不能横滚 | 单列上限 188dp，超了横滚 + 指示条 |
+| 标题 | Markwon 默认 H1 = 2 倍且自带横线 | 1.40 倍、无横线 |
+| 软换行 | CommonMark 原义（单换行并成空格） | `SoftBreakAddsNewLinePlugin` 按换行显示 |
+
+处理：流式渲染器改用 **`ZXMarkwonFactory.create(app, null)`**（原来那套自建 builder 是历史遗留，
+本功能只是把它原样搬进了新类）。标题、代码、引用、链接色、删除线、任务列表、软换行、
+表格配色全部与卡片对齐；图片插件传 null（座位消息不带图，且每 150ms 重设文本会反复触发异步调度）。
+
+**仍然不一致的只剩表格本身**：span 表格做不到「单列 188dp 上限 + 横滚」，单元格内边距也吃
+Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B，见下）。
+
 ## 待办 / 阻塞
 
 - (android) **进行中**：设备已连本机，第三轮正式包已装。用户在「报销答疑+员工手册」群
@@ -85,6 +110,12 @@ focusable / clickable / longClickable 一并强制设回 true。流式每 150ms 
   `commitBlock` 出现次数（表格块是否只渲染一次）；`follow` 的 `offset=A->B` 是否来回反复；
   `rebind` 频率；`foldCheck` 的 `h` 是否到 `cap`。
 - (android) 打点是**临时**的（代码里标了 `TODO 临时打点`），定位完必须删掉再交付。
+- (android) **待你验收第四轮包**（已 `adb install -r` Success）：流式中的标题字号、表格边框色、
+  单换行是否已经和回答完成后的卡片一致。表格列宽/横滚仍不一致，属预期。
+- (android) **后备方案 B（未做，等你拍板）**：流式座位也改走段栈
+  （`ZXMarkdownContentView` + `ZXMarkdownTableView`），表格才能完全一致。
+  代价：`rc_item_reference_message.xml` 加段栈容器、provider 流式分支重写、
+  折叠改用 `setHeightCap` / `isFoldNeeded`，回归面覆盖所有引用消息入口。
 - (android) 代码改动**未 commit**，留在 `fix/md-table-fold-truncate` 工作区。
 - (android) 未覆盖：同屏两条智能体同时回答（本次专门为它做了按 uid 排队，但没有构造场景验证）。
 
