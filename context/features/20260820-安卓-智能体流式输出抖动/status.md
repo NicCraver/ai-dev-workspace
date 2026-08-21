@@ -1,6 +1,6 @@
 # Status：安卓端 @智能体 / 个人AI框 流式输出抖动
 
-> 最后更新：2026-08-21（六轮全部真机通过，本地 9 个提交压成一个 `8275a307c`，未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-21（六轮全部真机通过，9 个提交压成 `8275a307c` 并已推 `feat/gfm-markdown`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -16,7 +16,7 @@
 | 正式包装机（`adb install -r` Success，设备 `cbaf94cf` 小米 2509FPN0BC） | — | ✅ | — | — |
 | **真机验收**（不抖不闪、与卡片一致、前缀不重复） | — | ✅ 通过 | — | — |
 | 本地 9 个提交压成一个 `8275a307c` | — | ✅ | — | — |
-| push | — | ⬜ 待定目标分支 | — | — |
+| push | — | ✅ `8275a307c` → `origin/feat/gfm-markdown`（快进） | — | — |
 
 > ✅ 只代表「代码写完 + 编译过 + 装上」。本仓库无单测，抖动是观感问题，**必须真机看**。
 
@@ -147,8 +147,9 @@ Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B�
   9 个 = AI 卡片 markdown 渲染修复 7 个 + 表格列宽 1 个 + 流式抗抖与对齐 1 个。
   **没有动**分支上另外 44 个提交——它们已经在 `origin/personal-ai-chat-hotfix`、
   `origin/feat/gfm-markdown` 等远程分支上，压了就是改写已发布历史。
-- (android) **尚未 push**：分支 `fix/md-table-fold-truncate` 无 upstream、远端无同名分支。
-  推同名分支会把 54 个提交（含已在别处发布的 44 个）一起带上，需先定目标分支。
+- (android) 已推送：`git push origin HEAD:feat/gfm-markdown`，快进 `9998908ea..8275a307c`，
+  推送后 `origin/feat/gfm-markdown..HEAD` = 0。本地分支仍是 `fix/md-table-fold-truncate`（无 upstream）。
+  远端提示可开 MR：`merge_requests/new?source_branch=feat/gfm-markdown`。
 - (android) `ActionCardMessageItemProvider` 里还留着两处 `ZXMarkwonCost` 绑定耗时打点
   （注释写着「验完删」，251 / 609 行），下次动这个文件时顺手删。
 - (android) 未覆盖：同屏两条智能体同时回答（本次专门为它做了按 uid 排队，但没有构造场景验证）。
