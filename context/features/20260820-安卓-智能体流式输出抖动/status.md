@@ -1,6 +1,6 @@
 # Status：安卓端 @智能体 / 个人AI框 流式输出抖动
 
-> 最后更新：2026-08-21（六轮全部真机通过，9 个提交压成 `8275a307c` 并已推 `feat/gfm-markdown`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-21（stop hook：desktop 脏区是本地打包配置，与本功能无关；android 工作区已干净）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -20,15 +20,15 @@
 
 > ✅ 只代表「代码写完 + 编译过 + 装上」。本仓库无单测，抖动是观感问题，**必须真机看**。
 
-## 各端工作区现状（2026-08-21，`scripts/code-status.sh --short`）
+## 各端工作区现状（2026-08-21，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 |
 |----|------|------|------|--------------|
-| context | `main` ahead 178 | 脏 15 | 本功能 docs + 其他功能遗留脏文件，勿一并提交 |
-| web | `feat/web-markdown-table-align-pc` | synced | 脏 1 | 不涉及（属 web markdown 对齐 PC 那个功能） |
-| android | `fix/md-table-fold-truncate` | 无 upstream | 脏 4 | **本功能**，未 commit |
-| ios | `feat/ios-file-download-progress` | synced | 脏 6 | 不涉及 |
-| desktop | `feat/gfm-markdown` | synced | 脏 6 | 不涉及 |
+| context | `main` ahead 185 | 脏 22 | 编排仓打包入口（`scripts/pack.mjs` 等）+ 其它遗留，**勿与本功能 docs 混提** |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 不涉及 |
+| android | `fix/md-table-fold-truncate` | 无 upstream | 干净 | 本功能已落在 `8275a307c`（与远端 `feat/gfm-markdown` 同 commit） |
+| ios | `feat/ios-file-download-progress` | synced | 干净 | 不涉及 |
+| desktop | `feat/gfm-markdown` | synced | 脏 3 | **不涉及**。脏文件是 `.env.test` / `electron-builder.yml` / `package.json`（PC 打 test 包留下的本地配置，**禁止提交**）。stop hook 因此误报，不是本功能又改了 desktop |
 
 ## 第二轮（真机反馈后，2026-08-20 18:0x）
 
@@ -141,7 +141,7 @@ Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B�
 
 ## 待办 / 阻塞
 
-- (android) **已全部真机验收通过**（含占位阶段前缀不再重复）。
+- (android) **已全部真机验收通过**（含占位阶段前缀不再重复）。android 工作区现已干净。
 - (android) 历史已整理：**本地未推送的 9 个提交全部压成一个** `8275a307c`
   （`git reset --soft 9998908ea` 后重新提交；压缩前的 tip 在 reflog 里可找回）。
   9 个 = AI 卡片 markdown 渲染修复 7 个 + 表格列宽 1 个 + 流式抗抖与对齐 1 个。
@@ -150,6 +150,7 @@ Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B�
 - (android) 已推送：`git push origin HEAD:feat/gfm-markdown`，快进 `9998908ea..8275a307c`，
   推送后 `origin/feat/gfm-markdown..HEAD` = 0。本地分支仍是 `fix/md-table-fold-truncate`（无 upstream）。
   远端提示可开 MR：`merge_requests/new?source_branch=feat/gfm-markdown`。
+- (desktop) 工作区脏 3 个本地打包文件，**不要当成这个功能的未提交代码**，也禁止 `git add`。
 - (android) `ActionCardMessageItemProvider` 里还留着两处 `ZXMarkwonCost` 绑定耗时打点
   （注释写着「验完删」，251 / 609 行），下次动这个文件时顺手删。
 - (android) 未覆盖：同屏两条智能体同时回答（本次专门为它做了按 uid 排队，但没有构造场景验证）。
