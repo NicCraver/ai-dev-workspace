@@ -102,6 +102,30 @@ focusable / clickable / longClickable 一并强制设回 true。流式每 150ms 
 **仍然不一致的只剩表格本身**：span 表格做不到「单列 188dp 上限 + 横滚」，单元格内边距也吃
 Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B，见下）。
 
+## 第五轮：流式一次性对齐卡片（2026-08-21，计划已批准并实施）
+
+抖动那条线已收口并 commit（`6591514c0`，作为本轮回退点）。本轮按批准的计划把**流式座位
+整条链路切到与 AI 卡片同一套渲染**：
+
+| 任务 | 落点 | 状态 |
+|------|------|------|
+| T1 抽出共用标签预处理，卡片改为调用它 | 新增 `robot/AgentMarkdownPreprocessor.java`；`ActionCardMessageItemProvider#preprocess` 瘦身 | ✅ 代码 |
+| T2 段栈支持流式增量（`beginStream` / `appendClosedSegments` / `setTailText`） | `robot/ZXMarkdownContentView.java`，`bind()` 未动 | ✅ 代码 |
+| T3 渲染器改为「喂段栈」，且**自身无状态** | `agent_stream/AgentStreamMarkdownRenderer.java` | ✅ 代码 |
+| T4 provider 流式分支切段栈 + 折叠照抄卡片 + 「回复 @xxx：」前缀 | `ReferenceMessageItemProvider` + `rc_item_reference_message.xml` 加 `md_content_stack` | ✅ 代码 |
+| T5 删除全部 `ZX:Stream` 临时打点 | 4 个文件 | ✅ 代码 |
+| 编译 `:IM:compileOnTestDebugJavaWithJavac` | — | ✅ 无 error |
+| 出包 + 装机 | 包已出（77.7 MB）；**装机失败：设备已拔** | ❌ 待重连 |
+
+实施中补掉的两个设计缺陷（计划里没写，实现时发现）：
+- **流式进度状态必须挂在段栈这个 View 上**，不能放渲染器里：provider 是全局单例，
+  段栈会随 holder 复用给另一条消息，渲染器记状态会把新消息的段接在旧消息内容后面。
+  现在 `streamUid / streamCommittedLen / streamCommittedHash` 都在 `ZXMarkdownContentView` 上，
+  `isStreaming(uid)` 不匹配就整条重来。
+- 「查看更多」「收起」在布局里锚在 `text_message_content` 上（`alignBottom` / `below`），
+  段栈上场后锚点必须用代码切到 `md_content_stack`，否则按钮贴在一个 GONE 的 View 上。
+- 引用聚合弹窗里的首条源消息仍用 `maxReferUnitHeightDP` 限高，没被 480 一刀切。
+
 ## 待办 / 阻塞
 
 - (android) **进行中**：设备已连本机，第三轮正式包已装。用户在「报销答疑+员工手册」群
@@ -109,7 +133,9 @@ Markwon 默认。要完全一致得让流式座位也走段栈（后备方案 B�
   待判定：`dispatch` 的 provider 是不是 `ReferenceMessageItemProvider`；
   `commitBlock` 出现次数（表格块是否只渲染一次）；`follow` 的 `offset=A->B` 是否来回反复；
   `rebind` 频率；`foldCheck` 的 `h` 是否到 `cap`。
-- (android) 打点是**临时**的（代码里标了 `TODO 临时打点`），定位完必须删掉再交付。
+- (android) **设备已拔，包没装上**。重连后：
+  `adb install -r apps/android/smart_message/build/outputs/apk/publish/release/zx-android-prod_v3.6.21.apk`
+- (android) 第五轮改动**未 commit**（回退点是 `6591514c0`）。真机过了再提交。
 - (android) **待你验收第四轮包**（已 `adb install -r` Success）：流式中的标题字号、表格边框色、
   单换行是否已经和回答完成后的卡片一致。表格列宽/横滚仍不一致，属预期。
 - (android) **后备方案 B（未做，等你拍板）**：流式座位也改走段栈
