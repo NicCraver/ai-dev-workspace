@@ -32,8 +32,43 @@
 | 展示层专项（electron-store 数据流） | — | ✅ | ✅ | ✅ |
 | 复现路径手册（`repro.md`，6 条） | — | ✅ | ✅ | ✅ |
 | 加固方案分批（第一批/第二批） | — | ✅ | ✅ | ✅ |
-| 修复方案选型（A/B/C 未定） | — | ⬜ | ⬜ | ⬜ |
-| **真机验证（全部未做）** | — | ⬜ | ⬜ | ⬜ |
+| 修复方案选型 | — | — | — | ✅ 定为三层方案（见下） |
+| **PC 加固实施（Task 0~11）** | — | — | — | ✅ 11 个 commit，单测 43/43，lint exit 0 |
+| **真机验证（全部未做）** | — | ⬜ | ⬜ | ⬜ **卡这里**，见 `acceptance.md` |
+
+## PC 加固实施结果（2026-08-24）
+
+分支 `fix/pc-read-receipt-hardening`，从 `origin/release` **613af430** 切出（不含 GFM Markdown 那 20 个 commit，可独立发版）。
+
+| Task | 内容 | commit |
+|---|---|---|
+| 1 | 已读时间合并 + 私聊已读解析 | `d02faddd` |
+| 2 | 群回执候选筛选 + 名单合并 | `e7393131` |
+| 3 | 服务端返回归一化 | `650e5792` |
+| 4 | 可观测计数器 `window.__receiptMetrics` | `0297ff61` |
+| **4B** | **表态/回复反推已读**（用户中途追加的增补机制） | `63501144` |
+| 5 | 私聊显示去日期册门槛 + 册子按需补载 | `0f4db746` |
+| 6 | 私聊回执去 `isFirstScreen` + 窗口聚焦触发 | `17f04acc` |
+| 7 | 群回执口径对齐安卓/iOS（**A1 修复**） | `c6bc1cc1` |
+| 8 | 群回执入库改单调更新 + 两处判定统一 | `288682c0` |
+| 9 | 回执有效期 15 天 / 修 switch fallthrough / 修 SRSMsg 包装 | `cc68cec3` |
+| 10 | 服务端权威源接入 + 反推接线 | `8ec3451e` |
+
+**核验结果**：单测 43/43 绿、`npm run lint` exit 0、**全分支无禁忌文件**（逐 commit 核过）。
+
+### 实施过程中的两条勘误
+
+- 计划写「测试 10 个用例」，实际是 9 条 `it()`（4+5）。实现者拒绝造假用例凑数，判断正确。
+- 计划写「模板 4 处 `:msgReceipt` 绑定」，实际只有 3 处属性绑定（339/434/450，已全改）。
+  第 4 处（560-561）是「已读 N/M」文案的 `v-if` 门槛，不是 prop。功能无缺口——
+  合并结果的名单键来自本地表，本地没登记时合并也是空，文案本就不显示。
+
+### 未决项
+
+**`chatType: 2` 是否含按人明细仍未知**（全程无 GUI 验证）。
+代码按「有明细 / 无明细」两分支兼容，用 `hasPerUserDetail` 做门闩；无明细时群聊退化为仅本地回执，
+**与改动前持平、不会更差**。起 PC 打开任意群，Console 会打印
+`[receipt] 群已读服务端返回 条数=N 含按人明细=true/false`，读到后回填 `acceptance.md` 的「零」节。
 | PC 加固 Task 1：已读状态纯逻辑模块（`mergeReadTime` / `resolvePrivateReadTime`） | — | — | — | ✅ `d02faddd`，vitest 9/9 |
 | PC 加固 Task 2：群回执候选筛选与名单合并（`isAgentOrRobotId` / `pickGroupReceiptCandidates` / `buildReceiptMessageDic` / `mergeGroupReceiptEntry`） | — | — | — | ✅ `e7393131`，vitest 25/25 |
 | PC 加固 Task 3：服务端已读返回归一化（`normalizeServerReadList`） | — | — | — | ✅ `650e5792`，vitest 31/31 |
