@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-20（PC 角标 `<reference>` 贴着前文，不再另起一行；待会话复验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-24（安卓仓库从 `fix/md-table-fold-truncate` 切回本分支 `feat/gfm-markdown`，已快进到 origin `8275a307c`，工作区干净）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -41,7 +41,17 @@
 
 **安卓新增 4 个类**：`ZXMarkwonFactory`（配置收敛 + 兜底 + 开关）、`ZXMarkdownSegment` / `ZXMarkdownSegmenter`（AST 切段）、`ZXMarkdownTableView`（横滚表格）、`ZXMarkdownContentView`（段栈 + 按段折叠）。
 
-## 各端工作区现状（2026-08-17，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-24，`scripts/code-status.sh`）
+
+| 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
+|----|------|------|------|--------------|------|
+| context | `main` | ahead 196 | 脏 22（打包脚本/commands，与本功能无关） | 文档更新 | — |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 表格折行，旁路 | tip `868f780` |
+| android | **`feat/gfm-markdown`** | **synced** | **干净** | **本功能分支** | 2026-08-24 丢掉收纳组未提交改动后切回；tip `8275a307c`（AI 卡片与流式 markdown 渲染修复） |
+| ios | `feat/ios-file-download-progress` | synced | 干净 | 旁路 | tip `0e1975634` |
+| desktop | **`feat/gfm-markdown`** | synced | 脏 3 | **本功能分支** | `.env.test` / `electron-builder.yml` / `package.json` **禁止提交**；tip `3a18a76a` |
+
+## 各端工作区现状（2026-08-17 历史快照）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|

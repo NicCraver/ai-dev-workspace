@@ -1,6 +1,6 @@
 # Status：安卓端 收纳组丢失 / 子项为 0 / 置顶失效
 
-> 最后更新：2026-08-24（本功能无进展；当日会话在做「智能会议室」新项目 brainstorm，未碰任何端代码）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-24（本地 F1~F5 与打点代码已全部丢弃，交同事接手；安卓仓库切回 `feat/gfm-markdown`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 本次要解决的用户问题
 
@@ -9,8 +9,8 @@
 | # | 现象 | 本轮处理 |
 |---|------|----------|
 | 1 | 8/21 开机提示「8/13 被其他账号登录」，需重新输密码 | 已分析，未动手 |
-| 2 | 进入智信后**所有群收纳组消失** | ✅ 根因同 3，已修 |
-| 3 | 进入智信后**某一个收纳组数量为 0**，其他正常 | ✅ 根因坐实，已修 |
+| 2 | 进入智信后**所有群收纳组消失** | 根因同 3，已坐实；**代码已丢弃，交同事改** |
+| 3 | 进入智信后**某一个收纳组数量为 0**，其他正常 | 根因已坐实；**代码已丢弃，交同事改** |
 | 4 | 首页「在组织内搜索」有的人搜不到 | 已分析，未动手 |
 
 ## 根因（真机日志坐实，留档 `/tmp/zx-gather-run1.log`）
@@ -47,7 +47,9 @@
 与最近 markdown / 流式迭代无关（`8275a307c` 只碰了该文件 1241 行的图片落盘）。
 引爆点是 **2026-08-19 14:55:45** 的一次收纳组重命名。
 
-## 已实施的修复
+## 已实施的修复（2026-08-24 本地已全部丢弃）
+
+> 下列 F1~F5 曾写在 `fix/md-table-fold-truncate` 工作区、**从未提交**。2026-08-24 按用户要求 `git restore` + 删除 `ZXGatherLog.java`，安卓仓库切到 `feat/gfm-markdown`（`8275a307c`，与 origin 同步、干净）。根因分析与决策记录仍有效，实现交同事。
 
 | | 改动 | 文件 |
 |---|------|------|
@@ -64,7 +66,7 @@
 | 只读定位（4 个问题的代码链路） | — | ✅ | — | — |
 | 新增 `ZXGatherLog` + 10 类打点 | — | ✅ | — | — |
 | 真机抓日志坐实根因 | — | ✅ | — | — |
-| F1~F5 修复 | — | ✅ 代码 | — | — |
+| F1~F5 修复 | — | ❌ 本地代码已丢弃，交同事 | — | — |
 | `:smart_message:compilePublishReleaseJavaWithJavac` | — | ✅ 无 error | — | — |
 | 出正式包 + 装机（`cbaf94cf` 小米 2509FPN0BC） | — | ✅ | — | — |
 | 验证 1：自愈（不清数据直接覆盖装） | — | ✅ **通过** | — | — |
@@ -72,7 +74,7 @@
 | 验证 3：清数据全流程（**这才验得到 F1/F3**） | — | ⬜ | — | — |
 | 验证 4/5：跨端重命名收 / 发 | — | ⬜ | — | — |
 | 验证 6：外联组置顶不跳 tab | — | ⬜ | — | — |
-| 删除全部临时打点 + 重新出包 | — | ⬜ | — | — |
+| 删除全部临时打点 + 重新出包 | — | ✅ 随 restore 一起清掉（未提交） | — | — |
 
 ### 验证 1 实测（2026-08-21 11:53）
 
@@ -89,25 +91,18 @@
 
 ## 待办 / 阻塞
 
-- (2026-08-24 核对) 三处脏区与 8-21 记录**完全一致**，无人动过：android `fix/md-table-fold-truncate` 脏 10（5 项修复 + 打点，无 upstream，tip `8275a307c`）、
-  desktop `feat/gfm-markdown` 脏 3（`.env.test` / `electron-builder.yml` / `package.json`，禁止提交）、
-  web `feat/web-markdown-table-align-pc` 与 ios `feat/ios-file-download-progress` 均干净且已同步。
-  验证 2/3/4/5/6 仍全部未跑，仍卡在设备重连。
-- (android) **设备掉线**（`adb devices` 空），日志抓取中断在 1.2MB（`/tmp/zx-gather-fix.log`）。重连 USB 后继续。
-- (android) 下一步跑**验证 3（清数据全流程）**：清数据 → 登录 → 看 2673 应为 7 → 杀进程重开 → 仍为 7。
-  这一步日志里应该出现 `msg.gather`，且显示子项未被覆盖，才算验到 F1/F3。
-- (android) 工作区脏 10 个文件 = 5 项修复 + 临时打点。**验证全过后必须先删打点再提交**，
-  `OkHttp3Interceptor` 里打原始 body 那段尤其要删干净（会打印会话数据）。
-- (android) 分支 `fix/md-table-fold-truncate`（无 upstream），tip `8275a307c`。
-- (desktop) 脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）是 PC 打包本地配置，**与本功能无关且禁止提交**。
+- (android) **2026-08-24 交接**：本地 F1~F5 + `ZXGatherLog` 打点已全部丢弃（从未提交）。
+  安卓仓库现为 `feat/gfm-markdown`，与 origin 同步、干净（tip `8275a307c`）。
+  本功能后续实现与验证由同事接手；根因与决策记录仍以本文为准。
 - (跨端) 需知会 iOS / PC：检查各自 `GatherMessage` 解析是否同样在可选数组字段上崩、encode 是否漏发
-  `childInfo` / `belongSubgroup`。安卓 F3 已做防御，但源头在发送端时其它端之间仍会互相污染。
+  `childInfo` / `belongSubgroup`。源头在发送端时其它端之间仍会互相污染。
 - (未做) 其它 5 个消息类型（`ZXCombineMessage` / `ZXRichMessage` / `ActionCardMessage` / `ToDoMessage` /
-  `TipMessage`）有**同样的 `getJSONArray` 崩解析模式**，本轮不修，单独排期。
+  `TipMessage`）有**同样的 `getJSONArray` 崩解析模式**，单独排期。
 - (未做) 问题 1、问题 4。问题 4 三条独立成因：全量拉取只取第 1 页 1 万条
   （`getCorpUsersByCorpId(corpId, corpType, 10000, 1)`）、组织 tab 硬条件 `USER_DIRECT_CORP = 1`、
   字母/拼音检索分支在 `DataCenter.java:974-979` 被注释掉（只输字母拼出非法 SQL 被 catch 吞掉）。
 - (已知无关) 「信息部人员」库里 12 个子项只显示 10 个，两个联系人本地缺失，与问题 4 同源。
+- (desktop) 脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）是 PC 打包本地配置，**与本功能无关且禁止提交**。
 
 ## 关键决策记录
 
