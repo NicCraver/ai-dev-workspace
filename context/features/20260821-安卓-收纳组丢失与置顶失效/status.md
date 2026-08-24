@@ -1,6 +1,6 @@
 # Status：安卓端 收纳组丢失 / 子项为 0 / 置顶失效
 
-> 最后更新：2026-08-21（根因已坐实并修复，自愈验证通过；解析修复待清数据场景验证）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-24（本功能无进展；当日会话在做「智能会议室」新项目 brainstorm，未碰任何端代码）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 本次要解决的用户问题
 
@@ -89,6 +89,10 @@
 
 ## 待办 / 阻塞
 
+- (2026-08-24 核对) 三处脏区与 8-21 记录**完全一致**，无人动过：android `fix/md-table-fold-truncate` 脏 10（5 项修复 + 打点，无 upstream，tip `8275a307c`）、
+  desktop `feat/gfm-markdown` 脏 3（`.env.test` / `electron-builder.yml` / `package.json`，禁止提交）、
+  web `feat/web-markdown-table-align-pc` 与 ios `feat/ios-file-download-progress` 均干净且已同步。
+  验证 2/3/4/5/6 仍全部未跑，仍卡在设备重连。
 - (android) **设备掉线**（`adb devices` 空），日志抓取中断在 1.2MB（`/tmp/zx-gather-fix.log`）。重连 USB 后继续。
 - (android) 下一步跑**验证 3（清数据全流程）**：清数据 → 登录 → 看 2673 应为 7 → 杀进程重开 → 仍为 7。
   这一步日志里应该出现 `msg.gather`，且显示子项未被覆盖，才算验到 F1/F3。
