@@ -1,6 +1,6 @@
 # Status：3端-私聊群聊已读回执不翻转排查
 
-> 最后更新：2026-08-24（Task 8）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-24（Task 9）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 本轮性质
 
@@ -23,7 +23,7 @@
 | spec 定稿 | — | ✅ | ✅ | ✅ |
 | 纵切：私聊已读链路测绘 | — | ✅ | ✅ | ✅ |
 | 纵切：群聊已读链路测绘 | — | ✅ | ✅ | ✅ |
-| 纵切：SDK 初始化配置 | — | ✅ 两类会话都开回执（`RongMessageInit.java:118-123`）；`readReceiptTimeout` 未显式设置 | ✅ 未找到显式设置 | ✅ 未传 options，取默认 1 天（`IMSDKServer.js:11`） |
+| 纵切：SDK 初始化配置 | — | ✅ 两类会话都开回执（`RongMessageInit.java:118-123`）；`readReceiptTimeout` 未显式设置 | ✅ 未找到显式设置 | ✅ 已传 `{ readReceiptTimeout: 15 }`（`IMSDKServer.js:15`，Task 9） |
 | 横切：6 阶段 × 2 机制对比矩阵 | — | ✅ | ✅ | ✅ |
 | 18 格组合推演 | — | ✅ | ✅ | ✅ |
 | 可疑点 A/B/C 定级 | — | ✅ | ✅ | ✅ |
@@ -43,6 +43,7 @@
 | PC 加固 Task 6：私聊回执去掉 `isFirstScreen` 门槛 + 窗口聚焦补发（`msg-list.vue` `ReadLastMessage`） | — | — | — | ✅ `17f04acc`，eslint 无 error；**未执行 GUI 验证** |
 | PC 加固 Task 7：群阅读方口径对齐安卓/iOS + 补会话切换触发点 | — | — | — | ✅ `c6bc1cc1`（上一任务已提交，本回合补记矩阵）；**未执行 GUI 验证** |
 | PC 加固 Task 8：群回执入库放宽为单调更新 + 大群@所有人不发无用请求 | — | — | — | ✅ `288682c0`，eslint 无 error；**未执行 GUI 验证** |
+| PC 加固 Task 9：回执窗口 15 天 + switch fallthrough + 消息映射 + SRSMsg 去包装 | — | — | — | ✅ `cc68cec3`，eslint 无 error；**未执行 GUI 验证** |
 
 ## 各端工作区现状（2026-08-24，`scripts/code-status.sh --short`）
 
@@ -52,9 +53,9 @@
 | web | `feat/web-markdown-table-align-pc` | synced | 脏 1（`AcMarkdown.vue` 行内代码样式） | **无关**（个人 AI 框 Markdown，不是 IM 回执） |
 | android | `feat/gfm-markdown` | synced | 脏 7 | **无关**：GFM 表格 + 旁路「粘贴个人 @ 误识别为群」；见 `20260728-安卓端@个人AI框` |
 | ios | `feat/ios-file-download-progress` | synced | 脏 1 | **无关**：GFM「回复 @」与表格重叠，见 `20260813-ios-机器人与智能体消息-GFM-Markdown渲染优化` |
-| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 9（… + `c6bc1cc1` + `288682c0`） | 脏 3 | **本功能**：Task 1+2+3+4+4B+5+6+7+8 已提交。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
+| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 10（… + `288682c0` + `cc68cec3`） | 脏 3 | **本功能**：Task 1+2+3+4+4B+5+6+7+8+9 已提交。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
 
-> 2026-08-24 PC 加固 Task 1+2+3+4+4B+5+6+7+8 已落地。Task 7（`c6bc1cc1`）群阅读方口径对齐并补会话切换触发点。Task 8（`288682c0`）`setGroupReceipt` 放宽为名单内单调更新（删掉数组当 key 的笔误），`HandleGroupMsgResp` 打 `groupRespReceived` / `groupRespEmptyForMe` / `groupRespApplied`，`shouldRequestGroupReadReceipt` 对 @所有人改为要求 `atAllUserList` 非空（大群不发注定被丢的回执请求）。GUI 未在本回合验证（`npm run dev:test` 因 Node 24 OpenSSL 失败）。表态/回复反推要等 Task 10 接线后才影响展示。web / 安卓 / iOS 脏区仍是同日旁路（Markdown 展示），不是 IM 回执。
+> 2026-08-24 PC 加固 Task 1+2+3+4+4B+5+6+7+8+9 已落地。Task 8（`288682c0`）`setGroupReceipt` 放宽为名单内单调更新，大群 @所有人不发无用请求。Task 9（`cc68cec3`）`readReceiptTimeout` 提到 15 天；`ReceiveMessageListener` 拆开私聊已读与群回执响应（去掉重复 case / fallthrough）；`MsgObjectNameEnum` 补 `RC:RRReqMsg` / `RC:SRSMsg`；`SyncReadStatusMessage` 改传纯对象避免再包一层。GUI 未在本回合验证（`npm run dev:test` 因 Node 24 OpenSSL 失败）。表态/回复反推要等 Task 10 接线后才影响展示。web / 安卓 / iOS 脏区仍是同日旁路（Markdown 展示），不是 IM 回执。
 
 ## 审计结论（详见 findings.md）
 
@@ -242,6 +243,7 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
 - (desktop) **PC 加固 Task 6 已完成**（`17f04acc`）：`ReadLastMessage` 去掉 `!isFirstScreen` 门槛、保留 `showDownMsg`；发出 / 跳过智能体 / 拦截三条路径 `receiptMetrics.bump`；`mounted` 里 `window` `focus` 补发已读，清理加进已有 `beforeDestroy`（未新建第二个同名钩子；无 `destroyed`）。eslint 无 error。**未执行 GUI 验证**（`npm run dev:test` 在 Node v24 下 webpack OpenSSL 失败，窗口未起）。
 - (desktop) **PC 加固 Task 7 已完成**（`c6bc1cc1`，本回合补记）：群阅读方口径对齐安卓/iOS，补会话切换触发点。**未执行 GUI 验证**。
 - (desktop) **PC 加固 Task 8 已完成**（`288682c0`）：`setGroupReceipt` 放宽为「名单里有这个人且新时间更大」；删掉 `needReceiptMap[groupId][messageUIds] = sentTime` 脏 key；`HandleGroupMsgResp` 接入 `receiptMetrics`；`shouldRequestGroupReadReceipt` 对 @所有人要求 `atAllUserList` 非空。eslint 无 error。**未执行 GUI 验证**（`npm run dev:test` 在 Node v24 下 webpack OpenSSL 失败，窗口未起）。
+- (desktop) **PC 加固 Task 9 已完成**（`cc68cec3`）：`RongIMClient.init(AppKey, null, { readReceiptTimeout: 15 })`；`ReceiveMessageListener` 的 `ReadReceiptResponseMessage` 只保留一处且补 `break`；`MsgObjectNameEnum` 补 `RC:RRReqMsg` / `RC:SRSMsg` 正反向映射；`SyncReadStatusMessage` 改传纯对象。eslint 无 error。**未执行 GUI 验证**（`npm run dev:test` 在 Node v24 下 webpack OpenSSL 失败，窗口未起）。
 - (desktop) **R8 待跑（当前第一优先）**：**手机发 @ 消息 → PC 去读 → 手机看已读**。
   至此所有实测都是 PC 发、手机读，**PC 当阅读方一次没测过**，而 A1 只在这个方向发作。
   测法：PC 收到手机发的 @ 消息后，在 devtools 里核对 `msg-list.vue:1433-1446` 的三个筛选条件
@@ -258,9 +260,9 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
   倾向 A + B 里的 B1/B3 必修项（D3 那层服务端救不了）。
 - (阻塞 A) **`chatType: 2` 的返回是否含按人明细，未验证**——这是 A 方案唯一命门。建议第一步不写代码，先打一发接口看返回。若只有会话级，群聊那半边要退回 C。
 - (跨端) **全部结论未经真机验证**，A 级也只是「代码上必然」。下一步按性价比：先验 A2（PC 本地 `npm run dev:test` 即可，无需出包）→ 再验 A1（需 iOS 配合发非纯文本 @ 消息）→ B1/B3 一起（devtools 看一次 @所有人 消息的 `extra` 结构）→ A3 最后（需安卓出包）。
-- (跨端) 审计阶段未改 IM 回执代码；2026-08-24 起 PC 加固 Task 1+2+3+4+4B 已提交纯逻辑模块，Task 5（`0f4db746`）已把私聊已读时间接到 `msg-list` / `storeModule`，Task 6（`17f04acc`）去掉 `isFirstScreen` 门槛并补窗口 focus 触发点，Task 7（`c6bc1cc1`）群阅读方口径对齐，Task 8（`288682c0`）群回执入库放宽并统一大群 @所有人 判定（GUI 均未验）。同日旁路改了 web `AcMarkdown` 行内代码样式、安卓智能体表格在引用前缀后不渲染、安卓粘贴个人 `@` 误识别为群、以及 iOS「回复 @」叠在表格上（见文首），均与回执无关。
+- (跨端) 审计阶段未改 IM 回执代码；2026-08-24 起 PC 加固 Task 1+2+3+4+4B 已提交纯逻辑模块，Task 5（`0f4db746`）已把私聊已读时间接到 `msg-list` / `storeModule`，Task 6（`17f04acc`）去掉 `isFirstScreen` 门槛并补窗口 focus 触发点，Task 7（`c6bc1cc1`）群阅读方口径对齐，Task 8（`288682c0`）群回执入库放宽并统一大群 @所有人 判定，Task 9（`cc68cec3`）回执窗口 15 天、修 switch fallthrough、补消息映射、SRSMsg 去包装（GUI 均未验）。同日旁路改了 web `AcMarkdown` 行内代码样式、安卓智能体表格在引用前缀后不渲染、安卓粘贴个人 `@` 误识别为群、以及 iOS「回复 @」叠在表格上（见文首），均与回执无关。
 - (android) 融云只有 `rong_imlib_5.5.3.jar` + `libRongIMLib.so`，SDK 内部不可读；凡涉及原生 SDK 内部行为的结论一律降到 B 级（见 B5）。
-- (desktop) `apps/desktop` 当前在 `fix/pc-read-receipt-hardening`（Task 1+2+3+4+4B+5+6+7+8 已提交）。工作区仍脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）——PC 打包本地配置，**禁止提交**。
+- (desktop) `apps/desktop` 当前在 `fix/pc-read-receipt-hardening`（Task 1+2+3+4+4B+5+6+7+8+9 已提交）。工作区仍脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）——PC 打包本地配置，**禁止提交**。
 - (desktop) 8/19 的 `context/features/20260819-pc端群@消息已读回执丢失/plan.md` 从未执行（`fix/pc-group-at-read-receipt` 分支不存在）。其事实表已在本轮复核并更新——**其中「阅读方回执只对文本/引用」「PC 不处理 RRReqMsg」两条仍成立，但「发送方登记只在 `MessageModel.js:305-317`」的描述需配合 `messageService.js:295-339` 的 `shouldRequestGroupReadReceipt` 一起看**（后者是那之后新增的）。
 - (契约) `datasyn/getReadMessage` 在 `context/contracts/` 下无契约文件。三端都在调，本轮未逐字段比对传参与解读，补契约留到下轮。
 
