@@ -814,6 +814,250 @@ git commit -m "feat(receipt): 新增回执可观测计数器，挂 window.__rece
 
 ---
 
+### Task 4B: 表态 / 回复反推已读（增补机制）
+
+用户 2026-08-24 明确反馈的**唯一可复现症状**：「大家表态、回复，还显示未读」。
+
+表态和回复都是**必须先看到消息才能做的动作**，因此可以直接反推已读，
+完全绕开融云回执通道——回执丢没丢都不影响这条推断。这是整个计划里唯一不依赖回执链路的兜底。
+
+**设计选择：只在展示时合并，不落盘。** 数据本来就在内存里（`expansionDataMap`），
+展示时算一次即可；不落盘就没有持久化时机问题、没有事件接线、没有循环依赖风险，
+而且历史消息重新加载后同样生效。
+
+**Files:**
+- Modify: `apps/desktop/src/renderer/components/chitchat/read-receipt/readStateModel.js`
+- Modify: `apps/desktop/src/renderer/components/chitchat/read-receipt/tests/readStateModel.test.js`
+
+**Interfaces:**
+- Consumes: `mergeReadTime`、`isAgentOrRobotId` (Task 1/2)
+- Produces:
+  - `extractExpansionReaders(expansionEntry, excludeUserId) -> Object`
+  - `mergeGroupReceiptEntry(localEntry, serverEntry, inferredEntry) -> Object`（**扩展既有函数，加第三个可选参数**）
+
+**背景事实**（已核实，实现时无需再查）：
+
+| 事实 | 位置 |
+|---|---|
+| 表态写扩展，key 为 `` `${emoji}_` `` 前缀 | `chat-box.vue:2493-2500` |
+| 回复写扩展，key 为 `referInfo_` 前缀 | `ReceiveMessageListener.js:318-322`、`messageService.js:258,582` |
+| 两者汇总进 `expansionDataMap[messageUId] = { prefix: [条目...] }`，值已 JSON.parse 成数组 | `WebIM/MessageExpansionUtils.js:16-47` |
+| 条目形如 `{ s: 账号Id, t: 时间戳 }`（`getSortList` 按这两个字段排序） | `WebIM/MessageExpansionUtils.js:50-58` |
+
+- [ ] **Step 1: 追加失败的测试**
+
+`tests/readStateModel.test.js` 顶部 import 追加 `extractExpansionReaders`（`mergeGroupReceiptEntry` 已在 import 里）：
+
+```js
+import {
+  mergeReadTime,
+  resolvePrivateReadTime,
+  isAgentOrRobotId,
+  pickGroupReceiptCandidates,
+  buildReceiptMessageDic,
+  mergeGroupReceiptEntry,
+  normalizeServerReadList,
+  extractExpansionReaders,
+} from "../readStateModel.js";
+```
+
+文件末尾追加：
+
+```js
+describe("extractExpansionReaders", () => {
+  it("从表态前缀里取出表态人及时间", () => {
+    const r = extractExpansionReaders({
+      "[赞]_0": [{ s: "u1", t: 1787000000000 }],
+    });
+    expect(r).toEqual({ u1: 1787000000000 });
+  });
+
+  it("从 referInfo_ 前缀里取出回复人及时间", () => {
+    const r = extractExpansionReaders({
+      referInfo_0: [{ s: "u2", t: 1787000000001 }],
+    });
+    expect(r).toEqual({ u2: 1787000000001 });
+  });
+
+  it("同一人多次表态取最晚时间", () => {
+    const r = extractExpansionReaders({
+      "[赞]_0": [{ s: "u1", t: 100 }],
+      referInfo_0: [{ s: "u1", t: 500 }],
+    });
+    expect(r).toEqual({ u1: 500 });
+  });
+
+  it("排除自己", () => {
+    const r = extractExpansionReaders(
+      { referInfo_0: [{ s: "me", t: 100 }, { s: "u1", t: 200 }] },
+      "me"
+    );
+    expect(r).toEqual({ u1: 200 });
+  });
+
+  it("排除机器人与智能体", () => {
+    const r = extractExpansionReaders({
+      referInfo_0: [{ s: "robot_1", t: 100 }, { s: "ga_1", t: 200 }],
+    });
+    expect(r).toEqual({});
+  });
+
+  it("缺 t 时用 1 占位，保证被判定为已读而不是 0", () => {
+    const r = extractExpansionReaders({ referInfo_0: [{ s: "u1" }] });
+    expect(r).toEqual({ u1: 1 });
+  });
+
+  it("忽略非数组值与无 s 的条目", () => {
+    const r = extractExpansionReaders({
+      referInfo_0: "not-an-array",
+      "[赞]_0": [{ t: 100 }, null],
+    });
+    expect(r).toEqual({});
+  });
+
+  it("空输入不抛异常", () => {
+    expect(extractExpansionReaders()).toEqual({});
+    expect(extractExpansionReaders(null, "me")).toEqual({});
+  });
+});
+
+describe("mergeGroupReceiptEntry 合并推断源", () => {
+  it("名单里的人表态过就补成已读", () => {
+    const r = mergeGroupReceiptEntry({ u1: 0 }, {}, { u1: 900 });
+    expect(r).toEqual({ u1: 900 });
+  });
+
+  it("三个源都有时取最大", () => {
+    const r = mergeGroupReceiptEntry({ u1: 100 }, { u1: 200 }, { u1: 300 });
+    expect(r).toEqual({ u1: 300 });
+  });
+
+  it("推断源里多出的人不加入名单", () => {
+    const r = mergeGroupReceiptEntry({ u1: 0 }, {}, { u1: 900, u2: 800 });
+    expect(r).toEqual({ u1: 900 });
+  });
+
+  it("不传第三个参数时行为与之前一致", () => {
+    const r = mergeGroupReceiptEntry({ u1: 0 }, { u1: 900 });
+    expect(r).toEqual({ u1: 900 });
+  });
+});
+```
+
+- [ ] **Step 2: 运行测试确认失败**
+
+```bash
+cd /Users/nic/w/ai-dev-workspace/apps/desktop
+npx vitest run src/renderer/components/chitchat/read-receipt/tests/readStateModel.test.js
+```
+
+预期：FAIL，报 `extractExpansionReaders is not a function`。
+
+- [ ] **Step 3: 实现**
+
+`readStateModel.js` 末尾追加：
+
+```js
+/**
+ * 从消息扩展里反推「谁看过这条消息」。
+ *
+ * 表态（emoji，key 形如 `${emoji}_0`）与回复（key 形如 `referInfo_0`）
+ * 都是必须先看到消息才能做的动作，因此可以直接反推已读——
+ * 这条推断完全不经过融云回执通道，回执丢没丢都不影响它。
+ *
+ * expansionDataMap[messageUId] 的形状是 { prefix: [{ s: 账号Id, t: 时间戳 }, ...] }，
+ * 值已被 MessageExpansionUtils 的 parseMap JSON.parse 过。
+ *
+ * @param {Object} expansionEntry expansionDataMap[messageUId]
+ * @param {string} excludeUserId  要排除的账号（通常是自己）
+ * @returns {Object} { accountId: 时间戳 }
+ */
+export function extractExpansionReaders(expansionEntry, excludeUserId) {
+  const entry = expansionEntry || {};
+  const readers = {};
+  const keys = Object.keys(entry);
+  for (let i = 0; i < keys.length; i++) {
+    const list = entry[keys[i]];
+    if (!Array.isArray(list)) {
+      continue;
+    }
+    for (let j = 0; j < list.length; j++) {
+      const item = list[j];
+      if (!item || !item.s) {
+        continue;
+      }
+      if (excludeUserId && item.s === excludeUserId) {
+        continue;
+      }
+      if (isAgentOrRobotId(item.s)) {
+        continue;
+      }
+      // 扩展条目缺 t 时用 1 占位：表态/回复这个动作本身就证明已读，
+      // 用 0 会被判成未读，用 1 是「已读但时间未知」的最小正值。
+      const t = mergeReadTime(item.t) || 1;
+      readers[item.s] = mergeReadTime(readers[item.s], t);
+    }
+  }
+  return readers;
+}
+```
+
+同时把既有的 `mergeGroupReceiptEntry` 改为接收第三个可选参数：
+
+```js
+/**
+ * 群聊：合并一条消息的本地已读名单、服务端已读明细与表态/回复反推。
+ *
+ * 名单的「有哪些人」由发送方登记决定（本地），后两个源只用来补时间。
+ * 多出的读者不加入名单——避免把非 @ 对象算进「需已读人数」的分母。
+ * 单调：已有的时间不会被更小的值覆盖。
+ *
+ * @param {Object} localEntry    { userId: 0|readTime }
+ * @param {Object} serverEntry   { userId: readTime }
+ * @param {Object} inferredEntry { userId: readTime } 来自 extractExpansionReaders
+ * @returns {Object} 合并后的名单
+ */
+export function mergeGroupReceiptEntry(localEntry, serverEntry, inferredEntry) {
+  const local = localEntry || {};
+  const server = serverEntry || {};
+  const inferred = inferredEntry || {};
+  const merged = {};
+  const keys = Object.keys(local);
+  for (let i = 0; i < keys.length; i++) {
+    const userId = keys[i];
+    merged[userId] = mergeReadTime(
+      local[userId],
+      server[userId],
+      inferred[userId]
+    );
+  }
+  return merged;
+}
+```
+
+- [ ] **Step 4: 运行测试确认通过**
+
+```bash
+cd /Users/nic/w/ai-dev-workspace/apps/desktop
+npx vitest run src/renderer/components/chitchat/read-receipt/tests/readStateModel.test.js
+```
+
+预期：PASS，全绿（含前三个任务的用例）。
+
+- [ ] **Step 5: 提交**
+
+```bash
+cd /Users/nic/w/ai-dev-workspace/apps/desktop
+git add src/renderer/components/chitchat/read-receipt/
+git commit -m "feat(receipt): 表态/回复反推已读的纯逻辑，群名单合并加推断源"
+```
+
+> **接线在 Task 10 Step 4/5 完成**：`getMergedGroupReceipt` 会把
+> `extractExpansionReaders(expansionDataMap[msg.messageUId], 我的id)` 作为第三个源传进来；
+> 私聊那条在 Task 10 Step 6 单独接。本任务只交付纯逻辑与单测。
+
+---
+
 ### Task 5: 私聊显示去门槛 + 已读册子按需加载
 
 **Files:**
@@ -1607,13 +1851,20 @@ git commit -m "fix(receipt): 回执有效期提到15天，修 switch fallthrough
 
 ```js
     /**
-     * 取某条群消息合并后的已读名单：本地回执表 + 服务端明细，取时间较大者。
-     * 名单成员由本地登记决定，服务端只补时间。
+     * 取某条群消息合并后的已读名单，三个源取时间较大者：
+     * 1. 本地回执表（融云 RC:RRRspMsg 落的）
+     * 2. 服务端明细（datasyn/getReadMessage）
+     * 3. 表态 / 回复反推——这条不经过回执通道，回执丢了它照样成立
+     * 名单成员由本地登记决定，后两个源只补时间。
      */
     getMergedGroupReceipt(msg) {
       const local = this.groupReceipt && this.groupReceipt[msg.messageUId];
       const server = this.serverGroupReceipt[msg.messageUId];
-      return mergeGroupReceiptEntry(local, server);
+      const inferred = extractExpansionReaders(
+        expansionDataMap[msg.messageUId],
+        this.senderInfo.id
+      );
+      return mergeGroupReceiptEntry(local, server, inferred);
     },
     getGroupNeedReadCount(msg) {
       return Object.keys(this.getMergedGroupReceipt(msg)).length;
@@ -1624,7 +1875,8 @@ git commit -m "fix(receipt): 回执有效期提到15天，修 switch fallthrough
     },
 ```
 
-import 区补上 `normalizeServerReadList` 与 `mergeGroupReceiptEntry`：
+import 区补上后续用到的三个函数（`expansionDataMap` 在本文件已有 import，见 `:653` 附近的
+`import { expansionDataMap, getSortList } from "@/WebIM/MessageExpansionUtils.js";`，若不存在则补上）：
 
 ```js
 import {
@@ -1633,8 +1885,48 @@ import {
   buildReceiptMessageDic,
   normalizeServerReadList,
   mergeGroupReceiptEntry,
+  extractExpansionReaders,
+  mergeReadTime,
 } from "../read-receipt/readStateModel.js";
 ```
+
+- [ ] **Step 5B: 私聊也接上表态 / 回复反推**
+
+私聊的症状同样存在：对方回复了我的消息，我这边还显示未读。
+
+把 Task 5 Step 2 改过的 `getStatusText` 里那段已读时间解析，再扩一层：
+
+```js
+      // 已读时间多源合并：
+      // 1. 本地册子  2. 服务端兜底（两者彼此独立，册子缺失不影响服务端）
+      // 3. 表态 / 回复反推——对方做了这两个动作就一定看过，不经过回执通道
+      const inferredReaders = extractExpansionReaders(
+        expansionDataMap[data.messageUId],
+        this.senderInfo.id
+      );
+      let inferredTime = 0;
+      const inferredKeys = Object.keys(inferredReaders);
+      for (let i = 0; i < inferredKeys.length; i++) {
+        inferredTime = mergeReadTime(
+          inferredTime,
+          inferredReaders[inferredKeys[i]]
+        );
+      }
+      const readTime = mergeReadTime(
+        resolvePrivateReadTime({
+          msgReadTime: this.msgReadTime,
+          innerReadTime: this.innerReadTime,
+          sentDate: data.sentDate,
+          messageUId: data.messageUId,
+        }),
+        inferredTime
+      );
+```
+
+> 注意 `getStatusText` 后面有一段 `if (data.sentTime > window.readedDefaultLastTime)` 才显示带时间的
+> 「xx丨已读」，否则显示纯「已读」。反推时间可能是占位值 `1`（扩展条目缺 `t` 时），
+> 那种情况下 `Math.max(readTime, data.sentTime)` 会取 `data.sentTime`，显示不会出现 1970 年，
+> 无需额外处理。
 
 - [ ] **Step 5: 模板里的 msgReceipt 也走合并结果**
 
@@ -1780,6 +2072,21 @@ git commit -m "docs(3端已读回执): PC 加固实施完成，补验收用例�
 | G6 | A 在 PC 从群 X 切到群 Y 再切回 X | 不报错；`window.__receiptMetrics.dump()` 里 `groupReceiptSent` 有增长 |
 | G7 | A 在 PC 发 @B，B **隔天**再看（或把 B 设备时间调后一天） | A 侧已读翻转（旧版 1 天窗口会丢） |
 
+### 二之二、表态 / 回复反推已读（5 条）—— 用户明确反馈的症状
+
+这组是本次唯一有用户实测症状支撑的：「大家表态、回复，还显示未读」。
+反推不经过融云回执通道，所以**即使回执全丢，这组也必须通过**。
+
+| # | 步骤 | 预期 |
+|---|---|---|
+| E1 | A 在 PC 群里发 @B 的消息，**B 在手机上对该消息表态**（点表情），B 不做别的 | A 侧「@B」旁小图标变已读 |
+| E2 | A 在 PC 群里发 @B 的消息，**B 在手机上回复该消息**（引用回复） | A 侧「@B」旁小图标变已读 |
+| E3 | A 在 PC 私聊发消息给 B，**B 在手机上回复该条**（引用回复） | A 侧该消息显示「已读」 |
+| E4 | **断网验证**：A 发 @B 后把 A 的网断开，B 表态，A 恢复网络重开会话 | 表态数据随扩展同步回来后，已读同样翻转 |
+| E5 | A 自己给自己的消息表态 | **不能**因此变已读（`extractExpansionReaders` 要排除自己） |
+
+> E5 是防倒退项：反推必须排除自己和机器人，否则「自己给自己点个赞就变已读」。
+
 ### 三、回归（4 条）—— 确认没改坏
 
 | # | 步骤 | 预期 |
@@ -1799,6 +2106,8 @@ git commit -m "docs(3端已读回执): PC 加固实施完成，补验收用例�
 
 - 私聊 P1~P6 全过，其中 **P3 必须通过、P4 必须不被破坏**
 - 群聊 G1~G7 全过，其中 **G5 是本次核心修复**
+- **表态/回复反推 E1~E5 全过**，其中 E1/E2/E3 对应用户实测症状、E5 是防倒退项。
+  这组是唯一有用户症状支撑的，**不通过不许上线**
 - 回归 R1~R4 无异常
 - 单测全绿、`npm run lint` 无 error
 - 提交里不含 `.env.test` / `electron-builder.yml` / `package.json` / `package-lock.json`
