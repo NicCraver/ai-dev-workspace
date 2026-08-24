@@ -1214,7 +1214,9 @@ export const bootstrapAuthFromUrl = () => {
     sessionStorage.setItem("meetingCorpId", corpId);
   }
   if (clientType) {
-    sessionStorage.setItem("clientType", JSON.stringify(clientType));
+    // 不做 JSON 包装：http.js 用 useSessionStorage("clientType", "app") 读，
+    // @vueuse 对字符串默认值走裸字符串序列化器（read: v => v），包了会多一对字面引号
+    sessionStorage.setItem("clientType", clientType);
   }
 
   return {
