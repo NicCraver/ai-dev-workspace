@@ -18,7 +18,11 @@
 - **功能内聚**：新增代码集中在 `apps/desktop/src/renderer/components/chitchat/read-receipt/`，单测放该目录下的 `tests/`。既有文件就地改，不搬迁。
 - **框架约束**：Vue 2.7 Options API，不引入 Vue 3 / Pinia / 组合式 API 库。
 - **禁止改动融云 SDK 私有 storage**（`localStorage["RCV4-API-V2"]`）：SDK 构造时整表读进内存缓存，外部写入会在 SDK 下次 `set` 时被整体覆盖。只读不写也不做依赖。
-- 分支：从 `apps/desktop` 当前分支切 `fix/pc-read-receipt-hardening`。
+- 分支：**从 `origin/release` 切** `fix/pc-read-receipt-hardening`（不是从当前的 `feat/gfm-markdown`），
+  目的是让回执修复能独立发版、不与 GFM Markdown 迭代绑定。
+  已核实：`origin/release` 被 `feat/gfm-markdown` 完全包含（分叉 0/20），那 20 个 commit **只碰 markdown 相关文件**，
+  本计划要改的 8 个文件在两分支间**零差异**，因此计划中的所有行号在 release 上同样有效。
+  `.env.test` / `electron-builder.yml` / `package.json` 三个本地脏文件在两分支间也无差异，切分支时会平滑带过。
 
 ### 明确不在本计划范围内
 
@@ -81,17 +85,35 @@ Task 6 的实现步骤里包含一次性探测，代码按「有明细 / 无明�
 - Consumes: 无
 - Produces: 分支 `fix/pc-read-receipt-hardening`
 
-- [ ] **Step 1: 确认工作区干净度并切分支**
+- [ ] **Step 1: 确认工作区干净度并从 release 切分支**
 
 ```bash
 cd /Users/nic/w/ai-dev-workspace/apps/desktop
 git status --short
-git checkout -b fix/pc-read-receipt-hardening
+git fetch origin release
+git checkout -b fix/pc-read-receipt-hardening origin/release
 git status --short
+git log --oneline -1
 ```
 
-预期：`git status --short` 只显示 `.env.test`、`electron-builder.yml`、`package.json` 三行 `M`。
-**这三个是 PC 打包本地配置，本计划全程不得 `git add`。** 若还有其它改动，先 `git stash` 或还原。
+预期：
+- 切换前后 `git status --short` **都只显示** `.env.test`、`electron-builder.yml`、`package.json` 三行 `M`
+  （这三个文件在 release 与 feat/gfm-markdown 之间无差异，本地修改会平滑带过）
+- `git log --oneline -1` 显示 `613af430 Merge branch 'master-3.4.25' into 'release'` 或更新的 release tip
+
+**这三个文件是 PC 打包本地配置，本计划全程不得 `git add`。** 若切换时报冲突或出现其它改动，先停下来问，不要强切。
+
+- [ ] **Step 2: 核对基线行号**
+
+```bash
+cd /Users/nic/w/ai-dev-workspace/apps/desktop
+grep -n "if (!this.isFirstScreen || this.showDownMsg)" src/renderer/components/chitchat/message/msg-list.vue
+grep -n "RongIMLib.RongIMClient.init(AppKey)" src/renderer/WebIM/IMSDKServer.js
+grep -n "Object.keys(needReadTimeMap).length === 0" src/renderer/store/module/storeModule/index.js
+```
+
+预期三条都能命中，行号分别接近 `2587`、`11`、`141`。
+**若任何一条命中不到，立即停止并报告**——说明基线与计划不符，后续任务的行号引用需要重新核对。
 
 ---
 
