@@ -13,6 +13,8 @@
 > 2026-08-24 第三条旁路（**不属于本功能**）：安卓复制 `@个人智能体` 粘贴后筛选条/发送走群。修在 `apps/android` 的 `feat/gfm-markdown` 工作树（`MentionAgentKindResolver`），见 `20260728-安卓端@个人AI框`。不改三端 IM 回执。**与 GFM 改动不要混提交。**
 >
 > 2026-08-24 第四条旁路（**不属于本功能**）：iOS 智能体「回复 @xx：」叠在表格第一行上。修在 `apps/ios` 的 `feat/ios-file-download-progress`（该分支已合入 GFM），见 `20260813-ios-机器人与智能体消息-GFM-Markdown渲染优化`。不改三端 IM 回执。
+>
+> 2026-08-24 第五条旁路（**不属于本功能**）：`ZX:ActionCardMsg` 内联 HTML，iOS 不认 `<mark>`、安卓没有背景色。修在 `apps/ios` 的 `feat/ios-file-download-progress` 与 `apps/android` 的 `feat/gfm-markdown`（只动 `SpanTagHandler` + 单测）。见两个 GFM 功能目录。不改三端 IM 回执。**安卓提交时不要带上 mention 那几份。**
 
 ## 平台矩阵
 

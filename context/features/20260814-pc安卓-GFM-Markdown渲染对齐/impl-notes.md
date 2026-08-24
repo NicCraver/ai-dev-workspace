@@ -54,7 +54,14 @@ Table.rows() -> List<Table.Row>
 
 反编译 `html:4.6.2` 确认默认已含 `SuperScriptHandler` / `SubScriptHandler` / `StrikeHandler` / `UnderlineHandler` / `LinkHandler` / `EmphasisHandler` / `StrongEmphasisHandler` / `BlockquoteHandler` / `HeadingHandler` / `ImageHandler` / `ListHandler`。
 
-**只有 `<span style="color:x">` 需要自己写**（项目里的 `SpanTagHandler`，325 行含 CSS 命名色表）。上下标不用补。
+**`<span>` / `<mark>` 的 style 需要自己写**（项目里的 `SpanTagHandler`）。Markwon 默认 Handler 没有这两类。必须解析：
+
+- `color`（正则前面不能是字母或 `-`，否则会把 `background-color` 当成字色）
+- `background-color` / `background` 简写 → 背景色
+- `font-weight: bold` / `font-style: italic` / `text-decoration: line-through`
+- `<mark>` 无背景时用 HTML 默认黄底
+
+只上前景色、或把 `background-color` 误解析成字色，表现就是「安卓没有背景色」。`padding` / `border-radius` 用 Span 画不了，圆角胶囊只能做成矩形色块。上下标不用补。
 
 ## 5. 软换行三端一致要显式配
 
@@ -236,6 +243,8 @@ PC 没踩坑：前缀是 markdown 容器外面的独立节点，送进解析器�
 2. 前缀与正文之间空一行（`\n\n`），让表格独立成块
 
 安卓选了 2，卡片气泡 / 引用悬浮 / 流式座位三处必须走同一拼接函数，只改一处会漏。
+
+iOS 走第三条路：先剥掉前缀再解析正文，再把前缀并进第一个富文本块。正文以表格开头时并不进去，前缀单独成块——这时段栈不能再把表格往上收（那是给 markdown 段末空白用的），否则会叠到「回复 @xx：」上。
 
 ## 13. 工程坑
 

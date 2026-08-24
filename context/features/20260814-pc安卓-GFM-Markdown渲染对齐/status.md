@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-24（安卓：引用前缀后紧跟表格不渲染，代码已修、单测 3/3 绿，真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-24（安卓：ActionCard 内联 HTML 无背景色 / 不认 `<mark>`，代码已修、单测 7/7 绿，真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -175,6 +175,7 @@
 
 - (android) **真机验 #9**：装当前 `feat/gfm-markdown` 包，打开那条带 `referMsg` 的智能体表格回复，应出现可横滚表格（表头底 + 边框），「回复 @xxx：」在表上方单独一行。无表格的 @ 回复回归一次（前缀与正文之间会多一段间距，对齐 PC 把前缀放在 markdown 外）。
 - (android) 2026-08-24 仓库在 `feat/gfm-markdown`（origin 同步）。#9 的 5 个文件**未提交**。收纳组未提交改动已丢弃，不并入本分支。
+- (android) **真机验 ActionCard HTML 高亮**：群机器人 `ZX:ActionCardMsg` 正文含 `<mark style="background:…">` 与 `span` 的 `background-color` / `background`。PC 正确；修前安卓无底色（`SpanTagHandler` 只上前景色，且 `color:` 正则会误吃 `background-color`）。代码已改，`SpanTagHandlerTest` 7/7。**与 `MentionAgentKindResolver` 不要混提交。**
 - (desktop) 2026-08-20 表格列 **min/max-width: 375px** 已写进 `markdown.scss`。热更新后看长单元格格内折行、多列横滚。
 
 ### PC 已本地合入 `origin/release`（2026-08-18，未 push）
