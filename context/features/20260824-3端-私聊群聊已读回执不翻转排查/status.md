@@ -7,6 +7,10 @@
 **只读审计，不改代码。** 现象无法稳定复现（用户说不清是哪端发的、遇到时无记录），唯一证据是代码本身。
 主交付是 `findings.md`。web 端不参与 IM 已读回执，故全列 `—`。
 
+> 2026-08-24 同日旁路（**不属于本功能**）：web 个人 AI 框 Markdown 行内 `` `code` `` 去掉 prose 伪元素反引号，改成浅底胶囊。代码在 `apps/web` 的 `feat/web-markdown-table-align-pc`，不改三端 IM 回执。
+>
+> 2026-08-24 再一条旁路（**不属于本功能**）：安卓智能体 `ZX:ActionCardMsg` 带引用前缀时 GFM 表格退化成管道符。修在 `apps/android` 的 `feat/gfm-markdown`，见 `20260814-pc安卓-GFM-Markdown渲染对齐`。不改三端 IM 回执。
+
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
@@ -26,17 +30,17 @@
 | 修复方案选型（A/B/C 未定） | — | ⬜ | ⬜ | ⬜ |
 | **真机验证（全部未做）** | — | ⬜ | ⬜ | ⬜ |
 
-## 各端工作区现状（2026-08-24，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-24，`scripts/code-status.sh --short`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 |
 |----|------|------|------|--------------|
-| context | `main` | ahead 199 | 脏 23（命令/脚本/契约文档，另一会话在改） | 无关 |
-| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 无关（web 不参与 IM 已读回执） |
-| android | `feat/gfm-markdown` | synced | 干净 | 无关（上个 feature 的打点已清，切回本分支） |
+| context | `main` | ahead 204 | 脏（命令/脚本 + 本功能 status 旁路记录） | 本功能 status + GFM 旁路文档 |
+| web | `feat/web-markdown-table-align-pc` | synced | 脏 1（`AcMarkdown.vue` 行内代码样式） | **无关**（个人 AI 框 Markdown，不是 IM 回执） |
+| android | `feat/gfm-markdown` | synced | 脏 5 | **无关**：智能体表格渲染，见 GFM 功能 |
 | ios | `feat/ios-file-download-progress` | synced | 干净 | 无关 |
-| desktop | `feat/gfm-markdown` | synced | 脏 3 | **无关且禁止提交**：`.env.test` / `electron-builder.yml` / `package.json`，PC 打包本地配置，本会话开始前就存在 |
+| desktop | `feat/gfm-markdown` | synced | 脏 3 | **无关且禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
 
-> 本功能自始至终**零代码改动**，四端脏区均非本功能产生。
+> 本功能（已读回执）仍**零代码改动**。web / 安卓脏区都是同日旁路的 Markdown 展示，不是 IM 回执。
 
 ## 审计结论（详见 findings.md）
 
@@ -125,7 +129,7 @@
   倾向 A + B 里的 B1/B3 必修项（D3 那层服务端救不了）。
 - (阻塞 A) **`chatType: 2` 的返回是否含按人明细，未验证**——这是 A 方案唯一命门。建议第一步不写代码，先打一发接口看返回。若只有会话级，群聊那半边要退回 C。
 - (跨端) **全部结论未经真机验证**，A 级也只是「代码上必然」。下一步按性价比：先验 A2（PC 本地 `npm run dev:test` 即可，无需出包）→ 再验 A1（需 iOS 配合发非纯文本 @ 消息）→ B1/B3 一起（devtools 看一次 @所有人 消息的 `extra` 结构）→ A3 最后（需安卓出包）。
-- (跨端) 本轮**未改任何代码**，四端工作区状态与审计开始时一致。
+- (跨端) 本功能审计**仍未改 IM 回执代码**。同日旁路改了 web `AcMarkdown` 行内代码样式，以及安卓智能体表格在引用前缀后不渲染（见文首），均与回执无关。
 - (android) 融云只有 `rong_imlib_5.5.3.jar` + `libRongIMLib.so`，SDK 内部不可读；凡涉及原生 SDK 内部行为的结论一律降到 B 级（见 B5）。
 - (desktop) `apps/desktop` 当前在 `feat/gfm-markdown`，工作区脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）——PC 打包本地配置，**与本功能无关且禁止提交**。
 - (desktop) 8/19 的 `context/features/20260819-pc端群@消息已读回执丢失/plan.md` 从未执行（`fix/pc-group-at-read-receipt` 分支不存在）。其事实表已在本轮复核并更新——**其中「阅读方回执只对文本/引用」「PC 不处理 RRReqMsg」两条仍成立，但「发送方登记只在 `MessageModel.js:305-317`」的描述需配合 `messageService.js:295-339` 的 `shouldRequestGroupReadReceipt` 一起看**（后者是那之后新增的）。

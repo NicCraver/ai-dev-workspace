@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-24（安卓仓库从 `fix/md-table-fold-truncate` 切回本分支 `feat/gfm-markdown`，已快进到 origin `8275a307c`，工作区干净）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-24（安卓：引用前缀后紧跟表格不渲染，代码已修、单测 3/3 绿，真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -45,11 +45,11 @@
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 196 | 脏 22（打包脚本/commands，与本功能无关） | 文档更新 | — |
-| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 表格折行，旁路 | tip `868f780` |
-| android | **`feat/gfm-markdown`** | **synced** | **干净** | **本功能分支** | 2026-08-24 丢掉收纳组未提交改动后切回；tip `8275a307c`（AI 卡片与流式 markdown 渲染修复） |
-| ios | `feat/ios-file-download-progress` | synced | 干净 | 旁路 | tip `0e1975634` |
-| desktop | **`feat/gfm-markdown`** | synced | 脏 3 | **本功能分支** | `.env.test` / `electron-builder.yml` / `package.json` **禁止提交**；tip `3a18a76a` |
+| context | `main` | ahead 204 | 脏（打包脚本/commands 与本功能无关；本功能文档已改） | 文档更新 | — |
+| web | `feat/web-markdown-table-align-pc` | synced | 脏 1 | 旁路 | `AcMarkdown` 行内代码样式，与表格无关 |
+| android | **`feat/gfm-markdown`** | **synced** | **脏 5** | **本功能分支** | 引用前缀 + 表格；未提交。tip `8275a307c` |
+| ios | `feat/ios-file-download-progress` | synced | 干净 | 旁路 | — |
+| desktop | **`feat/gfm-markdown`** | synced | 脏 3 | **本功能分支** | `.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
 
 ## 各端工作区现状（2026-08-17 历史快照）
 
@@ -163,14 +163,18 @@
 |---|------|------|------|
 | 8 | 角标应该贴着前文（行内 `[1]`），实际换到下一行；连续两个角标还被 `breaks: true` 拆成 `<br>` | 后端常把 `<reference>` 单独放一行。进解析器后自成 `<p>` 或变成 `<br>`。安卓 / iOS 解析前会把标签前的换行折掉，PC 漏了这一步。另外：折到表格行尾 `|` 后面时，GFM 当行尾垃圾丢掉，角标会消失 | 解析前折叠：标签贴到前一个非空白字符；连续标签之间的换行也吃掉；表格后的标签塞进最后一个单元格（吃掉行尾 `\|`）。`markdown-render` 23/23 绿。**待会话复验该条报销消息** |
 
+## 安卓自测反馈（2026-08-24）：引用前缀后的表格没有表格样式
+
+真实样本：群里 @个人 AI 框「生成 md 的表格」，智能体回 `ZX:ActionCardMsg`，正文整篇是 GFM 表，且带 `referMsg`。
+
+| # | 症状 | 根因 | 处理 |
+|---|------|------|------|
+| 9 | 安卓气泡里表格是管道符原文，没有表头底/边框/分列 | GFM 规定表格不能打断段落。安卓把「回复 @xxx：」用单个 `\n` 拼进 markdown 源，前缀与表并成同一段落，解析不出 `TableBlock`，段栈判定 `hasTable=false`，整篇当纯文本。PC 把前缀放在 markdown 容器外面，所以同条消息 PC 正常 | `joinReplyPrefix` 改为 `\n\n`；卡片两入口 + 流式座位三处共用。单测 3/3 先红后绿。**真机未验** |
+
 ## 待办 / 阻塞
 
-- (2026-08-24 工作区核对，本功能**无进展**) 当日会话在做另一件事——新建「智能会议室」前端底座
-  （见 `context/features/20260824-智能会议室-前端基建/`），产物落在**新仓库 `apps/meeting/`**，
-  与本功能无关。四端现状：web `feat/web-markdown-table-align-pc`、android `feat/gfm-markdown`、
-  ios `feat/ios-file-download-progress` 均 synced 且干净；desktop `feat/gfm-markdown` synced，
-  脏 3 个仍是 `.env.test` / `electron-builder.yml` / `package.json` 本地打包配置（**禁止提交**）。
-- (android) 2026-08-24 仓库已从 `fix/md-table-fold-truncate` 切回 `feat/gfm-markdown`（origin 同步、干净，tip `8275a307c`）。收纳组未提交改动已丢弃，不并入本分支。
+- (android) **真机验 #9**：装当前 `feat/gfm-markdown` 包，打开那条带 `referMsg` 的智能体表格回复，应出现可横滚表格（表头底 + 边框），「回复 @xxx：」在表上方单独一行。无表格的 @ 回复回归一次（前缀与正文之间会多一段间距，对齐 PC 把前缀放在 markdown 外）。
+- (android) 2026-08-24 仓库在 `feat/gfm-markdown`（origin 同步）。#9 的 5 个文件**未提交**。收纳组未提交改动已丢弃，不并入本分支。
 - (desktop) 2026-08-20 表格列 **min/max-width: 375px** 已写进 `markdown.scss`。热更新后看长单元格格内折行、多列横滚。
 
 ### PC 已本地合入 `origin/release`（2026-08-18，未 push）
