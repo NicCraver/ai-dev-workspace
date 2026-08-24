@@ -899,36 +899,54 @@ import receiptMetrics from "../read-receipt/receiptMetrics.js";
       });
 ```
 
-- [ ] **Step 3: 消息列表变化时补载册子**
+- [ ] **Step 3: 消息条数变化时补载册子**
 
-同文件，在 `Messages` watcher（原 `:1281-1290`）的 handler 末尾追加补载逻辑，改成：
+`Messages` watcher 是 `deep: true`，每次消息内容变动都会触发，不适合挂 O(n) 循环。
+挂到 `msgLength` watcher 上——它只在**条数**变化时触发，而条数变化正是「有新消息进入列表」的时刻。
+
+新增方法（放在 `methods` 里）：
 
 ```js
-    Messages: {
-      deep: true,
-      handler(val, oldVal) {
-        let leng = 0;
-        if (val) {
-          leng = val.length;
+    /**
+     * 把列表里实际出现的发送日期报给 store，缺的已读册子按需补载。
+     * refreshReadTimeState 只预载四册，超窗口的日期在 chatReadTime 里连 key 都没有，
+     * 会让 getStatusText 的已读判定直接短路。
+     */
+    ensureReadTimeDatesForList() {
+      const list = this.messageList || [];
+      if (!list.length) {
+        return;
+      }
+      const dates = {};
+      for (let i = 0; i < list.length; i++) {
+        const m = list[i];
+        if (m && m.bySelf && m.sentDate) {
+          dates[m.sentDate] = true;
         }
-        this.msgLength = leng;
-        // 把列表里实际出现的发送日期报给 store，缺的册子按需补载
-        if (val && val.length) {
-          const dates = {};
-          for (let i = 0; i < val.length; i++) {
-            const m = val[i];
-            if (m && m.bySelf && m.sentDate) {
-              dates[m.sentDate] = true;
-            }
-          }
-          this.$store.commit("electronStore/ensureReadTimeDates", {
-            accountId: this.senderInfo.id,
-            dates: Object.keys(dates),
-          });
-        }
-      },
+      }
+      const dateList = Object.keys(dates);
+      if (!dateList.length) {
+        return;
+      }
+      this.$store.commit("electronStore/ensureReadTimeDates", {
+        accountId: this.senderInfo.id,
+        dates: dateList,
+      });
     },
 ```
+
+把 `msgLength` watcher（原 `:1291-1295`）改为：
+
+```js
+    msgLength(len) {
+      if (len) {
+        this.ensureReadTimeDatesForList();
+        this.sendGroupReceiptMessage();
+      }
+    },
+```
+
+> `Messages` watcher（原 `:1281-1290`）**保持原样不动**，只负责维护 `msgLength`。
 
 - [ ] **Step 4: 起应用验证**
 
