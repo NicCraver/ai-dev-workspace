@@ -165,6 +165,7 @@
 
 ## 待办 / 阻塞
 
+- (android) 2026-08-24 仓库已从 `fix/md-table-fold-truncate` 切回 `feat/gfm-markdown`（origin 同步、干净，tip `8275a307c`）。收纳组未提交改动已丢弃，不并入本分支。
 - (desktop) 2026-08-20 表格列 **min/max-width: 375px** 已写进 `markdown.scss`。热更新后看长单元格格内折行、多列横滚。
 
 ### PC 已本地合入 `origin/release`（2026-08-18，未 push）
