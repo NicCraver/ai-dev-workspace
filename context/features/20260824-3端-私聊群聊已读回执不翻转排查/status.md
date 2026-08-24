@@ -4,8 +4,7 @@
 
 ## 本轮性质
 
-**只读审计，不改代码。** 现象无法稳定复现（用户说不清是哪端发的、遇到时无记录），唯一证据是代码本身。
-主交付是 `findings.md`。web 端不参与 IM 已读回执，故全列 `—`。
+审计阶段已结束（主交付 `findings.md`）。2026-08-24 起进入 **PC 已读回执加固实现**（分支 `apps/desktop` 的 `fix/pc-read-receipt-hardening`）。web 端不参与 IM 已读回执，故全列 `—`。
 
 > 2026-08-24 同日旁路（**不属于本功能**）：web 个人 AI 框 Markdown 行内 `` `code` `` 去掉 prose 伪元素反引号，改成浅底胶囊。代码在 `apps/web` 的 `feat/web-markdown-table-align-pc`，不改三端 IM 回执。
 >
@@ -31,6 +30,7 @@
 | 加固方案分批（第一批/第二批） | — | ✅ | ✅ | ✅ |
 | 修复方案选型（A/B/C 未定） | — | ⬜ | ⬜ | ⬜ |
 | **真机验证（全部未做）** | — | ⬜ | ⬜ | ⬜ |
+| PC 加固 Task 1：已读状态纯逻辑模块（`mergeReadTime` / `resolvePrivateReadTime`） | — | — | — | ✅ `d02faddd`，vitest 9/9 |
 
 ## 各端工作区现状（2026-08-24，`scripts/code-status.sh --short`）
 
@@ -40,9 +40,9 @@
 | web | `feat/web-markdown-table-align-pc` | synced | 脏 1（`AcMarkdown.vue` 行内代码样式） | **无关**（个人 AI 框 Markdown，不是 IM 回执） |
 | android | `feat/gfm-markdown` | synced | 脏 7 | **无关**：GFM 表格 + 旁路「粘贴个人 @ 误识别为群」；见 `20260728-安卓端@个人AI框` |
 | ios | `feat/ios-file-download-progress` | synced | 干净 | 无关 |
-| desktop | `feat/gfm-markdown` | synced | 脏 3 | **无关且禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
+| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 1（`d02faddd`） | 脏 3 | **本功能**：Task 1 已提交纯逻辑模块。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
 
-> 本功能（已读回执）仍**零代码改动**。web / 安卓脏区都是同日旁路（Markdown 展示 + 安卓粘贴个人 @），不是 IM 回执。
+> 2026-08-24 PC 加固 Task 1 已落地：`src/renderer/components/chitchat/read-receipt/readStateModel.js` + 单测，尚未接到 `msg-list.vue` / `storeModule`。web / 安卓脏区仍是同日旁路（Markdown 展示 + 安卓粘贴个人 @），不是 IM 回执。
 
 ## 审计结论（详见 findings.md）
 
@@ -221,6 +221,7 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
 
 ## 待办 / 阻塞
 
+- (desktop) **PC 加固 Task 1 已完成**（`d02faddd`）：`readStateModel.js` 抽出 `mergeReadTime` / `resolvePrivateReadTime`，vitest 9 passed。后续任务继续往该模块加函数并接线到 `msg-list.vue` / `storeModule`。本任务零接线，线上行为不变。
 - (desktop) **R8 待跑（当前第一优先）**：**手机发 @ 消息 → PC 去读 → 手机看已读**。
   至此所有实测都是 PC 发、手机读，**PC 当阅读方一次没测过**，而 A1 只在这个方向发作。
   测法：PC 收到手机发的 @ 消息后，在 devtools 里核对 `msg-list.vue:1433-1446` 的三个筛选条件
@@ -237,9 +238,9 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
   倾向 A + B 里的 B1/B3 必修项（D3 那层服务端救不了）。
 - (阻塞 A) **`chatType: 2` 的返回是否含按人明细，未验证**——这是 A 方案唯一命门。建议第一步不写代码，先打一发接口看返回。若只有会话级，群聊那半边要退回 C。
 - (跨端) **全部结论未经真机验证**，A 级也只是「代码上必然」。下一步按性价比：先验 A2（PC 本地 `npm run dev:test` 即可，无需出包）→ 再验 A1（需 iOS 配合发非纯文本 @ 消息）→ B1/B3 一起（devtools 看一次 @所有人 消息的 `extra` 结构）→ A3 最后（需安卓出包）。
-- (跨端) 本功能审计**仍未改 IM 回执代码**。同日旁路改了 web `AcMarkdown` 行内代码样式、安卓智能体表格在引用前缀后不渲染、以及安卓粘贴个人 `@` 误识别为群（见文首），均与回执无关。
+- (跨端) 审计阶段未改 IM 回执代码；2026-08-24 起 PC 加固 Task 1 已提交纯逻辑模块（尚未接线）。同日旁路改了 web `AcMarkdown` 行内代码样式、安卓智能体表格在引用前缀后不渲染、以及安卓粘贴个人 `@` 误识别为群（见文首），均与回执无关。
 - (android) 融云只有 `rong_imlib_5.5.3.jar` + `libRongIMLib.so`，SDK 内部不可读；凡涉及原生 SDK 内部行为的结论一律降到 B 级（见 B5）。
-- (desktop) `apps/desktop` 当前在 `feat/gfm-markdown`，工作区脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）——PC 打包本地配置，**与本功能无关且禁止提交**。
+- (desktop) `apps/desktop` 当前在 `fix/pc-read-receipt-hardening`（Task 1 已提交）。工作区仍脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）——PC 打包本地配置，**禁止提交**。
 - (desktop) 8/19 的 `context/features/20260819-pc端群@消息已读回执丢失/plan.md` 从未执行（`fix/pc-group-at-read-receipt` 分支不存在）。其事实表已在本轮复核并更新——**其中「阅读方回执只对文本/引用」「PC 不处理 RRReqMsg」两条仍成立，但「发送方登记只在 `MessageModel.js:305-317`」的描述需配合 `messageService.js:295-339` 的 `shouldRequestGroupReadReceipt` 一起看**（后者是那之后新增的）。
 - (契约) `datasyn/getReadMessage` 在 `context/contracts/` 下无契约文件。三端都在调，本轮未逐字段比对传参与解读，补契约留到下轮。
 
