@@ -65,7 +65,69 @@
 
 **关键机会**：`datasyn/getReadMessage` 返回带 `accountId`，接口明确支持 `chatType: 2`（群聊），三端写入侧都在打 `datasyn/readMessage`——服务端有全量数据。但安卓 / iOS **接口定义了却零调用**，PC 只用私聊且 reduce 时丢掉 `accountId`。
 
-## 加固版分批（2026-08-24 追加）
+## 推荐方案（2026-08-24 定稿，取代下方早期的 A/B/C 三选一）
+
+> **2026-08-24 修订**：用户澄清「>10 人不显示已读是需求」，原第 1 层（恢复大群 @所有人 已读）**作废**，
+> 降级为「让两处判定一致、别发无用请求」。第 2 层升为首要。
+
+### 核心判断
+
+PC 是三端里唯一不用融云 SDK 原生回执 API 的一端——发送方登记、阅读方筛选、回执入库全自研。
+自研与 SDK 原生的**口径差**才是根，逐条打补丁治不住。
+
+### 第 1 层 · 两处判定统一（对齐需求，非功能恢复）
+
+`shouldRequestGroupReadReceipt`（发不发请求，`messageService.js:295-318`）与
+`setNeedReceipt`（登不登记，`storeModule/index.js:116-151`）今天各判各的：
+大群 @所有人 时前者放行、后者不登记 → **请求发出去了，回执一定丢弃**，纯浪费，还让对方端做无用回执。
+
+抽成一个纯函数供两处共用。按需求，大群 @所有人 直接不发 `RC:RRReqMsg`。
+
+- 收益：去无用流量；结构上杜绝两处条件再走偏
+- 风险：极低
+
+### 第 2 层 · PC 阅读方口径对齐另两端（修 A1，**当前首要**，代码确定但未实测）
+
+去掉 `msg-list.vue:1433-1446` 的类型白名单与 `extra` 非空要求，改为与安卓 / iOS 同口径。
+
+- 即使 R8 测不出来也该改：三端阅读方口径不一致本身就是缺陷，PC 是最窄的一端
+- 风险：低。多发几条回执，SDK 收端自带去重
+
+### 第 3 层 · 服务端做权威源（治本，需先验前提）
+
+打开会话按 `chatType` 拉 `datasyn/getReadMessage`（群聊传 2），用 `accountId` 维度重建群已读；
+electron-store 降为缓存，冲突取已读时间较大者。
+
+- 收益：换机可恢复、三端同源、不受融云 15 天窗口限制
+- **前提**：`chatType: 2` 返回需含按人明细（模型里有 `accountId`，机制支持，未实测）
+
+### 附带三条一行改动
+
+| 改什么 | 位置 |
+|---|---|
+| `readReceiptTimeout` 1 天 → 15 天 | `IMSDKServer.js:11` |
+| `switch` 漏 `break` + 重复 case | `ReceiveMessageListener.js:246-264` |
+| `SyncReadStatusMessage` 消息体多包一层 | `messageService.js:545-553` |
+
+### 排除的两条路
+
+- **只修本地存储**：治不了 B1（问题在发送侧不在存储侧），也治不了换机丢失。
+- **全面改用融云 SDK 原生**：PC 是 v2 adapter，按人明细在 SDK 私有 localStorage
+  （`` `${myId}${messageUId}SENT` `` → `{userIds:{...}}`）。读它等于依赖未公开实现，而 8/19 已确认那块**不能写**
+  （SDK 构造时整表读进内存，外部写会被覆盖）。不可靠。
+
+### 排期
+
+| 批次 | 内容 | 依赖 |
+|---|---|---|
+| 立刻 | 验 `chatType: 2` 返回（不写代码，10 分钟） | 无 |
+| 第一批 | 第 1 层 + 第 2 层 + 三条一行改动 + 可观测埋点 | 无，纯 PC 端 |
+| 第二批 | 第 3 层 | 取决于上面的验证结果 |
+
+**B1 出局后，目前没有任何一条缺陷有实测证据。** 已实测的三项（happy path、8/6 老消息、R7）全部是「正常」或「符合需求」。
+汇报时必须如实说明：所有待修项都是代码级判断，未经实测复现。**当务之急是跑 R8 / R3 拿到第一个实测阳性。**
+
+## 加固版分批（2026-08-24 早期版本，已被上方「推荐方案」取代，保留作演进记录）
 
 用户当前处境：**复现不了，但要向领导汇报并出加固版**。结论是不等复现直接加固，分两批。
 
@@ -104,6 +166,50 @@
 | 2026-08-24 | 用户在三端各发消息、各端去读（**happy path**） | 全部正常翻转，未复现 | 符合预期——所有缺陷都是条件触发，happy path 一条都不碰 |
 | 2026-08-24 | PC 翻 **8/6**（4 天窗口外、6 个月内）自己发的私聊消息 | **显示已读** | **D2 降级、D1 私聊部分降级、`repro.md` R1 作废**。融云本地库持久化了 `sentStatus=READ`，册子缺失只丢已读时间戳 |
 | 2026-08-24 | **R7**：PC 在群里发 @某人 与 @所有人，手机读 | @某人 已读**正常翻转**；@所有人 **未登记、名单 undefined** | **B1 坐实**（卡点订正为 `storeModule/index.js:141-143` 名单为空 return，不是 `atUserList` 判空——`[]` 是 truthy）。但 @所有人 界面本就不显示已读图标（`msgtype/msg-txt.vue:52-73` 两个 `v-if` 都要 `msgReceipt` 非空），**大概率不是用户抱怨的现象**。「群 + PC 发 + @某人 + 手机读」路径**排除** |
+
+### B1 根因定位到源头：`send-box.vue` 的 10 人硬上限
+
+`apps/desktop/src/renderer/components/chitchat/sendbox/send-box.vue:1597-1605`：
+
+```js
+if (atAllList.length) {
+  const allPeopleList = [...this.currentGroup.groupMembers];
+  allPeopleList.push(this.currentGroup.owner);
+  const peopleIdList = allPeopleList.filter(item => item != this.GetSendUser.id);
+  if (peopleIdList.length <= 10) {        // ← 硬编码 10 人上限
+    atAllUserList = peopleIdList;
+  }
+}
+// :1728
+source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }), richList };
+```
+
+**群成员 > 10 人时 `atAllUserList` 根本不写进 `extra`** —— 与实测输出 `atAllUserList: undefined` 完全吻合（用户测的群 >10 人）。
+
+完整因果链：
+
+| 步骤 | 位置 | 结果 |
+|---|---|---|
+| 1 | `send-box.vue:1603` | 群 >10 人 → `atAllUserList` 不入 extra |
+| 2 | — | `atUserList` 为空数组（@所有人 无具体被 @ 人） |
+| 3 | `storeModule/index.js:127-143` | 名单构造为空 → `return`，**不登记** |
+| 4 | `messageService.js:300` | 但 `mentionedInfo.type === 1` 放行，**RRReqMsg 照发给对方** |
+| 5 | `storeModule/index.js:169-171` | 对方回执回来，查不到登记 → 静默丢弃 |
+| 6 | `msgtype/msg-txt.vue:52-73` | `msgReceipt` 为 undefined → 不显示任何图标 |
+
+**分界线**：≤10 人的群 @所有人 正常，>10 人的群 @所有人 无已读。
+
+> **2026-08-24 用户澄清：「大于 10 人不显示是需求」。**
+>
+> **B1 出局，不是缺陷。** `send-box.vue:1603` 的 10 人上限是产品有意为之，>10 人群 @所有人 不显示已读属预期行为。
+> 上面的因果链保留作机制记录，但**不作为待修项**。
+>
+> **唯一残留的真问题**：`shouldRequestGroupReadReceipt`（`messageService.js:300`）在 `mentionedInfo.type === 1` 时
+> 无条件放行，**照样把 `RC:RRReqMsg` 发给对方**。既然本机注定不登记、回执一定丢弃，这条请求就是纯浪费——
+> 还会让对方端（安卓 / iOS）做一次无用回执。应与「登不登记」用同一判定，大群 @所有人 直接不发请求。
+> 性质是**对齐需求 + 去无用流量**，不是恢复已读功能。
+>
+> 待确认：安卓 / iOS 在 >10 人群 @所有人 时是否同样不显示已读。若显示，则是三端产品行为不一致（产品问题，非本次缺陷）。
 
 **由此得到的关键推论**：
 
