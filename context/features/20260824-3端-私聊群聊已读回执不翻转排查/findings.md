@@ -369,6 +369,42 @@ if (msgState && msgState[senderUserId] === 0) {
 
 **群聊方向反而升级**：群已读没有融云兜底，D1 / D3 / B1 / B3 一旦命中就是必现，没有东西能救。
 
+### 实测：R7（PC 发 @所有人 / @某人，手机读）——2026-08-24
+
+群 `2044600546811285505`「AI框自定义Agent」，PC 发、手机读。
+
+| 消息 | `extra.atUserList` | `atAllUserList` | 已登记 | 需回执名单（手机读后） |
+|---|---|---|---|---|
+| `D06A-QLT4-6PUD-03B4` **@李峰** | 1 个元素 | `undefined` | ✅ true | `{"1478260773032583169": 1787557547548}` **已翻转** |
+| `D06A-QGQM-MP4D-03B4` **@所有人** | **空数组 `[]`** | `undefined` | ❌ false | `undefined` |
+
+**B1 坐实，但卡点位置需订正**：
+
+不是 `MessageModel.js:305-311` 的 `txtmsg.extra.atUserList` 判空——`[]` 在 JS 里是 truthy，那个条件**过了**，
+`setNeedReceipt` 确实被调用了。真正 return 掉的是下一层（`storeModule/index.js:127-143`）：
+
+```js
+const { atUserList = [], atAllUserList = [] } = extra || {};
+atUserList.forEach(...)      // 空数组，什么都没加
+atAllUserList.forEach(...)   // undefined → 兜底成 []，什么都没加
+if (Object.keys(needReadTimeMap).length === 0) {
+  return;                    // ← 名单为空，退出，不登记
+}
+```
+
+而 `shouldRequestGroupReadReceipt`（`messageService.js:300`）在 `mentionedInfo.type === 1` 时直接放行，
+`RC:RRReqMsg` 照发。**请求发给对方了，本机却没登记**，回执回来被 `setGroupReceipt` 第三道门
+（`storeModule/index.js:169-171`）静默丢弃。
+
+**但界面表现要注意**：已读标记是挂在每个被 @ 的人名旁边的小图标（`msgtype/msg-txt.vue:52-73`），
+两个 `v-if` 都要求 `msgReceipt` 非空。@所有人 时 `msgReceipt` 为 `undefined` → **一个图标都不显示**，
+不是「显示未读」。所以 B1 是真缺陷，但**大概率不是用户抱怨的那个现象**。
+
+**排除项**：群聊 + PC 发 + @某人 + 手机读 —— 链路完整，已读正常翻转。
+
+**由此暴露的最大空白**：至此所有实测都是 **PC 发、手机读**。**「手机发 @ 消息 → PC 去读」这个方向一次都没测过**，
+而 A1 恰恰只在这个方向发作（PC 当阅读方时的类型白名单 + `extra` 非空要求，`msg-list.vue:1433-1446`）。下一步补这条。
+
 ### 关键机会：服务端已有权威数据，三端都没用起来
 
 `datasyn/getReadMessage` 返回 `[{accountId, msgUID, msgTimestamp, chatType, targetId, readTimestamp}]`，
