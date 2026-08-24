@@ -19,7 +19,22 @@
 | 18 格组合推演 | — | ✅ | ✅ | ✅ |
 | 可疑点 A/B/C 定级 | — | ✅ | ✅ | ✅ |
 | `findings.md` 成稿 | — | ✅ | ✅ | ✅ |
+| HTML 汇报（`report.html`） | — | ✅ | ✅ | ✅ |
+| 展示层专项（electron-store 数据流） | — | ✅ | ✅ | ✅ |
+| 修复方案选型 | — | ⬜ | ⬜ | ⬜ |
 | **真机验证（全部未做）** | — | ⬜ | ⬜ | ⬜ |
+
+## 各端工作区现状（2026-08-24，`scripts/code-status.sh`）
+
+| 端 | 分支 | 同步 | 脏区 | 与本功能关系 |
+|----|------|------|------|--------------|
+| context | `main` | ahead 199 | 脏 23（命令/脚本/契约文档，另一会话在改） | 无关 |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 无关（web 不参与 IM 已读回执） |
+| android | `feat/gfm-markdown` | synced | 干净 | 无关（上个 feature 的打点已清，切回本分支） |
+| ios | `feat/ios-file-download-progress` | synced | 干净 | 无关 |
+| desktop | `feat/gfm-markdown` | synced | 脏 3 | **无关且禁止提交**：`.env.test` / `electron-builder.yml` / `package.json`，PC 打包本地配置，本会话开始前就存在 |
+
+> 本功能自始至终**零代码改动**，四端脏区均非本功能产生。
 
 ## 审计结论（详见 findings.md）
 
@@ -33,8 +48,25 @@
 
 6 条 B 级、5 条 C 级见 findings.md。
 
+### 展示层专项（追加，findings.md 第五之二节）
+
+同事指出「显示靠 electron-store」——核实成立，且比回执发送侧更根本。4 条 D 级：
+
+- **D1** 已读状态纯本地存储，无重建路径 → 换机/重装/清缓存永久丢失。
+- **D2** 私聊已读按天分片、只加载 4 天窗口（`storeModule/index.js:38-51`）→ **3 天前的消息回落显示「未读」**。
+- **D3** 登记表决定渲不渲染已读入口，丢了之后回执全被第一道门丢弃（`storeModule/index.js:157-159`）——服务端权威源也救不了这一层。
+- **D4** 三端各存各的，无共同权威源。
+
+**关键机会**：`datasyn/getReadMessage` 返回带 `accountId`，接口明确支持 `chatType: 2`（群聊），三端写入侧都在打 `datasyn/readMessage`——服务端有全量数据。但安卓 / iOS **接口定义了却零调用**，PC 只用私聊且 reduce 时丢掉 `accountId`。
+
 ## 待办 / 阻塞
 
+- (跨端) **卡在方案选型**，已向用户摆了三个方案待选：
+  **A**（推荐）服务端 `datasyn/getReadMessage` 做权威源、本地存储降级为缓存，三端同源；
+  **B** 只补本地存储的洞（不解决换机丢失与跨端一致）；
+  **C** 以融云 `readReceiptInfo` 为准（治标，且 PC 的 v2 adapter 与原生 5.x 不同源）。
+  倾向 A + B 里的 B1/B3 必修项（D3 那层服务端救不了）。
+- (阻塞 A) **`chatType: 2` 的返回是否含按人明细，未验证**——这是 A 方案唯一命门。建议第一步不写代码，先打一发接口看返回。若只有会话级，群聊那半边要退回 C。
 - (跨端) **全部结论未经真机验证**，A 级也只是「代码上必然」。下一步按性价比：先验 A2（PC 本地 `npm run dev:test` 即可，无需出包）→ 再验 A1（需 iOS 配合发非纯文本 @ 消息）→ B1/B3 一起（devtools 看一次 @所有人 消息的 `extra` 结构）→ A3 最后（需安卓出包）。
 - (跨端) 本轮**未改任何代码**，四端工作区状态与审计开始时一致。
 - (android) 融云只有 `rong_imlib_5.5.3.jar` + `libRongIMLib.so`，SDK 内部不可读；凡涉及原生 SDK 内部行为的结论一律降到 B 级（见 B5）。

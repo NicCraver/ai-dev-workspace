@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>三端已读回执排查汇报</title>
+<style>
+  :root{
+    --bg:#fbfbfa; --fg:#1a1a19; --muted:#71716c; --line:#e6e5e1;
+    --card:#fff; --code:#f4f4f1;
+    --red:#c0392b; --amber:#b8860b; --grey:#8a8a84; --blue:#3E7EFF; --green:#1f9d63;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:48px 24px 96px;
+    background:var(--bg); color:var(--fg);
+    font:15px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px;margin:0 auto}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:.88em}
+  code{background:var(--code);padding:1px 5px;border-radius:3px;white-space:nowrap}
+  pre{background:var(--code);padding:14px 16px;border-radius:6px;overflow-x:auto;margin:12px 0;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.6}
+  pre code{background:none;padding:0;white-space:pre}
+
+  header{border-bottom:2px solid var(--fg);padding-bottom:20px;margin-bottom:36px}
+  h1{font-size:26px;margin:0 0 10px;letter-spacing:-.3px}
+  .meta{color:var(--muted);font-size:13px}
+  .meta span{margin-right:18px;white-space:nowrap}
+
+  h2{font-size:19px;margin:44px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-size:15px;margin:26px 0 8px}
+  p{margin:10px 0}
+
+  .lede{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--fg);
+        padding:18px 20px;border-radius:0 6px 6px 0;margin:0 0 8px}
+  .lede p:first-child{margin-top:0}
+  .lede p:last-child{margin-bottom:0}
+
+  .finding{background:var(--card);border:1px solid var(--line);border-radius:6px;
+           padding:18px 20px;margin:16px 0}
+  .finding.a{border-left:3px solid var(--red)}
+  .finding.top{box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .fhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .tag{font-size:11px;font-weight:600;letter-spacing:.5px;padding:2px 7px;border-radius:3px;
+       color:#fff;background:var(--grey);white-space:nowrap}
+  .tag.a{background:var(--red)} .tag.b{background:var(--amber)} .tag.c{background:var(--grey)}
+  .ftitle{font-size:16px;font-weight:600;flex:1;min-width:200px}
+  .pill{font-size:11px;padding:2px 8px;border-radius:10px;background:#fff4d6;color:#8a6100;
+        border:1px solid #f0dfae;white-space:nowrap}
+  .floc{color:var(--muted);font-size:12.5px;margin:4px 0 10px}
+  .kv{display:grid;grid-template-columns:74px 1fr;gap:4px 14px;font-size:13.5px;margin-top:12px;
+      padding-top:12px;border-top:1px dashed var(--line);color:#333}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0}
+
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:#f2f1ed;font-weight:600;font-size:12.5px}
+  td.c,th.c{text-align:center}
+  .warn{color:var(--amber);font-weight:600}
+  .ok{color:var(--green)}
+  .bad{color:var(--red);font-weight:600}
+  .pc{background:#fff6f5}
+
+  ul{margin:10px 0;padding-left:22px} li{margin:5px 0}
+  ol{margin:10px 0;padding-left:22px}
+
+  details{background:var(--card);border:1px solid var(--line);border-radius:6px;
+          padding:12px 18px;margin:12px 0}
+  details[open]{padding-bottom:18px}
+  summary{cursor:pointer;font-weight:600;font-size:14.5px;outline:none}
+  summary::marker{color:var(--muted)}
+
+  .caution{background:#fffaf0;border:1px solid #f0e0c0;border-radius:6px;padding:16px 20px;margin:16px 0}
+  .caution h3{margin-top:0}
+
+  footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+         color:var(--muted);font-size:12.5px}
+  @media (max-width:640px){
+    body{padding:28px 14px 60px}
+    .kv{grid-template-columns:1fr;gap:2px}
+    .kv dt{margin-top:8px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>消息已读回执异常 · 三端链路排查汇报</h1>
+  <div class="meta">
+    <span>2026-08-24</span>
+    <span>纯代码审计 · 未改任何代码</span>
+    <span>desktop / android / ios</span>
+    <span class="mono">1d79054</span>
+  </div>
+</header>
+
+<div class="lede">
+  <p><strong>问题最集中在 PC 端（apps/desktop）。</strong></p>
+  <p>PC 是三端里唯一<strong>不用融云 SDK 原生回执 API</strong> 的一端——发送方登记、阅读方回执、回执入库全是自研。自研实现与 SDK 原生在四个地方口径不一致，每一处都能单独造成「对方看了、发送方仍显示未读」。</p>
+  <p>私聊 9 格、群聊 9 格两张组合推演表，断点的交集只有一个位置：<strong>PC</strong>。与「私聊、群聊均有」的反馈吻合。</p>
+</div>
+
+<h2>背景与约束</h2>
+<ul>
+  <li>现象<strong>无法稳定复现</strong>，用户遇到时未记录，也说不清是哪一端发的消息 → 没有复现路径，唯一证据是代码本身。</li>
+  <li>web 端不参与 IM 已读回执（grep 命中的全是个人 AI 框语境的 unread），所以是「3 端」而非 4 端。</li>
+  <li>本轮只查「已读回执」，不含「自己的未读数 / 红点多端同步」。</li>
+</ul>
+
+<h2>机制总览：两套完全独立的通道</h2>
+<table>
+  <tr><th style="width:15%"></th><th>私聊</th><th>群聊（@ 消息）</th></tr>
+  <tr>
+    <td><strong>主通道</strong></td>
+    <td>融云 <code>RC:ReadNtf</code>，带 <code>lastMessageSendTime</code>，覆盖该时间之前全部消息</td>
+    <td>融云 <code>RC:RRReqMsg</code>（发送方要求回执）→ <code>RC:RRRspMsg</code>（阅读方响应）</td>
+  </tr>
+  <tr>
+    <td><strong>服务端旁路</strong></td>
+    <td><code>datasyn/readMessage</code> 写 · <code>datasyn/getReadMessage</code> 读</td>
+    <td><strong>无</strong>。服务端没有群维度按人已读接口，群「已读 N 人」只有融云一条路</td>
+  </tr>
+</table>
+
+<h3>三端 SDK 版本不一致</h3>
+<table>
+  <tr><th style="width:14%">端</th><th style="width:34%">SDK</th><th style="width:22%">形态</th><th>可读性</th></tr>
+  <tr><td>android</td><td class="mono">rong_imlib_5.5.3.jar</td><td>原生 5.x</td><td>仅接口层，内部不可读</td></tr>
+  <tr><td>ios</td><td class="mono">RongCloudIM 5.3.7</td><td>原生 5.x</td><td>Pods 公开头文件可读</td></tr>
+  <tr class="pc"><td>desktop</td><td class="mono">RongIMLib-v2-Adapter-5.3.3</td><td><strong>v2 API 系</strong>，与原生 5.x 不是同一套</td><td>明文 JS，全可读</td></tr>
+</table>
+
+<h2>A 级结论 · 代码坐实，可直接开修</h2>
+
+<div class="finding a top">
+  <div class="fhead">
+    <span class="tag a">A2</span>
+    <span class="ftitle">PC 私聊已读回执被滚动位置状态整体挡掉</span>
+    <span class="pill">最可能是本次现象</span>
+  </div>
+  <div class="floc mono">apps/desktop/src/renderer/components/chitchat/message/msg-list.vue:2587</div>
+<pre><code>if (!this.isFirstScreen || this.showDownMsg) {
+  return false;
+}</code></pre>
+  <p><code>ReadLastMessage</code> 有 6 个调用点（<span class="mono">:871,1246,1334,1352,1366,2320</span>），但<strong>每一个都先撞这两行</strong>。<code>isFirstScreen</code> 在向上翻历史时置 false，<code>showDownMsg</code> 是「下方有新消息」提示。</p>
+  <p>安卓进会话就无条件发（<span class="mono">ConversationFragment.java:1393</span>），iOS <code>viewWillAppear</code> 就发（<span class="mono">ZXRCIMBaseChatController.m:151</span>）——<strong>两端都没有等价门槛</strong>。</p>
+  <p>滚回底部时 <code>isFirstScreen</code> 的 watcher 会补一次，所以<strong>不是必然失败，而是取决于用户当时滚到哪</strong>——这正是「偶发、说不清条件」的形状。</p>
+  <dl class="kv">
+    <dt>断点阶段</dt><dd>私聊 ② 阅读方触发</dd>
+    <dt>影响组合</dt><dd>任意端发 → <strong>PC 读</strong></dd>
+    <dt>验证</dt><dd>PC 打开有历史的私聊，先往上滚一段，让对方发消息，不滚回底部直接读，看对方端已读是否翻转</dd>
+  </dl>
+</div>
+
+<div class="finding a">
+  <div class="fhead">
+    <span class="tag a">A1</span>
+    <span class="ftitle">PC 阅读群消息时，回执只覆盖「文本/引用 且 extra 非空」的消息</span>
+  </div>
+  <div class="floc mono">apps/desktop/src/renderer/components/chitchat/message/msg-list.vue:1433-1446</div>
+  <p>PC 阅读方筛选条件写死了 <code>messageType ∈ {TextMessage, ReferenceMessage}</code> 且 <code>content.extra</code> 非空。</p>
+  <p>安卓 / iOS 阅读方按 SDK 的 <code>readReceiptInfo.isReceiptRequestMessage</code> 判定，<strong>不限消息类型</strong>（<span class="mono">ConversationFragment.java:3554-3559</span> / <span class="mono">ZXRCIMBaseChatController.m:1108-1113</span>）。</p>
+  <p>而 iOS 发送方只要 <code>content.mentionedInfo</code> 非 nil 就发回执请求（<span class="mono">+SendMessage.m:1170</span>）——<strong>iOS 能发出 PC 接不住的回执请求</strong>。</p>
+  <dl class="kv">
+    <dt>断点阶段</dt><dd>群聊 ③ 阅读方发出</dd>
+    <dt>影响组合</dt><dd>任意端发 → <strong>PC 读</strong>，条件是被 @ 的消息不是纯文本/引用，或 <code>extra</code> 为空</dd>
+    <dt>验证</dt><dd>iOS 发一条非纯文本的 @ 消息，PC 打开会话，看 iOS 侧已读是否翻转</dd>
+  </dl>
+</div>
+
+<div class="finding a">
+  <div class="fhead">
+    <span class="tag a">A3</span>
+    <span class="ftitle">安卓发送方只对纯文本发回执请求，引用消息不发</span>
+  </div>
+  <div class="floc mono">apps/android/IM/src/main/java/com/im/dialogue/ConversationFragment.java:1580</div>
+<pre><code>if (message != null
+    && message.getObjectName().equals(IMMessageType.TXT_MESSAGE)
+    && mConversationType == ConversationType.GROUP
+    && message.getContent().getMentionedInfo() != null) { ... }</code></pre>
+  <p>iOS 不限 objectName，PC 对文本和引用都发。安卓发引用 @ 消息时不发 <code>RC:RRReqMsg</code> → 安卓 / iOS 阅读方（都依赖 <code>isReceiptRequestMessage</code>）永远不回执 → <strong>安卓发送方永远显示未读</strong>。</p>
+  <dl class="kv">
+    <dt>断点阶段</dt><dd>群聊 ① 发送方登记</dd>
+    <dt>影响组合</dt><dd><strong>安卓发</strong> → 任意端读，限引用消息</dd>
+    <dt>验证</dt><dd>安卓群里发「引用某条 + @某人」，用 iOS 读，看安卓侧已读人数是否变化</dd>
+  </dl>
+</div>
+
+<h2>关键不对称一览</h2>
+<table>
+  <tr><th style="width:24%">阶段</th><th class="pc" style="width:26%">desktop</th><th style="width:25%">android</th><th>ios</th></tr>
+  <tr>
+    <td>群 ③ 阅读方回执范围</td>
+    <td class="pc"><span class="bad">仅 文本/引用 且 extra 非空</span></td>
+    <td>不限类型</td><td>不限类型</td>
+  </tr>
+  <tr>
+    <td>群 ② 阅读方触发点</td>
+    <td class="pc"><span class="warn">仅 msgLength watcher</span></td>
+    <td>RRReqMsg 事件 + 拉历史补发</td>
+    <td>viewWillAppear + 退后台 + 重连 + 4 处补发</td>
+  </tr>
+  <tr>
+    <td>群 ① 发回执请求的范围</td>
+    <td class="pc">文本 + 引用</td>
+    <td><span class="bad">仅纯文本</span></td>
+    <td>所有带 mentionedInfo 的类型</td>
+  </tr>
+  <tr>
+    <td>群 ①④ 登记与入库</td>
+    <td class="pc"><span class="warn">自研 map + 三道门</span></td>
+    <td>SDK 原生</td><td>SDK 原生</td>
+  </tr>
+  <tr>
+    <td>私 ② 阅读方触发点</td>
+    <td class="pc"><span class="bad">6 处，但全被滚动位置挡一道</span></td>
+    <td>进会话 + 前台实时收消息</td>
+    <td>viewWillAppear + 退后台 + 重连</td>
+  </tr>
+  <tr>
+    <td>私 ③ 已读时间戳口径</td>
+    <td class="pc">最新一条未读真人消息的 sentTime</td>
+    <td><span class="ok">当前时间（最宽）</span></td>
+    <td>最后一条 RECEIVE 的 sentTime</td>
+  </tr>
+  <tr>
+    <td>⑤ 多端同步</td>
+    <td class="pc"><span class="warn">无 syncConversationReadStatus</span></td>
+    <td>有，多处</td><td>有，仅 GROUP</td>
+  </tr>
+  <tr>
+    <td>失败重试</td>
+    <td class="pc">无</td>
+    <td><span class="ok">有（落库 + 轮询重发）</span></td>
+    <td>无</td>
+  </tr>
+</table>
+
+<h2>组合推演</h2>
+<p>发送端 = 看到错误未读态的一端；阅读端 = 实际看了消息的一端。<span class="bad">❌</span> 无条件断 · <span class="warn">⚠️</span> 满足附加条件时断 · <span class="ok">✓</span> 通。</p>
+
+<h3>群聊（@ 消息）</h3>
+<table>
+  <tr><th style="width:22%">发送端 ↓ / 阅读端 →</th><th class="c pc">desktop</th><th class="c">android</th><th class="c">ios</th></tr>
+  <tr><td class="pc"><strong>desktop</strong></td><td class="c pc"><span class="warn">⚠️ B1/B2/B3</span></td><td class="c"><span class="warn">⚠️ B1/B2/B3</span></td><td class="c"><span class="warn">⚠️ B1/B2/B3</span></td></tr>
+  <tr><td><strong>android</strong></td><td class="c pc"><span class="warn">⚠️ A3 + A1</span></td><td class="c"><span class="warn">⚠️ A3 引用@</span></td><td class="c"><span class="warn">⚠️ A3 引用@</span></td></tr>
+  <tr><td><strong>ios</strong></td><td class="c pc"><span class="bad">❌ A1</span></td><td class="c"><span class="ok">✓</span></td><td class="c"><span class="ok">✓</span></td></tr>
+</table>
+
+<h3>私聊</h3>
+<table>
+  <tr><th style="width:22%">发送端 ↓ / 阅读端 →</th><th class="c pc">desktop</th><th class="c">android</th><th class="c">ios</th></tr>
+  <tr><td class="pc"><strong>desktop</strong></td><td class="c pc"><span class="warn">⚠️ A2</span></td><td class="c"><span class="ok">✓</span></td><td class="c"><span class="ok">✓</span></td></tr>
+  <tr><td><strong>android</strong></td><td class="c pc"><span class="warn">⚠️ A2</span></td><td class="c"><span class="ok">✓</span></td><td class="c"><span class="ok">✓</span></td></tr>
+  <tr><td><strong>ios</strong></td><td class="c pc"><span class="warn">⚠️ A2</span></td><td class="c"><span class="ok">✓</span></td><td class="c"><span class="ok">✓</span></td></tr>
+</table>
+
+<p><strong>私聊的断点全在「阅读端 = PC」这一列</strong>，与发送端无关。<strong>群聊的断点分布在三处</strong>：「阅读端 = PC」整列、「发送端 = 安卓」整行（限引用消息）、「发送端 = PC」整行（条件性）。</p>
+
+<h2>B / C 级</h2>
+
+<details>
+  <summary>B 级 · 6 条 — 三端不对称，机制成立，但需 SDK 内部或未确认的数据结构才能定死</summary>
+  <table>
+    <tr><th style="width:6%">#</th><th style="width:40%">问题</th><th>位置 / 说明</th></tr>
+    <tr><td>B1</td><td>PC 发送方登记条件要 <code>extra.atUserList</code>，与「是否发回执请求」的条件不一致</td>
+        <td class="mono">MessageModel.js:305-311 vs messageService.js:295-302</td></tr>
+    <tr><td>B2</td><td>PC 登记跳过历史消息（<code>!isHis</code>），登记表纯本地无重建路径</td>
+        <td class="mono">MessageModel.js:309 · storeModule/index.js:144-150</td></tr>
+    <tr><td>B3</td><td>PC 回执入库要求读者已在名单且值<strong>严格等于 0</strong>，否则静默丢弃</td>
+        <td class="mono">storeModule/index.js:173</td></tr>
+    <tr><td>B4</td><td>PC <code>readReceiptTimeout</code> 未配置，取 SDK 默认 <strong>1 天</strong>（上限 15 天）</td>
+        <td class="mono">IMSDKServer.js:11</td></tr>
+    <tr><td>B5</td><td>安卓 / iOS SDK 是否同样做 SENT 记录本机化过滤，<strong>不可验证</strong></td>
+        <td>安卓只有 jar + .so；直接决定 A3 里「PC 的自研回执能否被安卓消化」</td></tr>
+    <tr><td>B6</td><td>三端 SDK 版本不一致（5.5.3 / 5.3.7 / v2-5.3.3）</td>
+        <td>本身不是缺陷，是上面所有「不可确认」项的根源</td></tr>
+  </table>
+</details>
+
+<details>
+  <summary>C 级 · 5 条 — 代码确有问题，但推演下不造成本次现象</summary>
+  <table>
+    <tr><th style="width:6%">#</th><th style="width:46%">问题</th><th>位置</th></tr>
+    <tr><td>C1</td><td><code>switch</code> 里 <code>case ReadReceiptResponseMessage</code> 写了两次，第一组无 <code>break</code>；因有判空守卫实际无害</td>
+        <td class="mono">ReceiveMessageListener.js:246-264</td></tr>
+    <tr><td>C2</td><td>缺 <code>RC:RRReqMsg</code> / <code>RC:SRSMsg</code> 反向映射 → 落 UnknownMessage；<code>case SyncReadStatusMessage</code> 是死分支</td>
+        <td class="mono">MessageModel.js:65-85</td></tr>
+    <tr><td>C3</td><td><code>SyncReadStatusMessage</code> payload <strong>多包一层</strong>；同一文件里三种调用写法并存</td>
+        <td class="mono">messageService.js:545-553</td></tr>
+    <tr><td>C4</td><td>iOS 私聊分支用群回执 API；另有正确路径兜底，属冗余非缺失</td>
+        <td class="mono">ZXRCIMBaseChatController.m:1098-1117</td></tr>
+    <tr><td>C5</td><td>安卓不排除 @机器人 也发回执请求；方向与本次现象相反</td>
+        <td class="mono">ConversationFragment.java:1580</td></tr>
+  </table>
+</details>
+
+<div class="caution">
+  <h3>必须说清的限制</h3>
+  <ol>
+    <li><strong>全部结论未经真机验证。</strong>A 级也只是「代码上必然」。</li>
+    <li><strong>SDK 可读性三端不对等。</strong>PC 的 adapter 是明文 JS，涉及 SDK 内部的结论逐条复核过；iOS 只读了公开头文件与调用层；安卓只有 jar + <code>libRongIMLib.so</code>，内部完全不可读——凡涉及原生 SDK 内部的推断一律压到 B 级。</li>
+    <li>未覆盖会话列表未读数 / 红点（本轮范围外）。</li>
+    <li><code>datasyn/getReadMessage</code> 在 <code>context/contracts/</code> 下<strong>无契约文件</strong>，三端都在调，本次未逐字段比对。</li>
+  </ol>
+</div>
+
+<h2>下一步 · 按性价比排序</h2>
+<table>
+  <tr><th class="c" style="width:6%">序</th><th style="width:16%">验哪条</th><th style="width:34%">怎么验</th><th>成本</th></tr>
+  <tr><td class="c"><strong>1</strong></td><td><strong>A2</strong></td>
+      <td>PC 本地 <code>npm run dev:test</code>，打开有历史的私聊，往上滚一段，让对方发消息，不滚回底部直接读</td>
+      <td><span class="ok">无需出包，约 10 分钟</span></td></tr>
+  <tr><td class="c">2</td><td>A1</td><td>iOS 发一条非纯文本的 @ 消息，PC 读</td><td>需 iOS 配合</td></tr>
+  <tr><td class="c">3</td><td>B1 + B3</td><td>PC devtools 里看一次 @所有人 消息的 <code>extra</code> 结构，两条一起定性</td><td>低</td></tr>
+  <tr><td class="c">4</td><td>A3</td><td>安卓发「引用 + @」，iOS 读</td><td><span class="warn">需安卓出包，最高</span></td></tr>
+</table>
+
+<footer>
+  完整事实表（三端 × 6 阶段 × 私聊/群聊，每条带文件行号）见
+  <span class="mono">context/features/20260824-3端-私聊群聊已读回执不翻转排查/findings.md</span>
+  · 本轮未改任何代码，四端工作区状态与审计开始时一致
+</footer>
+
+</div>
+</body>
+</html>

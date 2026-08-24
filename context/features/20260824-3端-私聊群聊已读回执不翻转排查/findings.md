@@ -321,6 +321,58 @@ if (msgState && msgState[senderUserId] === 0) {
 
 ---
 
+## 五之二、展示层专项（2026-08-24 追加）
+
+起因：同事指出「PC 就是看 msglist，有消息就给融云发回执；显示是 electron-store 来展示的」。核对结果如下。
+
+### 核对同事的说法
+
+| 说法 | 核对 |
+|---|---|
+| 「PC 有消息就给融云发回执」 | **群聊近似成立**——`sendGroupReceiptMessage()` 挂在 `msgLength` watcher（`msg-list.vue:1291`），消息数一变就发；但筛了两道（A1）。**私聊不成立**——`ReadLastMessage` 函数头 `if (!isFirstScreen \|\| showDownMsg) return`（`:2587`）。 |
+| 「显示靠 electron-store」 | **完全成立**，且这是比回执发送侧更根本的缺陷。 |
+
+### PC 展示层数据来源
+
+| 展示的东西 | 内存态 | 落盘位置 |
+|---|---|---|
+| 群「已读 N/M」 | `groupMessageReceiptMap[groupId][messageUId][userId]` | `electronStore/<accountId>/group-receipt-<groupId>.json`（`storeModule/index.js:23-28`） |
+| 要不要渲染已读入口 | `groupMessageNeedReceiptMap` | `groupMessageNeedReceipt.json`（`storeModule/index.js:12-15`） |
+| 私聊「已/未」+ 已读时间 | `chatReadTime[YYYYMMDD][messageUId]` | `msgReadTime-<date>.json`，**按天分片**（`storeModule/index.js:30-36`） |
+| 私聊兜底已读时间 | `innerReadTime` | 不落盘，进会话拉一次 `datasyn/getReadMessage`（`msg-list.vue:1265-1280`） |
+| 会话最后已读时间 | — | `chatLastReadTime.json`（`storeModule/index.js:16-19`） |
+
+### D 级：展示层四个洞
+
+| # | 问题 | 位置 | 后果 |
+|---|---|---|---|
+| **D1** | 已读状态**纯本地存储，无任何重建路径** | `storeModule/index.js` 全文 | 换机 / 重装 / 清缓存 → 已读全丢且永久回不来 |
+| **D2** | 私聊已读**按天分片，只加载 4 天窗口**（前 2 天 + 今天 + 明天） | `storeModule/index.js:38-51` | 超过 3 天前的消息 `msgReadTime[sentDate]` 为 `undefined` → `getStatusText`（`:2974-2989`）取不到 readTime → 回落到 `sentStatus` → **老消息显示「未读」** |
+| **D3** | 登记表决定渲不渲染已读入口，一旦丢失后续回执全被第一道门丢弃 | `storeModule/index.js:157-159` | 与 B1/B2/B3 同源；**服务端权威源也救不了「压根没渲染出已读入口」** |
+| **D4** | 三端各存各的，无共同权威源 | 三端 | 天然不可能显示一致 |
+
+### 关键机会：服务端已有权威数据，三端都没用起来
+
+`datasyn/getReadMessage` 返回 `[{accountId, msgUID, msgTimestamp, chatType, targetId, readTimestamp}]`，
+**带 `accountId`，且接口明确支持 `chatType: 2`（群聊）**：
+
+- 安卓接口定义与注释：`android_net/.../HistoryChatMessageZhiXinServerInterface.java:63-69`（「chatType:会话类型:1、单聊；2、群聊」）
+- iOS 封装按会话类型传 1/2：`ZX_Base/ZX_Logic/ZXConversationLogic.m:365-370`
+- 返回结构：安卓 `PrivateReadBean`、iOS `ZXRCReadTimeModel.h`
+
+写入侧三端都在打 `datasyn/readMessage`（PC `readSource:"websocket"` `messageService.js:928`、安卓 `"android"` `ConversationFragment.java:1735`、iOS `"IOS"` `ZXConversationLogic.m:346`）——**服务端手里有全量数据**。
+
+但读取侧：
+
+| 端 | 状态 |
+|---|---|
+| android | `getReadMsg` 接口已定义，**全仓库零调用** |
+| ios | `logicGetServerReadMessages` 已定义，**全仓库零调用** |
+| desktop | 只在私聊用，`chatType: 1` 写死（`msg-list.vue:1270`），且 reduce 时**丢掉了 `accountId`**（`:1272-1276`） |
+
+> **未验证的硬前提**：`chatType: 2` 的返回是否含**按人明细**（同一 msgUID 多条不同 accountId 的记录）。
+> 返回模型里有 `accountId` 字段，机制上支持，但没有实测过。这条决定服务端能否作为群已读的权威源。
+
 ## 六、推测（无行号支撑，需实测）
 
 - PC 阅读方回执唯一触发点是 `msgLength` watcher（`msg-list.vue:1291-1295`），推测**切回一个已打开过、消息数没变化的群会话时不会补发回执**。安卓 / iOS 都有「进入会话 / 拉历史」的补发路径。未在代码里找到 PC 的等价补发，但也没有能证伪的调用点。
