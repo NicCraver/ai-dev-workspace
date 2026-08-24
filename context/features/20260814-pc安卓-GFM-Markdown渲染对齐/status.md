@@ -165,6 +165,11 @@
 
 ## 待办 / 阻塞
 
+- (2026-08-24 工作区核对，本功能**无进展**) 当日会话在做另一件事——新建「智能会议室」前端底座
+  （见 `context/features/20260824-智能会议室-前端基建/`），产物落在**新仓库 `apps/meeting/`**，
+  与本功能无关。四端现状：web `feat/web-markdown-table-align-pc`、android `feat/gfm-markdown`、
+  ios `feat/ios-file-download-progress` 均 synced 且干净；desktop `feat/gfm-markdown` synced，
+  脏 3 个仍是 `.env.test` / `electron-builder.yml` / `package.json` 本地打包配置（**禁止提交**）。
 - (android) 2026-08-24 仓库已从 `fix/md-table-fold-truncate` 切回 `feat/gfm-markdown`（origin 同步、干净，tip `8275a307c`）。收纳组未提交改动已丢弃，不并入本分支。
 - (desktop) 2026-08-20 表格列 **min/max-width: 375px** 已写进 `markdown.scss`。热更新后看长单元格格内折行、多列横滚。
 
