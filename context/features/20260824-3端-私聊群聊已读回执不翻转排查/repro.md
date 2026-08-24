@@ -12,7 +12,16 @@
 
 ---
 
-## R1 · 私聊老消息显示「未读」
+## R1 · ~~私聊老消息显示「未读」~~ —— 已实测，不成立，作废
+
+> **2026-08-24 实测结果**：翻到 8/6（4 天窗口外、6 个月内）自己发的私聊消息，显示**已读**。
+>
+> 原因：融云本地库把 `sentStatus = READ` 持久化了，册子缺失只丢**已读时间戳**，不影响已读/未读文案。
+> D2 因此从 A 级降级，D1 对私聊也一并降级（群聊仍成立，群已读无融云兜底）。
+>
+> **推论**：私聊显示「未读」只可能是**回执没到达发送方**，不是显示层丢失。私聊方向改查 R3（A2）与 R6（B4）。
+>
+> 下面的原文保留作记录，**不要再按它测**。
 
 **这条现在就能验，不用等，不用改系统时间，不需要第二个人。**
 
@@ -294,19 +303,98 @@ SDK 内部在两个地方按这个窗口判断：写「我发过回执请求」�
 
 ---
 
+## R7 · PC 发「@所有人」，已读永远不翻转
+
+**当前第一优先。只用 PC 一台设备就能出结论，不用等对方读。**
+
+| | |
+|---|---|
+| 对应结论 | B1、B3 |
+| 需要 | 一台已登录的 PC，一个群 |
+| 耗时 | 3 分钟 |
+
+### 为什么会这样
+
+两个条件写得不一致。
+
+**发不发回执请求**（`messageService.js:295-302`）——@所有人 直接放行：
+
+```js
+if (mentionedInfo.type === 1 || mentionedInfo.type === RongIMLib.MentionedType.ALL) {
+  return true;
+}
+```
+
+**登不登记「这条要收已读」**（`MessageModel.js:305-311`）——只认 `atUserList`：
+
+```js
+if (msg.messageDirection === 1 &&
+    txtmsg.extra &&
+    txtmsg.extra.atUserList &&
+    !isHis && msg.messageUId) { ... }
+```
+
+若 @所有人 的 `extra` 里只有 `atAllUserList` 没有 `atUserList`，就是**请求发出去了但没登记**。
+对方回执回来，`setGroupReceipt` 第一道门（`storeModule/index.js:157-159`）整条丢弃 → 已读永不翻转。
+
+**群聊没有融云本地库兜底**（不像私聊），所以一旦命中就是必现。
+
+### 步骤
+
+1. PC 上随便找个群，发一条 **@所有人 + 纯文本**
+2. 立刻在开发者工具 Console 跑：
+
+```js
+const $s = document.querySelector('#app').__vue__.$store;
+const 群 = $s.getters.OpenDialog.id;
+
+const last = ($s.state.MessageModule.GroupMSG[群] || []).filter(m => m && m.bySelf).slice(-1)[0];
+console.log('messageUId:', last.messageUId);
+console.log('extra:', last.content.extra);
+console.log('  atUserList   :', last.content.extra && last.content.extra.atUserList);
+console.log('  atAllUserList:', last.content.extra && last.content.extra.atAllUserList);
+
+const 登记 = $s.state.electronStore.groupMessageNeedReceiptMap[群] || {};
+console.log('是否已登记:', !!登记[last.messageUId]);
+
+const 名单 = $s.getters['electronStore/groupReceiptByGroup']({ accountId: $s.getters.GetSendUser.id, groupId: 群 });
+console.log('需回执名单:', 名单[last.messageUId]);
+```
+
+3. 对照组：再发一条 **@某个具体的人**（纯文本），同样跑一遍
+
+### 实测记录
+
+| 组 | `atUserList` | `atAllUserList` | 是否已登记 | 需回执名单 |
+|---|---|---|---|---|
+| @某人（对照） | | | | |
+| @所有人（实验） | | | | |
+
+### 判定
+
+| 结果 | 结论 |
+|---|---|
+| 对照 = true，**实验 = false** | ✅ **B1 坐实**，PC 发的 @所有人 已读永远不翻转 |
+| 两条都 true，但**名单是 `{}`** | ✅ **B3 坐实**，登记了但名单为空，回执回来时 `msgState[senderUserId] === 0` 判不过被静默丢弃 |
+| 两条都 true 且名单有人 | 这两条排掉。让手机去读，看 PC 人数加不加；不加就是收端问题（B4 窗口期 / SDK 的 SENT 记录过滤） |
+
+---
+
 ## 优先级建议
+
+> 2026-08-24 实测后重排。R1 已作废（融云本地库兜底了私聊已读状态）。
 
 | 顺序 | 路径 | 理由 |
 |---|---|---|
-| 1 | **R1** | 零成本，现在就能跑，且几乎必然复现 |
-| 2 | **R2** | 单人单机，能一次性暴露 D1 + D3 两条 |
-| 3 | **R3** | 最贴近用户报的「私聊偶发未读」 |
-| 4 | R4 | 需要 iOS 配合 |
+| 1 | **R7** | 单机就能出结论，不用等对方读；群聊无融云兜底，一旦命中就是必现 |
+| 2 | **R3** | 最贴近用户报的「私聊偶发未读」；私聊现在只剩「回执没送达」这一种可能 |
+| 3 | R4 | 需要 iOS 配合 |
+| 4 | R2 | 只验群聊部分（私聊部分已被融云兜底证伪） |
 | 5 | R5 | 需要安卓配合 |
 | 6 | R6 | 要跨天，放最后 |
+| — | ~~R1~~ | **已作废** |
 
-**R1 + R2 + R3 三条跑完，就能覆盖「显示层」的全部缺陷**，也就是同事说的 electron-store 那一块。
-R4 / R5 / R6 属于「回执发送与接收」层，是另一半。
+分层：**R7 / R2 是群聊侧**（纯本地存储，无兜底，最脆）；**R3 / R6 是私聊侧**（只可能是回执没送达）；**R4 / R5 是跨端回执范围不一致**。
 
 ## 已知的复现盲区
 
