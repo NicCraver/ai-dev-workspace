@@ -47,7 +47,7 @@
 |----|------|------|------|--------------|------|
 | context | `main` | ahead 204 | 脏（打包脚本/commands 与本功能无关；本功能文档已改） | 文档更新 | — |
 | web | `feat/web-markdown-table-align-pc` | synced | 脏 1 | 旁路 | `AcMarkdown` 行内代码样式，与表格无关 |
-| android | **`feat/gfm-markdown`** | **synced** | **脏 5** | **本功能分支** | 引用前缀 + 表格；未提交。tip `8275a307c` |
+| android | **`feat/gfm-markdown`** | **synced** | **脏 7** | **本功能分支 + 旁路** | GFM 引用前缀+表格（5）**加上**粘贴个人 `@` 误识别为群（`MentionAgentKindResolver` 等，见 `20260728-安卓端@个人AI框`）。**提交 GFM 时不要带上 mention 那几份。** tip `8275a307c` |
 | ios | `feat/ios-file-download-progress` | synced | 干净 | 旁路 | — |
 | desktop | **`feat/gfm-markdown`** | synced | 脏 3 | **本功能分支** | `.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
 

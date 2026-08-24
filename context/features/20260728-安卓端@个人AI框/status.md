@@ -1,6 +1,6 @@
 # Status：安卓端@个人AI框
 
-> 最后更新：2026-07-28（Task 1–8 已实现并推送 `personal-ai-chat`；`assembleOnTestDebug` 通过；真机 E2E 待手测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-24（补：复制 @个人智能体 粘贴后被当成群智能体；单测 8/8，真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -65,12 +65,14 @@
 - (android) **抓包确认**：`aiRobtChat` 个人分支 `dataRangeList` 原样透传 3/4/1/2（勿被群侧 0/1/2 序列化污染）；`saveDataRange` 不得用空列表覆盖
 - (android) ⚠️ **群智能体回归**：本期改了 `@` 列表与知识类型胶囊「类型+N」，须回归群主流程并**告知测试**
 - (android) 大输入区（`ConversationLargeInputView`）为第二条链路，手测须单独覆盖「大输入内 `@` 个人 AI 发送」
+- (android) **2026-08-24 已修、待真机**：复制消息里的 `@个人智能体` 再粘贴，高亮对、筛选条/发送走群。根因 extra 不带 `agentKind`，空 kind + `ga_` 兜成群。粘贴还原时按本群缓存补 kind（`MentionAgentKindResolver`）。单测 8/8。代码在 `feat/gfm-markdown` 工作树，**不要和 GFM 改动混提交**。
 - (android) 分支 `personal-ai-chat` 与 `origin` 同步，工作树干净；`75d77f547`（选人企业列表/组织钻取）属 `20260707-选择AI框`，非本功能
 - (ios) `20260728-ios端at个人AI框` 的 E2E 手测清单仍未勾，见该功能 status
 - (desktop) 工作区打包/`.env`/DataScope 等本地改动 → **不属于本功能**
 
 ## 关键决策记录
 
+- 2026-08-24 **粘贴还原必须按本群缓存补 `agentKind`**：消息 extra 的 at 列表没有 kind；空 kind + `ga_` 的历史兜底会把个人 AI 判成群。不以改 extra 契约为本期范围（旧消息仍无该字段）。
 - 2026-07-29 **`aiRoleId` 三端统一固定 `"1"`**（群+个人都传，后端靠 `agentId` 判身份）；个人项过滤收紧为 `groupAgentType == 0`，群位置的 rel 不加类型校验（缺省 0 会误杀现网数据）—— `630ff1295`；⚠️ 群路径载荷变更，须回归群智能体主流程
 - 2026-07-28 **对齐性复核（对 PC/iOS spec 逐条）**，改 5 处：① 个人路径 `aiRoleId` 由现网值改固定 `"1"`（后于 07-29 扩到群）；② `@` 列表个人项补本地缓存兜底（个人项按「群id_归属人id」+ belongType 0 落库，新增 `AgentDisplayKeyUtil`）；③ 联网胶囊只留图标；④ 时间弹层改右对齐；⑤ 互斥判据 `contains("ga_")` → `startsWith`、个人项加 `groupAgentType != 3` 过滤 —— `f86bd2b38`
 - 2026-07-28 **Task 1–8 实现完成**并推送：模型、`@` 列表、分流、独立筛选条、get/save+DataScope、发送载荷、群胶囊文案、消息 tag/菜单；`assembleOnTestDebug` 通过
