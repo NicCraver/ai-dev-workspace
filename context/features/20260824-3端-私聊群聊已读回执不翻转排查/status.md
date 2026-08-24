@@ -252,7 +252,7 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
   倾向 A + B 里的 B1/B3 必修项（D3 那层服务端救不了）。
 - (阻塞 A) **`chatType: 2` 的返回是否含按人明细，未验证**——这是 A 方案唯一命门。建议第一步不写代码，先打一发接口看返回。若只有会话级，群聊那半边要退回 C。
 - (跨端) **全部结论未经真机验证**，A 级也只是「代码上必然」。下一步按性价比：先验 A2（PC 本地 `npm run dev:test` 即可，无需出包）→ 再验 A1（需 iOS 配合发非纯文本 @ 消息）→ B1/B3 一起（devtools 看一次 @所有人 消息的 `extra` 结构）→ A3 最后（需安卓出包）。
-- (跨端) 审计阶段未改 IM 回执代码；2026-08-24 起 PC 加固 Task 1+2+3+4+4B 已提交纯逻辑模块、计数器与表态/回复反推（尚未接线）。同日旁路改了 web `AcMarkdown` 行内代码样式、安卓智能体表格在引用前缀后不渲染、安卓粘贴个人 `@` 误识别为群、以及 iOS「回复 @」叠在表格上（见文首），均与回执无关。
+- (跨端) 审计阶段未改 IM 回执代码；2026-08-24 起 PC 加固 Task 1+2+3+4+4B 已提交纯逻辑模块，Task 5（`0f4db746`）已把私聊已读时间接到 `msg-list` / `storeModule`（GUI 未验）。同日旁路改了 web `AcMarkdown` 行内代码样式、安卓智能体表格在引用前缀后不渲染、安卓粘贴个人 `@` 误识别为群、以及 iOS「回复 @」叠在表格上（见文首），均与回执无关。
 - (android) 融云只有 `rong_imlib_5.5.3.jar` + `libRongIMLib.so`，SDK 内部不可读；凡涉及原生 SDK 内部行为的结论一律降到 B 级（见 B5）。
 - (desktop) `apps/desktop` 当前在 `fix/pc-read-receipt-hardening`（Task 1+2+3+4+4B+5 已提交）。工作区仍脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）——PC 打包本地配置，**禁止提交**。
 - (desktop) 8/19 的 `context/features/20260819-pc端群@消息已读回执丢失/plan.md` 从未执行（`fix/pc-group-at-read-receipt` 分支不存在）。其事实表已在本轮复核并更新——**其中「阅读方回执只对文本/引用」「PC 不处理 RRReqMsg」两条仍成立，但「发送方登记只在 `MessageModel.js:305-317`」的描述需配合 `messageService.js:295-339` 的 `shouldRequestGroupReadReceipt` 一起看**（后者是那之后新增的）。
