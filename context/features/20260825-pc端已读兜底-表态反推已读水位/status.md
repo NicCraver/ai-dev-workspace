@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-25（本回合未改本功能代码；iOS 修了个人 AI 框长卡片折叠，属 GFM）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（本回合未改本功能代码；安卓脏区是 GFM 引用高亮左偏）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -36,9 +36,9 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 |----|------|------|------|----------|------|
 | context | `main` ahead 244 | 脏 24 | 构建脚本 / 命令文件 / GFM 文档 | 否 | 本功能只应提交本目录 `status.md`；GFM 文档另提 |
 | web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 已 push `f5616c5` 波浪下划线 + 对比度，属 markdown 对齐 PC |
-| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | HTML `green`→`#008000` 等 GFM，与已读水位无关 |
+| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | 本回合修引用里高亮左偏 + 蓝色被整段字色盖掉，属 GFM，与已读水位无关 |
 | ios | `feat/ios-file-download-progress` | synced | 脏 13 | 否 | 本回合修 ActionCard 折叠开关（`ZXIMCellLogic`）；其余是 GFM 色表/标签，叠在文件进度分支上，与已读水位无关 |
-| desktop | `feat/gfm-markdown` | synced | 脏 3 | 否 | 仅 `.env.test` / `electron-builder.yml` / `package.json` 本地调试，**禁止提交** |
+| desktop | `feat/gfm-markdown` | synced | 脏 8 | 否 | 本回合改表格宽度（`markdown.scss` / actioncard / msg-list），属 GFM，**不要合进水位分支**。另有 `.env.test` / `electron-builder.yml` / `package.json` 本地调试，**禁止提交** |
 | desktop-watermark | `feat/pc-read-watermark` | ahead 4 vs `origin/release` | 干净 | **是** | Task 1–4 已提交；Task 5 群聊接线未开工 |
 
 ## 待办 / 阻塞
@@ -46,9 +46,10 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 - (desktop-watermark) **下一步是 Task 5**：群聊 `getMergedGroupReceipt`，只把名单里已有的人从 0 翻成时间戳，不改分母；本地名单缺失返回 `null` 不是 `{}`
 - (desktop-watermark) Task 6 真机验收 4 条见 `spec.md` 第七节；需要 `npm run dev:test`，与 `apps/desktop` 抢 9080 端口，起之前先确认主目录的 dev 已停
 - (desktop-watermark) 终审 triage 几条 Minor 见 `progress.md`（裸对象当 set、`senderUserId`/`bySelf` 冗余、空会话条目、`refreshReadWatermark` 注释措辞）——不挡 Task 5
-- (desktop) 主目录脏的三份本地调试文件保持脏、勿 stage
+- (desktop) 主目录 `feat/gfm-markdown` 本回合改了 markdown 表格宽度，属 `20260820`，不要合进水位分支。`.env.test` / `electron-builder.yml` / `package.json` 保持脏、勿 stage
 - (web / android / ios) 脏区或刚 push 的提交均属 markdown / GFM 并行功能，不要合进本分支
 - (android / ios) 2026-08-25 HTML `color:green` → `#008000`，归属 GFM，不是本功能
+- (android) 2026-08-25 引用块里 `<mark>` 高亮往左偏、引用里的蓝色被整段字色盖掉，已改代码，真机未验。归属 `20260814` GFM，不是本功能
 - (ios) 2026-08-25 自己发到群里的个人 AI 框长卡片不折叠：折叠开关从「是不是 AI 卡片」拆开，所有 ActionCard 超高都折。归属 `20260813` GFM，不是本功能。真机未验
 
 ## 关键决策记录
