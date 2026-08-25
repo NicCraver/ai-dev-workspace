@@ -19,7 +19,8 @@
 - **禁止 `npm install` / `pnpm install` / 删 `node_modules` 重装**。依赖已就绪，直接跑。
 - 测试命令统一 `npx vitest run <路径>`（`npm test` 是 `vitest --ui` 交互式，不要在自动化里用）。
 - **提交时绝不 `git add` 这四个文件**：`.env.test`、`electron-builder.yml`、`package.json`、`package-lock.json`。它们是本地调试配置，工作区里有改动属正常，不要还原也不要提交。用显式路径 `git add`，不要用 `git add -A` / `git add .`。
-- 所有路径以 `apps/desktop/` 为根书写，命令均在 `apps/desktop` 目录下执行。
+- **工作目录是 worktree `apps/desktop-watermark`，不是 `apps/desktop`。** 后者留给另一条并行任务（`feat/gfm-markdown`，用户用 Cursor 改）。本计划里的所有相对路径以 `apps/desktop-watermark/` 为根，命令都在该目录下执行。
+- 该 worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链（4.5G，不重复装）。**两个目录共用同一份依赖**——所以更不能跑任何 install。
 
 ## File Structure
 
@@ -37,26 +38,37 @@
 
 ---
 
-## Task 0: 切分支
+## Task 0: 环境（已完成，仅需核对）
 
-- [ ] **Step 1: 从 origin/release 切出工作分支**
+worktree 已建好，为并行开发准备的：
 
-当前工作区在 `fix/pc-read-receipt-hardening`（上一轮封存分支），工作区里有三个打包配置脏文件，**切分支时不要动它们**。
+| 目录 | 分支 | 归谁 |
+|---|---|---|
+| `apps/desktop` | `fix/pc-read-receipt-hardening`（封存）→ 用户会切到 `feat/gfm-markdown` | 用户 / Cursor |
+| `apps/desktop-watermark` | `feat/pc-read-watermark`（从 `origin/release` `613af430` 切出） | 本计划 |
+
+`node_modules` 是软链，指向 `apps/desktop/node_modules`。
+`node_modules` 已加进 `.git/info/exclude`（软链不被 `.gitignore` 的 `node_modules/` 匹配）。
+
+- [ ] **Step 1: 确认在正确的 worktree 且基线干净**
 
 ```bash
-cd apps/desktop
-git fetch origin release
-git checkout -b feat/pc-read-watermark origin/release
-```
-
-- [ ] **Step 2: 确认基线干净**
-
-```bash
+cd apps/desktop-watermark
+git rev-parse --abbrev-ref HEAD
 git status --short
 ```
 
-Expected：只有 `.env.test`、`electron-builder.yml`、`package.json` 三行 `M`（本地调试配置，不管它）。
-若出现别的改动文件，先停下来问人，不要继续。
+Expected：分支 `feat/pc-read-watermark`；`git status --short` **无任何输出**。
+若有输出，先停下来问人，不要继续。
+
+- [ ] **Step 2: 确认工具链在软链 node_modules 下可用**
+
+```bash
+npx vitest --version
+npm run lint
+```
+
+Expected：打印 `vitest/2.0.5`；lint exit 0。
 
 - [ ] **Step 3: 确认 read-receipt 目录不存在**
 
@@ -1101,13 +1113,27 @@ git commit -m "feat(receipt): 群聊已读名单接入水位兜底，只补分�
 
 **Files:** 无代码改动（除非发现问题）
 
-- [ ] **Step 1: 起测试环境**
+- [ ] **Step 1: 把本地调试配置带进 worktree**
+
+worktree 是从 `origin/release` 干净切出来的，没有主目录里那份指向 localhost 的调试配置。
+`dev:test` 需要它们：
+
+```bash
+cp ../desktop/.env.test ../desktop/electron-builder.yml ../desktop/package.json .
+```
+
+**拷完这三个文件会变成脏的，永远不要 `git add` 它们。**
+
+- [ ] **Step 2: 确认没有别的 dev 实例在跑**
+
+主目录（`apps/desktop`）如果正在跑 `npm run dev`，端口 9080 会冲突。
+先确认它停了，或者先停掉它再起这边。
 
 ```bash
 npm run dev:test
 ```
 
-- [ ] **Step 2: 确认提交前工作区干净**
+- [ ] **Step 3: 确认提交前工作区只脏那三个文件**
 
 ```bash
 git status --short
@@ -1115,7 +1141,7 @@ git status --short
 
 Expected：只有 `.env.test`、`electron-builder.yml`、`package.json` 三行 `M`。这三个**不要提交**。
 
-- [ ] **Step 3: 跑四条验收**
+- [ ] **Step 4: 跑四条验收**
 
 每条都要**先确认 PC 上显示未读**，再触发证据，观察是否翻转。
 
@@ -1126,12 +1152,12 @@ Expected：只有 `.env.test`、`electron-builder.yml`、`package.json` 三行 `
 | 3 | 群聊 · 名单外 | 不在 @ 名单的人对该消息表态 | `x/y` 完全不变 |
 | 4 | 对方发言 | 对方在会话里发一句话 | 我方该时刻之前的消息全翻已读 |
 
-- [ ] **Step 4: 回填验收结果**
+- [ ] **Step 5: 回填验收结果**
 
 把四条的实际结果（通过 / 不通过 + 现象）写进
 `context/features/20260825-pc端已读兜底-表态反推已读水位/status.md` 的平台矩阵与「待办 / 阻塞」。
 
-- [ ] **Step 5: 提交文档**
+- [ ] **Step 6: 提交文档**
 
 在**工作区仓库根目录**（不是 `apps/desktop`）执行：
 
