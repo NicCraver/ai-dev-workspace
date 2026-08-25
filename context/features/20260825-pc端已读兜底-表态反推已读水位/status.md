@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-25（Task 1–4 已在 worktree 落地；本回合只收尾文档，未改本功能代码）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（本回合未改本功能代码；安卓/iOS 脏区是 GFM `green`→`#008000`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -34,10 +34,10 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
-| context | `main` ahead 242 | 脏 22 | 构建脚本 / 命令文件 / iOS GFM status | 否 | 本功能只应提交本目录 `status.md` |
+| context | `main` ahead 243 | 脏 22 | 构建脚本 / 命令文件 / GFM status | 否 | 本功能只应提交本目录 `status.md`；GFM 文档另提 |
 | web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 本回合已 push `f5616c5` 波浪下划线 + 对比度，属 markdown 对齐 PC |
-| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | Markwon / 表格 / 波浪下划线等 GFM，与已读水位无关 |
-| ios | `feat/ios-file-download-progress` | synced | 脏 11 | 否 | GFM 渲染层叠在文件进度分支上，与已读水位无关 |
+| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | 本回合把 CSS `green` 改成 `#008000`（`SpanTagHandler`），属 GFM，与已读水位无关 |
+| ios | `feat/ios-file-download-progress` | synced | 脏 11 | 否 | 本回合色表 `green:008000`，GFM 叠在文件进度分支上，与已读水位无关 |
 | desktop | `feat/gfm-markdown` | synced | 脏 3 | 否 | 仅 `.env.test` / `electron-builder.yml` / `package.json` 本地调试，**禁止提交** |
 | desktop-watermark | `feat/pc-read-watermark` | ahead 4 vs `origin/release` | 干净 | **是** | Task 1–4 已提交；Task 5 群聊接线未开工 |
 
@@ -48,6 +48,7 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 - (desktop-watermark) 终审 triage 几条 Minor 见 `progress.md`（裸对象当 set、`senderUserId`/`bySelf` 冗余、空会话条目、`refreshReadWatermark` 注释措辞）——不挡 Task 5
 - (desktop) 主目录脏的三份本地调试文件保持脏、勿 stage
 - (web / android / ios) 脏区或刚 push 的提交均属 markdown / GFM 并行功能，不要合进本分支
+- (android / ios) 2026-08-25 本回合改了 HTML `color:green` → `#008000`，归属 `20260814` / `20260813` GFM，不是本功能
 
 ## 关键决策记录
 

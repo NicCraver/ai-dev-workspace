@@ -1,6 +1,6 @@
 # Status：ios-机器人与智能体消息-GFM-Markdown渲染优化
 
-> 最后更新：2026-08-25（补 HTML `<code>` 行内代码，真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（`color:green` 改 CSS `#008000`，真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -83,7 +83,9 @@
 - (ios) 2026-08-24 **「回复 @xx：」叠在表格第一行**（用户截图：个人 AI 框、正文只有表格）。根因：正文以表格开头时前缀无法并进富文本块，只能单独成块；`zx_topTightenForBlock` 仍把表格上收 10pt（本意是吃掉 markdown 段末 `\n`+段间距）。前缀没有这段空白，10pt 叠到字上。已改为：仅当前一块是带段末换行的富文本时才上收；独立前缀后再留 12pt（0.75em），避免贴住表格硬边框。真机叠字已确认修好，间距待再看一眼。代码在当前 `feat/ios-file-download-progress`（该分支已合入 GFM）。
 - (ios) 2026-08-24 **ActionCard 内联 HTML：`<mark>` 原样露标签、span 无背景色**（用户对照 PC：绿底白字「美好而宁静」、黄底「金色」、蓝底「生活」）。根因：`processHTMLTags` 只认 span 的 `color:`，未知标签按 2026-08-13 决策原样保留，故 `<mark style="background:…">` 露出源码；`background` / `background-color` / `font-weight` / `font-style` / `text-decoration` 都不解析。已让 span/mark 走同一套 style 解析（mark 无背景时用 HTML 默认黄底）。`padding` / `border-radius` 富文本画不了，蓝底「生活」会是矩形色块而不是圆角胶囊。代码在 `feat/ios-file-download-progress`。
 - (ios) 2026-08-25 **高亮背景偏下、没有上下居中**（用户截图：绿底「绿色背景提示」，字贴上沿、底下空一截）。根因：正文 `lineSpacing = 6` 加在行片段底部，系统 `NSBackgroundColor` 按整段 line fragment 填色。已用 `ZXMarkdownLayoutManager` 从底部裁到 `font.lineHeight`；`UITextView` 必须走 `zx_makeMarkdownTextView`（`initWithFrame:textContainer:`），否则 iOS 16+ 默认 TextKit 2，换不了 LayoutManager。**真机未验**。`ZXMarkdownContentView.m` 里还混着「回复 @ 前缀间距」改动，提交时不要和本条拆丢工厂那一行。
-- (ios) 2026-08-25 **small / big / del / 斜体 / 语义化标签**：`processHTMLTags` 原先只认 b/i/u/sup/sub。已补 `small`/`big`/`del`/`s`/`strike`/`ins`/`cite`/`dfn`/`var`/`abbr`/`q`/`kbd`/`samp`。中文斜体改 `NSObliquenessAttributeName`（系统字体没有 italic 字重）。自己发的淡蓝气泡上，表格边框 12%→22%、代码块 4%→10%、引用竖条 20%→28%。**真机未验**。
+- (ios) 2026-08-25 **small / big / del / 斜体 / 语义化标签**：`processHTMLTags` 原先只认 b/i/u/sup/sub。已补 `small`/`big`/`del`/`s`/`strike`/`ins`/`cite`/`dfn`/`var`/`abbr`/`q`/`code`/`kbd`/`samp`/`tt`。中文斜体改 `NSObliquenessAttributeName`（系统字体没有 italic 字重）。自己发的淡蓝气泡上，表格边框 12%→22%、代码块 4%→10%、引用竖条 20%→28%。**真机未验**。
+- (ios) 2026-08-25 **HTML `<code>render()</code>` 原样露标签**：根因是 `processHTMLTags` 只处理了 `kbd`/`samp`，没处理 `<code>`。已按行内代码做等宽 + 8% 黑底。**真机未验**。
+- (ios) 2026-08-25 **`color:green` 过亮**：色表当初为对齐安卓 `Color.GREEN` 写成 `#00FF00`（CSS `lime`），PC/浏览器是 `#008000`。已改成 CSS `green:008000`，`lime` 仍是 `00FF00`。老正则管线与 cmark 后处理共用这一张表。**真机未验**。
 
 > 已了结：T0 那 505 行内联 HTML 改动已提交（`a67d3d364`）；合并转发详情页链路已查清（复用会话页 cell，见 impl-notes）。
 

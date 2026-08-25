@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-25（PC：自己发淡蓝气泡上引用/表格/代码对比度，单测 38/38，会话未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（安卓：CSS `green` 改 #008000，SpanTagHandlerTest 9/9；真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -45,11 +45,11 @@
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 240 | 脏 22 | 本功能 status | 打包脚本 / commands 与本功能无关，勿一并提交 |
-| web | `feat/web-markdown-table-align-pc` | synced | 脏 5 | 旁路 | `AcMarkdown` 行内代码/对比度，属 `20260820-web端的-markdown对其pc` |
-| android | **`feat/gfm-markdown`** | synced | 脏 12 | 本功能 + 旁路 | 提交 GFM 时不要带 `MentionAgentKindResolver` |
-| ios | `feat/ios-file-download-progress` | synced | 脏 11 | 旁路 | GFM 已合进该分支 |
-| desktop | **`feat/gfm-markdown`** | synced | 脏 7 | **本功能** | 本次改 `markdown.scss` + 自己发引用条对比度 + 行内代码单测。`.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
+| context | `main` | ahead 243 | 脏 22 | 本功能 status | 打包脚本 / commands 与本功能无关，勿一并提交 |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 旁路 | 波浪下划线 + 对比度已 push |
+| android | **`feat/gfm-markdown`** | synced | 脏 12 | 本功能 + 旁路 | 本回合 `green`→`#008000`。提交 GFM 时不要带 `MentionAgentKindResolver` |
+| ios | `feat/ios-file-download-progress` | synced | 脏 11 | 旁路（色表同步） | 本回合色表 `green:008000`，GFM 已合进该分支 |
+| desktop | **`feat/gfm-markdown`** | synced | 脏 3 | **本功能** | `.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
 
 ## 各端工作区现状（2026-08-24，`scripts/code-status.sh`）
 
@@ -188,6 +188,7 @@
 - (android) **真机验 ActionCard HTML 高亮**：群机器人 `ZX:ActionCardMsg` 正文含 `<mark style="background:…">` 与 `span` 的 `background-color` / `background`。PC 正确；修前安卓无底色（`SpanTagHandler` 只上前景色，且 `color:` 正则会误吃 `background-color`）。代码已改，`SpanTagHandlerTest` 7/7。**与 `MentionAgentKindResolver` 不要混提交。**
 - (android) 2026-08-25 **高亮背景偏下、没有上下居中**。根因：`lineSpacingExtra = 6dp` 加在字下面，系统 `BackgroundColorSpan` 按整行 top~bottom 填色。已换成按 `baseline+ascent ~ baseline+descent` 自绘的 `VerticalCenterBackgroundSpan`（`LineBackgroundSpan`，可折行；不要用 `ReplacementSpan`）。`SpanTagHandlerTest` + `VerticalCenterBackgroundSpanTest` 共 8 条绿。**真机未验**。提交只带 `SpanTagHandler` / `VerticalCenterBackgroundSpan` / 对应单测 / `IM/build.gradle` 的 junit，不要带 mention 与 #9 引用前缀那几份。
 - (android) 2026-08-25 **波浪下划线**：`text-decoration: underline wavy` / `text-decoration-style: wavy` 原先只认 `line-through`。已加 `WavyUnderlineSpan`（`LineBackgroundSpan` 自绘正弦波），`SpanTagHandler` 接管 `u`/`ins`。自己发的淡蓝气泡上，表格边框 12%→22%、代码块 4%→10%、引用竖条 20%→28%。`SpanTagHandlerTest` 9/9。**真机未验**。提交不要带 `MentionAgentKindResolver`。
+- (android) 2026-08-25 **`color:green` 过亮**：命名色表把 `green` 写成系统 `Color.GREEN`（`#00FF00`，等于 CSS `lime`），PC/浏览器是 CSS `#008000`。已改成 `#008000`，`lime` 仍是 `#00FF00`。`SpanTagHandlerTest` 9/9（含 `namedGreenIsCssGreenNotAndroidLime`）。**真机未验**。提交仍不要带 `MentionAgentKindResolver`。
 - (desktop) 2026-08-20 表格列 **min/max-width: 375px** 已写进 `markdown.scss`。热更新后看长单元格格内折行、多列横滚。
 - (desktop) 2026-08-25 **自己发的淡蓝气泡看不清引用 / 表格线 / 代码块**。根因不是解析器：`` `code` `` 一直渲成 `<code>`；是 token 还停在 4%/6%/12%/20%，叠在 `#d7e5ff` 上几乎看不见，看起来像「不支持行内代码」。已对齐 token：行内代码 8%、代码块 10%、引用竖条 28%、表头 8%、边框 22%。卡片顶部 `referMsg` 与普通回复引用条（`#c9cfd8` / `#8f959e`）在自己发气泡上同样洗掉，改成同一套 28% 黑 / `#5D616B`。`markdown-render` 26/26（含 3 条行内代码）+ fold 12/12 绿。**请热更新后看自己发的那条。** 未 commit desktop。
 
