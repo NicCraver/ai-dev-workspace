@@ -61,6 +61,7 @@
 | 标签 / 样式 | 观感 | iOS | 安卓 | web |
 |---|---|---|---|---|
 | `<small>` / `<big>` | 0.83em / 1.2em | `processHTMLTags` | Markwon 默认 | 浏览器默认（Tiptap 可能剥掉，靠 CSS 兜底不够） |
+| `<code>` / `<kbd>` / `<samp>` / `<tt>` | 等宽 + 浅底胶囊 | `processHTMLTags`（原先漏了 `<code>`，会原样露标签） | Markwon 默认 | StarterKit Code |
 | `<del>` / `<s>` / `<strike>` | 删除线 | `processHTMLTags` | Markwon Strike | StarterKit Strike |
 | `<i>` / `<em>` / `<cite>` / `<dfn>` / `<var>` | 斜体。中文必须 `obliqueness`，不能只换 italic 字体 | `NSObliquenessAttributeName` | Markwon Emphasis | StarterKit Italic |
 | `<u>` / `<ins>` | 下划线 | `NSUnderlineStyleSingle` | `UnderlineSpan` | `ExtendUnderline` |
