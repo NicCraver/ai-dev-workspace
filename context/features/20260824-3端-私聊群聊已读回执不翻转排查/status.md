@@ -1,6 +1,6 @@
 # Status：3端-私聊群聊已读回执不翻转排查
 
-> 最后更新：2026-08-25（副作用审查未完成；旁路：web 内联 span 高亮）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（C1+I1~I7 已修完 8 commit，HEAD `aff6aaaf`；真机验收未跑）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 本轮性质
 
@@ -20,7 +20,7 @@
 >
 > 2026-08-25 第七条旁路（**不属于本功能**）：web 个人 AI 框内联 `<span style="background-color;padding;border-radius">` 无样式。Tiptap 只收下字色。修在 `apps/web` 的 `feat/web-markdown-table-align-pc`（`ExtendInlineSpanStyle`）。见 `20260820-web端的-markdown对其pc，你先收集信息`。不改三端 IM 回执。
 >
-> 2026-08-25（**本功能、未完成**）：用户要求审查 PC 加固 11 个 commit「是否影响其他或原有功能」。审查开了个头（对上 `origin/release`：10 文件 +912/−110），因会话中断**没有产出结论**，代码未改。下回合续审。
+> 2026-08-25（**本功能**）：Opus 5 终审 1 Critical + 7 Important 已全修，8 个独立 commit（C1→I1→I2→I3→I4→I5→I6+I7），HEAD `aff6aaaf`。报告 `.superpowers/sdd/receipt/fix-report.md`。真机验收仍未跑。
 
 ## 平台矩阵
 
@@ -41,7 +41,7 @@
 | 修复方案选型 | — | — | — | ✅ 定为三层方案（见下） |
 | **PC 加固实施（Task 0~11）** | — | — | — | ✅ 11 个 commit，单测 43/43，lint exit 0 |
 | **PC 加固副作用审查（对原有功能）** | — | — | — | ✅ 2026-08-25 Opus 5 子代理完成：1 Critical + 7 Important + 8 Minor + 14 条已排除 |
-| **审查 findings 修复（C1 + I1~I7）** | — | — | — | 🚧 用户选「全修」，已派 cag-max |
+| **审查 findings 修复（C1 + I1~I7）** | — | — | — | ✅ 8 个 commit，HEAD `aff6aaaf`，vitest 43/43，lint exit 0 |
 | **真机验证（全部未做）** | — | ⬜ | ⬜ | ⬜ **卡这里**，见 `acceptance.md` |
 
 ## PC 加固实施结果（2026-08-24）
@@ -61,8 +61,16 @@
 | 8 | 群回执入库改单调更新 + 两处判定统一 | `288682c0` |
 | 9 | 回执有效期 15 天 / 修 switch fallthrough / 修 SRSMsg 包装 | `cc68cec3` |
 | 10 | 服务端权威源接入 + 反推接线 | `8ec3451e` |
+| **终审 C1** | 群名单未登记返回 null，修 @ 误显已读勾 | `28529f22` |
+| **终审 I1** | focus 补发已读加路由守卫 | `02a20812` |
+| **终审 I2** | 历史浏览态不发已读 | `65d069dd` |
+| **终审 I3** | @所有人+@某人 继续判 atUserList | `b8413df0` |
+| **终审 I4** | 补回群回执多端角标清零 | `603681c3` |
+| **终审 I5** | 记 readReceiptTimeout 放宽的权衡（不改 15） | `0049ad8f` |
+| **终审 I6+I7** | 群回执节流+去重 | `aff6aaaf` |
 
-**核验结果**：单测 43/43 绿、`npm run lint` exit 0、**全分支无禁忌文件**（逐 commit 核过）。
+**核验结果（Task 1~10）**：单测 43/43 绿、`npm run lint` exit 0、**全分支无禁忌文件**。
+**核验结果（终审 C1+I1~I7）**：8 个独立 commit，vitest 43/43，lint exit 0，禁忌文件检查 `OK 无禁忌文件`。HEAD `aff6aaaf`。GUI/真机未跑。
 
 ### 实施过程中的两条勘误
 
@@ -166,9 +174,9 @@
 | web | `feat/web-markdown-table-align-pc` | synced | 脏 1：未跟踪 `aaaaaaa.md` | **无关**。行内代码胶囊已在 `92efddc`；剩下是草稿文件，不是 IM 回执 |
 | android | `feat/gfm-markdown` | synced | 脏 8：`ActionCard`/`SpanTagHandler`/引用消息 Markdown + 未跟踪 `MentionAgentKindResolver` 与 `IM/src/test/`，另有 `IM/build.gradle` | **无关**：GFM + 「粘贴个人 @ 误识别为群」。见 `20260814-pc安卓-GFM-Markdown渲染对齐` / `20260728-安卓端@个人AI框`。**mention 不要和 GFM 混提交** |
 | ios | `feat/ios-file-download-progress` | synced | 脏 2：`ZXMarkdownContentView.m`、`ZXMarkdownManager.m` | **无关**：GFM「回复 @」与表格。见 `20260813-ios-机器人与智能体消息-GFM-Markdown渲染优化` |
-| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 11（HEAD `8ec3451e`） | 脏 3 | **本功能**：Task 1~10 已提交。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json`。本回合未改 desktop 源码 |
+| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 19（HEAD `aff6aaaf`） | 脏 3 | **本功能**：Task 1~10 + 终审修复 8 commit 已提交。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
 
-> 2026-08-25 用户要审 PC 加固对原有功能的副作用，审查因会话中断未完成，desktop 工作区与 8/24 相同（11 commit + 3 个禁忌脏文件）。web / 安卓 / iOS 脏区仍是 Markdown / @ 识别旁路，不是 IM 回执。未做 web 联调，不改 `impl-notes.md`。
+> 2026-08-25 终审 findings 已修完（8 commit，HEAD `aff6aaaf`）。desktop 工作区脏 3 个禁忌文件未动。web / 安卓 / iOS 脏区仍是 Markdown / @ 识别旁路，不是 IM 回执。未做 web 联调，不改 `impl-notes.md`。
 
 ## 审计结论（详见 findings.md）
 
@@ -295,7 +303,8 @@ electron-store 降为缓存，冲突取已读时间较大者。
 | 2026-08-24 | PC 翻 **8/6**（4 天窗口外、6 个月内）自己发的私聊消息 | **显示已读** | **D2 降级、D1 私聊部分降级、`repro.md` R1 作废**。融云本地库持久化了 `sentStatus=READ`，册子缺失只丢已读时间戳 |
 | 2026-08-24 | **R7**：PC 在群里发 @某人 与 @所有人，手机读 | @某人 已读**正常翻转**；@所有人 **未登记、名单 undefined** | **B1 坐实**（卡点订正为 `storeModule/index.js:141-143` 名单为空 return，不是 `atUserList` 判空——`[]` 是 truthy）。但 @所有人 界面本就不显示已读图标（`msgtype/msg-txt.vue:52-73` 两个 `v-if` 都要 `msgReceipt` 非空），**大概率不是用户抱怨的现象**。「群 + PC 发 + @某人 + 手机读」路径**排除** |
 | 2026-08-24 | Task 10 起应用读 `chatType:2` 探测（`npm run dev:test` 开群聊看 Console） | **未执行 GUI 验证，chatType:2 探测结论未知** | Node v24.19.0 webpack OpenSSL 失败，窗口未起。`fetchServerGroupReceipt` 的 `console.log` 已保留，待 Node 14 环境人工补跑 |
-| 2026-08-25 | 审查 PC 加固 11 commit 对原有功能的副作用 | **未完成**（会话中断，无结论） | 下回合续审。未改 desktop 源码 |
+| 2026-08-25 | 审查 PC 加固 11 commit 对原有功能的副作用 | Opus 5 子代理完成：1 Critical + 7 Important | 用户选全修 |
+| 2026-08-25 | 修 C1 + I1~I7 | 8 个独立 commit，HEAD `aff6aaaf`，vitest 43/43，lint exit 0 | 真机验收仍未跑 |
 
 ### B1 根因定位到源头：`send-box.vue` 的 10 人硬上限
 
@@ -349,7 +358,7 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
 
 ## 待办 / 阻塞
 
-- (desktop) **2026-08-25 副作用审查未完成（当前优先）**：用户要求审查 `fix/pc-read-receipt-hardening` 相对 `origin/release` 的 10 文件改动（+912/−110）是否影响发送、会话切换、未读红点、@、智能体/机器人、首屏滚动等原有功能。审查开了个头即中断，**无结论**。下回合续审后再决定能不能进验收。
+- (desktop) **2026-08-25 终审 findings 已修完**：C1 + I1~I7 共 8 个 commit（`28529f22`…`aff6aaaf`），vitest 43/43，lint exit 0，全分支无禁忌文件。详见 `.superpowers/sdd/receipt/fix-report.md`。**下一步是真机验收**（见 `acceptance.md` 与审查者 7 条必测）。
 - (desktop) **PC 加固 Task 1 已完成**（`d02faddd`）：`readStateModel.js` 抽出 `mergeReadTime` / `resolvePrivateReadTime`，vitest 9 passed。零接线。
 - (desktop) **PC 加固 Task 2 已完成**（`e7393131`）：同模块追加 `isAgentOrRobotId` / `pickGroupReceiptCandidates` / `buildReceiptMessageDic` / `mergeGroupReceiptEntry`，vitest 25 passed（含 Task 1 的 9 条）。仍零接线，线上群回执筛选行为不变；后续任务接到 `msg-list.vue` 才修 A1。
 - (desktop) **PC 加固 Task 3 已完成**（`650e5792`）：同模块追加 `normalizeServerReadList`，兼容 `msgUID`/`readMsgUID` 与有无 `accountId` 两种形态，vitest 31 passed。仍零接线；`hasPerUserDetail` 留给后续权威源任务决定群聊那半边能不能用服务端明细。`chatType: 2` 是否下发按人明细仍未实测。
@@ -379,7 +388,7 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
 - (跨端) **全部结论未经真机验证**，A 级也只是「代码上必然」。下一步按性价比：先验 A2（PC 本地 `npm run dev:test` 即可，无需出包）→ 再验 A1（需 iOS 配合发非纯文本 @ 消息）→ B1/B3 一起（devtools 看一次 @所有人 消息的 `extra` 结构）→ A3 最后（需安卓出包）。
 - (跨端) 审计阶段未改 IM 回执代码；2026-08-24 起 PC 加固 Task 1+2+3+4+4B 已提交纯逻辑模块，Task 5（`0f4db746`）已把私聊已读时间接到 `msg-list` / `storeModule`，Task 6（`17f04acc`）去掉 `isFirstScreen` 门槛并补窗口 focus 触发点，Task 7（`c6bc1cc1`）群阅读方口径对齐，Task 8（`288682c0`）群回执入库放宽并统一大群 @所有人 判定，Task 9（`cc68cec3`）回执窗口 15 天、修 switch fallthrough、补消息映射、SRSMsg 去包装，Task 10（`8ec3451e`）接入服务端权威源并把表态/回复反推接到展示（GUI 均未验；chatType:2 探测结论未知）。同日旁路改了 web `AcMarkdown` 行内代码样式、安卓智能体表格在引用前缀后不渲染、安卓粘贴个人 `@` 误识别为群、以及 iOS「回复 @」叠在表格上（见文首），均与回执无关。
 - (android) 融云只有 `rong_imlib_5.5.3.jar` + `libRongIMLib.so`，SDK 内部不可读；凡涉及原生 SDK 内部行为的结论一律降到 B 级（见 B5）。
-- (desktop) `apps/desktop` 当前在 `fix/pc-read-receipt-hardening`（Task 1+2+3+4+4B+5+6+7+8+9+10 已提交）。工作区仍脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）——PC 打包本地配置，**禁止提交**。
+- (desktop) `apps/desktop` 当前在 `fix/pc-read-receipt-hardening`（Task 1~10 + 终审 C1+I1~I7 已提交，HEAD `aff6aaaf`）。工作区仍脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）——PC 打包本地配置，**禁止提交**。
 - (desktop) 8/19 的 `context/features/20260819-pc端群@消息已读回执丢失/plan.md` 从未执行（`fix/pc-group-at-read-receipt` 分支不存在）。其事实表已在本轮复核并更新——**其中「阅读方回执只对文本/引用」「PC 不处理 RRReqMsg」两条仍成立，但「发送方登记只在 `MessageModel.js:305-317`」的描述需配合 `messageService.js:295-339` 的 `shouldRequestGroupReadReceipt` 一起看**（后者是那之后新增的）。
 - (契约) `datasyn/getReadMessage` 在 `context/contracts/` 下无契约文件。三端都在调，本轮未逐字段比对传参与解读，补契约留到下轮。
 
@@ -391,4 +400,4 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
 - 2026-08-24 调查法选「先纵后横」：纵切产出带 `文件:行号` 的事实表（下轮修复可直接复用），横切成阶段矩阵暴露三端不对称。
 - 2026-08-24 不反编译安卓 jar/so：改用「调用层代码 + iOS 公开头文件 + PC 明文 adapter」三角互证。
 - 2026-08-24 智能体 / 机器人会话的已读跳过逻辑纳入范围（PC `msg-list.vue:2643`）：它是阶段③的过滤条件，直接决定某些私聊会话永不回执。
-- 2026-08-25 发版前先审副作用：用户明确要求核对加固是否碰到发送、会话切换、未读红点、@、智能体会话、首屏滚动等原有路径。审查未完成，**不能当已审过**。
+- 2026-08-25 发版前先审副作用：用户明确要求核对加固是否碰到发送、会话切换、未读红点、@、智能体会话、首屏滚动等原有路径。Opus 5 审出 1 Critical + 7 Important，已全修（8 commit，HEAD `aff6aaaf`）。真机验收未跑，**还不能当已验收**。
