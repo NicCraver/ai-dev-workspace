@@ -1,6 +1,6 @@
 # Status：3端-私聊群聊已读回执不翻转排查
 
-> 最后更新：2026-08-25（收尾：apps 脏区仍非回执；PC 真机验收未跑，HEAD `aff6aaaf`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（旁路：iOS 标签 / 安卓+web 波浪线 / 自己发消息表格代码对比度；回执真机仍未跑）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 本轮性质
 
@@ -19,6 +19,8 @@
 > 2026-08-25 第六条旁路（**不属于本功能**）：同上一样本文，iOS / 安卓高亮有底色但偏下、没有上下居中。行距 extra 加在字下面，系统按整行盒子填背景。安卓改自绘字形盒；iOS 换 LayoutManager 从底部裁到字形行高。仍不改三端 IM 回执。
 >
 > 2026-08-25 第七条旁路（**不属于本功能**）：web 个人 AI 框内联 `<span style="background-color;padding;border-radius">` 无样式。Tiptap 只收下字色。修在 `apps/web` 的 `feat/web-markdown-table-align-pc`（`ExtendInlineSpanStyle`）。见 `20260820-web端的-markdown对其pc，你先收集信息`。不改三端 IM 回执。
+>
+> 2026-08-25 第八条旁路（**不属于本功能**）：iOS 不认 `small`/`big`/`del`/斜体/语义化标签；安卓与 web 不画波浪下划线；自己发的淡蓝气泡上表格线、代码块、引用竖条太淡。修在 `apps/ios` `feat/ios-file-download-progress`、`apps/android` `feat/gfm-markdown`、`apps/web` `feat/web-markdown-table-align-pc`。见三个 GFM / web markdown 功能目录。不改三端 IM 回执。**安卓提交不要带 mention。**
 >
 > 2026-08-25（**本功能**）：Opus 5 终审 1 Critical + 7 Important 已全修，8 个独立 commit（C1→I1→I2→I3→I4→I5→I6+I7），HEAD `aff6aaaf`。报告 `.superpowers/sdd/receipt/fix-report.md`。真机验收仍未跑。
 
@@ -166,17 +168,17 @@
 | PC 加固 Task 9：回执窗口 15 天 + switch fallthrough + 消息映射 + SRSMsg 去包装 | — | — | — | ✅ `cc68cec3`，eslint 无 error；**未执行 GUI 验证** |
 | PC 加固 Task 10：服务端权威源接入（chatType:2 探测 + 表态/回复反推接线） | — | — | — | ✅ `8ec3451e`，eslint 无 error；**未执行 GUI 验证，chatType:2 探测结论未知** |
 
-## 各端工作区现状（2026-08-25 11:28，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-25，`scripts/code-status.sh --short`）
 
-本回合无回执代码改动。Stop hook 因 android / desktop / ios 工作区不干净触发；对照 diff，**三端脏区都不是 IM 已读回执**。平台矩阵：真机验证仍 ⬜。
+本回合无回执代码改动。脏区是 Markdown 旁路（标签 / 波浪线 / 自己发消息对比度）。平台矩阵：真机验证仍 ⬜。
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 |
 |----|------|------|------|--------------|
-| context | `main` | ahead origin/main 230 | 脏 22：打包命令/`pack` 脚本、`markdown-style-tokens.md`、`package.json` 等 | 本功能本回合只更 status。命令/脚本/token **无关**，不要跟这次一起提交 |
-| web | `feat/web-markdown-table-align-pc` | synced | 干净 | **无关**。HEAD `87d3921` 是个人 AI 框 span 高亮底色，已提交 |
-| android | `feat/gfm-markdown` | synced | 脏 9：ActionCard / SpanTagHandler / 引用 Markdown、`VerticalCenterBackgroundSpan`、未跟踪 `MentionAgentKindResolver` 与 `IM/src/test/`、`IM/build.gradle` | **无关**：GFM 高亮居中 + 粘贴个人 @ 误识别为群。见 GFM / `@个人AI框` 功能目录。**mention 不要和 GFM 混提交** |
-| ios | `feat/ios-file-download-progress` | synced | 脏 8：Markdown 管理器/内容视图、机器人与智能体气泡、`ZXMarkdownLayoutManager` 新增、pbxproj | **无关**：AI 聊天 Markdown 高亮底色垂直居中。见 iOS GFM 功能目录 |
-| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 18（HEAD `aff6aaaf`） | 脏 3 | **本功能代码已提交**（Task 1~10 + 终审 8 commit）。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
+| context | `main` | ahead origin/main 231 | 脏 25：打包命令/`pack`、token 表、三个 GFM/web markdown status | 本功能只记旁路。打包脚本 **无关**，不要跟这次一起提交 |
+| web | `feat/web-markdown-table-align-pc` | synced | 脏 5：`ExtendUnderline` + `AcMarkdown` 波浪线/对比度 | **无关**。见 `20260820-web端的-markdown对其pc` |
+| android | `feat/gfm-markdown` | synced | 脏 12：`WavyUnderlineSpan` / `SpanTagHandler` + 既有 GFM 高亮与 mention | **无关**。**mention 不要和 GFM 混提交** |
+| ios | `feat/ios-file-download-progress` | synced | 脏 11：`ZXMarkdownManager` 标签 + `ZXMarkdownStyle` 对比度 + 既有高亮居中 | **无关**。见 iOS GFM 功能目录 |
+| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 18（HEAD `aff6aaaf`） | 脏 3 | **本功能代码已提交**。脏 3 仍是本地打包配置，**禁止提交** |
 
 > 终审 findings 已修完（HEAD `aff6aaaf`）。PC 真机验收未跑。未做 web 联调（web 不参与 IM 回执），不改 `impl-notes.md`。
 

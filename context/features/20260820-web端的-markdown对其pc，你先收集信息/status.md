@@ -1,6 +1,6 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-08-25（web 内联 span 背景/圆角未进编辑器 schema）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（波浪下划线 + 表格/代码/引用对比度，页面未点）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -18,6 +18,7 @@
 | 列宽上限格内换行 | 187.5px（375/2）🚧 | — | — | min/max **375px** ✅ |
 | 行内代码：干掉 prose 反引号 + 浅底胶囊 | ✅ | — | — | — |
 | 内联 span：background / padding / border-radius | ✅ 代码已补，页面未点 | — | — | — |
+| 波浪下划线 `text-decoration: wavy` | ✅ 代码已补，页面未点 | — | — | — |
 
 > T0–T5 的 ✅ 是代码 + `vue-tsc`。真机格子在你看过之前保持 🚧。
 
@@ -33,6 +34,7 @@
 
 ## 待办 / 阻塞
 
+- (web) 2026-08-25 **波浪下划线**：`<u>` / `<span style="text-decoration: underline wavy">` 原先只出直线。已加 `ExtendUnderline`（吃 `text-decoration-style`）+ `ExtendInlineSpanStyle` 的 `textDecoration`；`AcMarkdown` 补 `text-decoration-style: wavy`。表格边框 12%→22%、代码块 10% 黑底、引用竖条 28%。`vue-tsc --noEmit` 干净。**请在个人 AI 框看这条样本。** 未 commit / push。
 - (web) 2026-08-25 **内联 HTML 高亮**：个人 AI 框这段 `<span style="background-color;padding;border-radius">` 看起来没样式。根因：`marked` 会把 HTML 透传，但 Tiptap 的 `textStyle` 只占位、`Color` 只吃字色，背景/内边距/圆角进不了 schema。已加 `ExtendInlineSpanStyle`（`EditorWrapper` + `htmlToMarkdown` 同源）。字色 / 加粗 / 删除线本来就有（`Color` + Bold/Strike 的 style 解析）。**请在个人 AI 框看这条样本。** 未 commit / push。
 - (web) 2026-08-24 已补行内代码皮肤（`AcMarkdown.vue`）：prose 不再用伪元素画反引号；单反引号与双反引号（内容含 `` ` ``）均已在本地 `AcMarkdown` 路径看过。未 commit / push。
 - (web) **请你验收**：窄屏长单元格应在约 **187.5px** 处折行，375 宽大约能看清两列。
