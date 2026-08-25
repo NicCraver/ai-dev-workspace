@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-25（代码任务全完成，终审 With fixes，两条 Important 修复中）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（**代码全部完成，7 commit 未 push，等真机验收**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -15,7 +15,8 @@
 | Task 5 接线：群聊读出 | — | — | — | ✅ `bd52a77c` lint 0 + 31/31 |
 | Task 5b 群聊合并加引用缓存（计划外） | — | — | — | ✅ `e96e3925` lint 0 + 44/44 |
 | 终审（全分支 6 commit） | — | — | — | ✅ **With fixes**，2 条 Important |
-| 终审修复（5 条一次提交） | — | — | — | 🚧 代理执行中 |
+| 终审修复（5 条一次提交） | — | — | — | ✅ `74b41acd` lint 0 + 46/46 |
+| 修复复审 | — | — | — | ✅ 逐条追证落地，**Ready: Yes** |
 | Task 6 真机自测（4 条） | — | — | — | ⬜ **需要你来跑** |
 
 本功能只做 desktop，另三端不涉及。Task 1–5b 的 ✅ = worktree 提交 + 单测 + 评审通过，**不含真机**。
@@ -69,6 +70,29 @@
 2. **验收时开着 DevTools console。** `msg-txt.vue:168` 那句 `console.log("watch msgReceipt", x)` 是
    `origin/release` 上的既有代码，正好当探针——群里有人表态时若它刷屏或整条消息闪烁，
    说明 Task 5b 的引用缓存没生效。这是给「组件方法无自动化测试」补的人工验证。
+3. **切会话 / 切公司时留意已读状态有无肉眼可见的闪烁。** 复审记的一条理论 Minor：
+   若 `senderInfo.id`（Vuex `GetSendUser`）在同账号会话期内瞬时置空，会话 key 会变空串，
+   组件本地的 `readWatermark` 被清成 `{}`，仅靠水位兜底显示已读的消息会短暂闪回未读再自愈。
+   **不产生错误已读**（模块级 `watermarkMap` 不受影响，`bumpWatermark` 遇空 key 提前 return），
+   只是可能的 UI 抖动。没观察到就忽略。
+
+## 分支最终状态
+
+`feat/pc-read-watermark`，**7 个 commit，全部未 push**，工作区干净。相对 `origin/release` 净改动
+5 个文件 +813 / -11（其中 372 行是测试）。
+
+| commit | 内容 |
+|---|---|
+| `fc7d7e46` | 证据提取与判定纯函数 |
+| `ec092d9c` | 扫消息列表算按人水位，三源合一 |
+| `dd6a4add` | 水位仓库，会话级按人单调只增 |
+| `75025888` | 私聊已读接入水位 |
+| `bd52a77c` | 群聊已读名单接入水位，只补分子不改分母 |
+| `e96e3925` | 群聊合并名单加引用缓存（终审前自查发现的回归） |
+| `74b41acd` | 终审两条 Important 修复 |
+
+新增 3 个文件（2 个纯逻辑模块 + 2 个测试文件），改 1 个既有文件（`msg-list.vue`）。
+46 个单测全绿、`npm run lint` exit 0。**合并 / push 等你发话。**
 
 ## 工作目录（并行开发）
 
@@ -101,7 +125,6 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 
 ## 待办 / 阻塞
 
-- (desktop-watermark) **终审修复代理执行中**：5 条一次提交（2 条 Important + 3 条注释类）
 - (desktop-watermark) **下一步是 Task 6 真机验收，需要你来跑**。4 条用例见 `spec.md` 第七节。
   要起 `npm run dev:test`，与 `apps/desktop` 抢 9080 端口，**起之前先确认主目录的 dev 已停**。
   worktree 是从 `origin/release` 干净切的，没有主目录那份指向 localhost 的调试配置，先：
