@@ -1,6 +1,68 @@
 # Status：3端-私聊群聊已读回执不翻转排查
 
-> 最后更新：2026-08-25（旁路：iOS 标签 / 安卓+web 波浪线 / 自己发消息表格代码对比度；回执真机仍未跑）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（⏸ **已封存** —— 改用新方案，代码 18 commit 全在 `fix/pc-read-receipt-hardening`，未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+
+## ⏸ 封存（2026-08-25）
+
+**用户决定改用新方案解决，本功能暂停。代码已全部提交，未 push。需要时按下面「怎么恢复」重启。**
+
+### 封存时的状态
+
+| 项 | 状态 |
+|---|---|
+| desktop 分支 | `fix/pc-read-receipt-hardening`，从 `origin/release` `613af430` 切出 |
+| commit 数 | **18**（加固 11 + 终审修复 7），HEAD `aff6aaaf` |
+| 是否 push | **否**，只在本地。远端无此分支 |
+| 工作区 | 只剩 3 个打包配置脏文件（`.env.test` / `electron-builder.yml` / `package.json`），**禁止提交** |
+| 单测 / lint | vitest 43/43、`npm run lint` exit 0 |
+| 真机验收 | **31 条只跑了 D0 一条**，其余全未测 |
+
+### 为什么暂停 —— 根因摆在这里
+
+融云的回执消息在 adapter 的属性表里是 `isPersited: false`：
+
+```
+"RC:ReadNtf"  :{isCounted:!1, isPersited:!1}
+"RC:RRReqMsg" :{isCounted:!1, isPersited:!1}
+"RC:RRRspMsg" :{isCounted:!1, isPersited:!1}
+```
+
+**不落库、不进历史。** PC 那一刻不在线，回执就永久丢失，之后拉多少次历史都补不回来。
+丢不丢全看时机 —— 这就是「无法稳定复现」的根本原因，也是本方案（在推送通道上打补丁）的天花板。
+
+普通消息是 `isPersited: true`，有离线存储、能补拉。**已读应该建立在可靠通道上，而不是修补不可靠通道。**
+
+### 没做完的三条（新方案可以直接拿去用）
+
+1. **服务端写入解耦**（改 3 行）——`messageService.js` 的 `scheduleReadMessageSync` 现在挂在
+   融云发送成功的 `.then` 里，融云失败则服务端也不写。两个源串成一条链，服务端失去独立兜底意义。
+2. **用「对方发过消息」反推已读**（新增纯函数 + 接线）——对方在会话里发言必然先打开会话，
+   收到对方 `sentTime = T` 的消息即可推断「我在 T 之前发的都被看到了」。
+   走的是 `isPersited: true` 的可靠通道，不受回执丢失影响。安卓的
+   `sendPrivateReadReceiptMessage`（`ConversationFragment.java:1710`）用当前时间做
+   `lastMessageSendTime`，本质就是这个思路。
+3. **群聊服务端接口**（阻塞，需后端）——`chatType: 2` 实测返回 0 条，未区分「不支持」还是「该群无数据」。
+
+### 怎么恢复
+
+```bash
+cd apps/desktop
+git checkout fix/pc-read-receipt-hardening   # 18 个 commit 都在
+npm run dev:test                              # 起 PC 端
+```
+
+验收清单：浏览器打开 `acceptance.html`（31 条，12 条阻塞项，结果存 localStorage、可导出 Markdown）。
+代码事实与行号：`findings.md`。实施步骤：`plan.md`。平台无关提炼（给安卓/iOS 对齐用）：`impl-notes.md`。
+
+### 遗留未修（Minor，不影响功能）
+
+- `msg-list.vue:1055-1069` 的 `innerReadTime` 回填仍被日期册门槛挡着（Task 5 只修了 `getStatusText` 那一半）
+- Task 10 的探测 `console.log` 仍在代码里（有意保留）
+- `hasPerUserDetail` 判据建议改成「存在 accountId ≠ 当前用户」
+- `provide.getGroupReceipt` 返回未合并的 `groupReceipt`（子组件 inject 已注释，无影响）
+- `messageActions.js` 从 store 反向 import components 下的模块（无循环依赖，分层不佳）
+
+---
 
 ## 本轮性质
 
