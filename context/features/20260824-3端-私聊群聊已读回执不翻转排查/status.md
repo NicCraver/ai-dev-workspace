@@ -40,7 +40,8 @@
 | 加固方案分批（第一批/第二批） | — | ✅ | ✅ | ✅ |
 | 修复方案选型 | — | — | — | ✅ 定为三层方案（见下） |
 | **PC 加固实施（Task 0~11）** | — | — | — | ✅ 11 个 commit，单测 43/43，lint exit 0 |
-| **PC 加固副作用审查（对原有功能）** | — | — | — | 🚧 2026-08-25 开了头，会话中断，无结论 |
+| **PC 加固副作用审查（对原有功能）** | — | — | — | ✅ 2026-08-25 Opus 5 子代理完成：1 Critical + 7 Important + 8 Minor + 14 条已排除 |
+| **审查 findings 修复（C1 + I1~I7）** | — | — | — | 🚧 用户选「全修」，已派 cag-max |
 | **真机验证（全部未做）** | — | ⬜ | ⬜ | ⬜ **卡这里**，见 `acceptance.md` |
 
 ## PC 加固实施结果（2026-08-24）
@@ -69,6 +70,75 @@
 - 计划写「模板 4 处 `:msgReceipt` 绑定」，实际只有 3 处属性绑定（339/434/450，已全改）。
   第 4 处（560-561）是「已读 N/M」文案的 `v-if` 门槛，不是 prop。功能无缺口——
   合并结果的名单键来自本地表，本地没登记时合并也是空，文案本就不显示。
+
+## 副作用审查结论（2026-08-25，Opus 5 子代理）
+
+审查包 `.superpowers/sdd/receipt/review-package.md`（11 commit / 10 文件 / +912−110），
+修复任务书 `.superpowers/sdd/receipt/fix-brief.md`。**用户选择全修（C1 + I1~I7）。**
+
+### Critical
+
+**C1 · 群里所有带 @ 的消息误显示「已读」绿勾**（`readStateModel.js:137-152` + `msg-list.vue:3038-3046` + 模板 339/434/450）
+
+`mergeGroupReceiptEntry` 恒返回 `{}`（truthy）。改前模板传 `groupReceipt && groupReceipt[uid]`，
+未登记时是 `undefined` → prop default `null` → 假值。子组件条件
+`msgReceipt && ... && msgReceipt[row.userId] !== 0` 里 `{}[uid]` 是 `undefined`，
+`undefined !== 0` 为 true → 渲染 `msg-read.png`。
+
+**旁观者看别人的 @ 消息也会出现绿勾**；首帧 `groupReceipt` 为 `null` 时全部 @ 先显示已读、2 秒后翻回，还会闪。
+
+> **控制端此前的判断有误**：8/24 我在 Task 10 复核时说「功能无缺口」——那句只对
+> 「已读 N/M」文案的 `v-if`（它仍挡在原始 `groupReceipt` 上），漏了 `:msgReceipt` 这条 prop 路径。
+
+### Important（4 条是回归）
+
+| # | 问题 | 位置 | 回归 |
+|---|---|---|---|
+| I1 | `focus` 补发已读无路由守卫。聊天面板常驻挂载（`main.vue` 用 `v-show`，不在 keep-alive 内），切到邮箱面板后 focus 照样触发 → **清掉用户没看过的消息角标** | `msg-list.vue:891-904` | ✅ |
+| I2 | 去掉 `!isFirstScreen` 后，历史浏览态（`GetIsGetHistoryStatus` 为真时 `messageList` 返回 `tempMessageList`）向下翻页会拿"窗口内最新"当"会话最新"，**清零整个会话角标** | `msg-list.vue:2686` | ✅ |
+| I3 | `@所有人 + @某人` 组合：`mentionedInfo.type` 是 ALL 但被点名的人照样进 `atUserList` 且已登记；新代码 ALL 分支直接 `return hasAllList` 就走，**不发 RRReqMsg** → 永远 0/N。旧代码是好的 | `messageService.js:307-315` | ✅ |
+| I4 | switch 拆开后丢了 `UpdateReminderMap` self 判断 → **手机读群消息后 PC 角标不再清零**（旧代码靠 fallthrough 执行） | `ReceiveMessageListener.js:246-266` | ✅ |
+| I5 | adapter 收 RRRspMsg「**窗口外原样放行、窗口内才裁剪**」。放宽到 15 天把一部分原本蒙混过关的离线回执关进裁剪逻辑 | `IMSDKServer.js:15` | |
+| I6 | 群回执用 `clearTimeout` 纯防抖，**活跃群（消息间隔 <1s）一条都发不出去** | `msg-list.vue:1511-1518` | |
+| I7 | 候选集放宽后 `receiptMessageDic` 随会话时长单调增长，大群里往几十 KB 走且全群扇出 | `msg-list.vue:1494-1519` | |
+
+> I5 无干净代码修法（SDK 在 app 看到消息前就改写了 dic），只做注释文档化 + 列为验收观测项，**不动 15 这个值**。
+
+### 已核查并排除的 14 项（摘要）
+
+- **最高风险项排除**：`init(AppKey, null, {...})` 安全——实读 adapter `init:function(e,t,n)`，
+  第二参 `t` 在函数体内**从未被引用**，传 null 等价于不传。初始化不会坏。
+- 新增的 `RC:RRReqMsg` / `RC:SRSMsg` 映射**不构成行为变更**——adapter 的 `GL` 表本来就有这两条，
+  改前就没落进 `UnknownMessage`。（控制端派单时的担心不成立。）
+- 删掉的 `Object.keys(groupStore).length === 0` 确是死代码（Conf 实例键恒为 4 个）；
+  删掉的数组当 key 那行不落盘、纯内存脏数据。
+- `ensureReadTimeDates` 不泄漏 fd、不创建空文件、不显著拖慢启动。
+- 回执类消息不污染角标/会话列表（adapter `ra` 表里三类全是 `isCounted:!1, isPersited:!1`）。
+- fallthrough 拆开除 I4 外无损；`SyncReadStatusMessage` 改传纯对象正确；≤10 人群 @所有人 未被误伤。
+- `focus` 无重复注册（`activated` 因不在 keep-alive 内是死代码）；`__groupReceiptTimer` 句柄管理正确。
+- 8 个改动文件全文无 `?.` / `??`；eslint 零告警；vitest 43/43。
+
+### Minor（留待终审，未修）
+
+- Task 10 的探测 `console.log` 仍在代码里（有意保留，验收时要读）
+- `hasPerUserDetail` 只要有任意 `accountId` 就置 true，而请求本身就带自己的 `accountId`
+  → 探测结论可能误导（功能无害）。建议判据改成「存在 accountId ≠ 当前用户」
+- **`msg-list.vue:1055-1069` 的 `innerReadTime` 回填仍被日期册门槛挡着**——Task 5 只修了 `getStatusText` 那一半
+- `provide.getGroupReceipt` 仍返回未合并的 `groupReceipt`（子组件 inject 已注释，无实际影响）
+- `messageActions.js` 从 store 反向 import components 下的模块，分层不佳（无循环依赖）
+- 切群时 `serverGroupReceipt` 无竞态保护（按全局唯一 messageUId 索引，最多少显示不会串数据）
+- `getStatusTextColor` 内部调 `getStatusText`，单条私聊消息每渲染跑 3 次 `extractExpansionReaders`，
+  群聊每条 `bySelf` 消息跑 7 次 `getMergedGroupReceipt`。**估算可接受**；若验收时列表卡顿，这里是第一嫌疑
+
+### 审查者建议的真机必测项（已并入 acceptance.md 待补）
+
+1. 群里**别人发的** @ 消息，@名字后不应有任何已读/未读图标（C1）
+2. 打开会话 → 切邮箱面板 → 收新消息 → alt-tab 出去再回来 → 角标不应被清（I1）
+3. 从搜索跳进 3 个月前历史 → 下翻 → 会话角标不应清零（I2）
+4. \>10 人群发「@所有人 @某人」→ 对方读后应变 1/1（I3）
+5. 手机读群消息 → PC 该群角标应清零（I4）
+6. 活跃群里 `groupReceiptSent` 不应长期为 0（I6）
+7. 全程盯 `groupRespEmptyForMe` / `groupRespApplied` 比值（I5/I7）
 
 ### 未决项
 
