@@ -1,6 +1,6 @@
 # Status：3端-私聊群聊已读回执不翻转排查
 
-> 最后更新：2026-08-25（副作用审查未完成；旁路：原生高亮背景垂直居中）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（副作用审查未完成；旁路：web 内联 span 高亮）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 本轮性质
 
@@ -17,6 +17,8 @@
 > 2026-08-24 第五条旁路（**不属于本功能**）：`ZX:ActionCardMsg` 内联 HTML，iOS 不认 `<mark>`、安卓没有背景色。修在 `apps/ios` 的 `feat/ios-file-download-progress` 与 `apps/android` 的 `feat/gfm-markdown`（只动 `SpanTagHandler` + 单测）。见两个 GFM 功能目录。不改三端 IM 回执。**安卓提交时不要带上 mention 那几份。**
 >
 > 2026-08-25 第六条旁路（**不属于本功能**）：同上一样本文，iOS / 安卓高亮有底色但偏下、没有上下居中。行距 extra 加在字下面，系统按整行盒子填背景。安卓改自绘字形盒；iOS 换 LayoutManager 从底部裁到字形行高。仍不改三端 IM 回执。
+>
+> 2026-08-25 第七条旁路（**不属于本功能**）：web 个人 AI 框内联 `<span style="background-color;padding;border-radius">` 无样式。Tiptap 只收下字色。修在 `apps/web` 的 `feat/web-markdown-table-align-pc`（`ExtendInlineSpanStyle`）。见 `20260820-web端的-markdown对其pc，你先收集信息`。不改三端 IM 回执。
 >
 > 2026-08-25（**本功能、未完成**）：用户要求审查 PC 加固 11 个 commit「是否影响其他或原有功能」。审查开了个头（对上 `origin/release`：10 文件 +912/−110），因会话中断**没有产出结论**，代码未改。下回合续审。
 

@@ -1,6 +1,6 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-08-20（PC 列宽改为 min/max 375px）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（web 内联 span 背景/圆角未进编辑器 schema）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -16,6 +16,8 @@
 | T5 status / impl-notes | ✅ | — | — | — |
 | 真机验收（宽表横滚 / 窄表无滑 / 输入框未回归） | 🚧 | — | — | — |
 | 列宽上限格内换行 | 187.5px（375/2）🚧 | — | — | min/max **375px** ✅ |
+| 行内代码：干掉 prose 反引号 + 浅底胶囊 | ✅ | — | — | — |
+| 内联 span：background / padding / border-radius | ✅ 代码已补，页面未点 | — | — | — |
 
 > T0–T5 的 ✅ 是代码 + `vue-tsc`。真机格子在你看过之前保持 🚧。
 
@@ -31,6 +33,8 @@
 
 ## 待办 / 阻塞
 
+- (web) 2026-08-25 **内联 HTML 高亮**：个人 AI 框这段 `<span style="background-color;padding;border-radius">` 看起来没样式。根因：`marked` 会把 HTML 透传，但 Tiptap 的 `textStyle` 只占位、`Color` 只吃字色，背景/内边距/圆角进不了 schema。已加 `ExtendInlineSpanStyle`（`EditorWrapper` + `htmlToMarkdown` 同源）。字色 / 加粗 / 删除线本来就有（`Color` + Bold/Strike 的 style 解析）。**请在个人 AI 框看这条样本。** 未 commit / push。
+- (web) 2026-08-24 已补行内代码皮肤（`AcMarkdown.vue`）：prose 不再用伪元素画反引号；单反引号与双反引号（内容含 `` ` ``）均已在本地 `AcMarkdown` 路径看过。未 commit / push。
 - (web) **请你验收**：窄屏长单元格应在约 **187.5px** 处折行，375 宽大约能看清两列。
 - (web) 列宽上限改动在 `feat/web-markdown-table-align-pc` 工作区，**尚未 commit / push**。
 - (desktop) 列宽改为 **min/max 375px**（不要 187.5）。热更新后看：一列大约一个 375 设计稿宽，长文格内折行，多列横滚。未 commit / push。
@@ -46,3 +50,4 @@
 - 2026-08-20 为让横滚在 flex 气泡里生效：`!max-w-unset` → `!max-w-full`，`ExpandableContent` / `AcMarkdown` 加 `min-w-0 max-w-full`。
 - 2026-08-20 子代理审查：无 Critical；status 已按真实进度改；`renderWrapper` 注释已写清 TableView vs getHTML。
 - 2026-08-20 旁路（PC GFM）：后端常把 `<reference>` 单独成行，解析器会当成独立块；PC 对齐安卓/iOS，解析前折掉标签前换行。表格后的标签必须塞进最后一格，否则 GFM 会丢掉。
+- 2026-08-24 web 行内代码：解析一直是 `marked` → `<code>`；看起来「不支持」是因为 UnoCSS `prose` 的 `code::before/after` 又画回反引号。按 token 表做成浅底胶囊并关掉伪元素。代码块黑底皮肤不动。

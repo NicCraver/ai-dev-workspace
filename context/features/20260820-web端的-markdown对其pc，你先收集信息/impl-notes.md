@@ -28,3 +28,7 @@
 ## 5. 本期故意不对齐的
 
 标题颜色与字号、代码块皮肤、引用、列表、单换行、折叠高度、左右渐变遮罩。输入框里用户自己插的表也不走这套展示外壳。
+
+## 6. 内联 HTML 的 style 不是「浏览器自动上色」
+
+个人 AI 框虽然最终是 HTML，但要进 Tiptap schema。只装了字色时，`<span style="background-color;padding;border-radius">` 会变成普通文字（或只剩字色）。背景、内边距、圆角必须做成 `textStyle` 上的属性；`background` 简写与 `background-color` 都要认。加粗 / 删除线走已有的 `font-weight` / `text-decoration` 解析，不用再写一遍。
