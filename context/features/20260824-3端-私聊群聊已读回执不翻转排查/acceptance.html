@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC 已读回执加固 · 验收清单</title>
+<style>
+:root{
+  --bg:#fbfbfa; --fg:#1a1a19; --muted:#71716c; --line:#e6e5e1; --card:#fff; --code:#f4f4f1;
+  --pass:#1f9d63; --fail:#c0392b; --skip:#8a8a84; --blue:#3E7EFF; --amber:#b8860b;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0 0 120px;background:var(--bg);color:var(--fg);
+  font:15px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.87em;
+  background:var(--code);padding:1px 5px;border-radius:3px}
+pre{background:var(--code);padding:10px 12px;border-radius:5px;overflow-x:auto;margin:8px 0;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55}
+
+/* 顶栏 */
+header{position:sticky;top:0;z-index:20;background:rgba(251,251,250,.96);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:14px 0 12px}
+.htop{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+h1{font-size:19px;margin:0;letter-spacing:-.2px}
+.meta{color:var(--muted);font-size:12.5px}
+.bar{height:7px;background:var(--line);border-radius:4px;overflow:hidden;display:flex}
+.bar i{display:block;height:100%;transition:width .25s}
+.bar .p{background:var(--pass)} .bar .f{background:var(--fail)} .bar .s{background:var(--skip)}
+.stats{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-top:8px;align-items:center}
+.stats b{font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.dot.p{background:var(--pass)} .dot.f{background:var(--fail)} .dot.s{background:var(--skip)} .dot.n{background:var(--line)}
+.acts{margin-left:auto;display:flex;gap:8px}
+button{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--line);background:var(--card);
+  border-radius:5px;cursor:pointer;color:var(--fg)}
+button:hover{background:var(--code)}
+button.primary{background:var(--fg);color:#fff;border-color:var(--fg)}
+
+/* 区块 */
+section{margin:32px 0 0}
+h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:9px}
+.tag{font-size:10.5px;font-weight:600;letter-spacing:.4px;padding:2px 7px;border-radius:3px;color:#fff;background:var(--skip)}
+.tag.must{background:var(--fail)} .tag.reg{background:var(--amber)} .tag.core{background:var(--blue)}
+.sechint{color:var(--muted);font-size:13px;margin:0 0 12px}
+
+/* 用例卡 */
+.case{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:14px 16px;margin:10px 0}
+.case.done-pass{border-left:3px solid var(--pass)}
+.case.done-fail{border-left:3px solid var(--fail);background:#fffaf9}
+.case.done-skip{border-left:3px solid var(--skip);opacity:.62}
+.chead{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.cid{font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700;color:var(--muted);min-width:34px}
+.ctitle{font-weight:600;flex:1;min-width:220px;font-size:14.5px}
+.pill{font-size:10.5px;padding:1px 7px;border-radius:9px;border:1px solid #f0dfae;background:#fff4d6;color:#8a6100;white-space:nowrap}
+.pill.block{border-color:#f0b8b0;background:#ffece9;color:#a03328}
+.steps{margin:9px 0 0;padding-left:19px;font-size:13.7px}
+.steps li{margin:3px 0}
+.expect{margin:9px 0 0;padding:8px 11px;background:var(--code);border-radius:5px;font-size:13.5px}
+.expect b{color:var(--pass)}
+.why{margin:7px 0 0;color:var(--muted);font-size:12.5px}
+.ctrl{margin:11px 0 0;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.ctrl label{display:inline-flex;align-items:center;gap:5px;font-size:13px;padding:4px 11px;
+  border:1px solid var(--line);border-radius:5px;cursor:pointer;background:var(--bg)}
+.ctrl label:hover{background:var(--code)}
+.ctrl input[type=radio]{margin:0}
+.ctrl label.on-p{border-color:var(--pass);background:#eaf7f0;color:var(--pass);font-weight:600}
+.ctrl label.on-f{border-color:var(--fail);background:#fdecea;color:var(--fail);font-weight:600}
+.ctrl label.on-s{border-color:var(--skip);background:#f2f2f0;color:var(--skip);font-weight:600}
+.ctrl textarea{flex:1;min-width:240px;font:inherit;font-size:13px;padding:5px 9px;
+  border:1px solid var(--line);border-radius:5px;resize:vertical;min-height:32px;background:var(--bg)}
+
+footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+dialog{border:1px solid var(--line);border-radius:8px;padding:0;max-width:760px;width:92%}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+.dlg{padding:18px 20px}
+.dlg h3{margin:0 0 10px;font-size:16px}
+.dlg textarea{width:100%;height:340px;font-family:ui-monospace,Menlo,monospace;font-size:12px;
+  border:1px solid var(--line);border-radius:5px;padding:10px;background:var(--code)}
+.hidefiltered .case.filtered{display:none}
+@media(max-width:640px){.wrap{padding:0 12px}.acts{margin-left:0;width:100%}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="htop">
+      <h1>PC 已读回执加固 · 验收清单</h1>
+      <span class="meta">分支 <code>fix/pc-read-receipt-hardening</code> · HEAD <code>aff6aaaf</code> · 18 commit</span>
+    </div>
+    <div class="bar"><i class="p" id="barP"></i><i class="f" id="barF"></i><i class="s" id="barS"></i></div>
+    <div class="stats">
+      <span><span class="dot p"></span>通过 <b id="nP">0</b></span>
+      <span><span class="dot f"></span>失败 <b id="nF">0</b></span>
+      <span><span class="dot s"></span>跳过 <b id="nS">0</b></span>
+      <span><span class="dot n"></span>未测 <b id="nN">0</b></span>
+      <span id="verdict" style="font-weight:600"></span>
+      <span class="acts">
+        <button id="btnFilter">只看未测/失败</button>
+        <button id="btnExport" class="primary">导出结果</button>
+        <button id="btnReset">清空</button>
+      </span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" id="app"></div>
+
+<dialog id="dlg"><div class="dlg">
+  <h3>验收结果（可直接复制）</h3>
+  <textarea id="dlgTxt" readonly></textarea>
+  <div style="margin-top:10px;display:flex;gap:8px">
+    <button class="primary" id="btnCopy">复制</button>
+    <button onclick="document.getElementById('dlg').close()">关闭</button>
+  </div>
+</div></dialog>
+
+<script>
+const DATA = [
+{
+  sec:"零 · 前置与探测", tag:"core", tagText:"先做",
+  hint:"开跑前先把环境和一个未决结论确认掉。前置：PC 装加固版（<code>npm run dev:test</code> 即可），手机装现网版；两个账号 A(PC) / B(手机)；准备一个 ≤10 人群和一个 >10 人群。",
+  cases:[
+    {id:"D0", t:"读服务端 chatType:2 探测结论", block:false,
+     steps:["PC 上打开<b>任意群聊</b>","开发者工具 Console 里找 <code>[receipt] 群已读服务端返回</code>"],
+     expect:"记下 <code>含按人明细= true / false</code>。<b>true</b> = 群已读有可重建的权威源，换机能恢复；<b>false</b> = 群聊退化为仅本地回执，<b>与改动前持平、不会更差</b>。",
+     why:"全程无 GUI 验证，这条结论一直未知。false 的话要记一条待办：需后端补群维度按人已读查询。"}
+  ]
+},
+{
+  sec:"一 · 表态 / 回复反推已读", tag:"must", tagText:"不过不上线",
+  hint:"用户原话：「大家表态、回复，还显示未读，bug 太明显了」。<b>这是全程唯一有用户实测症状支撑的一组。</b>这条链路不经过融云回执通道——表态和回复都是必须先看到消息才能做的动作，直接反推已读。<b>即使回执全丢，这组也必须通过。</b>",
+  cases:[
+    {id:"E1", t:"群里表态 → 发送方看到已读", block:true,
+     steps:["A 在 PC 群里发一条 @B 的消息","<b>B 在手机上对该消息表态</b>（点表情），B 不做别的"],
+     expect:"A 侧「@B」旁小图标<b>变已读</b>"},
+    {id:"E2", t:"群里回复 → 发送方看到已读", block:true,
+     steps:["A 在 PC 群里发一条 @B 的消息","<b>B 在手机上引用回复该消息</b>"],
+     expect:"A 侧「@B」旁小图标<b>变已读</b>"},
+    {id:"E3", t:"私聊回复 → 发送方看到已读", block:true,
+     steps:["A 在 PC 私聊发消息给 B","<b>B 在手机上引用回复该条</b>"],
+     expect:"A 侧该消息显示<b>「已读」</b>"},
+    {id:"E4", t:"断网后恢复，表态数据同步回来仍生效", block:false,
+     steps:["A 发 @B 后<b>把 A 的网断开</b>","B 在手机上表态","A 恢复网络，重新打开该会话"],
+     expect:"扩展数据同步回来后已读<b>同样翻转</b>"},
+    {id:"E5", t:"自己给自己表态不能变已读（防倒退）", block:true,
+     steps:["A 在 PC 上对<b>自己发的</b>消息表态"],
+     expect:"<b>不能</b>因此变已读",
+     why:"反推必须排除自己和机器人，否则「自己点个赞就变已读」。纯逻辑已有单测覆盖，这里验接线。"}
+  ]
+},
+{
+  sec:"二 · 回归验证", tag:"reg", tagText:"终审发现",
+  hint:"Opus 5 终审发现 1 Critical + 4 条回归，都已修（commit <code>28529f22</code> ~ <code>aff6aaaf</code>）。这组验的是<b>「修好没有」+「有没有把别的搞坏」</b>。",
+  cases:[
+    {id:"RG1", t:"别人发的 @ 消息不应出现已读图标", block:true,
+     steps:["找一个群，让<b>别人</b>（不是你）发一条 @ 某人的消息","你只是旁观者，打开该群看这条消息"],
+     expect:"「@某人」后面<b>不应有任何</b>已读/未读图标",
+     why:"C1：合并函数曾恒返回 {}（truthy），导致旁观者也看到假的绿色已读勾，首帧还会闪。已修为未登记时返回 null。"},
+    {id:"RG2", t:"离开会话页时不应误清角标", block:true,
+     steps:["PC 上打开群 A","<b>切到「邮箱」或「工作台」面板</b>（不要关窗口）","让群 A 来 5 条新消息","alt-tab 切出智信，再切回来"],
+     expect:"群 A 角标<b>不应被清零</b>，未读数还在",
+     why:"I1：聊天面板是常驻挂载（v-show 控制），切走后 focus 事件照样触发。已补 $route.name 守卫。"},
+    {id:"RG3", t:"浏览历史消息不应清零整个会话角标", block:true,
+     steps:["选一个有大量未读的会话","<b>用全局搜索跳到 3 个月前</b>的某条消息","在那个位置<b>向下翻页</b>加载，但不要滚到最底"],
+     expect:"会话角标<b>不应被清零</b>",
+     why:"I2：历史浏览态下 messageList 返回的是临时窗口，会把「窗口内最新」当「会话最新」。已用 GetIsGetHistoryStatus 做守卫。"},
+    {id:"RG4", t:"@所有人 + @某人 组合应正常显示已读", block:true,
+     steps:["在一个 <b>>10 人的群</b>里，发一条<b>同时 @所有人 和 @某B</b> 的消息","让 B 在手机上读"],
+     expect:"A 侧应显示 <b>1/1</b>（不是永远 0/1）",
+     why:"I3：这个组合的 mentionedInfo.type 也是 ALL，但被点名的人照样在 atUserList 里且已登记。旧代码是好的，被加固时误伤。"},
+    {id:"RG5", t:"手机读群消息后 PC 角标应清零", block:true,
+     steps:["PC 和手机<b>同一账号</b>登录","群里来新消息，PC 上出现角标","<b>在手机上打开该群读掉</b>"],
+     expect:"PC 上该群角标<b>应清零</b>",
+     why:"I4：拆 switch 时丢了一段靠 fallthrough 执行的 UpdateReminderMap。已显式补回。"},
+    {id:"RG6", t:"活跃群里回执不应被饿死", block:false,
+     steps:["找一个消息很密集的群（几十人在线讨论，消息间隔 <1 秒）","PC 上打开该群，挂 2-3 分钟","Console 执行 <code>window.__receiptMetrics.dump()</code>"],
+     expect:"<code>groupReceiptSent</code> <b>不应长期为 0</b>",
+     why:"I6：原来是纯防抖（每条新消息都 clearTimeout 重置），活跃群里一条都发不出去。已改成 3 秒 maxWait 节流。"},
+    {id:"RG7", t:"长时间挂着大群，回执体积不应膨胀", block:false,
+     steps:["PC 上打开一个大群，挂 30 分钟以上","Console 执行 <code>window.__receiptMetrics.dump()</code>","观察 <code>groupReceiptCandidates</code> 与 <code>groupReceiptSent</code> 的比值"],
+     expect:"候选数<b>不应</b>随时间线性暴涨（已加去重，只带没回执过的）",
+     why:"I7：原来每次都重发全量累积列表，大群里单条消息体积会往几十 KB 走且全群扇出。"}
+  ]
+},
+{
+  sec:"三 · 私聊", tag:"core", tagText:"核心",
+  hint:"P3 与 P4 是<b>一对</b>：只删了 <code>isFirstScreen</code>、保留了 <code>showDownMsg</code>。P3 过说明搜索跳转场景修好了，P4 过说明没把「用户没看到的消息」误标已读。",
+  cases:[
+    {id:"P1", t:"基础：发消息 → 对方读 → 显示已读", block:false,
+     steps:["A 在 PC 发消息给 B","B 在手机打开会话看到"],
+     expect:"A 侧 3 秒内显示<b>「已读」并带时间</b>"},
+    {id:"P2", t:"反向：手机发 → PC 读 → 手机显示已读", block:false,
+     steps:["B 在手机发消息给 A","A 在 PC <b>正常打开</b>会话看到"],
+     expect:"B 侧显示<b>已读</b>"},
+    {id:"P3", t:"从搜索跳进会话中间，看完不滚到底", block:true,
+     steps:["A 在 PC 用<b>全局搜索</b>跳进与 B 的会话中间某条","看完这段对话，<b>不要滚到底</b>，直接切走"],
+     expect:"B 侧显示<b>已读</b>",
+     why:"修复重点。旧版这个场景会一直显示未读——这是「偶发、说不清条件」的主要来源。"},
+    {id:"P4", t:"往上滚后收到新消息，不应误标已读（防倒退）", block:true,
+     steps:["A 在 PC 打开会话后<b>往上滚</b>离开底部","B 发新消息","A <b>不要</b>滚回底部"],
+     expect:"B 侧<b>保持未读</b>",
+     why:"防倒退项。用户确实没看到那条消息，不能因为放宽门槛就误报已读。"},
+    {id:"P5", t:"5 天前的老消息应显示已读时间", block:false,
+     steps:["A 在 PC 翻到<b>5 天前</b>自己发的、对方早就读过的消息"],
+     expect:"显示「已读」<b>且带已读时间</b>（旧版只有「已读」二字、无时间）",
+     why:"本地已读按天分册、只加载 4 天窗口，超窗口的日期连 key 都没有。已改按需补载。"},
+    {id:"P6", t:"重启客户端后 P5 结果一致", block:false,
+     steps:["A 完全退出 PC 客户端（不是关窗口）","重新打开、登录","重复 P5"],
+     expect:"结果与 P5 <b>一致</b>"}
+  ]
+},
+{
+  sec:"四 · 群聊", tag:"core", tagText:"核心",
+  hint:"G5 是本次核心修复——PC 当阅读方时的筛选口径原来比安卓/iOS 窄得多。",
+  cases:[
+    {id:"G1", t:"小群 @某人，对方读后翻转", block:false,
+     steps:["A 在 PC 的<b>小群（≤10 人）</b>发 @B 的纯文本","B 在手机看到"],
+     expect:"A 侧「@B」旁小图标<b>从未读变已读</b>"},
+    {id:"G2", t:"小群 @所有人，对方读后翻转", block:false,
+     steps:["A 在 PC 的<b>小群</b>发 @所有人","B 在手机看到"],
+     expect:"A 侧显示<b>已读</b>（与旧版一致）"},
+    {id:"G3", t:"大群 @所有人 不显示已读（符合需求）", block:false,
+     steps:["A 在 PC 的 <b>>10 人群</b>发 @所有人","Console 观察有无「回执请求」日志"],
+     expect:"<b>不显示</b>已读标记（这是产品需求）；Console 里<b>不应</b>出现回执请求日志",
+     why:"送出去也注定被丢弃，纯浪费还让对方端做无用回执。已收紧为不发。"},
+    {id:"G4", t:"手机发 @ 纯文本，PC 读后手机看到已读", block:false,
+     steps:["<b>B 在手机群里发 @A 的纯文本</b>","A 在 PC 打开该群看到"],
+     expect:"B 侧已读人数 <b>+1</b>"},
+    {id:"G5", t:"手机发 @ 非纯文本，PC 读后手机看到已读", block:true,
+     steps:["<b>B 在手机群里发 @A 的非纯文本</b>（引用消息 / 卡片等）","A 在 PC 打开看到"],
+     expect:"B 侧已读人数 <b>+1</b>",
+     why:"本次核心修复。旧版 PC 只对「文本/引用 且 extra 非空」回执，是三端里最窄的一档，接不住 iOS 发来的其它类型。"},
+    {id:"G6", t:"频繁切换会话不报错、回执照发", block:false,
+     steps:["A 在 PC 从群 X 切到群 Y 再切回 X，反复几次","Console 执行 <code>window.__receiptMetrics.dump()</code>"],
+     expect:"不报错；<code>groupReceiptSent</code> <b>有增长</b>"},
+    {id:"G7", t:"隔天才读也能翻转", block:false,
+     steps:["A 在 PC 发 @B","B <b>隔天</b>再看（或把 B 设备系统时间调后一天）"],
+     expect:"A 侧已读<b>翻转</b>（旧版 1 天窗口会丢）",
+     why:"回执有效期从默认 1 天提到 SDK 上限 15 天。"}
+  ]
+},
+{
+  sec:"五 · 通用回归", tag:"reg", tagText:"别改坏",
+  hint:"本次动了 IM SDK 初始化参数、消息分发 switch、消息类型映射——都可能间接影响已读之外的路径。",
+  cases:[
+    {id:"R1", t:"各类消息收发正常", block:true,
+     steps:["收发文本 / 图片 / 文件 / 引用消息 / 卡片消息"],
+     expect:"<b>全部正常</b>",
+     why:"改了 RongIMClient.init 的参数与消息分发 switch。init 出问题会导致整个 IM 不可用。"},
+    {id:"R2", t:"会话列表红点、未读数与旧版一致", block:true,
+     steps:["对比加固版与现网版的会话列表未读数、红点表现"],
+     expect:"<b>一致</b>",
+     why:"改了 readReceiptTimeout 和 switch 的 fallthrough，两者都可能间接影响未读数路径。别跳过这条。"},
+    {id:"R3", t:"智能体 / 机器人会话行为不变", block:false,
+     steps:["打开一个智能体或机器人会话，收发消息"],
+     expect:"不发已读回执、不打 readMessage、<b>本地角标正常清除</b>"},
+    {id:"R4", t:"多窗口（独立会话窗口）表现一致", block:false,
+     steps:["把某个会话拖成独立窗口","在独立窗口里收发消息、看已读"],
+     expect:"已读显示与主窗口<b>一致</b>，不报错"}
+  ]
+},
+{
+  sec:"六 · 可观测自检", tag:"", tagText:"",
+  hint:"这组不是功能验收，是<b>给上线后留现场</b>。若发版后仍有反馈，让用户跑一行导出计数即可定位。",
+  cases:[
+    {id:"M1", t:"计数器可用且分布合理", block:false,
+     steps:["Console 执行 <code>window.__receiptMetrics.dump()</code>"],
+     expect:"输出计数表，各项数值合理",
+     why:"关键项：<code>groupRespEmptyForMe</code> 持续增长 = 融云 SDK 的本机记录过滤在丢回执；<code>privateReceiptBlocked</code> 在「确实看了」的场景增长 = 门槛还是紧了；<code>serverReadRowsGroup</code> 恒为 0 = 服务端群已读没数据。"}
+  ]
+}
+];
+
+const KEY="zx-receipt-acceptance-v1";
+let state=JSON.parse(localStorage.getItem(KEY)||"{}");
+const save=()=>localStorage.setItem(KEY,JSON.stringify(state));
+const all=()=>DATA.flatMap(s=>s.cases);
+
+function render(){
+  document.getElementById("app").innerHTML=DATA.map(sec=>`
+    <section>
+      <h2>${sec.sec}${sec.tagText?` <span class="tag ${sec.tag}">${sec.tagText}</span>`:""}</h2>
+      <p class="sechint">${sec.hint}</p>
+      ${sec.cases.map(c=>{
+        const st=(state[c.id]||{}).r||"";
+        const note=(state[c.id]||{}).n||"";
+        return `<div class="case ${st?"done-"+({p:"pass",f:"fail",s:"skip"})[st]:""}" data-id="${c.id}" data-st="${st}">
+          <div class="chead">
+            <span class="cid">${c.id}</span>
+            <span class="ctitle">${c.t}</span>
+            ${c.block?'<span class="pill block">阻塞上线</span>':''}
+          </div>
+          <ol class="steps">${c.steps.map(s=>`<li>${s}</li>`).join("")}</ol>
+          <div class="expect">预期：${c.expect}</div>
+          ${c.why?`<div class="why">为什么测这条：${c.why}</div>`:""}
+          <div class="ctrl">
+            <label class="${st==="p"?"on-p":""}"><input type="radio" name="r-${c.id}" value="p" ${st==="p"?"checked":""}>通过</label>
+            <label class="${st==="f"?"on-f":""}"><input type="radio" name="r-${c.id}" value="f" ${st==="f"?"checked":""}>失败</label>
+            <label class="${st==="s"?"on-s":""}"><input type="radio" name="r-${c.id}" value="s" ${st==="s"?"checked":""}>跳过</label>
+            <textarea placeholder="实际结果 / 备注（失败时务必填）" data-note="${c.id}">${note}</textarea>
+          </div>
+        </div>`;
+      }).join("")}
+    </section>`).join("")
+    +`<footer>
+      共 ${all().length} 条 · <b>阻塞上线 ${all().filter(c=>c.block).length} 条</b> ·
+      结果自动存本地，刷新不丢 · 完整说明见 <code>acceptance.md</code> / <code>status.md</code>
+    </footer>`;
+  bind(); stats();
+}
+
+function bind(){
+  document.querySelectorAll('input[type=radio]').forEach(el=>{
+    el.onchange=e=>{
+      const id=e.target.name.slice(2);
+      state[id]=Object.assign({},state[id],{r:e.target.value});
+      save(); render();
+    };
+  });
+  document.querySelectorAll('textarea[data-note]').forEach(el=>{
+    el.oninput=e=>{
+      const id=e.target.dataset.note;
+      state[id]=Object.assign({},state[id],{n:e.target.value});
+      save(); stats();
+    };
+  });
+}
+
+function stats(){
+  const cs=all();
+  const c={p:0,f:0,s:0,n:0};
+  cs.forEach(x=>{const r=(state[x.id]||{}).r; c[r||"n"]++;});
+  const T=cs.length;
+  nP.textContent=c.p; nF.textContent=c.f; nS.textContent=c.s; nN.textContent=c.n;
+  barP.style.width=(c.p/T*100)+"%";
+  barF.style.width=(c.f/T*100)+"%";
+  barS.style.width=(c.s/T*100)+"%";
+
+  const blocks=cs.filter(x=>x.block);
+  const bFail=blocks.filter(x=>(state[x.id]||{}).r==="f");
+  const bDone=blocks.filter(x=>(state[x.id]||{}).r==="p");
+  const v=document.getElementById("verdict");
+  if(bFail.length){ v.style.color="var(--fail)"; v.textContent=`✗ 不可上线（阻塞项失败 ${bFail.length} 条：${bFail.map(x=>x.id).join(", ")}）`; }
+  else if(bDone.length===blocks.length && c.n===0){ v.style.color="var(--pass)"; v.textContent="✓ 可以上线"; }
+  else { v.style.color="var(--muted)"; v.textContent=`阻塞项 ${bDone.length}/${blocks.length}`; }
+}
+
+btnFilter.onclick=()=>{
+  const on=document.body.classList.toggle("hidefiltered");
+  document.querySelectorAll(".case").forEach(el=>{
+    const st=el.dataset.st;
+    el.classList.toggle("filtered", on && (st==="p"||st==="s"));
+  });
+  btnFilter.textContent=on?"显示全部":"只看未测/失败";
+};
+
+btnReset.onclick=()=>{ if(confirm("清空所有验收结果？此操作不可撤销。")){ state={}; save(); render(); } };
+
+btnExport.onclick=()=>{
+  const cs=all(); const L=[];
+  L.push("# PC 已读回执加固 · 验收结果");
+  L.push("");
+  L.push(`- 分支：fix/pc-read-receipt-hardening · HEAD aff6aaaf · 18 commit`);
+  L.push(`- 验收时间：${new Date().toLocaleString("zh-CN")}`);
+  const c={p:0,f:0,s:0,n:0}; cs.forEach(x=>{c[(state[x.id]||{}).r||"n"]++;});
+  L.push(`- 统计：通过 ${c.p} / 失败 ${c.f} / 跳过 ${c.s} / 未测 ${c.n}（共 ${cs.length}）`);
+  const blocks=cs.filter(x=>x.block);
+  const bFail=blocks.filter(x=>(state[x.id]||{}).r==="f");
+  const bNot=blocks.filter(x=>!(state[x.id]||{}).r);
+  L.push(`- 阻塞项：${blocks.length} 条，失败 ${bFail.length}，未测 ${bNot.length}`);
+  L.push(`- **结论：${bFail.length?"不可上线":(bNot.length||c.n)?"验收未完成":"可以上线"}**`);
+  L.push("");
+  DATA.forEach(sec=>{
+    L.push(`## ${sec.sec}`); L.push("");
+    L.push("| 用例 | 内容 | 结果 | 备注 |");
+    L.push("|---|---|---|---|");
+    sec.cases.forEach(x=>{
+      const s=state[x.id]||{};
+      const m={p:"✅ 通过",f:"❌ 失败",s:"⏭ 跳过"}[s.r]||"⬜ 未测";
+      L.push(`| ${x.id}${x.block?" 🔒":""} | ${x.t} | ${m} | ${(s.n||"").replace(/\|/g,"\\|").replace(/\n/g," ")} |`);
+    });
+    L.push("");
+  });
+  if(bFail.length){
+    L.push("## 失败的阻塞项（必须修完才能上线）"); L.push("");
+    bFail.forEach(x=>{ L.push(`- **${x.id} ${x.t}** — ${(state[x.id]||{}).n||"（未填备注）"}`); });
+    L.push("");
+  }
+  L.push("> 🔒 = 阻塞上线项");
+  dlgTxt.value=L.join("\n");
+  dlg.showModal();
+};
+
+btnCopy.onclick=()=>{
+  dlgTxt.select(); document.execCommand("copy");
+  btnCopy.textContent="已复制"; setTimeout(()=>btnCopy.textContent="复制",1400);
+};
+
+render();
+</script>
+</body>
+</html>
