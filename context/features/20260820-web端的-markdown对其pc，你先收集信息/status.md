@@ -1,6 +1,6 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-08-25（波浪下划线 + 表格/代码/引用对比度，页面未点）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（web `f5616c5` 已 push：波浪下划线 + 对比度，页面未点）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -34,11 +34,10 @@
 
 ## 待办 / 阻塞
 
-- (web) 2026-08-25 **波浪下划线**：`<u>` / `<span style="text-decoration: underline wavy">` 原先只出直线。已加 `ExtendUnderline`（吃 `text-decoration-style`）+ `ExtendInlineSpanStyle` 的 `textDecoration`；`AcMarkdown` 补 `text-decoration-style: wavy`。表格边框 12%→22%、代码块 10% 黑底、引用竖条 28%。`vue-tsc --noEmit` 干净。**请在个人 AI 框看这条样本。** 未 commit / push。
-- (web) 2026-08-25 **内联 HTML 高亮**：个人 AI 框这段 `<span style="background-color;padding;border-radius">` 看起来没样式。根因：`marked` 会把 HTML 透传，但 Tiptap 的 `textStyle` 只占位、`Color` 只吃字色，背景/内边距/圆角进不了 schema。已加 `ExtendInlineSpanStyle`（`EditorWrapper` + `htmlToMarkdown` 同源）。字色 / 加粗 / 删除线本来就有（`Color` + Bold/Strike 的 style 解析）。**请在个人 AI 框看这条样本。** 未 commit / push。
-- (web) 2026-08-24 已补行内代码皮肤（`AcMarkdown.vue`）：prose 不再用伪元素画反引号；单反引号与双反引号（内容含 `` ` ``）均已在本地 `AcMarkdown` 路径看过。未 commit / push。
-- (web) **请你验收**：窄屏长单元格应在约 **187.5px** 处折行，375 宽大约能看清两列。
-- (web) 列宽上限改动在 `feat/web-markdown-table-align-pc` 工作区，**尚未 commit / push**。
+- (web) 2026-08-25 **波浪下划线** 已 commit/push `f5616c5`：`<u>` / `<span style="text-decoration: underline wavy">` 原先只出直线。已加 `ExtendUnderline`（吃 `text-decoration-style`）+ `ExtendInlineSpanStyle` 的 `textDecoration`；`AcMarkdown` 补 `text-decoration-style: wavy`。表格边框 12%→22%、代码块 10% 黑底、引用竖条 28%。**请在个人 AI 框看这条样本。**
+- (web) 2026-08-25 **内联 HTML 高亮** 已在 `87d3921`：个人 AI 框这段 `<span style="background-color;padding;border-radius">` 看起来没样式。根因：`marked` 会把 HTML 透传，但 Tiptap 的 `textStyle` 只占位、`Color` 只吃字色，背景/内边距/圆角进不了 schema。已加 `ExtendInlineSpanStyle`（`EditorWrapper` + `htmlToMarkdown` 同源）。**请在个人 AI 框看这条样本。**
+- (web) 2026-08-24 行内代码皮肤已在 `92efddc`：prose 不再用伪元素画反引号；单反引号与双反引号均已在本地 `AcMarkdown` 路径看过。
+- (web) **请你验收**：窄屏长单元格应在约 **187.5px** 处折行，375 宽大约能看清两列。列宽改动已在分支上（`868f780`）。
 - (desktop) 列宽改为 **min/max 375px**（不要 187.5）。热更新后看：一列大约一个 375 设计稿宽，长文格内折行，多列横滚。未 commit / push。
 - (desktop，旁路，属 `20260814-pc安卓-GFM-Markdown渲染对齐`) Eric「报销」消息里单独成行的 `<reference>` 会换行：已在 `feat/gfm-markdown` 把标签前换行折掉，角标贴前文。**请你热更新后看那条消息**。未 commit / push。
 
