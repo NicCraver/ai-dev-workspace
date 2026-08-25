@@ -1,6 +1,6 @@
 # Status：3端-私聊群聊已读回执不翻转排查
 
-> 最后更新：2026-08-24（Task 10）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（副作用审查未完成）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 本轮性质
 
@@ -15,6 +15,8 @@
 > 2026-08-24 第四条旁路（**不属于本功能**）：iOS 智能体「回复 @xx：」叠在表格第一行上。修在 `apps/ios` 的 `feat/ios-file-download-progress`（该分支已合入 GFM），见 `20260813-ios-机器人与智能体消息-GFM-Markdown渲染优化`。不改三端 IM 回执。
 >
 > 2026-08-24 第五条旁路（**不属于本功能**）：`ZX:ActionCardMsg` 内联 HTML，iOS 不认 `<mark>`、安卓没有背景色。修在 `apps/ios` 的 `feat/ios-file-download-progress` 与 `apps/android` 的 `feat/gfm-markdown`（只动 `SpanTagHandler` + 单测）。见两个 GFM 功能目录。不改三端 IM 回执。**安卓提交时不要带上 mention 那几份。**
+>
+> 2026-08-25（**本功能、未完成**）：用户要求审查 PC 加固 11 个 commit「是否影响其他或原有功能」。审查开了个头（对上 `origin/release`：10 文件 +912/−110），因会话中断**没有产出结论**，代码未改。下回合续审。
 
 ## 平台矩阵
 
@@ -34,6 +36,7 @@
 | 加固方案分批（第一批/第二批） | — | ✅ | ✅ | ✅ |
 | 修复方案选型 | — | — | — | ✅ 定为三层方案（见下） |
 | **PC 加固实施（Task 0~11）** | — | — | — | ✅ 11 个 commit，单测 43/43，lint exit 0 |
+| **PC 加固副作用审查（对原有功能）** | — | — | — | 🚧 2026-08-25 开了头，会话中断，无结论 |
 | **真机验证（全部未做）** | — | ⬜ | ⬜ | ⬜ **卡这里**，见 `acceptance.md` |
 
 ## PC 加固实施结果（2026-08-24）
@@ -81,17 +84,17 @@
 | PC 加固 Task 9：回执窗口 15 天 + switch fallthrough + 消息映射 + SRSMsg 去包装 | — | — | — | ✅ `cc68cec3`，eslint 无 error；**未执行 GUI 验证** |
 | PC 加固 Task 10：服务端权威源接入（chatType:2 探测 + 表态/回复反推接线） | — | — | — | ✅ `8ec3451e`，eslint 无 error；**未执行 GUI 验证，chatType:2 探测结论未知** |
 
-## 各端工作区现状（2026-08-24，`scripts/code-status.sh --short`）
+## 各端工作区现状（2026-08-25，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 |
 |----|------|------|------|--------------|
-| context | `main` | ahead 211 | 脏（命令/脚本 + 本功能 status 旁路记录） | 本功能 status + GFM 旁路文档 |
-| web | `feat/web-markdown-table-align-pc` | synced | 脏 1（`AcMarkdown.vue` 行内代码样式） | **无关**（个人 AI 框 Markdown，不是 IM 回执） |
-| android | `feat/gfm-markdown` | synced | 脏 7 | **无关**：GFM 表格 + 旁路「粘贴个人 @ 误识别为群」；见 `20260728-安卓端@个人AI框` |
-| ios | `feat/ios-file-download-progress` | synced | 脏 1 | **无关**：GFM「回复 @」与表格重叠，见 `20260813-ios-机器人与智能体消息-GFM-Markdown渲染优化` |
-| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 11（… + `cc68cec3` + `8ec3451e`） | 脏 3 | **本功能**：Task 1+2+3+4+4B+5+6+7+8+9+10 已提交。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
+| context | `main` | ahead origin/main 224 | 脏 23：打包命令/`pack` 脚本、`markdown-style-tokens.md`、web Markdown 功能 status；本功能只动 status | 本功能本回合只更新 status。命令/脚本/Markdown token **无关**，不要跟这次一起提交 |
+| web | `feat/web-markdown-table-align-pc` | synced | 脏 1：未跟踪 `aaaaaaa.md` | **无关**。行内代码胶囊已在 `92efddc`；剩下是草稿文件，不是 IM 回执 |
+| android | `feat/gfm-markdown` | synced | 脏 8：`ActionCard`/`SpanTagHandler`/引用消息 Markdown + 未跟踪 `MentionAgentKindResolver` 与 `IM/src/test/`，另有 `IM/build.gradle` | **无关**：GFM + 「粘贴个人 @ 误识别为群」。见 `20260814-pc安卓-GFM-Markdown渲染对齐` / `20260728-安卓端@个人AI框`。**mention 不要和 GFM 混提交** |
+| ios | `feat/ios-file-download-progress` | synced | 脏 2：`ZXMarkdownContentView.m`、`ZXMarkdownManager.m` | **无关**：GFM「回复 @」与表格。见 `20260813-ios-机器人与智能体消息-GFM-Markdown渲染优化` |
+| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 11（HEAD `8ec3451e`） | 脏 3 | **本功能**：Task 1~10 已提交。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json`。本回合未改 desktop 源码 |
 
-> 2026-08-24 PC 加固 Task 1+2+3+4+4B+5+6+7+8+9+10 已落地。Task 10（`8ec3451e`）把 `datasyn/getReadMessage` 接到私聊（`chatType:1`）与群聊（`chatType:2`）；展示层 `getMergedGroupReceipt` / `getStatusText` 合并本地回执、服务端明细、表态/回复反推三源。模板 `:msgReceipt=` 实际 3 处（不是任务书写的 4）已全部改走合并结果。GUI 未在本回合验证（`npm run dev:test` 因 Node 24 OpenSSL 失败），**chatType:2 是否含按人明细仍未知**。web / 安卓 / iOS 脏区仍是同日旁路（Markdown 展示），不是 IM 回执。
+> 2026-08-25 用户要审 PC 加固对原有功能的副作用，审查因会话中断未完成，desktop 工作区与 8/24 相同（11 commit + 3 个禁忌脏文件）。web / 安卓 / iOS 脏区仍是 Markdown / @ 识别旁路，不是 IM 回执。未做 web 联调，不改 `impl-notes.md`。
 
 ## 审计结论（详见 findings.md）
 
@@ -218,6 +221,7 @@ electron-store 降为缓存，冲突取已读时间较大者。
 | 2026-08-24 | PC 翻 **8/6**（4 天窗口外、6 个月内）自己发的私聊消息 | **显示已读** | **D2 降级、D1 私聊部分降级、`repro.md` R1 作废**。融云本地库持久化了 `sentStatus=READ`，册子缺失只丢已读时间戳 |
 | 2026-08-24 | **R7**：PC 在群里发 @某人 与 @所有人，手机读 | @某人 已读**正常翻转**；@所有人 **未登记、名单 undefined** | **B1 坐实**（卡点订正为 `storeModule/index.js:141-143` 名单为空 return，不是 `atUserList` 判空——`[]` 是 truthy）。但 @所有人 界面本就不显示已读图标（`msgtype/msg-txt.vue:52-73` 两个 `v-if` 都要 `msgReceipt` 非空），**大概率不是用户抱怨的现象**。「群 + PC 发 + @某人 + 手机读」路径**排除** |
 | 2026-08-24 | Task 10 起应用读 `chatType:2` 探测（`npm run dev:test` 开群聊看 Console） | **未执行 GUI 验证，chatType:2 探测结论未知** | Node v24.19.0 webpack OpenSSL 失败，窗口未起。`fetchServerGroupReceipt` 的 `console.log` 已保留，待 Node 14 环境人工补跑 |
+| 2026-08-25 | 审查 PC 加固 11 commit 对原有功能的副作用 | **未完成**（会话中断，无结论） | 下回合续审。未改 desktop 源码 |
 
 ### B1 根因定位到源头：`send-box.vue` 的 10 人硬上限
 
@@ -271,6 +275,7 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
 
 ## 待办 / 阻塞
 
+- (desktop) **2026-08-25 副作用审查未完成（当前优先）**：用户要求审查 `fix/pc-read-receipt-hardening` 相对 `origin/release` 的 10 文件改动（+912/−110）是否影响发送、会话切换、未读红点、@、智能体/机器人、首屏滚动等原有功能。审查开了个头即中断，**无结论**。下回合续审后再决定能不能进验收。
 - (desktop) **PC 加固 Task 1 已完成**（`d02faddd`）：`readStateModel.js` 抽出 `mergeReadTime` / `resolvePrivateReadTime`，vitest 9 passed。零接线。
 - (desktop) **PC 加固 Task 2 已完成**（`e7393131`）：同模块追加 `isAgentOrRobotId` / `pickGroupReceiptCandidates` / `buildReceiptMessageDic` / `mergeGroupReceiptEntry`，vitest 25 passed（含 Task 1 的 9 条）。仍零接线，线上群回执筛选行为不变；后续任务接到 `msg-list.vue` 才修 A1。
 - (desktop) **PC 加固 Task 3 已完成**（`650e5792`）：同模块追加 `normalizeServerReadList`，兼容 `msgUID`/`readMsgUID` 与有无 `accountId` 两种形态，vitest 31 passed。仍零接线；`hasPerUserDetail` 留给后续权威源任务决定群聊那半边能不能用服务端明细。`chatType: 2` 是否下发按人明细仍未实测。
@@ -312,3 +317,4 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
 - 2026-08-24 调查法选「先纵后横」：纵切产出带 `文件:行号` 的事实表（下轮修复可直接复用），横切成阶段矩阵暴露三端不对称。
 - 2026-08-24 不反编译安卓 jar/so：改用「调用层代码 + iOS 公开头文件 + PC 明文 adapter」三角互证。
 - 2026-08-24 智能体 / 机器人会话的已读跳过逻辑纳入范围（PC `msg-list.vue:2643`）：它是阶段③的过滤条件，直接决定某些私聊会话永不回执。
+- 2026-08-25 发版前先审副作用：用户明确要求核对加固是否碰到发送、会话切换、未读红点、@、智能体会话、首屏滚动等原有路径。审查未完成，**不能当已审过**。
