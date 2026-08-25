@@ -1,6 +1,6 @@
 # Status：3端-私聊群聊已读回执不翻转排查
 
-> 最后更新：2026-08-25（C1+I1~I7 已修完 8 commit，HEAD `aff6aaaf`；真机验收未跑）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（收尾：apps 脏区仍非回执；PC 真机验收未跑，HEAD `aff6aaaf`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 本轮性质
 
@@ -166,17 +166,19 @@
 | PC 加固 Task 9：回执窗口 15 天 + switch fallthrough + 消息映射 + SRSMsg 去包装 | — | — | — | ✅ `cc68cec3`，eslint 无 error；**未执行 GUI 验证** |
 | PC 加固 Task 10：服务端权威源接入（chatType:2 探测 + 表态/回复反推接线） | — | — | — | ✅ `8ec3451e`，eslint 无 error；**未执行 GUI 验证，chatType:2 探测结论未知** |
 
-## 各端工作区现状（2026-08-25，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-25 11:28，`scripts/code-status.sh`）
+
+本回合无回执代码改动。Stop hook 因 android / desktop / ios 工作区不干净触发；对照 diff，**三端脏区都不是 IM 已读回执**。平台矩阵：真机验证仍 ⬜。
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 |
 |----|------|------|------|--------------|
-| context | `main` | ahead origin/main 224 | 脏 23：打包命令/`pack` 脚本、`markdown-style-tokens.md`、web Markdown 功能 status；本功能只动 status | 本功能本回合只更新 status。命令/脚本/Markdown token **无关**，不要跟这次一起提交 |
-| web | `feat/web-markdown-table-align-pc` | synced | 脏 1：未跟踪 `aaaaaaa.md` | **无关**。行内代码胶囊已在 `92efddc`；剩下是草稿文件，不是 IM 回执 |
-| android | `feat/gfm-markdown` | synced | 脏 8：`ActionCard`/`SpanTagHandler`/引用消息 Markdown + 未跟踪 `MentionAgentKindResolver` 与 `IM/src/test/`，另有 `IM/build.gradle` | **无关**：GFM + 「粘贴个人 @ 误识别为群」。见 `20260814-pc安卓-GFM-Markdown渲染对齐` / `20260728-安卓端@个人AI框`。**mention 不要和 GFM 混提交** |
-| ios | `feat/ios-file-download-progress` | synced | 脏 2：`ZXMarkdownContentView.m`、`ZXMarkdownManager.m` | **无关**：GFM「回复 @」与表格。见 `20260813-ios-机器人与智能体消息-GFM-Markdown渲染优化` |
-| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 19（HEAD `aff6aaaf`） | 脏 3 | **本功能**：Task 1~10 + 终审修复 8 commit 已提交。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
+| context | `main` | ahead origin/main 230 | 脏 22：打包命令/`pack` 脚本、`markdown-style-tokens.md`、`package.json` 等 | 本功能本回合只更 status。命令/脚本/token **无关**，不要跟这次一起提交 |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | **无关**。HEAD `87d3921` 是个人 AI 框 span 高亮底色，已提交 |
+| android | `feat/gfm-markdown` | synced | 脏 9：ActionCard / SpanTagHandler / 引用 Markdown、`VerticalCenterBackgroundSpan`、未跟踪 `MentionAgentKindResolver` 与 `IM/src/test/`、`IM/build.gradle` | **无关**：GFM 高亮居中 + 粘贴个人 @ 误识别为群。见 GFM / `@个人AI框` 功能目录。**mention 不要和 GFM 混提交** |
+| ios | `feat/ios-file-download-progress` | synced | 脏 8：Markdown 管理器/内容视图、机器人与智能体气泡、`ZXMarkdownLayoutManager` 新增、pbxproj | **无关**：AI 聊天 Markdown 高亮底色垂直居中。见 iOS GFM 功能目录 |
+| desktop | `fix/pc-read-receipt-hardening` | ahead origin/release 18（HEAD `aff6aaaf`） | 脏 3 | **本功能代码已提交**（Task 1~10 + 终审 8 commit）。脏 3 仍是本地打包配置，**禁止提交**：`.env.test` / `electron-builder.yml` / `package.json` |
 
-> 2026-08-25 终审 findings 已修完（8 commit，HEAD `aff6aaaf`）。desktop 工作区脏 3 个禁忌文件未动。web / 安卓 / iOS 脏区仍是 Markdown / @ 识别旁路，不是 IM 回执。未做 web 联调，不改 `impl-notes.md`。
+> 终审 findings 已修完（HEAD `aff6aaaf`）。PC 真机验收未跑。未做 web 联调（web 不参与 IM 回执），不改 `impl-notes.md`。
 
 ## 审计结论（详见 findings.md）
 
@@ -388,7 +390,8 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
 - (跨端) **全部结论未经真机验证**，A 级也只是「代码上必然」。下一步按性价比：先验 A2（PC 本地 `npm run dev:test` 即可，无需出包）→ 再验 A1（需 iOS 配合发非纯文本 @ 消息）→ B1/B3 一起（devtools 看一次 @所有人 消息的 `extra` 结构）→ A3 最后（需安卓出包）。
 - (跨端) 审计阶段未改 IM 回执代码；2026-08-24 起 PC 加固 Task 1+2+3+4+4B 已提交纯逻辑模块，Task 5（`0f4db746`）已把私聊已读时间接到 `msg-list` / `storeModule`，Task 6（`17f04acc`）去掉 `isFirstScreen` 门槛并补窗口 focus 触发点，Task 7（`c6bc1cc1`）群阅读方口径对齐，Task 8（`288682c0`）群回执入库放宽并统一大群 @所有人 判定，Task 9（`cc68cec3`）回执窗口 15 天、修 switch fallthrough、补消息映射、SRSMsg 去包装，Task 10（`8ec3451e`）接入服务端权威源并把表态/回复反推接到展示（GUI 均未验；chatType:2 探测结论未知）。同日旁路改了 web `AcMarkdown` 行内代码样式、安卓智能体表格在引用前缀后不渲染、安卓粘贴个人 `@` 误识别为群、以及 iOS「回复 @」叠在表格上（见文首），均与回执无关。
 - (android) 融云只有 `rong_imlib_5.5.3.jar` + `libRongIMLib.so`，SDK 内部不可读；凡涉及原生 SDK 内部行为的结论一律降到 B 级（见 B5）。
-- (desktop) `apps/desktop` 当前在 `fix/pc-read-receipt-hardening`（Task 1~10 + 终审 C1+I1~I7 已提交，HEAD `aff6aaaf`）。工作区仍脏 3 个（`.env.test` / `electron-builder.yml` / `package.json`）——PC 打包本地配置，**禁止提交**。
+- (desktop) `apps/desktop` 在 `fix/pc-read-receipt-hardening`，相对 `origin/release` ahead 18，HEAD `aff6aaaf`。工作区仍脏 3 个禁忌文件（`.env.test` / `electron-builder.yml` / `package.json`），**禁止提交**。
+- (android / ios) 2026-08-25 工作区脏区是 Markdown 高亮居中与安卓 @ 智能体 kind 补齐，**不是已读回执**；不要误当成回执未提交。
 - (desktop) 8/19 的 `context/features/20260819-pc端群@消息已读回执丢失/plan.md` 从未执行（`fix/pc-group-at-read-receipt` 分支不存在）。其事实表已在本轮复核并更新——**其中「阅读方回执只对文本/引用」「PC 不处理 RRReqMsg」两条仍成立，但「发送方登记只在 `MessageModel.js:305-317`」的描述需配合 `messageService.js:295-339` 的 `shouldRequestGroupReadReceipt` 一起看**（后者是那之后新增的）。
 - (契约) `datasyn/getReadMessage` 在 `context/contracts/` 下无契约文件。三端都在调，本轮未逐字段比对传参与解读，补契约留到下轮。
 
@@ -401,3 +404,4 @@ source.extra = { atAllList, atUserList, ...(atAllUserList && { atAllUserList }),
 - 2026-08-24 不反编译安卓 jar/so：改用「调用层代码 + iOS 公开头文件 + PC 明文 adapter」三角互证。
 - 2026-08-24 智能体 / 机器人会话的已读跳过逻辑纳入范围（PC `msg-list.vue:2643`）：它是阶段③的过滤条件，直接决定某些私聊会话永不回执。
 - 2026-08-25 发版前先审副作用：用户明确要求核对加固是否碰到发送、会话切换、未读红点、@、智能体会话、首屏滚动等原有路径。Opus 5 审出 1 Critical + 7 Important，已全修（8 commit，HEAD `aff6aaaf`）。真机验收未跑，**还不能当已验收**。
+- 2026-08-25 Stop hook 因三端工作区脏触发收尾：对照 `code-status.sh`，android/ios 脏区是 GFM 高亮，desktop 脏区是本地打包配置，**本功能无新代码**。
