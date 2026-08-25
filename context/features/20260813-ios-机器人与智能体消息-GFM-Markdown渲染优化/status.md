@@ -1,6 +1,6 @@
 # Status：ios-机器人与智能体消息-GFM-Markdown渲染优化
 
-> 最后更新：2026-08-25（`color:green` 改 CSS `#008000`，真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-25（个人 AI 框自己发的长卡片补折叠；`color:green` 仍未真机验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -86,6 +86,7 @@
 - (ios) 2026-08-25 **small / big / del / 斜体 / 语义化标签**：`processHTMLTags` 原先只认 b/i/u/sup/sub。已补 `small`/`big`/`del`/`s`/`strike`/`ins`/`cite`/`dfn`/`var`/`abbr`/`q`/`code`/`kbd`/`samp`/`tt`。中文斜体改 `NSObliquenessAttributeName`（系统字体没有 italic 字重）。自己发的淡蓝气泡上，表格边框 12%→22%、代码块 4%→10%、引用竖条 20%→28%。**真机未验**。
 - (ios) 2026-08-25 **HTML `<code>render()</code>` 原样露标签**：根因是 `processHTMLTags` 只处理了 `kbd`/`samp`，没处理 `<code>`。已按行内代码做等宽 + 8% 黑底。**真机未验**。
 - (ios) 2026-08-25 **`color:green` 过亮**：色表当初为对齐安卓 `Color.GREEN` 写成 `#00FF00`（CSS `lime`），PC/浏览器是 `#008000`。已改成 CSS `green:008000`，`lime` 仍是 `00FF00`。老正则管线与 cmark 后处理共用这一张表。**真机未验**。
+- (ios) 2026-08-25 **自己发到群里的个人 AI 框长卡片不折叠、没有「查看更多」**（`messageUId=D06R-RNQ6-06AD-03B4`，`bySelf=true`，`conversationType=3`，标题「【智信AI框】个人AI框：…」，`agentKnowledgeList=[]`）。根因：折叠开关绑在 `isAgentCardMessage` 上，后者只认 `ga_` 前缀或非空知识来源。这条发送人是本人、知识来源为空，被当成普通卡片。**折叠必须跟「是不是 AI 卡片」拆开**：所有 `ZX:ActionCardMsg` 超高都折，对齐安卓；`isAgentCardMessage` 仍只控制角标/知识来源/「回复 @」前缀，避免误拼前缀。**真机未验**，请看这条消息默认应收起、底部有「查看更多」，展开后有收起箭头。
 
 > 已了结：T0 那 505 行内联 HTML 改动已提交（`a67d3d364`）；合并转发详情页链路已查清（复用会话页 cell，见 impl-notes）。
 
