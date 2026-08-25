@@ -107,18 +107,36 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 执行方式：subagent-driven-development，每任务一个实施代理 + 一个评审代理，台账在
 `apps/desktop-watermark/.superpowers/sdd/progress.md`。四笔提交均未 push（分支跟踪的是 `origin/release`）。
 
-## 各端工作区现状（2026-08-25 再复查，`scripts/code-status.sh` + 手查 3 个）
+## 各端工作区现状（2026-08-25 收尾复查，`scripts/code-status.sh` + 手查 3 个）
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
-| context | `main` ahead 247 | 脏 25 | 构建脚本 / 命令文件 / GFM 文档 | 否 | 本功能只应提交本目录 `status.md`；GFM 文档另提 |
-| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 已 push `f5616c5`，属 markdown 对齐 PC |
-| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | GFM 引用高亮左偏 + 蓝色被整段字色盖掉，与已读水位无关 |
+| context | `main` ahead 249 | 脏 25 | 构建脚本 / 命令文件 / GFM 文档 | 否 | 本功能只提交本目录 `status.md`；其余另提 |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 属 markdown 对齐 PC |
+| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | GFM 引用高亮左偏等，与已读水位无关 |
 | ios | `feat/ios-agent-date-range` | **no upstream** | 脏 13 | 否 | 与已读水位无关 |
 | desktop | `feat/gfm-markdown` | synced | 脏 8 | 否 | markdown 表格宽度改动，属 GFM，**不要合进水位分支**。另有 `.env.test` / `electron-builder.yml` / `package.json` 本地调试，**禁止提交** |
-| desktop-watermark | `feat/pc-read-watermark` | ahead 6 vs `origin/release` | 干净 | **是** | Task 1–5b 已提交；终审修复代理执行中 |
-| meeting | `merge/pr4-pr7` | — | 脏 23 | 否 | `designs/` 目录改动，与已读水位无关 |
+| desktop-watermark | `feat/pc-read-watermark` | **ahead 7** vs `origin/release` | 干净 | **是** | 代码全完成，未 push |
+| meeting | `merge/pr4-pr7` | — | 干净 | 否 | 之前的 `designs/` 脏区已清 |
 | action-center | `release` | — | 干净 | 否 | — |
+
+## 改动文件清单（相对 `origin/release` `613af430`）
+
+| 状态 | 文件 | 行数 |
+|---|---|---|
+| **改** | `src/renderer/components/chitchat/message/msg-list.vue` | +117 / −11 |
+| 新增 | `src/renderer/components/chitchat/read-receipt/readWatermarkModel.js` | +237 |
+| 新增 | `src/renderer/components/chitchat/read-receipt/readWatermarkStore.js` | +87 |
+| 新增 | `src/renderer/components/chitchat/read-receipt/tests/readWatermarkModel.test.js` | +297 |
+| 新增 | `src/renderer/components/chitchat/read-receipt/tests/readWatermarkStore.test.js` | +75 |
+
+合计 +813 / −11，其中 372 行是测试。**只碰 `msg-list.vue` 一个既有文件**，其余全是新建。
+
+`msg-list.vue` 里的改动点：import、`created()` 加引用缓存、`conversationKey` computed、
+`messageList` 与 `conversationKey` 两个 watcher、`msg-expansion-update` 的 `$on`/`$off`、
+新方法 `refreshReadWatermark`、`getStatusText`（私聊读出）、
+`getMergedGroupReceipt` + `getGroupNeedReadCount` / `getGroupHasReadCount`（群聊读出）、
+3 处模板 `:msgReceipt` 绑定。
 
 > `apps/` 下实际有 7 个目录：`web` / `android` / `ios` / `desktop` / `desktop-watermark`（本功能 worktree）/ `meeting` / `action-center`。
 > **`scripts/code-status.sh` 硬编码只查前四个**，另三个需手查——Stop hook 报的 `meeting` 脏区在它输出里看不到。
