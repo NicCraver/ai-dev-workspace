@@ -82,13 +82,19 @@ isReadByWatermark(sentTime, watermark, userId)              // → boolean
 
 ## 四、接线（只碰 `msg-list.vue`）
 
-### 喂入点（1 个）
+### 喂入点
 
-watcher 盯 `messageList` 与 `expansionDataMap.updated`
-（`MessageExpansionUtils.js:44` 已有这个全局更新时间戳），变了就 `collectWatermark` 一次、`bump` 进表。
+两个 watcher（`messageList`、`conversationKey`）+ 一个事件订阅
+（`msg-expansion-update`，`msg-list.vue` 第 868 行已在订阅同一事件），触发后
+`collectWatermark` 一次、`bump` 进表。水位单调只增，重复触发幂等。
 
 实时扩展监听（`IMSDKServer.js:45`）、新消息（`MessageModel.js:251`）、拉历史（`MessageModel.js:353`）
-**全部汇入 `onExpansionUpdate`**，所以盯这一个时间戳就够，不用逐个挂钩子。
+**全部汇入 `onExpansionUpdate`**，它在 `MessageExpansionUtils.js:46` 统一 `$emit`，
+所以订一个事件就覆盖三条路径。
+
+> **不能靠 computed 监听 `expansionDataMap`**：它是 Vue 2.7 的 `reactive()`，
+> **新增 key 不响应**——`MessageExpansionUtils.js:44` 写的 `expansionDataMap["updated"]`
+> 是动态新增的键，computed 读它永远不会被重新触发。现有表态 UI 也正是靠事件总线刷新的。
 
 ### 读出点（2 个）
 
