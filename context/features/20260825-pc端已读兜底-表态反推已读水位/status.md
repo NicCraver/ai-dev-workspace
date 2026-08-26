@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-26（本回合修安卓「复制个人 AI 框被判成群」并装 onTest；水位矩阵不变，已 squash push `46c97783`。剩开 MR）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（本回合核对 iOS 合入并切到 `feat/ios-agent-date-range`；desktop 主目录已切回 `feat/gfm-markdown`。水位矩阵不变，已 squash push `46c97783`。剩开 MR）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -258,34 +258,32 @@ MR 创建链接（远端给的）：
 ## ⚠️ 工作目录：worktree 已没了，回到串行（2026-08-26）
 
 原来的并行方案（`apps/desktop` 跑 GFM、`apps/desktop-watermark` worktree 跑水位）**已经不存在**。
-不知何时被摘除，现状：
+不知何时被摘除。核对时发现 `apps/desktop` **已从水位切回 GFM**，水位分支还在、没丢：
 
 | 目录 | 现在 |
 |---|---|
-| `apps/desktop` | **主 checkout**（`.git` 是目录），分支 `feat/pc-read-watermark` @ `46c97783`，**synced** |
+| `apps/desktop` | **主 checkout**（`.git` 是目录），分支 **`feat/gfm-markdown`** @ `41c5caf9`，**behind 1**（远端多 `5213e645 chore: version 3.4.26`） |
 | `apps/desktop-watermark` | **空目录**，无 `.git`、无代码，只剩 `.superpowers/sdd/` 流程草稿。`git` 命令在里面会穿透到编排仓 |
 
-`git worktree list` 只有 `apps/desktop` 一条。
+`git worktree list` 只有 `apps/desktop` 一条。本地仍有 `feat/pc-read-watermark` @ `46c97783`，跟踪 `origin/feat/pc-read-watermark`，**当前没有 checkout**。
 
-**影响：`feat/gfm-markdown` 现在没有任何地方 checkout 着。** 那条线的改动已 push `d987d746` 不会丢，
-但要继续改 markdown 就得切分支，切了水位这边就得让位——**又变回串行了**。
-是否重新支 worktree，待用户决定。
+**影响：水位线要改代码或开 MR 得切回来，切了 GFM 就得让位。** 是否重新支 worktree，待用户决定。
 
 执行方式：subagent-driven-development，每任务一个实施代理 + 一个评审代理。
 台账仍在 `apps/desktop-watermark/.superpowers/sdd/progress.md`（目录还在，只是没代码）。
 **水位已 squash push**（`46c97783` → `origin/feat/pc-read-watermark`）。
 
-## 各端工作区现状（2026-08-26 本回合，`scripts/code-status.sh` + 手查 meeting / action-center）
+## 各端工作区现状（2026-08-26 本回合，`scripts/code-status.sh` + 手查 meeting / action-center / desktop-watermark）
 
-本回合**改了安卓 mention，没动水位代码**。Stop hook 因 apps 脏区（action-center / android / desktop / ios）触发。相对上一份：安卓 GFM 已 push `9c62212a1`；复制个人 AI 框判成群已修并装 onTest，**代码未提交**；iOS GFM 已合进 `master-3.5.31`。水位平台矩阵不变。
+本回合**没动水位代码、没开 MR**。核对了 iOS 合入：GFM + 文件打开进度都在 `master-3.5.31`（HEAD `16146b73f`），记忆条自定义时间区间不在。随后把 iOS 从 `master-3.5.31` 切到 `feat/ios-agent-date-range`（切前 `pbxproj` 排序噪声已 stash）。Stop hook 因 apps 脏区（action-center / android / desktop）触发。水位平台矩阵不变。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
-| context | `main` ahead 260 | 脏 27 | 构建脚本 / 命令 / GFM token / 会议室 UI / `迭代.md` / 个人 AI 框文档 | 否 | 本功能提交本目录 `status.md`；本回合改过的 `20260728` 文档一并提交 |
+| context | `main` ahead 261 | 脏 25 | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 / `迭代.md` | 否 | 本功能只提交本目录 `status.md`；其余另提 |
 | web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | `f5616c5` |
-| android | `feat/gfm-markdown` | synced | 脏 8 | 否 | HEAD **`9c62212a1`**（GFM 已 push）。未提交全是 **mention**（属 `20260728`）：extra 写 `agentKind`/`agentId` + 旧 extra 缓存补 + 单测。onTest 已装，**复制路径待你验**。与水位无关 |
-| ios | **`master-3.5.31`** | synced | 脏 1 | 否 | GFM 已合入 `16146b73f`。脏区只有 `project.pbxproj`（Xcode 排序噪声）。与水位无关 |
-| desktop | **`feat/pc-read-watermark`** | **synced** | 脏 3 | **是** | HEAD `46c97783`。脏区 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
+| android | `feat/gfm-markdown` | synced | 脏 8 | 否 | HEAD `9c62212a1`。未提交全是 **mention**（属 `20260728`）：extra 写 `agentKind`/`agentId` + 旧 extra 缓存补 + 单测。与水位无关 |
+| ios | **`feat/ios-agent-date-range`** | **无 upstream** | 干净 | 否 | 本地 `80cfabb20`（timeType=0 半屏选时间）。GFM / 文件打开已合进 `master-3.5.31`，这条时间改动还没合、也没 push。与水位无关 |
+| desktop | **`feat/gfm-markdown`** | **behind 1** | 脏 3 | 否（水位分支未 checkout） | HEAD `41c5caf9`，远端多 `5213e645 chore: version 3.4.26`。脏区 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交**。水位仍在本地/远端 `feat/pc-read-watermark` @ `46c97783` |
 | desktop-watermark | — | — | — | 否 | 空目录，worktree 已摘除 |
 | meeting | `main` | synced | 干净 | 否 | — |
 | action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`，勿 stage |
@@ -346,8 +344,8 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
 
 ## 待办 / 阻塞
 
-- (desktop) **✅ 全部完成并已 push**。`origin/feat/pc-read-watermark` @ `46c97783`，synced。
-  下一步是开 MR 走评审合并——链接见「分支最终状态」一节
+- (desktop) **✅ 水位代码全部完成并已 push**。`origin/feat/pc-read-watermark` @ `46c97783`。
+  下一步是开 MR——链接见「分支最终状态」一节。**注意：`apps/desktop` 当前不在这条分支上**
 - (desktop) 调试代码**已决定保留**。终审实测推翻了「生产包会 DCE 掉」的假设：
   `enabled` 是可变属性，Terser 折不掉，函数体全留在产物里。所以两个热点调用点已加
   `isWatermarkDebugOn()` 门。**隐私仍安全**（`window.__readWatermark` 生产包从不挂载），
@@ -355,13 +353,13 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
 - (desktop) 日志开关维持 `NODE_ENV`，**只有 `npm run dev*` 出日志，打包版一律没有**。
   **「可观测性只覆盖开发机」是已知缺口，将来单独排期**
 - (desktop) `impl-notes.md` 已写完。**安卓 / iOS 若要对齐，只读这一份就够**
-- (desktop) 脏区仍是 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交**
-- (desktop) EPIPE / Logger 自噬写爆盘**未修**，与水位无关，不要合进本分支。
+- (desktop) 主目录已切到 `feat/gfm-markdown`（`41c5caf9`，behind 1）。脏区仍是
+  `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交**。切水位前先确认这三份别被带上
+- (desktop) EPIPE / Logger 自噬写爆盘**未修**，与水位无关，不要合进水位分支。
   `logs/error/` 那 297 GB 仍占盘，删前先退出 zhixin-test，**等用户自己执行**
-- (desktop) `feat/gfm-markdown` **现在没有任何地方 checkout 着**（改动已 push `d987d746` 不会丢）。
-  要继续改 markdown 得切分支或重新支 worktree。切走的话水位这边就得让位
-- (android) GFM 已 push `9c62212a1`。脏 8 全是 **mention**（`20260728`）：发送 extra 带 `agentKind`，旧 extra 粘贴靠缓存补。onTest 已装，**复制「@李权泓的AI框22」待你确认出个人筛选条**。提交不要和 GFM 混。与水位无关
-- (ios) 已在 `master-3.5.31`（GFM 已合入）。脏区仅 `project.pbxproj` 排序噪声。与水位无关
+- (desktop) 水位与 GFM **串行**：GFM 占着主目录，水位要开 MR / 改代码得切回 `feat/pc-read-watermark`，或重新支 worktree
+- (android) GFM 已 push `9c62212a1`。脏 8 全是 **mention**（`20260728`）。提交不要和 GFM 混。与水位无关
+- (ios) 当前 `feat/ios-agent-date-range`（本地、无远端）。GFM + 文件打开已在 `master-3.5.31`；时间区间那条还没合。与水位无关
 - (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*` 共 7 文件，勿 stage
 - (web) 干净，不要合进本分支
 
