@@ -1,6 +1,6 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-08-25（web `f5616c5` 已 push：波浪下划线 + 对比度，页面未点）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（PC 表格宽度已 commit/push `d987d746`；仍等会话真机看窄表/宽表）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -15,7 +15,7 @@
 | T4 `vue-tsc --noEmit` | ✅ | — | — | — |
 | T5 status / impl-notes | ✅ | — | — | — |
 | 真机验收（宽表横滚 / 窄表无滑 / 输入框未回归） | 🚧 | — | — | — |
-| 列宽上限格内换行 | 187.5px（375/2）🚧 | — | — | min/max **375px** ✅ |
+| 列宽上限格内换行 | 187.5px（375/2）🚧 | — | — | max **375px**（无 min）✅ 代码 `d987d746`，真机 🚧 |
 | 行内代码：干掉 prose 反引号 + 浅底胶囊 | ✅ | — | — | — |
 | 内联 span：background / padding / border-radius | ✅ 代码已补，页面未点 | — | — | — |
 | 波浪下划线 `text-decoration: wavy` | ✅ 代码已补，页面未点 | — | — | — |
@@ -30,7 +30,7 @@
 | web | **`feat/web-markdown-table-align-pc`** | synced | 干净 | **本功能**（待真机验收） |
 | android | `fix/md-table-fold-truncate` | 无 upstream | 脏 4 | 不涉及 |
 | ios | `feat/ios-file-download-progress` | synced | 脏 6 | 不涉及 |
-| desktop | **`feat/gfm-markdown`** | synced | 脏 | **本功能**：`markdown.scss` 列 min/max 375px。另有角标贴行 + 本地调试文件（禁止提交） |
+| desktop | **`feat/gfm-markdown`** | synced | 脏 3 | 表格宽度已 push `d987d746`。剩 `.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
 
 ## 待办 / 阻塞
 
@@ -38,7 +38,7 @@
 - (web) 2026-08-25 **内联 HTML 高亮** 已在 `87d3921`：个人 AI 框这段 `<span style="background-color;padding;border-radius">` 看起来没样式。根因：`marked` 会把 HTML 透传，但 Tiptap 的 `textStyle` 只占位、`Color` 只吃字色，背景/内边距/圆角进不了 schema。已加 `ExtendInlineSpanStyle`（`EditorWrapper` + `htmlToMarkdown` 同源）。**请在个人 AI 框看这条样本。**
 - (web) 2026-08-24 行内代码皮肤已在 `92efddc`：prose 不再用伪元素画反引号；单反引号与双反引号均已在本地 `AcMarkdown` 路径看过。
 - (web) **请你验收**：窄屏长单元格应在约 **187.5px** 处折行，375 宽大约能看清两列。列宽改动已在分支上（`868f780`）。
-- (desktop) 列宽改为 **min/max 375px**（不要 187.5）。热更新后看：一列大约一个 375 设计稿宽，长文格内折行，多列横滚。未 commit / push。
+- (desktop) 2026-08-26 **表格宽度对齐 web** 已 commit/push `d987d746`：原先 `min+max 375px` 把短列也撑满，且卡片根节点 `!max-w-[max-content]` 让宽表撑破气泡再被裁掉、滑条出不来。已改成与 web 同一套算法——`table width:max-content`、单元格只有 `max-width:375px`、从 `.message-wrapper` / `.msg-box` / `.md-html-wrapper` / `.md-table-wrap` 一路 `min-width:0; max-width:100%`。**请热更新后看**：窄表（2～3 列短字）不应再被撑到每列 375；宽表/长单元格应格内折行并在表内横滚，标题不跟着横移。
 - (desktop，旁路，属 `20260814-pc安卓-GFM-Markdown渲染对齐`) Eric「报销」消息里单独成行的 `<reference>` 会换行：已在 `feat/gfm-markdown` 把标签前换行折掉，角标贴前文。**请你热更新后看那条消息**。未 commit / push。
 
 ## 关键决策记录
@@ -46,7 +46,7 @@
 - 2026-08-20 场景 = 个人 AI 框 +「AI 优化文本」弹窗；只对齐表格，标题/代码/引用/列表不动。
 - 2026-08-20 单元格 nowrap + 表级左右横滚；不要左右渐变罩。
 - 2026-08-20 真机：纯 nowrap 窄屏滑过去看不见几个字 → 列宽上限改为 **187.5px**（375/2），手机上一屏大约两列。
-- 2026-08-20 同一 187.5px 上限接到 PC 会话后太窄；改成列 **min-width / max-width: 375px**（整段设计稿）。
+- 2026-08-20 同一 187.5px 上限接到 PC 会话后太窄；改成列 **max-width: 375px**（整段设计稿）。2026-08-25 去掉 min-width（短列随内容，对齐 web），并补上 flex 收缩链，否则横滚出不来。
 - 2026-08-20 方案 1：皮肤写在 `AcMarkdown`；`renderWrapper` 只闸 `getHTML()`。直播 DOM 在 `resizable: false` 时本来就有 `TableView` 的 `.tableWrapper`。
 - 2026-08-20 为让横滚在 flex 气泡里生效：`!max-w-unset` → `!max-w-full`，`ExpandableContent` / `AcMarkdown` 加 `min-w-0 max-w-full`。
 - 2026-08-20 子代理审查：无 Critical；status 已按真实进度改；`renderWrapper` 注释已写清 TableView vs getHTML。
