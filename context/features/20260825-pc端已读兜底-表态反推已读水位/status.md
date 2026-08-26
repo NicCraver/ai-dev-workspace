@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-26（本回合查安卓工作区并同步各端表；水位 **已 squash push** `46c97783`。剩开 MR 合入 release）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（本回合修安卓「复制个人 AI 框被判成群」并装 onTest；水位矩阵不变，已 squash push `46c97783`。剩开 MR）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -275,20 +275,20 @@ MR 创建链接（远端给的）：
 台账仍在 `apps/desktop-watermark/.superpowers/sdd/progress.md`（目录还在，只是没代码）。
 **水位已 squash push**（`46c97783` → `origin/feat/pc-read-watermark`）。
 
-## 各端工作区现状（2026-08-26 本回合，`scripts/code-status.sh` + 手查 meeting / action-center / desktop-watermark）
+## 各端工作区现状（2026-08-26 本回合，`scripts/code-status.sh` + 手查 meeting / action-center）
 
-本回合会话**只查了安卓的 git / 代码状态**，没有改任何端的代码、没有跑真机。Stop hook 因 apps 脏区（action-center / android / desktop）触发收尾。相对上一份 status：水位 10 笔已 squash 成 `46c97783` 并 push；iOS GFM 已提交 push、工作区干净。平台矩阵不变。
+本回合**改了安卓 mention，没动水位代码**。Stop hook 因 apps 脏区（action-center / android / desktop / ios）触发。相对上一份：安卓 GFM 已 push `9c62212a1`；复制个人 AI 框判成群已修并装 onTest，**代码未提交**；iOS GFM 已合进 `master-3.5.31`。水位平台矩阵不变。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
-| context | `main` ahead 258 | 脏 25 | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 / `迭代.md` | 否 | 本功能只提交本目录 `status.md`；其余另提 |
-| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 波浪下划线 + 对比度已在远端 `f5616c5` |
-| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | HEAD `8275a307c`。未提交两摊：**GFM**（`joinReplyPrefix` 空行保表格、`SpanTagHandler`+高亮居中/波浪线/`green→#008000`、淡蓝气泡 token、引用字色高 priority）和 **mention**（`MentionAgentKindResolver` + `MsgDraftRichConvertUtil.fillMissingAgentKind`）。**提交 GFM 不要带 mention**。真机未验。与水位无关 |
-| ios | **`feat/ios-gfm-markdown`** | synced | **干净** | 否 | HEAD `eb8f25482`（高亮居中、对比度、green 色值、ActionCard 全折）已在远端。与水位无关。真机未验 |
-| desktop | **`feat/pc-read-watermark`** | **synced** | 脏 3 | **是** | HEAD `46c97783` 已 push。脏区只有 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
-| desktop-watermark | — | — | — | 否 | **空目录，worktree 已摘除**，只剩 `.superpowers/sdd/` 草稿。`git` 命令在里面会穿透到编排仓，报的是编排仓状态，别被误导 |
+| context | `main` ahead 260 | 脏 27 | 构建脚本 / 命令 / GFM token / 会议室 UI / `迭代.md` / 个人 AI 框文档 | 否 | 本功能提交本目录 `status.md`；本回合改过的 `20260728` 文档一并提交 |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | `f5616c5` |
+| android | `feat/gfm-markdown` | synced | 脏 8 | 否 | HEAD **`9c62212a1`**（GFM 已 push）。未提交全是 **mention**（属 `20260728`）：extra 写 `agentKind`/`agentId` + 旧 extra 缓存补 + 单测。onTest 已装，**复制路径待你验**。与水位无关 |
+| ios | **`master-3.5.31`** | synced | 脏 1 | 否 | GFM 已合入 `16146b73f`。脏区只有 `project.pbxproj`（Xcode 排序噪声）。与水位无关 |
+| desktop | **`feat/pc-read-watermark`** | **synced** | 脏 3 | **是** | HEAD `46c97783`。脏区 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
+| desktop-watermark | — | — | — | 否 | 空目录，worktree 已摘除 |
 | meeting | `main` | synced | 干净 | 否 | — |
-| action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`（7 个 vendor 文件），与水位无关，勿 stage |
+| action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`，勿 stage |
 
 ## 改动文件清单（squash 前统计，以「分支最终状态」为准）
 
@@ -360,11 +360,9 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
   `logs/error/` 那 297 GB 仍占盘，删前先退出 zhixin-test，**等用户自己执行**
 - (desktop) `feat/gfm-markdown` **现在没有任何地方 checkout 着**（改动已 push `d987d746` 不会丢）。
   要继续改 markdown 得切分支或重新支 worktree。切走的话水位这边就得让位
-- (android) `feat/gfm-markdown` synced，脏 12（本回合核对过）。两摊不要混提：
-  **GFM** = `joinReplyPrefix` 空行保表格 + `SpanTagHandler` / 高亮居中 / 波浪线 / `green→#008000` / 淡蓝 token / 引用内蓝色；
-  **mention** = `MentionAgentKindResolver` + `MsgDraftRichConvertUtil.fillMissingAgentKind`。真机未验。与水位无关
-- (ios) 已在 `feat/ios-gfm-markdown` 并 push，**工作区干净**（`eb8f25482`）。真机未验。与水位无关
-- (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*` 共 7 文件，与本功能无关，勿 stage
+- (android) GFM 已 push `9c62212a1`。脏 8 全是 **mention**（`20260728`）：发送 extra 带 `agentKind`，旧 extra 粘贴靠缓存补。onTest 已装，**复制「@李权泓的AI框22」待你确认出个人筛选条**。提交不要和 GFM 混。与水位无关
+- (ios) 已在 `master-3.5.31`（GFM 已合入）。脏区仅 `project.pbxproj` 排序噪声。与水位无关
+- (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*` 共 7 文件，勿 stage
 - (web) 干净，不要合进本分支
 
 ## 关键决策记录
