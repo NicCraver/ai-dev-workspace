@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-26（本回合无水位代码；stop hook 因 apps 脏区触发，刷新各端归属。**仍等 Task 6 真机验收**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（本回合排查 PC 测试包 error 日志暴涨，**未改任何代码**；stop hook 因既有 apps 脏区触发，刷新各端归属。**仍等 Task 6 真机验收**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -109,7 +109,7 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 
 ## 各端工作区现状（2026-08-26 收尾，`scripts/code-status.sh` + 手查 3 个）
 
-本回合会话只做了「三端 Markdown 优化总结」，**没有改水位代码、没有跑真机**。stop hook 报的 apps 脏区全部归属并行 GFM / 无关 vendor，见下表。
+本回合会话只排查了「PC 测试包 error 日志暴涨 297 GB」（诊断结论见下面独立小节），**没有改任何代码、没有跑真机**。各端脏区与上回合逐字一致，全部归属并行 GFM / 无关 vendor，见下表。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
@@ -143,7 +143,45 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 > `apps/` 下实际有 7 个目录：`web` / `android` / `ios` / `desktop` / `desktop-watermark`（本功能 worktree）/ `meeting` / `action-center`。
 > **`scripts/code-status.sh` 硬编码只查前四个**，另三个需手查——Stop hook 报的 `meeting` 脏区在它输出里看不到。
 
+## 计划外发现：PC 测试包 error 日志 9 小时写出 106 GB（**不属本功能，但卡真机验收**）
+
+`~/Library/Application Support/zhixin-test/logs/error/` 下 `2026-08-25` 191 GB + `2026-08-26` 106 GB，
+**整目录 297 GB**，根卷只剩 29 GB 可用。内容 99.9% 是同一条 `write EPIPE`，00:00:00 刷到 08:54:18，
+约 4700 行/秒。
+
+**根因是 `uncaughtException` handler 自噬**（`apps/desktop/src/main/index.js:437`）：
+
+```js
+process.on("uncaughtException", (err) => {
+  console.error("uncaughtException", err);   // 438 行，凶手
+  Logger.error({ type: "Caught exception", message: util.inspect(err) });
+});
+```
+
+app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，管道读端消失）→ 任一次 `console.error`
+抛 `EPIPE`，异步抛出所以进 `uncaughtException` → handler 第一行又 `console.error` → 又 EPIPE → **无限自激**。
+每圈 `Logger.error` 用 `fs.appendFileSync` 追 ~700 字节。stack 里显示 `console.warn` 是因为 Node 里
+`console.error` 与 `console.warn` 是同一个函数对象，不是另一处调用。
+
+放大器在 `src/modules/logger/index.js`：只按天切文件，**无大小上限 / 无轮转 / 无限速 / 无去重**；
+清理只看 7 天过期（`deleteAllOverdue`），一天写爆 200 GB 它管不着；且 `appendFileSync` 同步阻塞主进程
+——那 9 小时里主进程基本耗在磁盘 I/O 上。
+
+当前跑着的 pid 63112 是 Finder 启的，fd 0/1/2 全是 `/dev/null`，**已不再刷**，文件停在 08:54。
+**判据：只要从终端直接起包（而非 Finder / `open`），关掉终端就会复现。**
+
+建议修法（三处，均在 `apps/desktop`，**尚未动手**）：
+1. handler 去掉 `console.error`，或先判 `process.stderr.destroyed`；`EPIPE`/`EBADF` 直接 return 不落盘。
+2. `Logger.error` 加同 message 去重 + 限速，合并成一行 `xN`。
+3. 单文件加字节上限，超了停写或轮转。
+
 ## 待办 / 阻塞
+
+- (desktop) **真机验收前先清日志**：`logs/error/2026-08-25` + `2026-08-26` 共 297 GB，根卷仅剩 29 GB。
+  删除不可逆，**等用户自己执行**；删前必须先退出 zhixin-test，否则 fd 还开着空间不释放。
+  磁盘满会直接搞砸 Task 6 真机验收
+- (desktop) 上面三处 EPIPE / Logger 修法**未实施**，改哪条分支待定——主目录现在是 `feat/gfm-markdown` 且脏 8 个文件。
+  **与水位无关，不要合进 `feat/pc-read-watermark`**
 
 - (desktop-watermark) **下一步仍是 Task 6 真机验收，需要你来跑**。4 条用例见 `spec.md` 第七节。
   要起 `npm run dev:test`，与 `apps/desktop` 抢 9080 端口，**起之前先确认主目录的 dev 已停**。
