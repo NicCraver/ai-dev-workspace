@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-25（**代码全部完成，7 commit 未 push，等真机验收**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（本回合无水位代码；stop hook 因 apps 脏区触发，刷新各端归属。**仍等 Task 6 真机验收**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -107,18 +107,20 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 执行方式：subagent-driven-development，每任务一个实施代理 + 一个评审代理，台账在
 `apps/desktop-watermark/.superpowers/sdd/progress.md`。四笔提交均未 push（分支跟踪的是 `origin/release`）。
 
-## 各端工作区现状（2026-08-25 收尾复查，`scripts/code-status.sh` + 手查 3 个）
+## 各端工作区现状（2026-08-26 收尾，`scripts/code-status.sh` + 手查 3 个）
+
+本回合会话只做了「三端 Markdown 优化总结」，**没有改水位代码、没有跑真机**。stop hook 报的 apps 脏区全部归属并行 GFM / 无关 vendor，见下表。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
-| context | `main` ahead 249 | 脏 25 | 构建脚本 / 命令文件 / GFM 文档 | 否 | 本功能只提交本目录 `status.md`；其余另提 |
-| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 属 markdown 对齐 PC |
-| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | GFM 引用高亮左偏等，与已读水位无关 |
-| ios | `feat/ios-agent-date-range` | **no upstream** | 脏 13 | 否 | 与已读水位无关 |
-| desktop | `feat/gfm-markdown` | synced | 脏 8 | 否 | markdown 表格宽度改动，属 GFM，**不要合进水位分支**。另有 `.env.test` / `electron-builder.yml` / `package.json` 本地调试，**禁止提交** |
-| desktop-watermark | `feat/pc-read-watermark` | **ahead 7** vs `origin/release` | 干净 | **是** | 代码全完成，未 push |
-| meeting | `merge/pr4-pr7` | — | 干净 | 否 | 之前的 `designs/` 脏区已清 |
-| action-center | `release` | — | 干净 | 否 | — |
+| context | `main` ahead 250 | 脏 25+ | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 | 否 | 本功能只提交本目录 `status.md`；其余另提 |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 波浪下划线 + 对比度已在远端 `f5616c5` |
+| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | GFM：`SpanTagHandler` / 高亮居中 / 波浪线 / 引用前缀+表；另有 `MentionAgentKindResolver` **不要和 GFM 混提**。与水位无关 |
+| ios | `feat/ios-agent-date-range` | **no upstream** | 脏 13 | 否 | GFM：`ZXMarkdownStyle` / LayoutManager 高亮居中 / ActionCard 折叠拆开。分支本身是记忆条日期区间，与水位无关 |
+| desktop | `feat/gfm-markdown` | synced | 脏 8 | 否 | GFM：`markdown.scss` 对比度、表格宽度、`msg-actioncard` / `msg-reply-poll`。`msg-list.vue` 也脏，**属 GFM 不要合进水位**。`.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
+| desktop-watermark | `feat/pc-read-watermark` | **ahead 7** vs `origin/release` | 干净 | **是** | 代码全完成，未 push，等真机 |
+| meeting | `main` | synced | 干净 | 否 | 已不在 `merge/pr4-pr7` |
+| action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`，vendor 产物，与水位 / GFM 都无关，勿 stage |
 
 ## 改动文件清单（相对 `origin/release` `613af430`）
 
@@ -143,15 +145,18 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 
 ## 待办 / 阻塞
 
-- (desktop-watermark) **下一步是 Task 6 真机验收，需要你来跑**。4 条用例见 `spec.md` 第七节。
+- (desktop-watermark) **下一步仍是 Task 6 真机验收，需要你来跑**。4 条用例见 `spec.md` 第七节。
   要起 `npm run dev:test`，与 `apps/desktop` 抢 9080 端口，**起之前先确认主目录的 dev 已停**。
   worktree 是从 `origin/release` 干净切的，没有主目录那份指向 localhost 的调试配置，先：
   `cp ../desktop/.env.test ../desktop/electron-builder.yml ../desktop/package.json .`（拷完这三个会变脏，**永远不要 `git add`**）
 - (desktop-watermark) 验收前先跟测试人员对齐上面「必须先对齐的两件事」，否则会拿回假 bug
 - (desktop-watermark) 真机跑完后补 `impl-notes.md`，**务必把 `isLocalMessage` 在本仓库的真实语义记进去**——这是会重复踩的坑
-- (desktop-watermark) 六笔提交全部**未 push**，分支跟踪的是 `origin/release`。合并/push 等你发话
-- (desktop) 主目录 `feat/gfm-markdown` 本回合改了 markdown 表格宽度，属 `20260820`，不要合进水位分支。`.env.test` / `electron-builder.yml` / `package.json` 保持脏、勿 stage
-- (web / android / ios) 脏区或刚 push 的提交均属 markdown / GFM 并行功能，不要合进本分支
+- (desktop-watermark) **7 笔**提交全部**未 push**，分支跟踪的是 `origin/release`。合并/push 等你发话
+- (desktop) 主目录 `feat/gfm-markdown` 脏的是 markdown 对比度 / 表格宽度 / `msg-list.vue`，属 `20260814` + `20260820`，**不要合进水位分支**。`.env.test` / `electron-builder.yml` / `package.json` 保持脏、勿 stage
+- (android) `feat/gfm-markdown` 脏 12：高亮居中、波浪线、引用前缀+表、`MentionAgentKindResolver`。**提交 GFM 不要带 mention**。与水位无关
+- (ios) `feat/ios-agent-date-range` 脏 13：GFM 高亮居中 / 标签 / ActionCard 折叠。与水位无关
+- (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*`，与本功能无关，勿 stage
+- (web) 干净，GFM/web markdown 已在远端，不要合进本分支
 - (android / ios) 2026-08-25 HTML `color:green` → `#008000`，归属 GFM，不是本功能
 - (android) 2026-08-25 引用块里 `<mark>` 高亮往左偏、引用里的蓝色被整段字色盖掉，已改代码，真机未验。归属 `20260814` GFM，不是本功能
 - (ios) 2026-08-25 自己发到群里的个人 AI 框长卡片不折叠：折叠开关从「是不是 AI 卡片」拆开，所有 ActionCard 超高都折。归属 `20260813` GFM，不是本功能。真机未验
