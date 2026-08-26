@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-26（**已 squash 成 1 个 commit 并 push 到 `origin/feat/pc-read-watermark`**，`46c97783`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（本回合查安卓工作区并同步各端表；水位 **已 squash push** `46c97783`。剩开 MR 合入 release）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -262,7 +262,7 @@ MR 创建链接（远端给的）：
 
 | 目录 | 现在 |
 |---|---|
-| `apps/desktop` | **主 checkout**（`.git` 是目录），分支 `feat/pc-read-watermark` @ `c3fe6bcc`，ahead 10 |
+| `apps/desktop` | **主 checkout**（`.git` 是目录），分支 `feat/pc-read-watermark` @ `46c97783`，**synced** |
 | `apps/desktop-watermark` | **空目录**，无 `.git`、无代码，只剩 `.superpowers/sdd/` 流程草稿。`git` 命令在里面会穿透到编排仓 |
 
 `git worktree list` 只有 `apps/desktop` 一条。
@@ -273,24 +273,24 @@ MR 创建链接（远端给的）：
 
 执行方式：subagent-driven-development，每任务一个实施代理 + 一个评审代理。
 台账仍在 `apps/desktop-watermark/.superpowers/sdd/progress.md`（目录还在，只是没代码）。
-**10 笔提交全部未 push**（分支跟踪的是 `origin/release`）。
+**水位已 squash push**（`46c97783` → `origin/feat/pc-read-watermark`）。
 
-## 各端工作区现状（2026-08-26 收尾，`scripts/code-status.sh` + 手查 meeting / action-center / desktop-watermark）
+## 各端工作区现状（2026-08-26 本回合，`scripts/code-status.sh` + 手查 meeting / action-center / desktop-watermark）
 
-本回合会话**只查了 iOS 的 git / 代码状态**，没有改任何端的代码、没有跑真机。Stop hook 因 apps 脏区触发收尾。相对上一份 status：desktop 多了 2 笔水位提交（见上 `d4a08e3e` / `c3fe6bcc`，非本回合所写），其余脏区仍全是并行 GFM / vendor。
+本回合会话**只查了安卓的 git / 代码状态**，没有改任何端的代码、没有跑真机。Stop hook 因 apps 脏区（action-center / android / desktop）触发收尾。相对上一份 status：水位 10 笔已 squash 成 `46c97783` 并 push；iOS GFM 已提交 push、工作区干净。平台矩阵不变。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
-| context | `main` ahead 256 | 脏 25 | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 / `迭代.md` | 否 | 本功能只提交本目录 `status.md`；其余另提 |
+| context | `main` ahead 258 | 脏 25 | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 / `迭代.md` | 否 | 本功能只提交本目录 `status.md`；其余另提 |
 | web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 波浪下划线 + 对比度已在远端 `f5616c5` |
-| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | GFM：`SpanTagHandler` / `VerticalCenterBackgroundSpan` / `WavyUnderlineSpan` / 引用前缀+表；另有 `MentionAgentKindResolver` **不要和 GFM 混提**。与水位无关 |
-| ios | `feat/ios-agent-date-range` | **no upstream** | 脏 13 | 否 | **已提交**是记忆条日期区间 `80cfabb20`；**脏区全是 GFM**：LayoutManager 高亮居中、style 对比度、`color:green→#008000`、所有 ActionCard 超高折叠。两摊不要混提。与水位无关 |
-| desktop | **`feat/pc-read-watermark`** | **ahead 10** | 脏 3 | **是** | HEAD `c3fe6bcc`，**真机验收 5 项全过**。脏区只有 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
+| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | HEAD `8275a307c`。未提交两摊：**GFM**（`joinReplyPrefix` 空行保表格、`SpanTagHandler`+高亮居中/波浪线/`green→#008000`、淡蓝气泡 token、引用字色高 priority）和 **mention**（`MentionAgentKindResolver` + `MsgDraftRichConvertUtil.fillMissingAgentKind`）。**提交 GFM 不要带 mention**。真机未验。与水位无关 |
+| ios | **`feat/ios-gfm-markdown`** | synced | **干净** | 否 | HEAD `eb8f25482`（高亮居中、对比度、green 色值、ActionCard 全折）已在远端。与水位无关。真机未验 |
+| desktop | **`feat/pc-read-watermark`** | **synced** | 脏 3 | **是** | HEAD `46c97783` 已 push。脏区只有 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
 | desktop-watermark | — | — | — | 否 | **空目录，worktree 已摘除**，只剩 `.superpowers/sdd/` 草稿。`git` 命令在里面会穿透到编排仓，报的是编排仓状态，别被误导 |
 | meeting | `main` | synced | 干净 | 否 | — |
-| action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`，vendor 产物，与水位无关，勿 stage |
+| action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`（7 个 vendor 文件），与水位无关，勿 stage |
 
-## 改动文件清单（相对 `origin/release` `613af430`）
+## 改动文件清单（squash 前统计，以「分支最终状态」为准）
 
 | 状态 | 文件 | 行数 |
 |---|---|---|
@@ -346,34 +346,26 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
 
 ## 待办 / 阻塞
 
-- (desktop) **真机验收前先清日志**：`logs/error/2026-08-25` + `2026-08-26` 共 297 GB，根卷仅剩 29 GB。
-  删除不可逆，**等用户自己执行**；删前必须先退出 zhixin-test，否则 fd 还开着空间不释放。
-  磁盘满会直接搞砸 Task 6 真机验收
-- (desktop) 上面三处 EPIPE / Logger 修法**未实施**，改哪条分支待定——主目录现在是 `feat/pc-read-watermark`，脏区只剩 3 个本地调试文件。
-  **与水位无关，不要合进 `feat/pc-read-watermark`**
-
-- (desktop) **✅ 全部完成并已 push**。`origin/feat/pc-read-watermark`，单 commit `46c97783`。
+- (desktop) **✅ 全部完成并已 push**。`origin/feat/pc-read-watermark` @ `46c97783`，synced。
   下一步是开 MR 走评审合并——链接见「分支最终状态」一节
 - (desktop) 调试代码**已决定保留**。终审实测推翻了「生产包会 DCE 掉」的假设：
   `enabled` 是可变属性，Terser 折不掉，函数体全留在产物里。所以两个热点调用点已加
   `isWatermarkDebugOn()` 门。**隐私仍安全**（`window.__readWatermark` 生产包从不挂载），
   但「零成本」的说法是错的，已订正进 impl-notes
 - (desktop) 日志开关维持 `NODE_ENV`，**只有 `npm run dev*` 出日志，打包版一律没有**。
-  查过了：`.env.*` 里没有任何既有调试开关约定；`MODE_ENV` 不经 DefinePlugin 进渲染层
-  （只作 `isProd` 给 `index.ejs` 用）；要按 MODE_ENV 开关就得往 `.env.*` 加新键，
-  而 `.env.test` 在禁提交清单里。**「可观测性只覆盖开发机」是已知缺口，将来单独排期**
-- (desktop) `impl-notes.md` 已写完，含 `isLocalMessage` 真实语义、水位取 sentTime 的权衡、
-  会话 key 必须含自己账号、验收方法的两条结论。**安卓 / iOS 若要对齐，只读这一份就够**
-- (desktop) **10 笔**提交全部**未 push**，分支跟踪的是 `origin/release`。合并 / push 等用户发话
+  **「可观测性只覆盖开发机」是已知缺口，将来单独排期**
+- (desktop) `impl-notes.md` 已写完。**安卓 / iOS 若要对齐，只读这一份就够**
+- (desktop) 脏区仍是 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交**
+- (desktop) EPIPE / Logger 自噬写爆盘**未修**，与水位无关，不要合进本分支。
+  `logs/error/` 那 297 GB 仍占盘，删前先退出 zhixin-test，**等用户自己执行**
 - (desktop) `feat/gfm-markdown` **现在没有任何地方 checkout 着**（改动已 push `d987d746` 不会丢）。
-  要继续改 markdown 得切分支或重新支 worktree，**待用户决定**。切走的话水位这边就得让位
-- (android) `feat/gfm-markdown` 脏 12：高亮居中、波浪线、引用前缀+表、`MentionAgentKindResolver`。**提交 GFM 不要带 mention**。与水位无关
-- (ios) `feat/ios-agent-date-range` **无 upstream、未 push**。HEAD 是记忆条日期区间；脏 13 全是 GFM（LayoutManager / 对比度 / green→#008000 / ActionCard 全折），**两摊不要混提**。与水位无关。真机未验
-- (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*`，与本功能无关，勿 stage
-- (web) 干净，GFM/web markdown 已在远端，不要合进本分支
-- (android / ios) 2026-08-25 HTML `color:green` → `#008000`，归属 GFM，不是本功能
-- (android) 2026-08-25 引用块里 `<mark>` 高亮往左偏、引用里的蓝色被整段字色盖掉，已改代码，真机未验。归属 `20260814` GFM，不是本功能
-- (ios) 2026-08-25 自己发到群里的个人 AI 框长卡片不折叠：折叠开关从「是不是 AI 卡片」拆开，所有 ActionCard 超高都折。归属 `20260813` GFM，不是本功能。真机未验
+  要继续改 markdown 得切分支或重新支 worktree。切走的话水位这边就得让位
+- (android) `feat/gfm-markdown` synced，脏 12（本回合核对过）。两摊不要混提：
+  **GFM** = `joinReplyPrefix` 空行保表格 + `SpanTagHandler` / 高亮居中 / 波浪线 / `green→#008000` / 淡蓝 token / 引用内蓝色；
+  **mention** = `MentionAgentKindResolver` + `MsgDraftRichConvertUtil.fillMissingAgentKind`。真机未验。与水位无关
+- (ios) 已在 `feat/ios-gfm-markdown` 并 push，**工作区干净**（`eb8f25482`）。真机未验。与水位无关
+- (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*` 共 7 文件，与本功能无关，勿 stage
+- (web) 干净，不要合进本分支
 
 ## 关键决策记录
 
