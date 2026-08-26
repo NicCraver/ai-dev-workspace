@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-26（**核心兜底已真机验证生效**；发现一处刷新空转 + 两处日志缺陷，待修）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（本回合只查 iOS 状态；水位 3 条空转/日志修法已提交，**真机未复验**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -20,7 +20,7 @@
 | 验收日志出口（计划外） | — | — | — | ✅ `d61316d8` lint 0 + 48/48 |
 | Task 6 真机验收 · 核心兜底 | — | — | — | ✅ **已验证生效**，见下「实证」 |
 | Task 6 真机验收 · 回归 4 条 | — | — | — | ⬜ 切账号 / 群聊分母 / 引用缓存 / 只增不减 |
-| 刷新空转 + 日志缺陷修复 | — | — | — | ⬜ 3 条，见下 |
+| 刷新空转 + 日志缺陷修复 | — | — | — | 🚧 `d4a08e3e` + `c3fe6bcc` 代码已落，真机未复验 |
 
 本功能只做 desktop，另三端不涉及。Task 1–5b 的 ✅ = worktree 提交 + 单测 + 评审通过，**不含真机**。
 
@@ -184,6 +184,8 @@ Task 5b 那层引用缓存挡住了子组件 DOM 重挂，所以**不掉帧**，
 
 第 1 条动 `msg-list.vue`，2、3 只动 `readWatermarkDebug.js`。
 
+**代码已提交（2026-08-26 下午，非本回合）**：`d4a08e3e` 值没变不换引用 + 日志去中间态并补日期；`c3fe6bcc` 证据日志改按身份去重、补报未抬高水位。脏区仍只有 3 个禁提交调试文件。**真机还没复跑**，刷屏是否消失、日期是否自证，等下次 `npm run dev:test` 确认后再把本行改 ✅。
+
 ## 真机验收前必须先对齐的两件事（不是缺陷）
 
 1. **水位翻出的私聊已读会让一批消息显示同一个时间戳。** 水位是「人」的属性不是「消息」的属性，
@@ -199,8 +201,7 @@ Task 5b 那层引用缓存挡住了子组件 DOM 重挂，所以**不掉帧**，
 
 ## 分支最终状态
 
-`feat/pc-read-watermark`，**8 个 commit，全部未 push**，工作区只剩 3 个禁提交的本地调试配置。
-相对 `origin/release` 净改动 6 个文件 +1115 / −11（其中 410 行是测试）。
+`feat/pc-read-watermark` @ `c3fe6bcc`，**10 个 commit，全部未 push**（跟踪 `origin/release`），工作区只剩 3 个禁提交的本地调试配置。
 
 | commit | 内容 |
 |---|---|
@@ -212,9 +213,11 @@ Task 5b 那层引用缓存挡住了子组件 DOM 重挂，所以**不掉帧**，
 | `e96e3925` | 群聊合并名单加引用缓存（终审前自查发现的回归） |
 | `74b41acd` | 终审两条 Important 修复 |
 | `d61316d8` | 验收日志出口（`readWatermarkDebug.js` + `onEvidence` 回调） |
+| `d4a08e3e` | 水位值没变不换引用；日志去中间态并补日期 |
+| `c3fe6bcc` | 证据日志按身份去重，补报未抬高水位 |
 
 新增 5 个文件（3 个模块 + 2 个测试文件），改 1 个既有文件（`msg-list.vue`）。
-48 个单测全绿、`npm run lint` exit 0。**合并 / push 等用户发话。**
+**合并 / push 等用户发话。**
 
 > `readWatermarkDebug.js` 只服务验收、不参与判定，验完可整体删掉（连同 `onEvidence` 回调与
 > `msg-list.vue` 里那 6 处接线）。
@@ -226,7 +229,7 @@ Task 5b 那层引用缓存挡住了子组件 DOM 重挂，所以**不掉帧**，
 
 | 目录 | 现在 |
 |---|---|
-| `apps/desktop` | **主 checkout**（`.git` 是目录），分支 `feat/pc-read-watermark` @ `d61316d8`，ahead 8 |
+| `apps/desktop` | **主 checkout**（`.git` 是目录），分支 `feat/pc-read-watermark` @ `c3fe6bcc`，ahead 10 |
 | `apps/desktop-watermark` | **空目录**，无 `.git`、无代码，只剩 `.superpowers/sdd/` 流程草稿。`git` 命令在里面会穿透到编排仓 |
 
 `git worktree list` 只有 `apps/desktop` 一条。
@@ -237,19 +240,19 @@ Task 5b 那层引用缓存挡住了子组件 DOM 重挂，所以**不掉帧**，
 
 执行方式：subagent-driven-development，每任务一个实施代理 + 一个评审代理。
 台账仍在 `apps/desktop-watermark/.superpowers/sdd/progress.md`（目录还在，只是没代码）。
-**8 笔提交全部未 push**（分支跟踪的是 `origin/release`）。
+**10 笔提交全部未 push**（分支跟踪的是 `origin/release`）。
 
-## 各端工作区现状（2026-08-26 收尾，`scripts/code-status.sh` + 手查 3 个）
+## 各端工作区现状（2026-08-26 收尾，`scripts/code-status.sh` + 手查 meeting / action-center / desktop-watermark）
 
-本回合会话只排查了「PC 测试包 error 日志暴涨 297 GB」（诊断结论见下面独立小节），**没有改任何代码、没有跑真机**。各端脏区与上回合逐字一致，全部归属并行 GFM / 无关 vendor，见下表。
+本回合会话**只查了 iOS 的 git / 代码状态**，没有改任何端的代码、没有跑真机。Stop hook 因 apps 脏区触发收尾。相对上一份 status：desktop 多了 2 笔水位提交（见上 `d4a08e3e` / `c3fe6bcc`，非本回合所写），其余脏区仍全是并行 GFM / vendor。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
-| context | `main` ahead 254 | 脏 25 | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 | 否 | 本功能只提交本目录 `status.md`；其余另提 |
+| context | `main` ahead 255 | 脏 25 | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 / `迭代.md` | 否 | 本功能只提交本目录 `status.md`；其余另提 |
 | web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 波浪下划线 + 对比度已在远端 `f5616c5` |
-| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | GFM：`SpanTagHandler` / 高亮居中 / 波浪线 / 引用前缀+表；另有 `MentionAgentKindResolver` **不要和 GFM 混提**。与水位无关 |
-| ios | `feat/ios-agent-date-range` | **no upstream** | 脏 13 | 否 | GFM：`ZXMarkdownStyle` / LayoutManager 高亮居中 / ActionCard 折叠拆开。分支本身是记忆条日期区间，与水位无关 |
-| desktop | **`feat/pc-read-watermark`** | **ahead 8** | 脏 3 | **是** | 主目录即水位分支，本回合只跑真机没改代码。脏区只有 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
+| android | `feat/gfm-markdown` | synced | 脏 12 | 否 | GFM：`SpanTagHandler` / `VerticalCenterBackgroundSpan` / `WavyUnderlineSpan` / 引用前缀+表；另有 `MentionAgentKindResolver` **不要和 GFM 混提**。与水位无关 |
+| ios | `feat/ios-agent-date-range` | **no upstream** | 脏 13 | 否 | **已提交**是记忆条日期区间 `80cfabb20`；**脏区全是 GFM**：LayoutManager 高亮居中、style 对比度、`color:green→#008000`、所有 ActionCard 超高折叠。两摊不要混提。与水位无关 |
+| desktop | **`feat/pc-read-watermark`** | **ahead 10** | 脏 3 | **是** | HEAD `c3fe6bcc`。脏区只有 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
 | desktop-watermark | — | — | — | 否 | **空目录，worktree 已摘除**，只剩 `.superpowers/sdd/` 草稿。`git` 命令在里面会穿透到编排仓，报的是编排仓状态，别被误导 |
 | meeting | `main` | synced | 干净 | 否 | — |
 | action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`，vendor 产物，与水位无关，勿 stage |
@@ -313,21 +316,18 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
 - (desktop) **真机验收前先清日志**：`logs/error/2026-08-25` + `2026-08-26` 共 297 GB，根卷仅剩 29 GB。
   删除不可逆，**等用户自己执行**；删前必须先退出 zhixin-test，否则 fd 还开着空间不释放。
   磁盘满会直接搞砸 Task 6 真机验收
-- (desktop) 上面三处 EPIPE / Logger 修法**未实施**，改哪条分支待定——主目录现在是 `feat/gfm-markdown`，脏区只剩 3 个本地调试文件。
+- (desktop) 上面三处 EPIPE / Logger 修法**未实施**，改哪条分支待定——主目录现在是 `feat/pc-read-watermark`，脏区只剩 3 个本地调试文件。
   **与水位无关，不要合进 `feat/pc-read-watermark`**
 
-- (desktop) **核心兜底已真机验证生效**（见上「实证」）。**下一步是修那 3 条**：
-  刷新空转（`refreshReadWatermark` 值没变别换引用）+ 证据日志去重 + 日志加日期。
-  第 1 条不改判定结果，只改赋值时机；2、3 只动 `readWatermarkDebug.js`
-- (desktop) 修完再过剩余回归 4 条：切账号 / 群聊分母 / 引用缓存 / 只增不减
+- (desktop) **核心兜底已真机验证生效**。空转 + 日志 3 条**代码已提交**（`d4a08e3e` / `c3fe6bcc`），**下一步真机复验**：刷屏是否消失、时间戳是否带日期。再过剩余回归 4 条：切账号 / 群聊分母 / 引用缓存 / 只增不减
 - (desktop) 跑验收用 `cd apps/desktop && npm run dev:test`（**必须 dev 模式，打包版日志总开关是关的**）
 - (desktop) 验收前先跟用户对齐下面「必须先对齐的两件事」，否则会拿回假 bug
 - (desktop) 验收跑完后补 `impl-notes.md`，**务必把 `isLocalMessage` 在本仓库的真实语义记进去**——这是会重复踩的坑
-- (desktop) **8 笔**提交全部**未 push**，分支跟踪的是 `origin/release`。合并 / push 等用户发话
+- (desktop) **10 笔**提交全部**未 push**，分支跟踪的是 `origin/release`。合并 / push 等用户发话
 - (desktop) `feat/gfm-markdown` **现在没有任何地方 checkout 着**（改动已 push `d987d746` 不会丢）。
   要继续改 markdown 得切分支或重新支 worktree，**待用户决定**。切走的话水位这边就得让位
 - (android) `feat/gfm-markdown` 脏 12：高亮居中、波浪线、引用前缀+表、`MentionAgentKindResolver`。**提交 GFM 不要带 mention**。与水位无关
-- (ios) `feat/ios-agent-date-range` 脏 13：GFM 高亮居中 / 标签 / ActionCard 折叠。与水位无关
+- (ios) `feat/ios-agent-date-range` **无 upstream、未 push**。HEAD 是记忆条日期区间；脏 13 全是 GFM（LayoutManager / 对比度 / green→#008000 / ActionCard 全折），**两摊不要混提**。与水位无关。真机未验
 - (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*`，与本功能无关，勿 stage
 - (web) 干净，GFM/web markdown 已在远端，不要合进本分支
 - (android / ios) 2026-08-25 HTML `color:green` → `#008000`，归属 GFM，不是本功能
