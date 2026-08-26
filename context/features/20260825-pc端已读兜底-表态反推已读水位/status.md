@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-26（**真机验收 5 项全过，代码完成，impl-notes 已沉淀**；剩「删不删调试代码」与「何时 push」两个决定）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（**已 squash 成 1 个 commit 并 push 到 `origin/feat/pc-read-watermark`**，`46c97783`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -22,6 +22,9 @@
 | 补「收到但未抬高」输出 | — | — | — | ✅ `c3fe6bcc` |
 | **Task 6 真机验收 · 5 项** | — | — | — | ✅ **全过**，见下「验收结果」 |
 | impl-notes 沉淀 | — | — | — | ✅ 含 `isLocalMessage` 坑与验收方法结论 |
+| 终审第二轮（全分支 10 commit，opus） | — | — | — | ✅ **With fixes**，2 条 Important |
+| 终审第二轮修复（8 条） | — | — | — | ✅ `fb22d551` lint 0 + 52/52 |
+| **squash + push** | — | — | — | ✅ `46c97783` → `origin/feat/pc-read-watermark` |
 
 本功能只做 desktop，另三端不涉及。Task 1–5b 的 ✅ = worktree 提交 + 单测 + 评审通过，**不含真机**。
 
@@ -226,28 +229,31 @@ Task 5b 那层引用缓存挡住了子组件 DOM 重挂，所以**不掉帧**，
    **不产生错误已读**（模块级 `watermarkMap` 不受影响，`bumpWatermark` 遇空 key 提前 return），
    只是可能的 UI 抖动。没观察到就忽略。
 
-## 分支最终状态
+## 分支最终状态：已 push（2026-08-26）
 
-`feat/pc-read-watermark` @ `c3fe6bcc`，**10 个 commit，全部未 push**（跟踪 `origin/release`），工作区只剩 3 个禁提交的本地调试配置。
+**远端分支 `origin/feat/pc-read-watermark`，单个 commit `46c97783`。**
+原 12 个 commit 已 `git reset --soft 613af430` 压缩成一个（该分支从未 push 过，改写历史安全）。
 
-| commit | 内容 |
+相对 `origin/release` `613af430`：**7 个文件，+1259 / −11**（含 542 行测试）。
+
+| 状态 | 文件 |
 |---|---|
-| `fc7d7e46` | 证据提取与判定纯函数 |
-| `ec092d9c` | 扫消息列表算按人水位，三源合一 |
-| `dd6a4add` | 水位仓库，会话级按人单调只增 |
-| `75025888` | 私聊已读接入水位 |
-| `bd52a77c` | 群聊已读名单接入水位，只补分子不改分母 |
-| `e96e3925` | 群聊合并名单加引用缓存（终审前自查发现的回归） |
-| `74b41acd` | 终审两条 Important 修复 |
-| `d61316d8` | 验收日志出口（`readWatermarkDebug.js` + `onEvidence` 回调） |
-| `d4a08e3e` | 水位值没变不换引用；日志去中间态并补日期 |
-| `c3fe6bcc` | 证据日志按身份去重，补报未抬高水位 |
+| 改 | `src/renderer/components/chitchat/message/msg-list.vue` |
+| 新增 | `read-receipt/readWatermarkModel.js`（证据提取 / 水位计算 / 判定，纯函数） |
+| 新增 | `read-receipt/readWatermarkStore.js`（会话级按人的单调水位表，纯内存） |
+| 新增 | `read-receipt/readWatermarkDebug.js`（验收日志出口，**已决定长期保留**） |
+| 新增 | `tests/readWatermarkModel.test.js` / `readWatermarkStore.test.js` / `readWatermarkDebug.test.js` |
 
-新增 5 个文件（3 个模块 + 2 个测试文件），改 1 个既有文件（`msg-list.vue`）。
-**合并 / push 等用户发话。**
+**52 个单测全绿、`npm run lint` exit 0。**
 
-> `readWatermarkDebug.js` 只服务验收、不参与判定，验完可整体删掉（连同 `onEvidence` 回调与
-> `msg-list.vue` 里那 6 处接线）。
+推送前逐 commit 扫过禁提交文件（`.env.test` / `electron-builder.yml` / `package.json` /
+`package-lock.json`）——**零命中**，那三个本地调试配置全程留在工作区未暂存。
+
+> 副作用（好的）：分支上游从 `origin/release` 变成了 `origin/feat/pc-read-watermark`，
+> 「裸 `git push` 会推到 release」这个陷阱自动解除。
+
+MR 创建链接（远端给的）：
+`http://192.168.5.166:10090/xinxi/zg-web/zx/zx-client-pc/merge_requests/new?merge_request[source_branch]=feat/pc-read-watermark`
 
 ## ⚠️ 工作目录：worktree 已没了，回到串行（2026-08-26）
 
@@ -346,11 +352,16 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
 - (desktop) 上面三处 EPIPE / Logger 修法**未实施**，改哪条分支待定——主目录现在是 `feat/pc-read-watermark`，脏区只剩 3 个本地调试文件。
   **与水位无关，不要合进 `feat/pc-read-watermark`**
 
-- (desktop) **✅ 真机验收 5 项全过，代码与文档均已完成。剩两个决定等用户拍板：**
-  - **调试代码删不删** —— `readWatermarkDebug.js`（228 行）+ `readWatermarkModel.js` 的 `onEvidence` 回调
-    + `msg-list.vue` 里 6 处接线。只服务验收，不参与判定，删起来干净。
-    留着的成本：生产包里被编译期消除（零运行成本），但源码多 250 行只有调试价值的代码
-  - **何时 push / 合并** —— 10 个 commit 全在本地，分支跟踪 `origin/release`
+- (desktop) **✅ 全部完成并已 push**。`origin/feat/pc-read-watermark`，单 commit `46c97783`。
+  下一步是开 MR 走评审合并——链接见「分支最终状态」一节
+- (desktop) 调试代码**已决定保留**。终审实测推翻了「生产包会 DCE 掉」的假设：
+  `enabled` 是可变属性，Terser 折不掉，函数体全留在产物里。所以两个热点调用点已加
+  `isWatermarkDebugOn()` 门。**隐私仍安全**（`window.__readWatermark` 生产包从不挂载），
+  但「零成本」的说法是错的，已订正进 impl-notes
+- (desktop) 日志开关维持 `NODE_ENV`，**只有 `npm run dev*` 出日志，打包版一律没有**。
+  查过了：`.env.*` 里没有任何既有调试开关约定；`MODE_ENV` 不经 DefinePlugin 进渲染层
+  （只作 `isProd` 给 `index.ejs` 用）；要按 MODE_ENV 开关就得往 `.env.*` 加新键，
+  而 `.env.test` 在禁提交清单里。**「可观测性只覆盖开发机」是已知缺口，将来单独排期**
 - (desktop) `impl-notes.md` 已写完，含 `isLocalMessage` 真实语义、水位取 sentTime 的权衡、
   会话 key 必须含自己账号、验收方法的两条结论。**安卓 / iOS 若要对齐，只读这一份就够**
 - (desktop) **10 笔**提交全部**未 push**，分支跟踪的是 `origin/release`。合并 / push 等用户发话
