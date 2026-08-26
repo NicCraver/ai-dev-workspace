@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-26（**验收方式改成看日志**，日志出口已落 `d61316d8`；worktree 已没了，主目录即水位分支）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（**核心兜底已真机验证生效**；发现一处刷新空转 + 两处日志缺陷，待修）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -18,7 +18,9 @@
 | 终审修复（5 条一次提交） | — | — | — | ✅ `74b41acd` lint 0 + 46/46 |
 | 修复复审 | — | — | — | ✅ 逐条追证落地，**Ready: Yes** |
 | 验收日志出口（计划外） | — | — | — | ✅ `d61316d8` lint 0 + 48/48 |
-| Task 6 真机自测 | — | — | — | ⬜ **需要你来跑，方式已改，见下** |
+| Task 6 真机验收 · 核心兜底 | — | — | — | ✅ **已验证生效**，见下「实证」 |
+| Task 6 真机验收 · 回归 4 条 | — | — | — | ⬜ 切账号 / 群聊分母 / 引用缓存 / 只增不减 |
+| 刷新空转 + 日志缺陷修复 | — | — | — | ⬜ 3 条，见下 |
 
 本功能只做 desktop，另三端不涉及。Task 1–5b 的 ✅ = worktree 提交 + 单测 + 评审通过，**不含真机**。
 
@@ -112,6 +114,76 @@ console 里先 `window.__readWatermark.help()` 确认出口在，再用 **`[已�
 
 **这套只服务验收，不参与任何判定逻辑，验完可整体删掉。**
 
+## ✅ 核心兜底已真机验证生效（2026-08-26）
+
+私聊实测日志：
+
+```
+[已读水位] 私聊 767-0D0H 发于 16:45:43 | 本地=- 服务端=- 水位=11:42:18 → **水位兜底**
+```
+
+`本地=-` `服务端=-` —— **回执通道对这条消息一条记录都没有**，正是「回执丢了」的状态；
+水位把它翻成了已读。**这就是本功能存在的理由，它成立了。**
+（767-0D0H 必然是前一天或更早的消息：日志时刻约 11:42，当天 16:45:43 尚未到达。）
+
+同批日志里 `→ 本地册子` 的几条也正确：私聊读出点故意只在其它源都没值时才用水位
+（水位是下界，不如回执精确），符合设计。
+
+三个证据源（表态 / 引用回复 / 对方发言）实测都能收到，日志可见。
+
+### 剩余回归 4 条（非核心，快速过）
+
+1. **切账号不串** —— 唯一会产出错误已读的路径。实测会话 key 已是
+   `1880150187008081921_1_1919599141374148609`，前缀就是自己账号，隔离已在。换账号跟同一人私聊复验一次。
+2. **群聊分母不能被改** —— 不在 @ 名单的人表态，`x/y` 必须完全不变。
+3. **引用缓存没失效** —— 群里有人表态时 `msg-txt.vue:168` 的 `watch msgReceipt` 有无刷屏 / 消息整条闪。
+4. **只增不减** —— 已显示已读的，切走再切回不能退回未读。
+
+## ⚠️ 待修 3 条：一次事件触发 6 次全量重算（2026-08-26）
+
+群聊实测日志里同一批证据**重复 6 遍**，暴露出刷新空转。**日志在生产包里会被编译期消除，
+但重算在生产环境照样发生。**
+
+### 生产包日志开销 = 0（已确认，不用担心）
+
+`readWatermarkDebug.js:19` 的开关是 `process.env.NODE_ENV !== "production"`。
+`.electron-vue/build.js:3` 设 `NODE_ENV=production` → `webpack.renderer.config.js:216` 的
+DefinePlugin 烤成字面量 → 表达式编译期即 `false` → 日志函数第一行 return，压缩时函数体被 DCE。
+
+### 为什么会重算 6 次
+
+**老问题（`origin/release` 就有，不是本功能引入）**：`messageList` 这个 computed
+**自己读又自己写 `innerReadTime`** —— 读在 `msg-list.vue:1067` / `:1071`，写在 `:1073`。
+自失效 computed，一次变更连锁重算好几轮。
+
+本功能把一个 O(N) 全表扫描（`collectWatermark` 每次从空表重扫所有已加载消息）挂在它的
+watcher 上，**放大了这个 thrash**。
+
+**本功能自己的问题**：`refreshReadWatermark` 无条件把 `bumpWatermark` 返回的**新对象**
+赋给 `this.readWatermark`，即使值一个都没变 → 新引用 → 所有依赖它的已读绑定
+（`getStatusText`、`getMergedGroupReceipt`）全部重算。
+
+Task 5b 那层引用缓存挡住了子组件 DOM 重挂，所以**不掉帧**，但上游这一层在空转。
+
+### 实际影响
+
+纯计算量亚毫秒级（N 条消息 × 6 次廉价属性读）。真正开销是每次强制一轮已读绑定重算。
+大群 + 长历史 + 消息密集时会有感。**不阻塞上线，但该修。**
+
+### 三条修法
+
+1. **`refreshReadWatermark` 值没变就不换引用** —— 复用现成的 `isSameReceiptEntry`
+   （形状一样，都是 `{id: 时间戳}`）。掐掉 6 次里的 5 次空转，**顺带日志刷屏也没了**。
+   改的是判定路径外的赋值时机，不改判定结果。
+2. **证据日志去重** —— 只在真正抬到新高点时报一次。现在报的是「本次重算过程中的中间抬高」：
+   `collectWatermark` 每次从空表重扫，遍历顺序靠前的小值也会触发一次「抬高」，
+   所以会报出被后续大值覆盖掉的中间态（实测见过报 11:42:07 又报 11:42:18）。
+3. **日志加日期** —— 改成 `MM-DD HH:mm:ss`。`hhmmss()` 丢掉日期，导致
+   `发于 16:45:43 | 水位=11:42:18 → 水位兜底` 单看像 bug，只能靠「当天 16:45 还没到」倒推。
+   **验收日志必须自证，不该靠推理。**
+
+第 1 条动 `msg-list.vue`，2、3 只动 `readWatermarkDebug.js`。
+
 ## 真机验收前必须先对齐的两件事（不是缺陷）
 
 1. **水位翻出的私聊已读会让一批消息显示同一个时间戳。** 水位是「人」的属性不是「消息」的属性，
@@ -173,11 +245,11 @@ console 里先 `window.__readWatermark.help()` 确认出口在，再用 **`[已�
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
-| context | `main` ahead 250 | 脏 25+ | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 | 否 | 本功能只提交本目录 `status.md`；其余另提 |
+| context | `main` ahead 254 | 脏 25 | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 | 否 | 本功能只提交本目录 `status.md`；其余另提 |
 | web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 波浪下划线 + 对比度已在远端 `f5616c5` |
 | android | `feat/gfm-markdown` | synced | 脏 12 | 否 | GFM：`SpanTagHandler` / 高亮居中 / 波浪线 / 引用前缀+表；另有 `MentionAgentKindResolver` **不要和 GFM 混提**。与水位无关 |
 | ios | `feat/ios-agent-date-range` | **no upstream** | 脏 13 | 否 | GFM：`ZXMarkdownStyle` / LayoutManager 高亮居中 / ActionCard 折叠拆开。分支本身是记忆条日期区间，与水位无关 |
-| desktop | **`feat/pc-read-watermark`** | **ahead 8** | 脏 3 | **是** | 主目录现在就是水位分支。脏区只有 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
+| desktop | **`feat/pc-read-watermark`** | **ahead 8** | 脏 3 | **是** | 主目录即水位分支，本回合只跑真机没改代码。脏区只有 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
 | desktop-watermark | — | — | — | 否 | **空目录，worktree 已摘除**，只剩 `.superpowers/sdd/` 草稿。`git` 命令在里面会穿透到编排仓，报的是编排仓状态，别被误导 |
 | meeting | `main` | synced | 干净 | 否 | — |
 | action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`，vendor 产物，与水位无关，勿 stage |
@@ -244,9 +316,11 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
 - (desktop) 上面三处 EPIPE / Logger 修法**未实施**，改哪条分支待定——主目录现在是 `feat/gfm-markdown`，脏区只剩 3 个本地调试文件。
   **与水位无关，不要合进 `feat/pc-read-watermark`**
 
-- (desktop) **下一步是 Task 6 验收，需要用户来跑。方式已改成看日志**，见上面「验收方式已改」一节。
-  `cd apps/desktop && npm run dev:test`（**必须 dev 模式，打包版日志总开关是关的**）。
-  worktree 没了，不用再切目录、也不用再拷调试配置——主目录本来就有那三个脏文件
+- (desktop) **核心兜底已真机验证生效**（见上「实证」）。**下一步是修那 3 条**：
+  刷新空转（`refreshReadWatermark` 值没变别换引用）+ 证据日志去重 + 日志加日期。
+  第 1 条不改判定结果，只改赋值时机；2、3 只动 `readWatermarkDebug.js`
+- (desktop) 修完再过剩余回归 4 条：切账号 / 群聊分母 / 引用缓存 / 只增不减
+- (desktop) 跑验收用 `cd apps/desktop && npm run dev:test`（**必须 dev 模式，打包版日志总开关是关的**）
 - (desktop) 验收前先跟用户对齐下面「必须先对齐的两件事」，否则会拿回假 bug
 - (desktop) 验收跑完后补 `impl-notes.md`，**务必把 `isLocalMessage` 在本仓库的真实语义记进去**——这是会重复踩的坑
 - (desktop) **8 笔**提交全部**未 push**，分支跟踪的是 `origin/release`。合并 / push 等用户发话
