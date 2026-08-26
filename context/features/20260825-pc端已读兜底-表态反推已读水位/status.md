@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-26（旁路：主目录 GFM 表格宽度已 push `d987d746`，与水位无关。**仍等 Task 6 真机验收**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-26（**验收方式改成看日志**，日志出口已落 `d61316d8`；worktree 已没了，主目录即水位分支）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -17,7 +17,8 @@
 | 终审（全分支 6 commit） | — | — | — | ✅ **With fixes**，2 条 Important |
 | 终审修复（5 条一次提交） | — | — | — | ✅ `74b41acd` lint 0 + 46/46 |
 | 修复复审 | — | — | — | ✅ 逐条追证落地，**Ready: Yes** |
-| Task 6 真机自测（4 条） | — | — | — | ⬜ **需要你来跑** |
+| 验收日志出口（计划外） | — | — | — | ✅ `d61316d8` lint 0 + 48/48 |
+| Task 6 真机自测 | — | — | — | ⬜ **需要你来跑，方式已改，见下** |
 
 本功能只做 desktop，另三端不涉及。Task 1–5b 的 ✅ = worktree 提交 + 单测 + 评审通过，**不含真机**。
 
@@ -63,6 +64,54 @@
 | `getMergedGroupReceipt` 无自动化测试 | 留着——本仓库 CLAUDE.md 明写「测试用例基本空置，质量靠 lint + 真机自测」 |
 | 引用缓存不随消息滚出窗口裁剪 | 留着——与同文件既有 `innerReadTime` / `msgExpansionKeyMap` 同款 |
 
+## ⚠️ 验收方式已改：看日志，不看 UI（2026-08-26）
+
+**原来那四条「先确认 PC 显示未读，再触发证据」的用例，构造不出来。**
+用户指出：对方在手机上打开会话去表态时，**会话打开本身就发了一条正常回执**，PC 在线就收到了，
+已读通过正常通道就翻了——根本分不清是水位兜底生效还是回执本来就好使。原 bug 压根没被复现。
+
+（要真复现，得在第 2 步插「PC 完全退出应用」，让回执到达时 PC 不在线。可行但麻烦，且失败时
+分不清是逻辑错了还是证据压根没到。）
+
+**改为：开发 PC 上 @某人，那人用手机表态 / 发消息，开发 PC 看 console 日志。**
+
+为此加了 `readWatermarkDebug.js`（commit `d61316d8`）。关键设计：
+**即使回执通道正常工作、水位没被用上，日志也照样把水位那一列打出来**——
+一次正常测试就能同时确认「水位算对了」和「当前是谁在起作用」，不用做断线体操。
+
+### 怎么跑
+
+```bash
+cd apps/desktop      # 注意：现在主目录就是水位分支，worktree 已没了
+npm run dev:test
+```
+
+**必须 dev 模式，不能用装好的测试包。** `.electron-vue/build.js:3` 把 `NODE_ENV` 设成 `production`，
+DefinePlugin 烤进包里，日志总开关就关了。dev 模式下 `dev-runner.js` 不设 `NODE_ENV`，
+运行时是 undefined，按「开」处理。
+
+console 里先 `window.__readWatermark.help()` 确认出口在，再用 **`[已读水位]`（带方括号）** 过滤。
+
+### 三类日志
+
+```
+[已读水位] 收到证据：A 的水位抬到 14:32:07（来源：表态或回复，消息 3f9a2b1c）
+[已读水位] 会话 me_3_g12345 当前水位：A=14:32:07  B=14:28:11
+[已读水位] 群聊 8c4d1e0f 发于 14:20:33 | 2/2 | A=**水位**14:32:07  B=本地14:25:02
+[已读水位] 私聊 5b7e9a2d 发于 14:20:33 | 本地=- 服务端=- 水位=14:32:07 → **水位兜底**
+```
+
+**判据：`**水位**` 带星号那行出现 = 兜底真生效。** 若显示 `本地xx:xx`，说明这次回执没丢、
+正常通道在起作用、水位待命——**那也是有效信息，不是失败**。
+
+按判定签名去重，同一条消息判定不变不重复打，不刷屏。`window.__readWatermark` 可查当前水位表
+与最近 200 条证据，`.enabled = false` 随时关。
+
+**已知不足**：总开关关闭时 `installWatermarkDebug()` 提前 return，连 `window.__readWatermark`
+都不挂，所以打包版没法运行时打开。若之后要用测试包验收，需把挂载从开关里摘出来（约 3 行）。
+
+**这套只服务验收，不参与任何判定逻辑，验完可整体删掉。**
+
 ## 真机验收前必须先对齐的两件事（不是缺陷）
 
 1. **水位翻出的私聊已读会让一批消息显示同一个时间戳。** 水位是「人」的属性不是「消息」的属性，
@@ -78,8 +127,8 @@
 
 ## 分支最终状态
 
-`feat/pc-read-watermark`，**7 个 commit，全部未 push**，工作区干净。相对 `origin/release` 净改动
-5 个文件 +813 / -11（其中 372 行是测试）。
+`feat/pc-read-watermark`，**8 个 commit，全部未 push**，工作区只剩 3 个禁提交的本地调试配置。
+相对 `origin/release` 净改动 6 个文件 +1115 / −11（其中 410 行是测试）。
 
 | commit | 内容 |
 |---|---|
@@ -90,22 +139,33 @@
 | `bd52a77c` | 群聊已读名单接入水位，只补分子不改分母 |
 | `e96e3925` | 群聊合并名单加引用缓存（终审前自查发现的回归） |
 | `74b41acd` | 终审两条 Important 修复 |
+| `d61316d8` | 验收日志出口（`readWatermarkDebug.js` + `onEvidence` 回调） |
 
-新增 3 个文件（2 个纯逻辑模块 + 2 个测试文件），改 1 个既有文件（`msg-list.vue`）。
-46 个单测全绿、`npm run lint` exit 0。**合并 / push 等你发话。**
+新增 5 个文件（3 个模块 + 2 个测试文件），改 1 个既有文件（`msg-list.vue`）。
+48 个单测全绿、`npm run lint` exit 0。**合并 / push 等用户发话。**
 
-## 工作目录（并行开发）
+> `readWatermarkDebug.js` 只服务验收、不参与判定，验完可整体删掉（连同 `onEvidence` 回调与
+> `msg-list.vue` 里那 6 处接线）。
 
-| 目录 | 分支 | 归谁 |
-|---|---|---|
-| `apps/desktop` | `feat/gfm-markdown` | 用户 / Cursor，另一条并行任务（GFM / 对比度） |
-| `apps/desktop-watermark`（worktree） | `feat/pc-read-watermark`，相对 `origin/release` ahead 4，工作区干净 | 本功能 |
+## ⚠️ 工作目录：worktree 已没了，回到串行（2026-08-26）
 
-worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，两边共用一份依赖，**禁止任何 install**。
-`node_modules` 与 `.superpowers/` 已加进 `.git/info/exclude`（软链不被 `.gitignore` 的 `node_modules/` 匹配）。
+原来的并行方案（`apps/desktop` 跑 GFM、`apps/desktop-watermark` worktree 跑水位）**已经不存在**。
+不知何时被摘除，现状：
 
-执行方式：subagent-driven-development，每任务一个实施代理 + 一个评审代理，台账在
-`apps/desktop-watermark/.superpowers/sdd/progress.md`。四笔提交均未 push（分支跟踪的是 `origin/release`）。
+| 目录 | 现在 |
+|---|---|
+| `apps/desktop` | **主 checkout**（`.git` 是目录），分支 `feat/pc-read-watermark` @ `d61316d8`，ahead 8 |
+| `apps/desktop-watermark` | **空目录**，无 `.git`、无代码，只剩 `.superpowers/sdd/` 流程草稿。`git` 命令在里面会穿透到编排仓 |
+
+`git worktree list` 只有 `apps/desktop` 一条。
+
+**影响：`feat/gfm-markdown` 现在没有任何地方 checkout 着。** 那条线的改动已 push `d987d746` 不会丢，
+但要继续改 markdown 就得切分支，切了水位这边就得让位——**又变回串行了**。
+是否重新支 worktree，待用户决定。
+
+执行方式：subagent-driven-development，每任务一个实施代理 + 一个评审代理。
+台账仍在 `apps/desktop-watermark/.superpowers/sdd/progress.md`（目录还在，只是没代码）。
+**8 笔提交全部未 push**（分支跟踪的是 `origin/release`）。
 
 ## 各端工作区现状（2026-08-26 收尾，`scripts/code-status.sh` + 手查 3 个）
 
@@ -117,10 +177,10 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 | web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | 波浪下划线 + 对比度已在远端 `f5616c5` |
 | android | `feat/gfm-markdown` | synced | 脏 12 | 否 | GFM：`SpanTagHandler` / 高亮居中 / 波浪线 / 引用前缀+表；另有 `MentionAgentKindResolver` **不要和 GFM 混提**。与水位无关 |
 | ios | `feat/ios-agent-date-range` | **no upstream** | 脏 13 | 否 | GFM：`ZXMarkdownStyle` / LayoutManager 高亮居中 / ActionCard 折叠拆开。分支本身是记忆条日期区间，与水位无关 |
-| desktop | `feat/gfm-markdown` | synced | 脏 3 | 否 | GFM 表格宽度已 push `d987d746`。剩 `.env.test` / `electron-builder.yml` / `package.json` **禁止提交**。与水位无关 |
-| desktop-watermark | `feat/pc-read-watermark` | **ahead 7** vs `origin/release` | 干净 | **是** | 代码全完成，未 push，等真机 |
-| meeting | `main` | synced | 干净 | 否 | 已不在 `merge/pr4-pr7` |
-| action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`，vendor 产物，与水位 / GFM 都无关，勿 stage |
+| desktop | **`feat/pc-read-watermark`** | **ahead 8** | 脏 3 | **是** | 主目录现在就是水位分支。脏区只有 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交** |
+| desktop-watermark | — | — | — | 否 | **空目录，worktree 已摘除**，只剩 `.superpowers/sdd/` 草稿。`git` 命令在里面会穿透到编排仓，报的是编排仓状态，别被误导 |
+| meeting | `main` | synced | 干净 | 否 | — |
+| action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`，vendor 产物，与水位无关，勿 stage |
 
 ## 改动文件清单（相对 `origin/release` `613af430`）
 
@@ -129,6 +189,7 @@ worktree 的 `node_modules` 是指向 `apps/desktop/node_modules` 的软链，�
 | **改** | `src/renderer/components/chitchat/message/msg-list.vue` | +117 / −11 |
 | 新增 | `src/renderer/components/chitchat/read-receipt/readWatermarkModel.js` | +237 |
 | 新增 | `src/renderer/components/chitchat/read-receipt/readWatermarkStore.js` | +87 |
+| 新增 | `src/renderer/components/chitchat/read-receipt/readWatermarkDebug.js`（验收用，可删） | +228 |
 | 新增 | `src/renderer/components/chitchat/read-receipt/tests/readWatermarkModel.test.js` | +297 |
 | 新增 | `src/renderer/components/chitchat/read-receipt/tests/readWatermarkStore.test.js` | +75 |
 
@@ -183,14 +244,14 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
 - (desktop) 上面三处 EPIPE / Logger 修法**未实施**，改哪条分支待定——主目录现在是 `feat/gfm-markdown`，脏区只剩 3 个本地调试文件。
   **与水位无关，不要合进 `feat/pc-read-watermark`**
 
-- (desktop-watermark) **下一步仍是 Task 6 真机验收，需要你来跑**。4 条用例见 `spec.md` 第七节。
-  要起 `npm run dev:test`，与 `apps/desktop` 抢 9080 端口，**起之前先确认主目录的 dev 已停**。
-  worktree 是从 `origin/release` 干净切的，没有主目录那份指向 localhost 的调试配置，先：
-  `cp ../desktop/.env.test ../desktop/electron-builder.yml ../desktop/package.json .`（拷完这三个会变脏，**永远不要 `git add`**）
-- (desktop-watermark) 验收前先跟测试人员对齐上面「必须先对齐的两件事」，否则会拿回假 bug
-- (desktop-watermark) 真机跑完后补 `impl-notes.md`，**务必把 `isLocalMessage` 在本仓库的真实语义记进去**——这是会重复踩的坑
-- (desktop-watermark) **7 笔**提交全部**未 push**，分支跟踪的是 `origin/release`。合并/push 等你发话
-- (desktop) 主目录 `feat/gfm-markdown` 表格宽度已 push `d987d746`（属 `20260820`）。剩 `.env.test` / `electron-builder.yml` / `package.json` 保持脏、勿 stage。**不要合进水位分支**
+- (desktop) **下一步是 Task 6 验收，需要用户来跑。方式已改成看日志**，见上面「验收方式已改」一节。
+  `cd apps/desktop && npm run dev:test`（**必须 dev 模式，打包版日志总开关是关的**）。
+  worktree 没了，不用再切目录、也不用再拷调试配置——主目录本来就有那三个脏文件
+- (desktop) 验收前先跟用户对齐下面「必须先对齐的两件事」，否则会拿回假 bug
+- (desktop) 验收跑完后补 `impl-notes.md`，**务必把 `isLocalMessage` 在本仓库的真实语义记进去**——这是会重复踩的坑
+- (desktop) **8 笔**提交全部**未 push**，分支跟踪的是 `origin/release`。合并 / push 等用户发话
+- (desktop) `feat/gfm-markdown` **现在没有任何地方 checkout 着**（改动已 push `d987d746` 不会丢）。
+  要继续改 markdown 得切分支或重新支 worktree，**待用户决定**。切走的话水位这边就得让位
 - (android) `feat/gfm-markdown` 脏 12：高亮居中、波浪线、引用前缀+表、`MentionAgentKindResolver`。**提交 GFM 不要带 mention**。与水位无关
 - (ios) `feat/ios-agent-date-range` 脏 13：GFM 高亮居中 / 标签 / ActionCard 折叠。与水位无关
 - (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*`，与本功能无关，勿 stage
