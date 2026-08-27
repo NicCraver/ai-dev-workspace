@@ -18,4 +18,4 @@
 
 ## 待办 / 阻塞
 
-- 无。后续可用 web-design-guidelines 做视觉整改（独立目标）。
+- 无。web-design-guidelines 已对管理壳、预定弹层、记录页做焦点/表单/导航整改。
