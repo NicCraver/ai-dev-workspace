@@ -1,1 +1,3 @@
-20260814-pc安卓-GFM-Markdown渲染对齐
+# 活跃功能清单：每行一个功能目录名，第一行为主功能（SessionStart 只注入它的 status.md 全文）
+# 本行这样的注释与空行会被忽略；无活跃功能时留空或写 none
+none

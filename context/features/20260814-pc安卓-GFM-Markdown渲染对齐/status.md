@@ -1,6 +1,20 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-27（收尾：本回合零编码，仅打招呼；安卓 T15 脏区仍 2 文件未提交/未真机验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> **已结项（2026-08-27）**——用户判定功能完成，已从 `context/features/ACTIVE` 移出，不再是活跃功能。
+> 最后更新：2026-08-27（结项收尾）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+
+## 结项说明（2026-08-27）
+
+功能按用户判定完成。下面的矩阵与待办**保持结项当刻的事实原样，未做乐观刷绿**，留给日后回溯。
+
+**结项时的遗留，均由用户自行处理，非阻塞**：
+
+- (android) T15 长按修复两文件（`ZXMarkdownContentView.java` + `ZXMarkdownTableView.java`）结项时仍在 `feat/gfm-markdown` 工作区**未提交**。用户明确表示代码侧自己处理（提交 / push / 丢弃均由其决定），本次收尾只动文档。
+- (desktop) `feat/gfm-markdown` 结项时 **behind 1**（origin `5213e645`），本地调试三件套 `.env.test` / `electron-builder.yml` / `package.json` 仍脏且**禁止提交**。
+- 矩阵里 T6 / T12（两端用例页）仍是 🚧：用例页已建但未逐条自测，**结项时也未删**。日后清理时删 PC `components/debug/MarkdownGfmCases.vue` + router 那条、安卓 `com/im/debug/MarkdownGfmCasesActivity.java` + manifest 那条。
+- 下方「下一步全是运行时自测」整批**未执行**——全部 ✅ 的判据始终是「代码写完 + 编译通过」，不含运行时验证。已真机验过的只有：登录崩溃修复、issue #9 之前的几轮自测反馈项。
+
+**沉淀去处**：三端样式唯一事实来源是 `context/design/markdown-style-tokens.md`（未随本功能结项失效，后续改 markdown 样式仍以它为准）。安卓崩溃排查经验已写进 `context/platforms/android.md`。
 
 ## 平台矩阵
 
