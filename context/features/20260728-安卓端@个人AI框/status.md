@@ -1,6 +1,6 @@
 # Status：安卓端@个人AI框
 
-> 最后更新：2026-08-26（复制 @个人 粘贴成群：根因 extra 不带 kind；发送已写入 kind，旧 extra 仍走缓存补。单测 11/11，待装包真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-27（`9db9de690` 已整条 revert = `4439ae468`：发送恢复正常，粘贴补 kind 一并退回，待另想办法）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -65,7 +65,10 @@
 - (android) **抓包确认**：`aiRobtChat` 个人分支 `dataRangeList` 原样透传 3/4/1/2（勿被群侧 0/1/2 序列化污染）；`saveDataRange` 不得用空列表覆盖
 - (android) ⚠️ **群智能体回归**：本期改了 `@` 列表与知识类型胶囊「类型+N」，须回归群主流程并**告知测试**
 - (android) 大输入区（`ConversationLargeInputView`）为第二条链路，手测须单独覆盖「大输入内 `@` 个人 AI 发送」
-- (android) **2026-08-26 已修、待真机**：用户给的 extra 实证 `atUserList` 只有 `ga_2079…` / 名字 / 下标，没有 `agentKind`。发送链路 `MentionBlock → ToDoPlayers → extra` 原先丢掉 kind。现 extra 带上 kind；粘贴能读回；你贴的那条旧消息没有 kind，仍靠本群缓存补（`MentionAgentKindResolver`）。单测 extra 3 + resolver 8。代码在 `feat/gfm-markdown` 工作树，**不要和 GFM 混提**。
+- (android) ✅ **2026-08-27 `9db9de690` 整条回退**（`4439ae468`，已 push `origin/feat/gfm-markdown`）：真机验证 **@个人AI框 发送恢复正常**。`extra.atUserList` 是三端硬契约，只能有 `atUserId/atUserName/startIndex/endIndex`（iOS `SendMessage.m:1236-1240`、desktop `send-box.vue:1588-1593` 均只有这四个），多塞 `agentKind`/`agentId` 后只有安卓与另两端不同构，后端不认。**别再往发送 extra 里加字段。**
+- (android) ⬜ **复制 @个人 粘贴的 kind 识别退回坏状态**：`fillMissingAgentKind`（按缓存 belongId 补 kind、`accountId` 与 `群id_本人` 两种 key 都认）随回退一起删了，粘贴后个人 AI 重新被当成群智能体。原实现可从 git 历史 `9db9de690` 取回（`MentionAgentKindResolver` + `MsgDraftRichConvertUtil`）——**只能走本地缓存那条路，不能改 extra**。
+- (android) ⚠️ **`aiRobtChat` 业务错误码被吞**：`ConversationFragmentParent.java:219-221` 的 `onSuccess` 拿着 `JsonObjectResult.getCode()`/`getMsg()` 一个都没读，后端报错客户端零提示，这次因此多绕一圈。查智能体链路先补日志再猜。
+- (android) 📌 **撤回不等于后端不认**：智能体回答是两条消息——回答中是引用消息（流式座位），回答完**座位被撤回**、另发一条 AI 卡片（见 `20260820-安卓-智能体流式输出抖动/impl-notes.md:76-78`）。看到「消息来了又被撤回」先分清是正常收尾还是失败。
 - (android) 分支 `personal-ai-chat` 与 `origin` 同步，工作树干净；`75d77f547`（选人企业列表/组织钻取）属 `20260707-选择AI框`，非本功能
 - (ios) `20260728-ios端at个人AI框` 的 E2E 手测清单仍未勾，见该功能 status
 - (desktop) 工作区打包/`.env`/DataScope 等本地改动 → **不属于本功能**

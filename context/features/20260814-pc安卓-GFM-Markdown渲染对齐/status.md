@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-26（旁路：PC 表格宽度已 push `d987d746`；安卓引用高亮仍等真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-27（安卓同分支旁路 mention 已整条回退并 push `4439ae468`，markdown 未受影响；PC 表格宽度已 push `d987d746`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -40,6 +40,24 @@
 **PC 新增单测 35 条**（`markdown-render.spec.js` 23 + `markdown-fold-model.spec.js` 12），全绿。安卓无单测（工程本来就没有）。
 
 **安卓新增 4 个类**：`ZXMarkwonFactory`（配置收敛 + 兜底 + 开关）、`ZXMarkdownSegment` / `ZXMarkdownSegmenter`（AST 切段）、`ZXMarkdownTableView`（横滚表格）、`ZXMarkdownContentView`（段栈 + 按段折叠）。
+
+## 2026-08-27 安卓同分支旁路：mention 整条回退（已 push `4439ae468`）
+
+`feat/gfm-markdown` 上除 GFM 外还搭着一摊 mention 改动（`9db9de690` 复制@个人粘贴按实际 belongId 补 `agentKind`）。该提交导致**个人智能体发送后端不认**，本次整条 revert 并 push。与 GFM 无关，但同分支，记在这里免得下次翻分支时困惑。
+
+**根因**：`extra.atUserList` 是三端硬契约，只允许 `atUserId / atUserName / startIndex / endIndex`——iOS `ZXRCIMBaseChatController+SendMessage.m:1236-1240`、desktop `send-box.vue:1588-1593` 都只有这四个。`9db9de690` 单方面多塞 `agentKind` / `agentId`，只有安卓这条链路与另两端不同构。真机验证：回退后 @个人AI框 发送恢复正常。
+
+**对 markdown 无影响**，三条证据：
+
+1. 相对 HEAD 全是删除、零新增：`8 files changed, 412 deletions(-)`
+2. 文件集与 markdown 那串提交（`a092b0c3c` ~ `9c62212a1`，21 个文件）只在 `ConversationFragment.java` 相交，而该文件只差两行——`:1855-1856` 的 `setAgentKind` / `setAgentId`，位置在发送 extra 的 `atUserList` 组装处，与渲染无关
+3. `:IM:testOnTestDebugUnitTest` 16/16 绿：`AgentMarkdownPreprocessorTest` 3 + `SpanTagHandlerTest` 10 + `VerticalCenterBackgroundSpanTest` 3
+
+**回退的代价**（归 `20260728-安卓端@个人AI框`）：复制一条带 @个人AI 的消息再粘贴，个人 AI 重新被识别成群智能体——`fillMissingAgentKind` 那套按缓存补 kind 一并退掉，待另找不改 extra 的方案。
+
+**顺带查实的坑**：`aiRobtChat` 的业务错误码被完全吞掉——`ConversationFragmentParent.java:219-221` 的 `onSuccess` 拿着 `JsonObjectResult.getCode()` / `getMsg()` 一个都没读，后端报错客户端零提示。下次查智能体链路先补日志再猜。
+
+**本轮出的包**（均基于回退后代码）：`zx-android-test_v3.6.21.apk`（onTest debug，88.4 MB）、`zx-android-prod_v3.6.21.apk`（publish release，77.7 MB）。安卓仓库工作区现已干净，分支 `feat/gfm-markdown` 与 origin 同步于 `4439ae468`。
 
 ## 各端工作区现状（2026-08-25，`scripts/code-status.sh --short`）
 
