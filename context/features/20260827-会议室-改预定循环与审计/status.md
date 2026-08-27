@@ -7,7 +7,7 @@
 | 平台 | 状态 | 说明 |
 |---|---|---|
 | meeting server | 已完成 | 改预定、周循环展开、我的历史、审计表、管理端列表；`booked` 事件带 title + slot |
-| meeting web | 进行中 | 助手成功卡可关面板；换表情眨眼过渡 + 球身回弹 |
+| meeting web | 进行中 | 助手面板阴影改为向下分层；成功卡可关；换表情眨眼过渡 |
 | meeting 测试 | 已完成 | `buddyPose` 插值；web / server 单测 |
 
 ## 决策（已拍板）
