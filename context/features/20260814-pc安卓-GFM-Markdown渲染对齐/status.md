@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-27（收尾：同步各端工作区；`zx-android-prod_v3.6.22` 已 adb 装真机、T15 长按**未验**；`ZXMarkdownTableView` 修复仍脏未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-27（收尾：本回合未动 GFM；安卓 T15 脏区扩到段栈+表格共 2 文件，仍未提交/未真机验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,7 +26,7 @@
 | T12 31 条用例页（已建，**待自测**） | — | 🚧 | — | — |
 | T13 收尾（impl-notes + status） | — | ✅ | — | ✅ |
 | T14 三端样式统一（token 表落地，**运行时未验**） | — | ✅ | ✅ | ✅ |
-| T15 表格区域长按弹窗修复（计划外，**真机未验**） | — | 🚧 | — | — |
+| T15 表格/段栈长按弹窗修复（计划外，**真机未验**） | — | 🚧 | — | — |
 
 > ✅ 的判据是**代码写完 + 编译通过**（PC：`npm run lint` 干净 + vitest 23 条全绿；安卓：`assembleDevelopDebug` BUILD SUCCESSFUL）。
 > **不含任何运行时验证**——表格横滚、折叠不切块、长按不被吞、配色观感，一眼都没看过。
@@ -60,7 +60,21 @@
 
 **本轮出的包**（均基于回退后代码）：`zx-android-test_v3.6.21.apk`（onTest debug，88.4 MB）、`zx-android-prod_v3.6.21.apk`（publish release，77.7 MB）。**2026-08-27 午后**另出 `zx-android-prod_v3.6.22.apk`（publish release，约 78 MB，tip `a3934d51f`；构建时工作区带脏 `ZXMarkdownTableView` → 包内**可能已含** T15 长按修复）。该 v3.6.22 正式包已 `adb install -r` 至真机 `2509FPN0BC`（`2509FPN0BC` 型号），**功能未验**。安卓仓库仍脏 1（同上文件未 commit）。
 
-## 各端工作区现状（2026-08-27 收尾，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-27 下午收尾，`scripts/code-status.sh`）
+
+本回合会话在查 `apps/action-center` 周五总结字段并写根目录 md，**没有改 PC/安卓 GFM 代码、没有 web 联调**。stop hook 因 apps 脏区触发。相对上一轮收尾：安卓脏区从 1 变 2（段栈也接手长按）。
+
+| 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
+|----|------|------|------|--------------|------|
+| context | `main` | ahead 271 | 脏 24（脚本/commands） | 本功能只改本 status | tip `7c69d72`。打包脚本 / `pack.md` / `pnpm-lock` **勿并入本 commit** |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 旁路 | tip `f5616c5` |
+| android | **`feat/gfm-markdown`** | synced | **脏 2** | **本功能 T15** | `ZXMarkdownTableView.java` + `ZXMarkdownContentView.java`（+118/−2）。文字段 `LinkMovementMethod` 同样吞 DOWN，段栈 `dispatchTouchEvent` 旁观代判长按再 `performLongClick`。**未提交、真机未验**。tip `a3934d51f`（v3.6.22） |
+| ios | `master-3.5.31` | synced | 干净 | 旁路 | GFM 已合进主干（`16146b73f`） |
+| desktop | `feat/gfm-markdown` | **behind 1** | 脏 3 | 本功能分支 | 仍是 `.env.test` / `electron-builder.yml` / `package.json` **禁止提交**；远端多 `5213e645`，本地 tip `41c5caf9` |
+| action-center | `release` | synced | 脏 7 | **旁路** | 仅删 `@tiptap-pro/extension-unique-id/dist/*`，勿 stage。根目录 `周五总结-*-版本字段汇总.md` 是查阅笔记，不属本功能 |
+| meeting | `fix/meeting-full-app-gaps` | 无 upstream | 脏多 | **旁路** | 预订/房间/助手，非 GFM |
+
+## 各端工作区现状（2026-08-27 午收尾，`scripts/code-status.sh`）
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
@@ -214,8 +228,8 @@
 
 ## 待办 / 阻塞
 
-- (android) **T15 真机复验（优先）**：`zx-android-prod_v3.6.22.apk` 已装 `2509FPN0BC`。在含表格消息上验 issue #10 四点：① 长按表格区弹转发/回复菜单 ② 长按文字区仍正常 ③ 横滚表格中途松手不误弹 ④ 表格上纵滑会话列表不误弹。通过后 commit `ZXMarkdownTableView.java`；未通过继续改。
-- (android) `ZXMarkdownTableView.java` T15 长按修复仍在工作区（+82 行），**未 commit**——勿与 mention / #9 等旁路混提交。
+- (android) **T15 真机复验（优先）**：`zx-android-prod_v3.6.22.apk` 已装 `2509FPN0BC`，但**当前脏代码比装机包多**（段栈长按尚未进包）。验 issue #10：① 长按表格区弹菜单 ② 长按**段栈文字区**（含链接空白处）也能弹、且只弹一次 ③ 横滚中途松手不误弹 ④ 表格上纵滑列表不误弹。通过后再一起 commit 下面两个文件。
+- (android) T15 未提交：`ZXMarkdownTableView.java` + `ZXMarkdownContentView.java`（段栈代判长按，因 MovementMethod 吞 DOWN）。勿与 mention / #9 混提交。
 - (desktop) `feat/gfm-markdown` **behind 1**（origin `5213e645` v3.4.26），pull 前确认本地调试三件套不 stage。
 - (android) **真机验 #9**：装当前 `feat/gfm-markdown` 包，打开那条带 `referMsg` 的智能体表格回复，应出现可横滚表格（表头底 + 边框），「回复 @xxx：」在表上方单独一行。无表格的 @ 回复回归一次（前缀与正文之间会多一段间距，对齐 PC 把前缀放在 markdown 外）。
 - (android) 2026-08-24 仓库在 `feat/gfm-markdown`（origin 同步）。#9 的 5 个文件**未提交**。收纳组未提交改动已丢弃，不并入本分支。
@@ -337,7 +351,9 @@ java.lang.IllegalArgumentException: the bind value at index 71 is null
 
 > 表格区域的**单击**同样被横滚容器吞着，本次未动（用户只报了长按；表格区吞单击对横滚体验反而更稳）。要放行再说。
 >
-> 复验点：① 长按表格区域弹菜单 ② 长按表格外文字区域仍正常 ③ 横滚表格中途松手不误弹 ④ 在表格上纵向滑动，消息列表照常滚且不误弹。
+> 复验点：① 长按表格区域弹菜单 ② 长按表格外**段栈文字**仍正常且不双弹 ③ 横滚表格中途松手不误弹 ④ 在表格上纵向滑动，消息列表照常滚且不误弹。
+>
+> **2026-08-27 下午**：工作区相对装机包又多了 `ZXMarkdownContentView`——文字段 `LinkMovementMethod` 同样吞 `ACTION_DOWN`，只改表格控件盖不住「长按文字也不出菜单」。尚未编译进 v3.6.22。
 
 ### 已知未做
 
