@@ -1,6 +1,6 @@
 # Status：智能会议室 · 助手 agent 预定
 
-> 最后更新：2026-08-27（Task 8 收尾） ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-27（补 server/.env.example） ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 一句话
 
@@ -23,7 +23,7 @@
 
 ## 待办 / 阻塞
 
-- (meeting) 无 `MEETING_LLM_*` 时服务端返回 M4000、零写库，已单测覆盖；浏览器无 key 路径待人工点验。
+- (meeting) LLM 配置：`server/.env.example` 复制为 `server/.env`（gitignore）。变量 `MEETING_LLM_BASE_URL` / `MEETING_LLM_API_KEY` / `MEETING_LLM_MODEL`。key 为空时仍返回 M4000「助手未配置」。
 - (meeting) 有 key 后补一轮真实 LLM 联调（理解 + 推荐档 + 确认写库）。
 
 ## 关键决策记录
