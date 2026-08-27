@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-27（收尾：本回合未动 GFM；安卓 T15 脏区扩到段栈+表格共 2 文件，仍未提交/未真机验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-27（收尾：本回合零编码，仅打招呼；安卓 T15 脏区仍 2 文件未提交/未真机验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -60,13 +60,13 @@
 
 **本轮出的包**（均基于回退后代码）：`zx-android-test_v3.6.21.apk`（onTest debug，88.4 MB）、`zx-android-prod_v3.6.21.apk`（publish release，77.7 MB）。**2026-08-27 午后**另出 `zx-android-prod_v3.6.22.apk`（publish release，约 78 MB，tip `a3934d51f`；构建时工作区带脏 `ZXMarkdownTableView` → 包内**可能已含** T15 长按修复）。该 v3.6.22 正式包已 `adb install -r` 至真机 `2509FPN0BC`（`2509FPN0BC` 型号），**功能未验**。安卓仓库仍脏 1（同上文件未 commit）。
 
-## 各端工作区现状（2026-08-27 下午收尾，`scripts/code-status.sh`）
+## 各端工作区现状（2026-08-27 傍晚收尾，`scripts/code-status.sh`）
 
-本回合会话在查 `apps/action-center` 周五总结字段并写根目录 md，**没有改 PC/安卓 GFM 代码、没有 web 联调**。stop hook 因 apps 脏区触发。相对上一轮收尾：安卓脏区从 1 变 2（段栈也接手长按）。
+**本回合零编码**（会话只有一句打招呼）。stop hook 由上一回合遗留的 apps 脏区触发，各端状态与下方「下午收尾」快照完全一致：安卓 T15 两文件仍未提交、未真机验；desktop 仍 behind 1、脏区仍是禁提交三件套。唯一变化是 context 自身文档提交推进（ahead 271→272，脏 24→26，多出 `迭代.md` 等笔记）。
 
 | 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
 |----|------|------|------|--------------|------|
-| context | `main` | ahead 271 | 脏 24（脚本/commands） | 本功能只改本 status | tip `7c69d72`。打包脚本 / `pack.md` / `pnpm-lock` **勿并入本 commit** |
+| context | `main` | ahead 272 | 脏 26（脚本/commands/笔记） | 本功能只改本 status | tip `d97c714`。打包脚本 / `pack.md` / `pnpm-lock` / 根目录周五总结与 `迭代.md` **勿并入本 commit** |
 | web | `feat/web-markdown-table-align-pc` | synced | 干净 | 旁路 | tip `f5616c5` |
 | android | **`feat/gfm-markdown`** | synced | **脏 2** | **本功能 T15** | `ZXMarkdownTableView.java` + `ZXMarkdownContentView.java`（+118/−2）。文字段 `LinkMovementMethod` 同样吞 DOWN，段栈 `dispatchTouchEvent` 旁观代判长按再 `performLongClick`。**未提交、真机未验**。tip `a3934d51f`（v3.6.22） |
 | ios | `master-3.5.31` | synced | 干净 | 旁路 | GFM 已合进主干（`16146b73f`） |
