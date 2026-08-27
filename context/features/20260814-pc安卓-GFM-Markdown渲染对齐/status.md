@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-27（T15 第二轮：长按判定上收到段栈容器，覆盖文字段/表格段，编译过、**真机未验**）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-27（收尾：同步各端工作区；`zx-android-prod_v3.6.22` 已 adb 装真机、T15 长按**未验**；`ZXMarkdownTableView` 修复仍脏未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,7 +26,7 @@
 | T12 31 条用例页（已建，**待自测**） | — | 🚧 | — | — |
 | T13 收尾（impl-notes + status） | — | ✅ | — | ✅ |
 | T14 三端样式统一（token 表落地，**运行时未验**） | — | ✅ | ✅ | ✅ |
-| T15 markdown 正文长按弹窗修复（计划外，第二轮改法**真机未验**） | — | 🚧 | — | — |
+| T15 表格区域长按弹窗修复（计划外，**真机未验**） | — | 🚧 | — | — |
 
 > ✅ 的判据是**代码写完 + 编译通过**（PC：`npm run lint` 干净 + vitest 23 条全绿；安卓：`assembleDevelopDebug` BUILD SUCCESSFUL）。
 > **不含任何运行时验证**——表格横滚、折叠不切块、长按不被吞、配色观感，一眼都没看过。
@@ -214,6 +214,9 @@
 
 ## 待办 / 阻塞
 
+- (android) **T15 真机复验（优先）**：`zx-android-prod_v3.6.22.apk` 已装 `2509FPN0BC`。在含表格消息上验 issue #10 四点：① 长按表格区弹转发/回复菜单 ② 长按文字区仍正常 ③ 横滚表格中途松手不误弹 ④ 表格上纵滑会话列表不误弹。通过后 commit `ZXMarkdownTableView.java`；未通过继续改。
+- (android) `ZXMarkdownTableView.java` T15 长按修复仍在工作区（+82 行），**未 commit**——勿与 mention / #9 等旁路混提交。
+- (desktop) `feat/gfm-markdown` **behind 1**（origin `5213e645` v3.4.26），pull 前确认本地调试三件套不 stage。
 - (android) **真机验 #9**：装当前 `feat/gfm-markdown` 包，打开那条带 `referMsg` 的智能体表格回复，应出现可横滚表格（表头底 + 边框），「回复 @xxx：」在表上方单独一行。无表格的 @ 回复回归一次（前缀与正文之间会多一段间距，对齐 PC 把前缀放在 markdown 外）。
 - (android) 2026-08-24 仓库在 `feat/gfm-markdown`（origin 同步）。#9 的 5 个文件**未提交**。收纳组未提交改动已丢弃，不并入本分支。
 - (android) **真机验 ActionCard HTML 高亮**：群机器人 `ZX:ActionCardMsg` 正文含 `<mark style="background:…">` 与 `span` 的 `background-color` / `background`。PC 正确；修前安卓无底色（`SpanTagHandler` 只上前景色，且 `color:` 正则会误吃 `background-color`）。代码已改，`SpanTagHandlerTest` 7/7。**与 `MentionAgentKindResolver` 不要混提交。**
@@ -332,13 +335,9 @@ java.lang.IllegalArgumentException: the bind value at index 71 is null
 |---|------|------|------|
 | 10 | 含表格的 markdown 消息，长按**表格区域**弹不出转发/回复菜单；同一条消息长按文字区域正常 | `ZXMarkdownTableView` 继承 `HorizontalScrollView`，其 `onTouchEvent` 自处理全部触摸、**从不调 `super.onTouchEvent`**：既不看 `clickable`/`longClickable`（`:73` 那句 `setLongClickable(false)` 无效），`View.checkForLongClick` 也永远排不上，末尾还无条件 `return true` 把 DOWN 吞掉 → 气泡根的长按监听（`MessageListAdapter:620`）收不到手势。表格段是 `MATCH_PARENT` 宽，等于气泡中间一条通栏死区。**2026-08-14 第 4 条「顺带修掉长按被吞」对表格段不成立** | `ZXMarkdownTableView` 自判长按（按下计时 + `touchSlop` 撤销 + `cancelLongPress`/detach 清理），超时沿 parent 链 `performLongClick` 上抛。`:IM:compileOnTestDebugJavaWithJavac` BUILD SUCCESSFUL。**未提交**；`zx-android-prod_v3.6.22` 已装真机但**长按四点未验** |
 
-**第二轮真机（同日）**：表格能弹了，**markdown 其余正文仍不弹**。追加根因——段栈的文字段也吞按下事件：`TextView.onTouchEvent` 里 movement 一 handled 就 `return true`，而 `LinkMovementMethod` 没命中链接会落到 `Touch.onTouchEvent`，后者 **ACTION_DOWN 无条件 `return true`**（android-29 源码 `Touch.java:103`）。等于段栈整片都是死区。
-
-改法**上收一处**：`ZXMarkdownTableView` 里那份判定删掉（各判各的会一次长按弹两次），改由 `ZXMarkdownContentView.dispatchTouchEvent` 旁观触摸序列——**仅当这一 DOWN 被子 View 消费**才代为计时（没被消费的本来就会冒泡到气泡根，重复判就是双弹），超时沿 parent 链 `performLongClick` 上抛，弹出后补发 cancel 给子 View（否则抬手会被链接 movement 当成一次链接点击）。覆盖文字段 / 表格段 / 知识来源段及以后新增段。`:IM:compileOnTestDebugJavaWithJavac` BUILD SUCCESSFUL。**未提交、真机未验**。
-
-> 仍是死区（本轮未动）：卡片底部按钮列表（`mRvBtnList` 自身是 RecyclerView）、引用块内部（`ReferencePreviewView` 有自己的点击/长按监听）。表格区域的**单击**也仍被横滚容器吞着——用户只要求长按。
+> 表格区域的**单击**同样被横滚容器吞着，本次未动（用户只报了长按；表格区吞单击对横滚体验反而更稳）。要放行再说。
 >
-> 复验点：① 长按 markdown 正文任意处（文字/表格/知识来源）都弹菜单 ② 长按只弹一次，不是两次 ③ 长按链接：弹菜单且**不**跳转链接 ④ 横滚表格中途松手不误弹 ⑤ 在正文上纵向滑动，消息列表照常滚且不误弹 ⑥ 短按链接仍能跳转。
+> 复验点：① 长按表格区域弹菜单 ② 长按表格外文字区域仍正常 ③ 横滚表格中途松手不误弹 ④ 在表格上纵向滑动，消息列表照常滚且不误弹。
 
 ### 已知未做
 
