@@ -1,7 +1,7 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
 > **已结项（2026-08-27）**——用户判定功能完成，已从 `context/features/ACTIVE` 移出，不再是活跃功能。
-> 最后更新：2026-08-27（结项收尾）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-27（T15 已 commit + push `4a283b741`，真机仍未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 结项说明（2026-08-27）
 
@@ -9,7 +9,7 @@
 
 **结项时的遗留，均由用户自行处理，非阻塞**：
 
-- (android) T15 长按修复两文件（`ZXMarkdownContentView.java` + `ZXMarkdownTableView.java`）结项时仍在 `feat/gfm-markdown` 工作区**未提交**。用户明确表示代码侧自己处理（提交 / push / 丢弃均由其决定），本次收尾只动文档。
+- (android) T15 长按修复已提交并 push：`4a283b741`（`feat/gfm-markdown`，synced）。真机长按四点仍未验。
 - (desktop) `feat/gfm-markdown` 结项时 **behind 1**（origin `5213e645`），本地调试三件套 `.env.test` / `electron-builder.yml` / `package.json` 仍脏且**禁止提交**。
 - 矩阵里 T6 / T12（两端用例页）仍是 🚧：用例页已建但未逐条自测，**结项时也未删**。日后清理时删 PC `components/debug/MarkdownGfmCases.vue` + router 那条、安卓 `com/im/debug/MarkdownGfmCasesActivity.java` + manifest 那条。
 - 下方「下一步全是运行时自测」整批**未执行**——全部 ✅ 的判据始终是「代码写完 + 编译通过」，不含运行时验证。已真机验过的只有：登录崩溃修复、issue #9 之前的几轮自测反馈项。
@@ -72,7 +72,7 @@
 
 **顺带查实的坑**：`aiRobtChat` 的业务错误码被完全吞掉——`ConversationFragmentParent.java:219-221` 的 `onSuccess` 拿着 `JsonObjectResult.getCode()` / `getMsg()` 一个都没读，后端报错客户端零提示。下次查智能体链路先补日志再猜。
 
-**本轮出的包**（均基于回退后代码）：`zx-android-test_v3.6.21.apk`（onTest debug，88.4 MB）、`zx-android-prod_v3.6.21.apk`（publish release，77.7 MB）。**2026-08-27 午后**另出 `zx-android-prod_v3.6.22.apk`（publish release，约 78 MB，tip `a3934d51f`；构建时工作区带脏 `ZXMarkdownTableView` → 包内**可能已含** T15 长按修复）。该 v3.6.22 正式包已 `adb install -r` 至真机 `2509FPN0BC`（`2509FPN0BC` 型号），**功能未验**。安卓仓库仍脏 1（同上文件未 commit）。
+**本轮出的包**（均基于回退后代码）：`zx-android-test_v3.6.21.apk`（onTest debug，88.4 MB）、`zx-android-prod_v3.6.21.apk`（publish release，77.7 MB）。**2026-08-27 午后**另出 `zx-android-prod_v3.6.22.apk`（publish release，约 78 MB，tip `a3934d51f`；构建时工作区带脏 `ZXMarkdownTableView` → 包内**可能已含**部分 T15）。该包已装真机 `2509FPN0BC`，**功能未验**。完整 T15（含段栈代判）在之后的 `4a283b741`，**未打进该 v3.6.22 包**。
 
 ## 各端工作区现状（2026-08-27 傍晚收尾，`scripts/code-status.sh`）
 
@@ -242,8 +242,7 @@
 
 ## 待办 / 阻塞
 
-- (android) **T15 真机复验（优先）**：`zx-android-prod_v3.6.22.apk` 已装 `2509FPN0BC`，但**当前脏代码比装机包多**（段栈长按尚未进包）。验 issue #10：① 长按表格区弹菜单 ② 长按**段栈文字区**（含链接空白处）也能弹、且只弹一次 ③ 横滚中途松手不误弹 ④ 表格上纵滑列表不误弹。通过后再一起 commit 下面两个文件。
-- (android) T15 未提交：`ZXMarkdownTableView.java` + `ZXMarkdownContentView.java`（段栈代判长按，因 MovementMethod 吞 DOWN）。勿与 mention / #9 混提交。
+- (android) **T15 真机复验（优先）**：代码已在 `4a283b741`。装机包 `zx-android-prod_v3.6.22` 仍是 `a3934d51f`，**不含段栈代判**。需重出包含 `4a283b741` 的包再验 issue #10：① 长按表格区弹菜单 ② 长按**段栈文字区**（含链接空白处）也能弹、且只弹一次 ③ 横滚中途松手不误弹 ④ 表格上纵滑列表不误弹。
 - (desktop) `feat/gfm-markdown` **behind 1**（origin `5213e645` v3.4.26），pull 前确认本地调试三件套不 stage。
 - (android) **真机验 #9**：装当前 `feat/gfm-markdown` 包，打开那条带 `referMsg` 的智能体表格回复，应出现可横滚表格（表头底 + 边框），「回复 @xxx：」在表上方单独一行。无表格的 @ 回复回归一次（前缀与正文之间会多一段间距，对齐 PC 把前缀放在 markdown 外）。
 - (android) 2026-08-24 仓库在 `feat/gfm-markdown`（origin 同步）。#9 的 5 个文件**未提交**。收纳组未提交改动已丢弃，不并入本分支。
@@ -361,13 +360,13 @@ java.lang.IllegalArgumentException: the bind value at index 71 is null
 
 | # | 症状 | 根因 | 处理 |
 |---|------|------|------|
-| 10 | 含表格的 markdown 消息，长按**表格区域**弹不出转发/回复菜单；同一条消息长按文字区域正常 | `ZXMarkdownTableView` 继承 `HorizontalScrollView`，其 `onTouchEvent` 自处理全部触摸、**从不调 `super.onTouchEvent`**：既不看 `clickable`/`longClickable`（`:73` 那句 `setLongClickable(false)` 无效），`View.checkForLongClick` 也永远排不上，末尾还无条件 `return true` 把 DOWN 吞掉 → 气泡根的长按监听（`MessageListAdapter:620`）收不到手势。表格段是 `MATCH_PARENT` 宽，等于气泡中间一条通栏死区。**2026-08-14 第 4 条「顺带修掉长按被吞」对表格段不成立** | `ZXMarkdownTableView` 自判长按（按下计时 + `touchSlop` 撤销 + `cancelLongPress`/detach 清理），超时沿 parent 链 `performLongClick` 上抛。`:IM:compileOnTestDebugJavaWithJavac` BUILD SUCCESSFUL。**未提交**；`zx-android-prod_v3.6.22` 已装真机但**长按四点未验** |
+| 10 | 含表格的 markdown 消息，长按**表格区域**弹不出转发/回复菜单；同一条消息长按文字区域正常 | `ZXMarkdownTableView` 继承 `HorizontalScrollView`，其 `onTouchEvent` 自处理全部触摸、**从不调 `super.onTouchEvent`**：既不看 `clickable`/`longClickable`（`:73` 那句 `setLongClickable(false)` 无效），`View.checkForLongClick` 也永远排不上，末尾还无条件 `return true` 把 DOWN 吞掉 → 气泡根的长按监听（`MessageListAdapter:620`）收不到手势。表格段是 `MATCH_PARENT` 宽，等于气泡中间一条通栏死区。**2026-08-14 第 4 条「顺带修掉长按被吞」对表格段不成立** | 最终方案：段栈 `ZXMarkdownContentView.dispatchTouchEvent` 旁观代判长按再上抛（表格与 `LinkMovementMethod` 文字段都吞 DOWN）。已 push `4a283b741`。**真机四点未验**；v3.6.22 装机包不含此提交 |
 
 > 表格区域的**单击**同样被横滚容器吞着，本次未动（用户只报了长按；表格区吞单击对横滚体验反而更稳）。要放行再说。
 >
 > 复验点：① 长按表格区域弹菜单 ② 长按表格外**段栈文字**仍正常且不双弹 ③ 横滚表格中途松手不误弹 ④ 在表格上纵向滑动，消息列表照常滚且不误弹。
 >
-> **2026-08-27 下午**：工作区相对装机包又多了 `ZXMarkdownContentView`——文字段 `LinkMovementMethod` 同样吞 `ACTION_DOWN`，只改表格控件盖不住「长按文字也不出菜单」。尚未编译进 v3.6.22。
+> **2026-08-27 傍晚**：上述两文件已 commit + push `4a283b741`。v3.6.22 装机包仍不含段栈代判，真机四点未验。
 
 ### 已知未做
 
