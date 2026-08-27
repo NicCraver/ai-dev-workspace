@@ -1,6 +1,6 @@
 # Status：pc安卓-GFM-Markdown渲染对齐
 
-> 最后更新：2026-08-27（安卓同分支旁路 mention 已整条回退并 push `4439ae468`，markdown 未受影响；PC 表格宽度已 push `d987d746`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-27（安卓：修表格区域吞掉气泡长按，编译过、**真机未验**；同日旁路 mention 已整条回退并 push `4439ae468`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -26,6 +26,7 @@
 | T12 31 条用例页（已建，**待自测**） | — | 🚧 | — | — |
 | T13 收尾（impl-notes + status） | — | ✅ | — | ✅ |
 | T14 三端样式统一（token 表落地，**运行时未验**） | — | ✅ | ✅ | ✅ |
+| T15 表格区域长按弹窗修复（计划外，**真机未验**） | — | 🚧 | — | — |
 
 > ✅ 的判据是**代码写完 + 编译通过**（PC：`npm run lint` 干净 + vitest 23 条全绿；安卓：`assembleDevelopDebug` BUILD SUCCESSFUL）。
 > **不含任何运行时验证**——表格横滚、折叠不切块、长按不被吞、配色观感，一眼都没看过。
@@ -58,6 +59,16 @@
 **顺带查实的坑**：`aiRobtChat` 的业务错误码被完全吞掉——`ConversationFragmentParent.java:219-221` 的 `onSuccess` 拿着 `JsonObjectResult.getCode()` / `getMsg()` 一个都没读，后端报错客户端零提示。下次查智能体链路先补日志再猜。
 
 **本轮出的包**（均基于回退后代码）：`zx-android-test_v3.6.21.apk`（onTest debug，88.4 MB）、`zx-android-prod_v3.6.21.apk`（publish release，77.7 MB）。安卓仓库工作区现已干净，分支 `feat/gfm-markdown` 与 origin 同步于 `4439ae468`。
+
+## 各端工作区现状（2026-08-27，`scripts/code-status.sh`）
+
+| 端 | 分支 | 同步 | 脏区 | 与本功能关系 | 备注 |
+|----|------|------|------|--------------|------|
+| context | `main` | ahead 267 | 脏 28 | 本功能文档 | 打包脚本 / commands / 会议室 spec 与本功能无关，勿一并提交 |
+| web | `feat/web-markdown-table-align-pc` | synced | 干净 | 旁路 | 无本回合改动 |
+| android | **`feat/gfm-markdown`** | synced | **脏 1** | **本功能** | 唯一脏文件 `ZXMarkdownTableView.java` = 本回合长按修复，未提交。tip `a3934d51f`（v3.6.22 / versionCode 299） |
+| ios | `master-3.5.31` | synced | 干净 | 旁路 | GFM 已合进主干（`16146b73f`） |
+| desktop | `feat/gfm-markdown` | **behind 1** | 脏 3 | 本功能分支 | 脏区就是 `.env.test` / `electron-builder.yml` / `package.json` 三件套，**禁止提交** |
 
 ## 各端工作区现状（2026-08-25，`scripts/code-status.sh --short`）
 
@@ -312,6 +323,16 @@ java.lang.IllegalArgumentException: the bind value at index 71 is null
 4. **(安卓)** 折叠高度：段间距计入后，折叠态实际高度没超过 480dp
 5. **(三端)** 同一条含 H1~H6 / 任务列表 / 引用 / 行内代码 / 表格的消息，三端并排截图比对
 6. **(iOS)** iOS 的 GFM 用例页已在 `c4d50e28b` 删掉了，比对得用真实消息或临时再建一个
+
+### 安卓自测反馈（2026-08-27）：表格区域长按弹不出操作菜单
+
+| # | 症状 | 根因 | 处理 |
+|---|------|------|------|
+| 10 | 含表格的 markdown 消息，长按**表格区域**弹不出转发/回复菜单；同一条消息长按文字区域正常 | `ZXMarkdownTableView` 继承 `HorizontalScrollView`，其 `onTouchEvent` 自处理全部触摸、**从不调 `super.onTouchEvent`**：既不看 `clickable`/`longClickable`（`:73` 那句 `setLongClickable(false)` 无效），`View.checkForLongClick` 也永远排不上，末尾还无条件 `return true` 把 DOWN 吞掉 → 气泡根的长按监听（`MessageListAdapter:620`）收不到手势。表格段是 `MATCH_PARENT` 宽，等于气泡中间一条通栏死区。**2026-08-14 第 4 条「顺带修掉长按被吞」对表格段不成立** | `ZXMarkdownTableView` 自判长按（按下计时 + `touchSlop` 撤销 + `cancelLongPress`/detach 清理），超时沿 parent 链 `performLongClick` 上抛。`:IM:compileOnTestDebugJavaWithJavac` BUILD SUCCESSFUL。**未提交、真机未验** |
+
+> 表格区域的**单击**同样被横滚容器吞着，本次未动（用户只报了长按；表格区吞单击对横滚体验反而更稳）。要放行再说。
+>
+> 复验点：① 长按表格区域弹菜单 ② 长按表格外文字区域仍正常 ③ 横滚表格中途松手不误弹 ④ 在表格上纵向滑动，消息列表照常滚且不误弹。
 
 ### 已知未做
 

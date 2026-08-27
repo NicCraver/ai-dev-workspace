@@ -72,7 +72,8 @@ get/save/aiRobtChat 失败：对齐群智能体——仅日志、不 toast、不
 10. **富文本输入框有多条 span→提及 的转换路径**：发送用的一条与草稿/全量信息用的一条是**不同方法**，`agentKind`/`agentId` 必须**每条都带**。只补其中一条时，界面能正常显示个人 AI 筛选条，但发送时提及会退化成群智能体 → 群条 DTO 为空 → 旁路 `aiRobtChat` 静默不发 → 表现为「@ 个人 AI 发消息没有任何回复」。排查入口：先打日志确认「是否走到调接口分支」，再看请求体。
 11. **个人 AI 回复的流式效果由后端决定**：三端仿流式的判据一致——回复消息须是 `RC:ReferenceMsg` 且 `extra.fromType == 1`，客户端据此轮询 `aiRobtMessageById` 增量渲染。个人 AI 回复若不满足（消息类型不同或 extra 缺该字段），三端都无流式，**属后端下发问题，客户端无法单独修**。
 12. **联网胶囊只留图标**：与 iOS 收敛后的筛选条一致。**时间弹层 Android 取水平居中**（与群记忆条一致，左侧越界贴边）——与 iOS 的右对齐不同，属本端刻意保留的差异。
-13. **复制消息再粘贴会丢掉 `agentKind`**：发出去的 extra 原先只带 at 账号/名字/下标。粘贴按 extra 重建提及——高亮能对上，但 kind 为空。空 kind + `ga_` 被历史兜底判成群智能体。两层修：① 发送 extra 的 atUserList **带上 `agentKind`/`agentId`**（人 mention 仍省略）；② 旧 extra 没有 kind 时，粘贴用**本群缓存**补：账号等于当前用户个人 AI → `personal`，等于本群智能体 → `group`。只靠 `ga_` 前缀不够。其它端 extra 多两个可选字段，忽略即可。
+13. **复制消息再粘贴会丢掉 `agentKind`**：发出去的 extra 原先只带 at 账号/名字/下标。粘贴按 extra 重建提及——高亮能对上，但 kind 为空。空 kind + `ga_` 被历史兜底判成群智能体。**不要把 kind 写进 extra**——后端 extra 契约只有 id/名/下标，多写 `agentKind`/`agentId` 后个人智能体发送后端不认。粘贴用**本群缓存**补 kind（见下条）。
+14. **个人 AI 缓存 belongId 对不上（复制粘贴二次根因）**：文档约定个人项按「群id_归属人id」存，**落库实际写成登录人 accountId**。粘贴补 kind 若只按约定 key 查，缓存永远 miss，旧消息复制后仍变群。补 kind 时两种 belongId 都要认：`accountId` 与 `群id_归属人id`。其它端若也有「设计 key ≠ 落库 key」，会踩同一坑。
 
 ## 与 bridge 的交互
 

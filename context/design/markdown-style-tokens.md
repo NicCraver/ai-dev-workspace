@@ -32,7 +32,7 @@
 | 表格 · 表头底 | `rgba(0,0,0,.08)` + 粗体 | 淡蓝气泡上 4% 几乎看不见 | | |
 | 表格 · 边框 | 1px `rgba(0,0,0,.22)`，**单线、无圆角** | 12% 在自己发的淡蓝气泡上几乎看不见格子 | 每格只画右+下，容器画左+上（否则相邻格叠成 2px） | 去圆角 |
 | 表格 · cell padding | 竖 0.35em 横 0.6em | 5/8 px | 5/9 dp | 6/10 pt |
-| 表格 · 换行 | 单元格有列宽上下限，超出折行；多列仍靠横滚。不要把整表设成 100% 宽再换行（会挤成一列一个字） | `min/max-width: 375px`（整段设计稿宽） | 列宽上限 360dp | 列宽上限 24em（384pt） |
+| 表格 · 换行 | 单元格有列宽上限，超出折行；多列仍靠横滚。不要把整表设成 100% 宽再换行（会挤成一列一个字）。短列随内容，不要 min-width 把窄表撑开 | `max-width: 375px`（整段设计稿宽） | 列宽上限 360dp | 列宽上限 24em（384pt） |
 | 表格 · 斑马纹 | **无**（prose 默认有，须干掉） | | | |
 | 表格 · 横滚条 | 溢出即常驻（不等滑、不淡出）；窄表不画。细胶囊 overlay，约 35% 黑。**无左右渐变罩** | 6px 常驻 webkit 条；窄表底 8px；溢出时条上 4px、条下 margin 20px | 3dp 自绘胶囊 | 3pt 自绘胶囊 |
 
@@ -54,7 +54,7 @@
 | PC | `apps/desktop/src/renderer/assets/styles/markdown.scss`（全局，`main.js` 引入；`.md-html-wrapper` 下一套规则，**不挂 `prose`**） |
 | 安卓 | `apps/android/IM/src/main/java/com/im/message_type/robot/ZXMarkwonFactory.java` 的 `configureTheme()`；表格控件 `ZXMarkdownTableView`；段栈 `ZXMarkdownContentView` |
 | iOS | `apps/ios/SmartMessage/ZX_Base/ZX_Manager/Markdown/ZXMarkdownStyle.m` 的 `defaultStyleWithBaseAttributes:` |
-| web（表格 + 行内代码） | `apps/web/src/components/common/AcMarkdown.vue`：表格走 `.tableWrapper` / `table`；行内 `code` 走 `:not(pre) > code`（干掉 prose 的 `code::before/after` 反引号）。直播 DOM 的表格外壳来自 Tiptap `TableView`（`resizable: false` 时总会包一层）；`EditorWrapper` 仅在 `markdownAsHtml` 时打开 `renderWrapper`，让 `getHTML()` 也带外壳。横滚条 6px、表底恒 8px，**不对齐** PC 列里溢出时 4px+20px 那套 gutter。单元格 `max-width: 187.5px`（375/2）后换行。PC 会话列是 min/max **375px**，不要抄成一半。波浪下划线走 `ExtendUnderline` + `ExtendInlineSpanStyle` 的 `text-decoration`。 |
+| web（表格 + 行内代码） | `apps/web/src/components/common/AcMarkdown.vue`：表格走 `.tableWrapper` / `table`；行内 `code` 走 `:not(pre) > code`（干掉 prose 的 `code::before/after` 反引号）。直播 DOM 的表格外壳来自 Tiptap `TableView`（`resizable: false` 时总会包一层）；`EditorWrapper` 仅在 `markdownAsHtml` 时打开 `renderWrapper`，让 `getHTML()` 也带外壳。横滚条 6px、表底恒 8px，**不对齐** PC 列里溢出时 4px+20px 那套 gutter。单元格 `max-width: 187.5px`（375/2）后换行。PC 会话列是 **max-width 375px**（不要 min-width，短列随内容）。横滚要生效：气泡链路上每层 `min-width: 0` + `max-width: 100%`，不要 `max-width: max-content`。波浪下划线走 `ExtendUnderline` + `ExtendInlineSpanStyle` 的 `text-decoration`。 |
 
 ## 内联 HTML 标签（2026-08-25）
 
