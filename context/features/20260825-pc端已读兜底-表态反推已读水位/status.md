@@ -362,7 +362,7 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
 - (ios) 当前 **`master-3.5.31`** synced 干净（GFM 已合）。`feat/ios-agent-date-range` 仍在本地、没 push。与水位无关
 - (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*` 共 7 文件，勿 stage
 - (web) 干净，不要合进本分支
-- (meeting) 2026-08-27 在 `apps/meeting` 跑通并补齐自动化测试（后端 46、前端现 22），修了非法日历日、开放时间非整点选出后端拒收时段、占用中锚点窗口、损坏 facilities JSON；PC 参考图 UI 对齐已按用户要求撤回。另有 PC/移动预定首页右下角 Grok 风格 AI blob（眼睛跟随/眨眼）。**本回合**：弹层不再用 `min-width: 1024px` 判断设备，改为 `zx`/`m` 入口 + UA 写 `html[data-device]`；预定/管理页文案改为不压缩（换行或省略）。**与水位无关，不要合进水位分支**
+- (meeting) 2026-08-27 助手 agent 预定 spec 与契约已落盘 `features/20260827-会议室助手-agent预定`、`contracts/meeting/`。既有 blob FAB 仍仅占位。**与水位无关，不要合进水位分支**
 
 ## 关键决策记录
 
