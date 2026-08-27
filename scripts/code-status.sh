@@ -127,13 +127,23 @@ if [[ "$SHORT" -eq 0 ]]; then
   echo "=== 五端工作区状态 ==="
   active_file="$ROOT/context/features/ACTIVE"
   if [[ -f "$active_file" ]]; then
-    active="$(tr -d '[:space:]' < "$active_file")"
-    echo "活跃功能: $active"
-    status_file="$ROOT/context/features/$active/status.md"
-    if [[ -f "$status_file" ]]; then
-      updated="$(grep -m1 '^> 最后更新' "$status_file" 2>/dev/null | sed 's/^> 最后更新：//' | sed 's/｜.*//' || true)"
-      [[ -n "$updated" ]] && echo "status 更新: $updated"
-    fi
+    idx=0
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      line="$(printf '%s' "$line" | tr -d '[:space:]')"
+      [[ -z "$line" || "$line" == \#* || "$line" == "none" ]] && continue
+      idx=$((idx + 1))
+      if [[ "$idx" -eq 1 ]]; then
+        echo "活跃功能(主): $line"
+      else
+        echo "活跃功能: $line"
+      fi
+      status_file="$ROOT/context/features/$line/status.md"
+      if [[ -f "$status_file" ]]; then
+        updated="$(grep -m1 '^> 最后更新' "$status_file" 2>/dev/null | sed 's/^> 最后更新：//' | sed 's/｜.*//' || true)"
+        [[ -n "$updated" ]] && echo "  status 更新: $updated"
+      fi
+    done < "$active_file"
+    [[ "$idx" -eq 0 ]] && echo "活跃功能: (ACTIVE 为空)"
   else
     echo "活跃功能: (未设置 ACTIVE)"
   fi

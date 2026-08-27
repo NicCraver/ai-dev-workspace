@@ -18,7 +18,7 @@ bash scripts/code-status.sh
 
 ### 2. AI 总结（必做，表格）
 
-阅读脚本输出 + `context/features/ACTIVE` 对应 `status.md`，在原始数据下方输出 **一张 Markdown 表格**，一行一端，列固定为：
+阅读脚本输出 + `context/features/ACTIVE` 里各活跃功能（可能多个，第一行为主功能）的 `status.md`，在原始数据下方输出 **一张 Markdown 表格**，一行一端，列固定为：
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 
@@ -30,7 +30,7 @@ bash scripts/code-status.sh
 | 分支 | 当前分支名 |
 | 同步 | `synced` / `ahead N` / `behind N` / `ahead N·behind M` / `no upstream` |
 | 脏区 | `干净` 或 `脏(N)` |
-| 活跃功能 | `相关` / `旁路` / `—`（无关或未设置 ACTIVE） |
+| 活跃功能 | 有多个活跃功能时填**具体功能名**（脏区归属哪个）；单个时填 `相关` / `旁路` / `—`（无关或未设置 ACTIVE） |
 | 备注 | 1 句：关键脏文件方向、是否需 push/pull/commit/wrapup |
 
 **禁止**在表格外再写长段 prose；**禁止**为填表对各仓库再跑 `git status` / `git diff`（除非用户追问某端细节）。

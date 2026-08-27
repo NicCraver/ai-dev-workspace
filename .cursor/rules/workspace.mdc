@@ -22,10 +22,11 @@ alwaysApply: true
 
 ## 会话启动规则（每次必读）
 
-1. 当前活跃功能记录在 `context/features/ACTIVE` 文件中（sessionStart hook 会自动注入其 status.md）。
-2. 开始任何编码任务前，先读活跃功能的 `status.md`，明确本次要推进矩阵中的哪一格。
-3. 涉及某端代码时，先读 `context/platforms/<端>.md`；查代码结构优先用 codebase-memory 检索，不要盲目大量读文件。
-4. Web 端样式规范见 `context/dev-rules/unocss-conventions.mdc`（编辑 `apps/web/**` 时由 Cursor 按 glob 自动注入，其他端不加载）。
+1. 活跃功能记录在 `context/features/ACTIVE`，**每行一个，支持多个并行任务**；第一行是主功能，`#` 开头与空行忽略。sessionStart hook 只注入主功能的 status.md 全文，其余只列名。
+2. 开始任何编码任务前，先确认本次归属哪个活跃功能——不是主功能时**自己去读** `context/features/<名>/status.md`，再明确要推进矩阵中的哪一格。
+3. 功能做完从 ACTIVE 里删掉那一行；`/new-feature` 会把新功能插到第一行并保留其余行。
+4. 涉及某端代码时，先读 `context/platforms/<端>.md`；查代码结构优先用 codebase-memory 检索，不要盲目大量读文件。
+5. Web 端样式规范见 `context/dev-rules/unocss-conventions.mdc`（编辑 `apps/web/**` 时由 Cursor 按 glob 自动注入，其他端不加载）。
 
 ## 文档产出路径
 
@@ -52,11 +53,11 @@ alwaysApply: true
 
 完成任何编码任务后、结束回合前，必须：
 
-1. 更新活跃功能 `status.md` 的平台矩阵与「待办/阻塞」小节。
+1. 更新**本次实际推进的那个**活跃功能的 `status.md`（平台矩阵与「待办/阻塞」）。一回合动了多个功能就分别更新；没动的功能不要写空更新。
 2. 若本次完成了 web 端接口联调 → 生成/更新该功能的 `impl-notes.md`。
-3. 在 context 仓库执行 `git add -A && git commit`（提交信息格式：`docs(<feature>): <一句话>`）。
+3. 在 context 仓库执行 `git add -A && git commit`（提交信息格式：`docs(<feature>): <一句话>`）。多个功能各提一条，不要混成一个 commit。
 
-> stop hook 会检查：apps 有代码改动但活跃功能 status.md 未更新时，将自动续跑并提示补齐。
+> stop hook 会检查：apps 有代码改动但**所有**活跃功能的 status.md 都未更新时，将自动续跑并提示补齐（任一更新即放行，写对地方靠这条规则自觉）。
 
 ## 各仓库内部约定
 

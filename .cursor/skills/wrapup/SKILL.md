@@ -7,9 +7,16 @@ description: 收尾与文档同步。在完成任何编码任务、修完 bug、
 
 按顺序执行以下步骤，全部完成后才算收尾结束。
 
-## 1. 确定活跃功能
+## 1. 确定本次要收尾的功能
 
-读 `context/features/ACTIVE` 得到功能名 `<feature>`，工作目录为 `context/features/<feature>/`。
+读 `context/features/ACTIVE`（每行一个活跃功能，第一行为主功能，`#` 开头与空行忽略）。
+
+- 只有一行 → 那个就是 `<feature>`。
+- 多行 → **按本回合实际改了什么代码判断归属**，不要默认取第一行。判不准就问用户，别猜。
+- 本回合推进了多个功能 → 每个都走一遍第 2–4 步，status.md 分别更新、commit 分开提。
+- 本回合没动的功能不要写空更新。
+
+工作目录为 `context/features/<feature>/`。
 
 ## 2. 更新 status.md
 

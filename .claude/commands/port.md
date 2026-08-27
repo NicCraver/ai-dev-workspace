@@ -1,9 +1,9 @@
 ---
 description: 将活跃功能从已完成端（默认 web）移植到目标端
-argument-hint: <目标端: android|ios|desktop> [功能名，缺省为 ACTIVE]
+argument-hint: <目标端: android|ios|desktop> [功能名，缺省为 ACTIVE 主功能]
 ---
 
-跨端移植任务，参数：$ARGUMENTS（第一个词是目标端；第二个词可选，指定功能名，缺省读 `context/features/ACTIVE`）。
+跨端移植任务，参数：$ARGUMENTS（第一个词是目标端；第二个词可选，指定功能名）。缺省时读 `context/features/ACTIVE` 的**第一行**（主功能）；若该文件有多行且不确定要移植哪个，先问用户。
 
 严格按以下步骤执行：
 
