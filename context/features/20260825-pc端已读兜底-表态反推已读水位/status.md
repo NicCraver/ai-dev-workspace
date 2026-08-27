@@ -1,6 +1,6 @@
 # Status：PC 端已读兜底 —— 表态反推已读水位
 
-> 最后更新：2026-08-26（本回合核对 iOS 合入并切到 `feat/ios-agent-date-range`；desktop 主目录已切回 `feat/gfm-markdown`。水位矩阵不变，已 squash push `46c97783`。剩开 MR）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-27（meeting 仓：设备判断改入口/UA、修文案挤压；水位矩阵不变）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -275,17 +275,17 @@ MR 创建链接（远端给的）：
 
 ## 各端工作区现状（2026-08-26 本回合，`scripts/code-status.sh` + 手查 meeting / action-center / desktop-watermark）
 
-本回合**没动水位代码、没开 MR**。核对了 iOS 合入：GFM + 文件打开进度都在 `master-3.5.31`（HEAD `16146b73f`），记忆条自定义时间区间不在。随后把 iOS 从 `master-3.5.31` 切到 `feat/ios-agent-date-range`（切前 `pbxproj` 排序噪声已 stash）。Stop hook 因 apps 脏区（action-center / android / desktop）触发。水位平台矩阵不变。
+本回合**没动水位代码、没开 MR**。修的是安卓 `20260728` 复制 @个人 粘贴成群：个人 AI 缓存 belongId 落库/查询对不上。水位平台矩阵不变。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |----|------|------|------|----------|------|
 | context | `main` ahead 261 | 脏 25 | 构建脚本 / 命令 / GFM token / 会议室 UI 文档 / `迭代.md` | 否 | 本功能只提交本目录 `status.md`；其余另提 |
 | web | `feat/web-markdown-table-align-pc` | synced | 干净 | 否 | `f5616c5` |
-| android | `feat/gfm-markdown` | synced | 脏 8 | 否 | HEAD `9c62212a1`。未提交全是 **mention**（属 `20260728`）：extra 写 `agentKind`/`agentId` + 旧 extra 缓存补 + 单测。与水位无关 |
-| ios | **`feat/ios-agent-date-range`** | **无 upstream** | 干净 | 否 | 本地 `80cfabb20`（timeType=0 半屏选时间）。GFM / 文件打开已合进 `master-3.5.31`，这条时间改动还没合、也没 push。与水位无关 |
+| android | `feat/gfm-markdown` | synced | 脏 | 否 | HEAD `9db9de690`。正在回退 extra 里的 agentKind（个人发送后端不认）。与水位无关 |
+| ios | **`master-3.5.31`** | synced | 干净 | 否 | HEAD `16146b73f`（已合 GFM）。`feat/ios-agent-date-range` 仍在本地 `80cfabb20`、无远端。与水位无关 |
 | desktop | **`feat/gfm-markdown`** | **behind 1** | 脏 3 | 否（水位分支未 checkout） | HEAD `41c5caf9`，远端多 `5213e645 chore: version 3.4.26`。脏区 `.env.test` / `electron-builder.yml` / `package.json`，**禁止提交**。水位仍在本地/远端 `feat/pc-read-watermark` @ `46c97783` |
 | desktop-watermark | — | — | — | 否 | 空目录，worktree 已摘除 |
-| meeting | `main` | synced | 干净 | 否 | — |
+| meeting | `main` | — | 脏 | 否 | 本回合与水位无关：补 `pnpm test`（server 46 + web 17 全绿），修非法日期、30 分钟格对齐、坏 facilities JSON；未提交 |
 | action-center | `release` | synced | 脏 7 | 否 | 删了 `@tiptap-pro/extension-unique-id/dist/*`，勿 stage |
 
 ## 改动文件清单（squash 前统计，以「分支最终状态」为准）
@@ -358,10 +358,11 @@ app 的 stderr 是 pipe（从终端 / npm 脚本直起，终端后来关了，�
 - (desktop) EPIPE / Logger 自噬写爆盘**未修**，与水位无关，不要合进水位分支。
   `logs/error/` 那 297 GB 仍占盘，删前先退出 zhixin-test，**等用户自己执行**
 - (desktop) 水位与 GFM **串行**：GFM 占着主目录，水位要开 MR / 改代码得切回 `feat/pc-read-watermark`，或重新支 worktree
-- (android) GFM 已 push `9c62212a1`。脏 8 全是 **mention**（`20260728`）。提交不要和 GFM 混。与水位无关
-- (ios) 当前 `feat/ios-agent-date-range`（本地、无远端）。GFM + 文件打开已在 `master-3.5.31`；时间区间那条还没合。与水位无关
+- (android) GFM+mention `9db9de690` 已 push。本回合回退 extra 的 `agentKind`/`agentId`（个人智能体发送后端不认）。与水位无关
+- (ios) 当前 **`master-3.5.31`** synced 干净（GFM 已合）。`feat/ios-agent-date-range` 仍在本地、没 push。与水位无关
 - (action-center) `release` 上删了 `@tiptap-pro/extension-unique-id/dist/*` 共 7 文件，勿 stage
 - (web) 干净，不要合进本分支
+- (meeting) 2026-08-27 在 `apps/meeting` 跑通并补齐自动化测试（后端 46、前端现 22），修了非法日历日、开放时间非整点选出后端拒收时段、占用中锚点窗口、损坏 facilities JSON；PC 参考图 UI 对齐已按用户要求撤回。另有 PC/移动预定首页右下角 Grok 风格 AI blob（眼睛跟随/眨眼）。**本回合**：弹层不再用 `min-width: 1024px` 判断设备，改为 `zx`/`m` 入口 + UA 写 `html[data-device]`；预定/管理页文案改为不压缩（换行或省略）。**与水位无关，不要合进水位分支**
 
 ## 关键决策记录
 
