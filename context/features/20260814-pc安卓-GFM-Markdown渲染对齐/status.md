@@ -74,6 +74,10 @@
 
 **本轮出的包**（均基于回退后代码）：`zx-android-test_v3.6.21.apk`（onTest debug，88.4 MB）、`zx-android-prod_v3.6.21.apk`（publish release，77.7 MB）。**2026-08-27 午后**另出 `zx-android-prod_v3.6.22.apk`（publish release，约 78 MB，tip `a3934d51f`；构建时工作区带脏 `ZXMarkdownTableView` → 包内**可能已含**部分 T15）。该包已装真机 `2509FPN0BC`，**功能未验**。完整 T15（含段栈代判）在之后的 `4a283b741`，**未打进该 v3.6.22 包**。
 
+## 各端工作区现状（2026-08-27 傍晚 T15 push，`apps/android`）
+
+安卓 `feat/gfm-markdown` 干净、synced。T15 已 push `4a283b741`。真机未验；v3.6.22 装机包仍停在 `a3934d51f`。
+
 ## 各端工作区现状（2026-08-27 傍晚收尾，`scripts/code-status.sh`）
 
 **本回合零编码**（会话只有一句打招呼）。stop hook 由上一回合遗留的 apps 脏区触发，各端状态与下方「下午收尾」快照完全一致：安卓 T15 两文件仍未提交、未真机验；desktop 仍 behind 1、脏区仍是禁提交三件套。唯一变化是 context 自身文档提交推进（ahead 271→272，脏 24→26，多出 `迭代.md` 等笔记）。
