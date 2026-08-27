@@ -23,7 +23,7 @@ alwaysApply: true
 | 路径 | 说明 |
 |------|------|
 | `apps/meeting/` | 智能会议室。**目前是个人项目**（远端在 GitHub `NicCraver/zx-meeting-room`，其余仓库都在公司内网 GitLab），正准备推进到公司。pnpm workspace 双包 `web/` + `server/`，内嵌于智信三端 WebView。约定见 `context/platforms/meeting.md` |
-| `apps/action-center/` | 行动中心（`zx-operation-center`），**公司的另一个 web 项目**。Vue 3 + Vite MPA 四入口。主要当**参考源**——抄它的交互 / 逻辑 / 界面到智信各端；未来也会直接迭代它自己。约定见各自根目录 CLAUDE.md |
+| `apps/action-center/` | 行动中心（`zx-operation-center`），**公司的另一个 web 项目**。Vue 3 + Vite MPA 四入口。主要当**参考源**——抄它的交互 / 逻辑 / 界面到智信各端；未来也会直接迭代它自己。约定见 `context/platforms/action-center.md` |
 
 其余路径：
 
