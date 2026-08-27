@@ -1,20 +1,21 @@
 # Status：改预定 / 循环预定 / 历史与审计
 
-> 最后更新：2026-08-27
+> 最后更新：2026-08-28
 
 ## 平台矩阵
 
 | 平台 | 状态 | 说明 |
 |---|---|---|
-| meeting server | 已完成 | 改预定、周循环展开、我的历史、审计表、管理端列表 |
-| meeting web | 已完成 | 创建勾选每周重复、我的预定修改/历史、管理端记录页 |
-| meeting 测试 | 已完成 | `pnpm -F @meeting/server test` 114；`pnpm -F @meeting/web test` 49 |
+| meeting server | 已完成 | 改预定、周循环展开、我的历史、审计表、管理端列表；`booked` 事件带 title + slot |
+| meeting web | 进行中 | 助手预定成功留在 dock 成功卡；调用 agent 轮换等待文案与表情 |
+| meeting 测试 | 已完成 | 前端 `applyEvent` / `waitHints`；服务端 confirm booked 载荷 |
 
 ## 决策（已拍板）
 
 - 循环：房间 `allowRecurring` 时按周展开成多条独立预定，范围 ≤ 可提前天数；冲突整单失败；改/释放只动单条。
 - 修改：用户侧不可改时段，只需释放后重新预定；已结束或已释放不可释放。
 - 历史：我的预定保留已结束/已释放；每次 create/update/release 写 `booking_audits`；管理员可看全量与单条审计。
+- 助手：预定成功不关面板，展示成功卡；等待期轮换文案与表情；成功为 happy。
 
 ## 待办 / 阻塞
 

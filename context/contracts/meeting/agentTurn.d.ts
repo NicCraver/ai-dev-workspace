@@ -3,6 +3,7 @@
  * POST /meetingApi/agent/turn
  * 分类：SSE 流式（非 axios 信封逐事件；HTTP 200 后 text/event-stream）
  * Changelog:
+ * - 2026-08-28 booked 事件带 title + slot，前端成功卡展示
  * - 2026-08-27 新增。查空档 + 待确认预定；createBooking 仅 confirm 动作可写库
  * - 2026-08-27 debug：SSE 可夹带 `{ type:'debug', entry }`（分类日志，不含 key）
  */
@@ -116,6 +117,9 @@ export interface MeetingAgentBookedEvent {
   type: 'booked';
   /** 已写入的预定 id */
   bookingId: string;
+  /** 落库主题 mock: '评审会' */
+  title: string;
+  slot: MeetingFreeSlot;
   expression: MeetingBuddyExpression;
 }
 
