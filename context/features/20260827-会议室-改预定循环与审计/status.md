@@ -7,7 +7,7 @@
 | 平台 | 状态 | 说明 |
 |---|---|---|
 | meeting server | 已完成 | 改预定、周循环展开、我的历史、审计表、管理端列表；`booked` 事件带 title + slot |
-| meeting web | 进行中 | PC 时间轴预定块铺满主题色；助手阴影/成功卡/表情过渡 |
+| meeting web | 进行中 | PC 时间轴：我的预定主题蓝、别人琥珀色铺满；助手阴影/成功卡/表情过渡 |
 | meeting 测试 | 已完成 | `buddyPose` 插值；web / server 单测 |
 
 ## 决策（已拍板）
