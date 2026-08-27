@@ -5,6 +5,7 @@
   "type": "module",
   "description": "多端协同编排仓库工具脚本",
   "bin": {
+    "pack": "./scripts/pack.mjs",
     "zhixin-run-android": "./scripts/zhixin-run-android.mjs",
     "pc-build-test": "./scripts/pc-build-test.mjs",
     "anzhuo-build-test": "./scripts/anzhuo-build-test.mjs",
@@ -12,6 +13,7 @@
     "prod-android-build": "./scripts/prod-android-build.mjs"
   },
   "scripts": {
+    "pack": "node scripts/pack.mjs",
     "zhixin-run-android": "node scripts/zhixin-run-android.mjs",
     "pc-build-test": "node scripts/pc-build-test.mjs",
     "anzhuo-build-test": "node scripts/anzhuo-build-test.mjs",

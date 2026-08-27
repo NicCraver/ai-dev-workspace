@@ -7,54 +7,58 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  classifyGradleLine,
+  createCli,
+  dumpTail,
+  formatElapsed,
+  formatSize,
+  ink,
+  spawnLogged,
+} from './lib/build-cli.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WORKSPACE_ROOT = path.resolve(__dirname, '..');
 const ANDROID_DIR = path.join(WORKSPACE_ROOT, 'apps/android');
+const GRADLEW = path.join(ANDROID_DIR, 'gradlew');
 
-function formatElapsed(ms) {
-  const totalSec = ms / 1000;
-  if (totalSec < 60) return `${totalSec.toFixed(1)}s`;
-  const sec = Math.round(totalSec);
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  if (h > 0) return `${h}h ${m}m ${s}s`;
-  return `${m}m ${s}s`;
-}
-
-function trackElapsed() {
-  const startedAt = Date.now();
-  process.on('exit', () => {
-    console.log(`用时 ${formatElapsed(Date.now() - startedAt)}`);
-  });
-}
-
-function formatSize(bytes) {
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / 1024).toFixed(1)} KB`;
-}
+/** @type {ReturnType<typeof parseArgs> | null} */
+let cliOpts = null;
+/** @type {ReturnType<typeof createCli>} */
+let cli;
 
 function printHelp() {
-  console.log('用法: anzhuo-build-test [--develop]');
-  console.log('  默认: Gradle daemon 增量编译 assembleOnTestDebug，再 open 产物目录');
-  console.log('  --develop  开发环境 APK');
+  console.log(`用法: anzhuo-build-test [--develop] [选项]
+
+  （无）        Gradle 增量 assembleOnTestDebug，重命名，打开产物目录
+  --develop     开发环境 APK
+
+  --no-open     成功后不打开产物目录
+  --verbose     子进程日志全量输出（默认只留当前 Task + 错误）
+`);
 }
 
 function parseArgs(argv) {
-  const opts = { develop: false };
+  const opts = { develop: false, open: true, help: false, verbose: false };
 
   for (const arg of argv) {
     switch (arg) {
       case '--develop':
         opts.develop = true;
         break;
+      case '--no-open':
+        opts.open = false;
+        break;
+      case '-v':
+      case '--verbose':
+        opts.verbose = true;
+        break;
       case '-h':
       case '--help':
         opts.help = true;
         break;
       default:
-        console.error(`未知参数: ${arg}`);
+        console.error(`未知参数: ${arg}\n跑 --help 看用法`);
         process.exit(1);
     }
   }
@@ -67,7 +71,7 @@ function resolveConfig(develop) {
     return {
       task: 'assembleDevelopDebug',
       outDir: path.join(ANDROID_DIR, 'smart_message/build/outputs/apk/develop/debug'),
-      label: 'develop',
+      label: 'develop debug',
       renamedPrefix: 'zx-android-develop',
     };
   }
@@ -75,25 +79,29 @@ function resolveConfig(develop) {
   return {
     task: 'assembleOnTestDebug',
     outDir: path.join(ANDROID_DIR, 'smart_message/build/outputs/apk/onTest/debug'),
-    label: 'onTest',
+    label: 'onTest debug',
     renamedPrefix: 'zx-android-test',
   };
 }
 
 function assertAndroidDir() {
-  if (!fs.existsSync(path.join(ANDROID_DIR, 'gradlew'))) {
-    console.error(`错误: 找不到 Android 工程 ${ANDROID_DIR}`);
-    process.exit(1);
+  if (!fs.existsSync(GRADLEW)) {
+    die(`找不到 Android 工程 ${ANDROID_DIR}`);
   }
 }
 
 function chmodGradlew() {
-  const gradlew = path.join(ANDROID_DIR, 'gradlew');
   try {
-    fs.chmodSync(gradlew, 0o755);
+    fs.chmodSync(GRADLEW, 0o755);
   } catch {
     // 无权限时忽略，后续 spawn 会报错
   }
+}
+
+function die(msg) {
+  if (cli) cli.close();
+  console.error(`错误: ${msg}`);
+  process.exit(1);
 }
 
 function findLatestApk(outDir) {
@@ -114,51 +122,117 @@ function parseVersion(apkName) {
   return match?.[1] ?? null;
 }
 
-function main() {
+async function gradle(tasks) {
+  const result = await spawnLogged(GRADLEW, [...tasks, '--console=plain'], {
+    cwd: ANDROID_DIR,
+    env: process.env,
+    classifyLine: classifyGradleLine,
+    verbose: cliOpts?.verbose,
+    cli,
+  });
+  if (result.status !== 0) {
+    dumpTail(result.outputText);
+    throw new Error(`${tasks.join(' ')} 失败 (exit ${result.status})`);
+  }
+}
+
+function summarize({ mode, ok, apk, size, opened }) {
+  const elapsed = formatElapsed(Date.now() - cli.startedAt);
+  console.log('');
+  console.log(`  ${ink.dim('─'.repeat(42))}`);
+  console.log(`  模式    ${mode}`);
+  console.log(`  结果    ${ok ? ink.green('成功') : ink.red('失败')}  ${ink.dim(elapsed)}`);
+  if (apk) {
+    console.log(
+      `  产物    ${path.basename(apk)}  ${size ?? ''}${opened ? ink.dim('  已打开产物目录') : ''}`,
+    );
+    console.log(`  ${ink.dim(apk)}`);
+  }
+  console.log('');
+}
+
+function planSteps(opts) {
+  const steps = ['前置检查', 'Gradle'];
+  steps.push('重命名产物');
+  if (opts.open) steps.push('打开产物');
+  return steps;
+}
+
+async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  cliOpts = opts;
   if (opts.help) {
     printHelp();
     process.exit(0);
   }
 
-  trackElapsed();
+  cli = createCli();
+  process.on('exit', () => cli.close());
+
   assertAndroidDir();
   chmodGradlew();
 
   const config = resolveConfig(opts.develop);
+  const steps = planSteps(opts);
+  let stepIndex = 0;
+  const total = steps.length;
+  const next = (label) => {
+    stepIndex += 1;
+    cli.begin(stepIndex, total, label);
+  };
 
-  console.log(`==> ${config.task}`);
-  const result = spawnSync('./gradlew', [config.task, '--console=plain', '-q'], {
-    cwd: ANDROID_DIR,
-    stdio: 'inherit',
-    shell: true,
-  });
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
+  cli.header([
+    ink.bold('Android test 包') + ink.dim(`  ·  ${config.label}`),
+    ink.dim(config.task),
+  ]);
 
-  const apk = findLatestApk(config.outDir);
-  if (!apk) {
-    console.error(`错误: 构建完成但未找到 APK（${config.outDir}/*.apk）`);
+  let apkPath;
+  let size;
+  let opened = false;
+
+  try {
+    next('前置检查');
+    cli.succeed(ANDROID_DIR);
+
+    next('Gradle');
+    await gradle([config.task]);
+    cli.succeed();
+
+    next('重命名产物');
+    const apk = findLatestApk(config.outDir);
+    if (!apk) {
+      throw new Error(`构建完成但未找到 APK（${config.outDir}/*.apk）`);
+    }
+    const version = parseVersion(path.basename(apk));
+    if (!version) {
+      throw new Error(`无法从 APK 文件名解析版本号: ${path.basename(apk)}`);
+    }
+    const renamed = path.join(config.outDir, `${config.renamedPrefix}_v${version}.apk`);
+    if (apk !== renamed) {
+      if (fs.existsSync(renamed)) fs.unlinkSync(renamed);
+      fs.renameSync(apk, renamed);
+    }
+    apkPath = renamed;
+    size = formatSize(fs.statSync(renamed).size);
+    cli.succeed(`${path.basename(renamed)}  ${size}`);
+
+    if (opts.open) {
+      next('打开产物');
+      spawnSync('open', [config.outDir], { stdio: 'inherit' });
+      opened = true;
+      cli.succeed(config.outDir);
+    }
+  } catch (err) {
+    cli.fail(err.message);
+    summarize({ mode: config.label, ok: false, apk: apkPath, size, opened });
     process.exit(1);
   }
 
-  const version = parseVersion(path.basename(apk));
-  if (!version) {
-    console.error(`错误: 无法从 APK 文件名解析版本号: ${path.basename(apk)}`);
-    process.exit(1);
-  }
-
-  const renamed = path.join(config.outDir, `${config.renamedPrefix}_v${version}.apk`);
-  if (apk !== renamed) {
-    fs.renameSync(apk, renamed);
-  }
-
-  const size = formatSize(fs.statSync(renamed).size);
-  console.log(`==> 产物: ${renamed} (${size})`);
-  console.log(`==> open ${config.outDir}`);
-  spawnSync('open', [config.outDir], { stdio: 'inherit' });
-  console.log(`完成 | ${config.label} | ${renamed}`);
+  summarize({ mode: config.label, ok: true, apk: apkPath, size, opened });
 }
 
-main();
+main().catch((err) => {
+  if (cli) cli.close();
+  console.error(`错误: ${err.message}`);
+  process.exit(1);
+});

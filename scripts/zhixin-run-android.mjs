@@ -7,47 +7,41 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  classifyAdbLine,
+  classifyGradleLine,
+  createCli,
+  dumpTail,
+  formatElapsed,
+  ink,
+  spawnLogged,
+} from './lib/build-cli.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WORKSPACE_ROOT = path.resolve(__dirname, '..');
 const ANDROID_DIR = path.join(WORKSPACE_ROOT, 'apps/android');
+const GRADLEW = path.join(ANDROID_DIR, 'gradlew');
 
 const ACTIVITY = 'com.cnmts.smart_message.activity.AppStartSplashActivity';
 
-function formatElapsed(ms) {
-  const totalSec = ms / 1000;
-  if (totalSec < 60) return `${totalSec.toFixed(1)}s`;
-  const sec = Math.round(totalSec);
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  if (h > 0) return `${h}h ${m}m ${s}s`;
-  return `${m}m ${s}s`;
-}
-
-function trackElapsed() {
-  const startedAt = Date.now();
-  process.on('exit', () => {
-    console.log(`用时 ${formatElapsed(Date.now() - startedAt)}`);
-  });
-}
-
-function assertAndroidDir() {
-  if (!fs.existsSync(path.join(ANDROID_DIR, 'gradlew'))) {
-    console.error(`错误: 找不到 Android 工程 ${ANDROID_DIR}`);
-    process.exit(1);
-  }
-}
+/** @type {ReturnType<typeof parseArgs> | null} */
+let cliOpts = null;
+/** @type {ReturnType<typeof createCli>} */
+let cli;
 
 function printHelp() {
-  console.log('用法: zhixin-run-android [--quick] [--develop]');
-  console.log('  默认: Gradle daemon 增量编译并安装 onTest，再启动');
-  console.log('  --quick    跳过编译，仅 adb 重装已有 APK');
-  console.log('  --develop  开发环境');
+  console.log(`用法: zhixin-run-android [--quick] [--develop] [选项]
+
+  （无）        Gradle daemon 增量编译并安装 onTest，再启动
+  --quick       跳过编译，仅 adb 重装已有 APK
+  --develop     开发环境
+
+  --verbose     子进程日志全量输出（默认只留当前 Task + 错误）
+`);
 }
 
 function parseArgs(argv) {
-  const opts = { quick: false, develop: false };
+  const opts = { quick: false, develop: false, help: false, verbose: false };
 
   for (const arg of argv) {
     switch (arg) {
@@ -57,12 +51,16 @@ function parseArgs(argv) {
       case '--develop':
         opts.develop = true;
         break;
+      case '-v':
+      case '--verbose':
+        opts.verbose = true;
+        break;
       case '-h':
       case '--help':
         opts.help = true;
         break;
       default:
-        console.error(`未知参数: ${arg}`);
+        console.error(`未知参数: ${arg}\n跑 --help 看用法`);
         process.exit(1);
     }
   }
@@ -70,33 +68,21 @@ function parseArgs(argv) {
   return opts;
 }
 
-function run(cmd, args, options = {}) {
-  const result = spawnSync(cmd, args, {
-    cwd: ANDROID_DIR,
-    encoding: 'utf8',
-    ...options,
-  });
-
-  if (result.error) {
-    throw result.error;
-  }
-
-  return result;
+function die(msg) {
+  if (cli) cli.close();
+  console.error(`错误: ${msg}`);
+  process.exit(1);
 }
 
-function assertAdbDevice() {
-  const result = run('adb', ['get-state'], { stdio: 'pipe' });
-  if (result.status !== 0) {
-    console.error('错误: 无已连接设备（请插线并允许 USB 调试）');
-    run('adb', ['devices', '-l'], { stdio: 'inherit' });
-    process.exit(1);
+function assertAndroidDir() {
+  if (!fs.existsSync(GRADLEW)) {
+    die(`找不到 Android 工程 ${ANDROID_DIR}`);
   }
 }
 
 function chmodGradlew() {
-  const gradlew = path.join(ANDROID_DIR, 'gradlew');
   try {
-    fs.chmodSync(gradlew, 0o755);
+    fs.chmodSync(GRADLEW, 0o755);
   } catch {
     // 无权限时忽略，后续 spawn 会报错
   }
@@ -107,28 +93,21 @@ function resolveConfig(develop) {
     return {
       pkg: 'com.cnmts.smart_message.develop',
       task: 'installDevelopDebug',
-      apkDir: path.join(
-        ANDROID_DIR,
-        'smart_message/build/outputs/apk/develop/debug',
-      ),
+      label: 'develop debug',
+      apkDir: path.join(ANDROID_DIR, 'smart_message/build/outputs/apk/develop/debug'),
     };
   }
 
   return {
     pkg: 'com.cnmts.smart_message.test',
     task: 'installOnTestDebug',
-    apkDir: path.join(
-      ANDROID_DIR,
-      'smart_message/build/outputs/apk/onTest/debug',
-    ),
+    label: 'onTest debug',
+    apkDir: path.join(ANDROID_DIR, 'smart_message/build/outputs/apk/onTest/debug'),
   };
 }
 
 function findLatestApk(apkDir) {
-  if (!fs.existsSync(apkDir)) {
-    return null;
-  }
-
+  if (!fs.existsSync(apkDir)) return null;
   const apks = fs
     .readdirSync(apkDir)
     .filter((name) => name.endsWith('.apk'))
@@ -137,77 +116,131 @@ function findLatestApk(apkDir) {
       return { fullPath, mtimeMs: fs.statSync(fullPath).mtimeMs };
     })
     .sort((a, b) => b.mtimeMs - a.mtimeMs);
-
   return apks[0]?.fullPath ?? null;
 }
 
-function installQuick(apkDir) {
-  const apk = findLatestApk(apkDir);
-  if (!apk) {
-    console.error('错误: 无 APK，去掉 --quick 重新运行');
-    process.exit(1);
-  }
-
-  console.log(`==> adb install -r ${path.basename(apk)}`);
-  const result = run('adb', ['install', '-r', apk], { stdio: 'inherit' });
-  if (result.status !== 0) {
-    const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
-    if (output.includes('INSTALL_FAILED_USER_RESTRICTED')) {
-      console.error(
-        '若报 INSTALL_FAILED_USER_RESTRICTED：手机开「USB 安装」或点允许后重跑 --quick',
-      );
-    }
-    process.exit(result.status ?? 1);
-  }
-}
-
-function installWithGradle(task) {
-  console.log(`==> ${task}`);
-  const result = run('./gradlew', [task, '--console=plain', '-q'], {
-    stdio: 'inherit',
-    shell: true,
+async function logged(cmd, args, classifyLine, extra = {}) {
+  const result = await spawnLogged(cmd, args, {
+    cwd: extra.cwd ?? ANDROID_DIR,
+    env: process.env,
+    classifyLine,
+    verbose: cliOpts?.verbose,
+    cli,
   });
   if (result.status !== 0) {
-    process.exit(result.status ?? 1);
+    dumpTail(result.outputText);
+    const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
+    if (output.includes('INSTALL_FAILED_USER_RESTRICTED')) {
+      throw new Error(
+        'INSTALL_FAILED_USER_RESTRICTED：手机开「USB 安装」或点允许后重跑 --quick',
+      );
+    }
+    throw new Error(`${[cmd, ...args].join(' ')} 失败 (exit ${result.status})`);
   }
+  return result;
 }
 
-function launchApp(pkg) {
-  console.log(`==> 启动 ${pkg}`);
-  const result = run(
-    'adb',
-    ['shell', 'am', 'start', '-n', `${pkg}/${ACTIVITY}`],
-    { stdio: 'pipe' },
-  );
+function assertAdbDevice() {
+  const result = spawnSync('adb', ['get-state'], { encoding: 'utf8' });
   if (result.status !== 0) {
-    process.exit(result.status ?? 1);
+    spawnSync('adb', ['devices', '-l'], { stdio: 'inherit' });
+    throw new Error('无已连接设备（请插线并允许 USB 调试）');
   }
+  return (result.stdout ?? '').trim();
 }
 
-function main() {
+function summarize({ mode, ok, pkg }) {
+  const elapsed = formatElapsed(Date.now() - cli.startedAt);
+  console.log('');
+  console.log(`  ${ink.dim('─'.repeat(42))}`);
+  console.log(`  模式    ${mode}`);
+  console.log(`  结果    ${ok ? ink.green('成功') : ink.red('失败')}  ${ink.dim(elapsed)}`);
+  if (pkg) console.log(`  包名    ${pkg}`);
+  console.log('');
+}
+
+function planSteps(opts) {
+  const steps = ['检查设备'];
+  steps.push(opts.quick ? 'adb 安装' : 'Gradle 安装');
+  steps.push('启动应用');
+  return steps;
+}
+
+async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  cliOpts = opts;
   if (opts.help) {
     printHelp();
     process.exit(0);
   }
 
-  trackElapsed();
-  assertAndroidDir();
-  const config = resolveConfig(opts.develop);
+  cli = createCli();
+  process.on('exit', () => cli.close());
 
-  assertAdbDevice();
+  assertAndroidDir();
   chmodGradlew();
 
-  if (opts.quick) {
-    installQuick(config.apkDir);
-  } else {
-    installWithGradle(config.task);
+  const config = resolveConfig(opts.develop);
+  const steps = planSteps(opts);
+  let stepIndex = 0;
+  const total = steps.length;
+  const next = (label) => {
+    stepIndex += 1;
+    cli.begin(stepIndex, total, label);
+  };
+
+  cli.header([
+    ink.bold('Android 安装启动') + ink.dim(`  ·  ${config.label}`),
+    ink.dim(opts.quick ? 'adb install -r（跳过编译）' : config.task),
+  ]);
+
+  try {
+    next('检查设备');
+    const state = assertAdbDevice();
+    cli.succeed(state || 'device');
+
+    if (opts.quick) {
+      next('adb 安装');
+      const apk = findLatestApk(config.apkDir);
+      if (!apk) {
+        throw new Error('无 APK，去掉 --quick 重新运行');
+      }
+      cli.note(path.basename(apk));
+      await logged('adb', ['install', '-r', apk], classifyAdbLine, { cwd: undefined });
+      cli.succeed(path.basename(apk));
+    } else {
+      next('Gradle 安装');
+      await logged(GRADLEW, [config.task, '--console=plain'], classifyGradleLine);
+      cli.succeed();
+    }
+
+    next('启动应用');
+    await logged(
+      'adb',
+      ['shell', 'am', 'start', '-n', `${config.pkg}/${ACTIVITY}`],
+      classifyAdbLine,
+      { cwd: undefined },
+    );
+    cli.succeed(config.pkg);
+  } catch (err) {
+    cli.fail(err.message);
+    summarize({
+      mode: `${config.label}${opts.quick ? ' / quick' : ''}`,
+      ok: false,
+      pkg: config.pkg,
+    });
+    process.exit(1);
   }
 
-  launchApp(config.pkg);
-  console.log(
-    `完成 | ${config.pkg} | onTest=192.168.10.25（除非 --develop）`,
-  );
+  summarize({
+    mode: `${config.label}${opts.quick ? ' / quick' : ''}`,
+    ok: true,
+    pkg: config.pkg,
+  });
 }
 
-main();
+main().catch((err) => {
+  if (cli) cli.close();
+  console.error(`错误: ${err.message}`);
+  process.exit(1);
+});
