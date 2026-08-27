@@ -4,6 +4,7 @@
  * 分类：SSE 流式（非 axios 信封逐事件；HTTP 200 后 text/event-stream）
  * Changelog:
  * - 2026-08-27 新增。查空档 + 待确认预定；createBooking 仅 confirm 动作可写库
+ * - 2026-08-27 debug：SSE 可夹带 `{ type:'debug', entry }`（分类日志，不含 key）
  */
 
 import type {
@@ -42,7 +43,8 @@ export type MeetingAgentEvent =
   | MeetingAgentNeedMoreEvent
   | MeetingAgentErrorEvent
   | MeetingAgentBookedEvent
-  | MeetingAgentClosedEvent;
+  | MeetingAgentClosedEvent
+  | MeetingAgentDebugEvent;
 
 export interface MeetingAgentSessionEvent {
   type: 'session';
@@ -120,6 +122,23 @@ export interface MeetingAgentBookedEvent {
 export interface MeetingAgentClosedEvent {
   type: 'closed';
   expression: MeetingBuddyExpression;
+}
+
+export type MeetingAgentDebugCat = 'turn' | 'http' | 'search' | 'reply' | 'error';
+
+export interface MeetingAgentDebugEntry {
+  id: string;
+  /** epoch ms */
+  ts: number;
+  cat: MeetingAgentDebugCat;
+  title: string;
+  data?: unknown;
+}
+
+/** 调试帧。正式 UI 应忽略；`?debug=1` 弹窗消费。不含 API Key。 */
+export interface MeetingAgentDebugEvent {
+  type: 'debug';
+  entry: MeetingAgentDebugEntry;
 }
 
 /**

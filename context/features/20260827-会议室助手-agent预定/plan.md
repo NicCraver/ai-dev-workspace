@@ -470,3 +470,202 @@ test("anonymous POST agent/turn is M4002", async () => {
 | SSE 契约 | 5 |
 
 无 TBD。`handleTurn` / `FreeSlot` 字段名与契约一致。
+
+---
+
+## 增量计划：首屏个性化快捷建议（2026-08-27）
+
+### Task 9: 建议规则与历史偏好
+
+**Files:**
+- Create: `apps/meeting/server/src/domain/agentSuggestions.ts`
+- Create: `apps/meeting/server/tests/agentSuggestions.test.ts`
+- Create: `context/contracts/meeting/agentSuggestions.d.ts`
+
+**Interfaces:**
+- Produces: `type AgentSuggestion = { id: string; label: string; message: string; source: "time" | "history" }`
+- Produces: `buildAgentSuggestions(db, corpId, userId, now?): AgentSuggestion[]`
+- Consumes: `shanghaiNow()`、`nextOpen()`、`addDays()`、`fromMinutes()` 和现有 `bookings` / `rooms` 表。
+
+- [ ] **Step 1: 写失败测试**
+
+在 `agentSuggestions.test.ts` 用 `openMemoryDb()` 固定 `{ date: "2026-08-27", minute: 15 * 60 + 56 }`，覆盖：
+
+```ts
+test("returns four time suggestions aligned to the next half hour", () => {
+  const suggestions = buildAgentSuggestions(db, CORP, "u1", FROZEN);
+  assert.equal(suggestions.length, 4);
+  assert.match(suggestions[0].message, /2026-08-27 16:00.*1小时/);
+  assert.match(suggestions[1].message, /2026-08-27 16:00.*30分钟/);
+});
+
+test("moves afternoon suggestion to tomorrow after office hours", () => {
+  const suggestions = buildAgentSuggestions(db, CORP, "u1", {
+    date: "2026-08-27",
+    minute: 17 * 60 + 31
+  });
+  assert.match(suggestions[2].message, /2026-08-28 14:00/);
+});
+
+test("uses repeated booking preference and ignores another user's history", () => {
+  seedTwoBookingsForU1AtTenInSameRoom(db);
+  seedBookingForU2AtSixteen(db);
+  const suggestions = buildAgentSuggestions(db, CORP, "u1", FROZEN);
+  const personalized = suggestions.find((item) => item.source === "history");
+  assert.match(personalized?.label ?? "", /常用.*10:00.*1小时/);
+  assert.match(personalized?.message ?? "", /1号会议室/);
+});
+```
+
+- [ ] **Step 2: 运行并确认失败**
+
+Run: `pnpm -F @meeting/server exec tsx --test tests/agentSuggestions.test.ts`  
+Expected: FAIL，`agentSuggestions.ts` 尚不存在。
+
+- [ ] **Step 3: 实现最小规则**
+
+`buildAgentSuggestions` 始终返回 4 项：
+
+1. 最近半点开始的 60 分钟；
+2. 最近半点开始的 30 分钟；
+3. 当天 `max(14:00, 最近半点 + 30 分钟)` 开始的 60 分钟，避免与“最近一小时”重复；若无法在 18:00 前结束则顺延至次日 14:00；
+4. 次日 10:00 开始的 60 分钟。
+
+最近半点若无法在 18:00 前完成对应时长，则改为次日 09:00。历史查询只统计当前企业、当前用户、`released_at IS NULL` 的最近 30 条预订。至少有 2 条历史后，按出现次数选择常用 `start_min`、`end_min-start_min` 和房间；并用 `{date} {start} 开始、{时长}、优先 {roomName}` 生成一条 `source:"history"` 建议，替换第 3 项。并列时取日期、创建时间较新的值。
+
+- [ ] **Step 4: 写契约**
+
+`agentSuggestions.d.ts` 声明：
+
+```ts
+/**
+ * GET /meetingApi/agent/suggestions
+ * Changelog:
+ * - 2026-08-27 新增：按上海时间和用户历史预订返回首屏快捷建议
+ */
+export interface MeetingAgentSuggestion {
+  id: string;
+  label: string;
+  message: string;
+  source: 'time' | 'history';
+}
+
+export type MeetingAgentSuggestionsData = MeetingAgentSuggestion[];
+```
+
+- [ ] **Step 5: 运行测试**
+
+Run: `pnpm -F @meeting/server exec tsx --test tests/agentSuggestions.test.ts`  
+Expected: PASS。
+
+提交仅在用户明确授权后执行，建议：`feat(agent): 按时间与历史生成快捷建议`。
+
+### Task 10: 建议接口与前端数据函数
+
+**Files:**
+- Modify: `apps/meeting/server/src/routes/agent.ts`
+- Modify: `apps/meeting/server/tests/routes.test.ts`
+- Create: `apps/meeting/web/src/server/module/agent.js`
+- Create: `apps/meeting/web/src/features/booking/agent/suggestions.js`
+- Create: `apps/meeting/web/src/features/booking/tests/suggestions.test.js`
+
+**Interfaces:**
+- Produces: `GET /meetingApi/agent/suggestions`，成功返回 `{ code:"M0000", data: AgentSuggestion[], msg:"" }`
+- Produces: `getAgentSuggestions()`，复用现有 axios 实例和鉴权头。
+- Produces: `buildSuggestionTurnBody(suggestion, sessionId)`，返回现有 `streamTurn` 可消费的 message action。
+
+- [ ] **Step 1: 写失败测试**
+
+服务端测试未登录返回 `M4002`；登录用户返回 4 项，且每项有 `id/label/message/source`。
+
+前端纯函数测试：
+
+```js
+test("suggestion click builds a message turn and never a confirm turn", () => {
+  assert.deepEqual(
+    buildSuggestionTurnBody({ message: "2026-08-27 16:00 开始，1小时" }, "s1"),
+    { sessionId: "s1", action: "message", message: "2026-08-27 16:00 开始，1小时" }
+  );
+});
+```
+
+- [ ] **Step 2: 运行并确认失败**
+
+Run: `pnpm -F @meeting/server exec tsx --test tests/routes.test.ts && pnpm -F @meeting/web test`  
+Expected: 新测试 FAIL。
+
+- [ ] **Step 3: 实现接口和函数**
+
+在 `agent.ts` 增加：
+
+```ts
+agent.get("/agent/suggestions", requireUser, (c) =>
+  ok(
+    c,
+    buildAgentSuggestions(c.get("db"), c.get("corpId"), c.get("userId"))
+  )
+);
+```
+
+所有 import 保持模块顶部。`web/src/server/module/agent.js` 只导出 `getAgentSuggestions = () => http.get("/agent/suggestions")`。`buildSuggestionTurnBody` 对 message 做 `String(...).trim()`，有 session 才附加 `sessionId`，固定 `action:"message"`，不产生 `confirm` / `pick_slot`。
+
+- [ ] **Step 4: 运行测试**
+
+Run: `pnpm -F @meeting/server exec tsx --test tests/routes.test.ts && pnpm -F @meeting/web test`  
+Expected: PASS。
+
+提交仅在用户明确授权后执行，建议：`feat(agent): 暴露助手快捷建议接口`。
+
+### Task 11: FAB 快捷按钮与默认文案
+
+**Files:**
+- Modify: `apps/meeting/web/src/features/booking/components/AiBuddyFab.vue`
+- Modify: `apps/meeting/web/src/features/booking/booking.css`
+- Modify: `context/features/20260827-会议室助手-agent预定/status.md`
+
+**Interfaces:**
+- Consumes: `getAgentSuggestions()`、`buildSuggestionTurnBody()` 和现有 `runTurn()`。
+- UI condition: `dockOpen && !ui.status && !ui.card && suggestions.length > 0`。
+
+- [ ] **Step 1: 接入状态与加载**
+
+新增 `suggestions`、`suggestionsLoaded` 和 `suggestionsGeneration`。首次打开助手时请求建议；关闭或卸载后递增 generation，防止迟到响应覆盖新状态。失败时设为空数组且不展示错误，不影响输入。
+
+- [ ] **Step 2: 接入点击行为**
+
+增加 `sendSuggestion(suggestion)`：发送前清空建议可见态，设置本地「正在理解」状态，调用 `runTurn(buildSuggestionTurnBody(...))`。与手动发送共用相同状态更新，点击时若 `sending` 则忽略。
+
+- [ ] **Step 3: 更新模板与样式**
+
+placeholder 精确改成：
+
+```vue
+placeholder="告诉我时间和人数，帮你找会议室"
+```
+
+在卡片槽与 composer 之间放 `.ai-buddy-prompts`，按钮使用横向自动换行的胶囊布局；历史建议用同一视觉，只通过可访问名称包含“根据历史预订推荐”，不额外增加醒目标签。移动端保持 16px 边距，按钮最小高度 32px，键盘 focus-visible 有主题色轮廓。
+
+- [ ] **Step 4: 全量验证**
+
+Run: `pnpm -F @meeting/server test && pnpm -F @meeting/web test && pnpm -F @meeting/web run typecheck`  
+Expected: 全部 PASS。
+
+浏览器检查 PC `/meeting/` 与移动 `/meeting/m/`：
+
+1. 打开助手出现 4 个快捷建议和新 placeholder；
+2. 15:56 时显示 16:00 开始的一小时/30分钟建议；
+3. 点击建议进入现有查询状态，不直接预定；
+4. 有至少 2 条历史记录时出现常用时段/会议室建议；
+5. 建议接口失败时只隐藏建议，仍可手工发送。
+
+- [ ] **Step 5: 更新状态**
+
+在 `status.md` 平台矩阵增加“首屏个性化快捷建议”一行，按实际测试结果标记 meeting-web / meeting-server；待办记录真实 LLM 与浏览器验证是否完成。
+
+提交仅在用户明确授权后执行，建议：`feat(agent): 助手首屏展示个性化快捷选项`。
+
+## 增量计划自检
+
+- Spec 覆盖：默认文案、4 个时间建议、上海时区、历史偏好、接口失败静默降级、点击不直接写库均有对应 Task。
+- 类型一致：服务端与契约均使用 `id/label/message/source`；前端只把 `message` 转为现有 `action:"message"`。
+- 无新增依赖；不改原生三端；不新增预订写库入口。
