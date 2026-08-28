@@ -7,7 +7,7 @@
 | 平台 | 状态 | 说明 |
 |---|---|---|
 | meeting server | 已完成 | 空主题落成「{姓名}预定的会议」；booked 带 title + slot |
-| meeting web | 已完成 | 助手成功卡可关、表情过渡、时间轴配色、默认标题 |
+| meeting web | 已完成 | 时间轴确认卡 Teleport 到 body，不再被粘性表头盖住 |
 | meeting 测试 | 已完成 | web 57；server 115 |
 
 ## 决策（已拍板）
