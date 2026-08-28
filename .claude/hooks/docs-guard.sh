@@ -31,10 +31,18 @@ done < "$ACTIVE_FILE"
 [[ ${#FEATURES[@]} -eq 0 ]] && exit 0
 
 # 1) 检查 apps/* 是否有代码改动（未提交的工作区改动，含未跟踪文件）
+# PC 端（desktop）的本地调试配置按项目规则永远不提交，会长期处于脏状态，
+# 不能算作「代码改动」，否则每回合都会误拦截。
+DESKTOP_IGNORE='/(\.env\.test|electron-builder\.yml|package\.json|package-lock\.json)$'
 apps_dirty=""
 for app in "$ROOT"/apps/*/; do
   [[ -d "$app/.git" ]] || continue
-  if [[ -n "$(git -C "$app" status --porcelain 2>/dev/null)" ]]; then
+  porcelain="$(git -C "$app" status --porcelain 2>/dev/null)"
+  if [[ "$(basename "$app")" == "desktop" ]]; then
+    # porcelain 行形如 " M .env.test"，补一个前导 / 让上面的正则统一匹配路径末段
+    porcelain="$(printf '%s\n' "$porcelain" | sed 's#^\(...\)#\1/#' | grep -Ev "$DESKTOP_IGNORE" || true)"
+  fi
+  if [[ -n "$(printf '%s' "$porcelain" | tr -d '[:space:]')" ]]; then
     apps_dirty+=" $(basename "$app")"
   fi
 done
