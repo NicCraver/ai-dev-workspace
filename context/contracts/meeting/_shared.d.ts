@@ -1,6 +1,7 @@
 /**
  * 契约：智能会议室域 · 共享类型
  * Changelog:
+ * - 2026-08-28 空主题落库为「{预定人}预定的会议」
  * - 2026-08-27 助手 agent 初版：空档、草稿、表情
  */
 
@@ -31,7 +32,7 @@ export interface MeetingBookingDraft {
   /** 草稿 id mock: 'draft-uuid' */
   draftId: string;
   slot: MeetingFreeSlot;
-  /** 会议主题，空则落库为「无主题会议」 mock: '周会' */
+  /** 会议主题，空则落库为「{预定人姓名}预定的会议」 mock: '周会' */
   title: string;
 }
 
