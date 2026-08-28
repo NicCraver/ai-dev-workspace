@@ -67,6 +67,7 @@
 | `selectAiAgent` | —（wnsdk `aiChat.selectAiAgent`） | web→原生 | — | 见下「selectAiAgent 回传」 | ios / android | ios 已落地；android 已落地（真机 E2E 通过） |
 | `selectDataRangeScope` | —（wnsdk `aiChat.selectDataRangeScope` / 安卓 `window.WebView.selectDataRangeScope`） | web→原生 | `{ agentId:string, accountId?:string }`（安卓为该对象的 JSON 字符串；**禁止**传 `initialScopes`） | 见下「selectDataRangeScope 回传」 | ios / android | 原生落库 ACK 改造中（见 plan-数据范围原生落库） |
 | `openKnowledgeDoc` | —（wnsdk `aiChat.openKnowledgeDoc`） | web→原生 | `{ docId:string, agentId:string, agentVersionId?:number, docName?:string, fromType?:number }` | 见下「openKnowledgeDoc 回传」 | **仅 ios** | 新增（知识来源文件下载进度与取消） |
+| `selectDateRange` | —（wnsdk `aiChat.selectDateRange` / 安卓 `window.WebView.selectDateRange`） | **web→原生（上报）** | 见下「selectDateRange 上报」 | ios：ACK `{"ok":true}`；安卓无回参 | ios / android | 新增（记忆条自定义时间区间 timeType=0） |
 
 ### `selectAiAgent` 回传（ios → web）
 
@@ -119,6 +120,32 @@ web 收到 `ok` → `getAgentDataRange` 刷本地（不在此路径 save）。
 
 web 分流：`payload.ok` → 新；有 `payload.scopes` → 老。取消：`code=-1`（android 亦可空串）。PC 仍 H5 + web save。
 
+### `selectDateRange` 上报（web → 原生）
+
+记忆条时间档选「自定义」（`timeType=0`）时，原生拉起 web 的 `/date-range` 免鉴权独立页（半屏 webview / PC iframe）。**方向与其它桥相反**：不是 web 找原生要数据，而是 H5 选完把结果上报给原生，原生据此关层并落库。
+
+载荷（三端同一份）：
+
+```jsonc
+{ "type": "date-range:confirm", "startTime": 1756310400000, "endTime": 1756396799999 } // 毫秒
+{ "type": "date-range:cancel" }
+```
+
+各宿主通路（web 侧判定见 `apps/web/src/pages/date-range/host-bridge.js`，优先级 android > ios > parent）：
+
+| 宿主 | 调用形态 |
+|------|---------|
+| android | `window.WebView.selectDateRange(JSON.stringify(payload))` |
+| ios | `wnsdk.aiChat.selectDateRange({ data: payload, success, error })` |
+| PC iframe | `window.parent.postMessage(payload, "*")` |
+
+**iOS 两个必踩的坑（已修，勿回退）**：
+
+1. **载荷必须放 `data`**。wnsdk 内部把参数里的 `success` / `error` 当回调函数取走（`var o=a.success, n=a.error, d=a.data` → `callHandler(proto, handlerName, d, cb)`），只有 `data` 会下发原生。曾把 payload 塞进 `success`，原生收到空 data，一律按取消收口。
+2. **`/date-range` 页必须自行注册 namespace**。该页属 main 入口，`mpa/mobile/App.vue` 的 `extendModule` 不作用于它；且 `@tjmt/wnsdk` 是 UMD 包，经 Vite 走 CommonJS 分支打包**不挂 `window.wnsdk`**。故页面 `onMounted` 自注册 `selectDateRange`（`os:["MTCoreApi"]`，一次性上报无需 `isLongCb`），并把实例传给 `postToHost`。非 iOS 客户端不得触碰 `wnsdk.aiChat`——os 不匹配时模块 getter 会弹 `showError`。
+
+原生 ACK：`code=0`，`result="{\"ok\":true}"`；web 侧 fire-and-forget，不消费。
+
 ### `openKnowledgeDoc` 回传（ios → web）
 
 H5（移动端 AI 会话页）点知识来源具体链接时调用。**整条链路交给原生**：拉 `agentFileDataByDocId` 元数据 → 飞书/WPS 授权兜底 → OSS 签名 → 下载（带环形进度浮层，可取消）→ 预览（文档 / 图片 / 智文 Web 页 / 外链）。web 不再自行拼 url。
@@ -157,6 +184,7 @@ H5（移动端 AI 会话页）点知识来源具体链接时调用。**整条链
 
 ## Changelog
 
+- 2026-08-28 登记 `selectDateRange`（ios / android，web→原生上报）：`/date-range` 页确认/取消回传 `{type,startTime,endTime}`。iOS 修两处：载荷从 `success` 键移到 `data`（`success`/`error` 是 wnsdk 保留回调键），`/date-range` 页自注册 namespace（main 入口无 wnsdk，UMD 也不挂 window）；原生解析改平铺优先、保留嵌套兼容。
 - 2026-08-18 新增 `openKnowledgeDoc`（仅 ios）：H5 点知识来源链接改由原生全包（元数据 + 授权 + OSS 签名 + 下载进度 + 预览），回传 `{status:success|cancel}`，失败 `code=-1`；安卓未实现，web 按 UA 降级。
 - 2026-08-05 登记 `personal-ai:ready`（web → AiBrowser，fire-and-forget）：web 首屏挂载完成信号，宿主据此撤个人 AI 框首屏假 loading；宿主 8s 超时兜底兼容老版本 web。
 - 2026-07-31 web 选择 AI 框组织架构改直调 contact（`getContract` / `sub_dept_user_pagelistV3`），不再调桥 `getOrgCompanies`/`getDeptUsers`；desktop 桥 handler 保留不动。
