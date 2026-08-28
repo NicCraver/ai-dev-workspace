@@ -18,6 +18,7 @@
 ## 待办 / 阻塞
 
 - (ios) 待真机自测：打开半屏日历 → 取消应关层不写脏态；确认应关层并回填区间到记忆条胶囊。
+- (web) 自定义档回显：确认后筛选条是「自定义」、再打开列表应仍选中自定义（不要回到近一周）。代码已修，待页面自测。
 - (web) 本地 node_modules 缺 prettier，`pnpm format` 未跑（vue-tsc --noEmit 已过，退出 0）。
 
 ## 关键决策记录
@@ -26,3 +27,4 @@
 - 2026-08-28 `/date-range` 页自注册 `selectDateRange` namespace（main 入口拿不到 mobile 的注册、UMD 不挂 window），桥实例显式注入，不再探测 `window.wnsdk`。
 - 2026-08-28 非 iOS 客户端不访问 `wnsdk.aiChat`（os 不匹配会弹 showError），已加守卫测试。
 - 2026-08-28 iOS 解析平铺优先、保留 `success`/`error` 嵌套兼容分支。
+- 2026-08-28 web 回显：`timeType`/`startTime`/`endTime` 在读写边界归一（`"0"`≠丢档、ISO 转毫秒）；`chatBelongs` watch 必须保留自定义区间。

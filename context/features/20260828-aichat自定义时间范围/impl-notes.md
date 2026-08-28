@@ -70,8 +70,18 @@ wnsdk 下发给原生 handler 的就是 `data` 对应的字典，所以 iOS 侧 
 解析顺序：顶层有 `type` → 直接用；否则回落 `success`/`error` 嵌套（兼容早期写法）。
 非法载荷一律按取消收口，不写脏态。
 
+### 5. web：筛选条已是「自定义」，打开列表却高亮「近一周」
+
+两处叠加：
+
+1. **接口 `timeType` 可能是字符串 `"0"`**。胶囊用 `=== "0"` 能显示「自定义」，但 `el-radio` 的 `label` 是 number `0`，严格相等失败，列表看起来仍像默认档（近一周）。get 侧 `startTime`/`endTime` 还可能是 ISO 串（含 `+0000`），当 Number prop 会变成 `NaN`，日历也回填不上。
+2. **`chatBelongs` 的 deep watch 重建 `im` 时只写了 `timeType`，丢掉 `startTime`/`endTime`**。确认自定义后只要归属对象动一下，区间就被冲掉。
+
+处理：档位/区间在边界统一 `Number` + 毫秒归一；watch 必须 spread 旧 `im`；radio 同时绑 `:value` 与 `:label`。PC 记忆条此前已按同样规则修过。
+
 ## 验证
 
-- web：`node --test src/pages/date-range/host-bridge.test.mjs`（8 例：四通路 + 优先级 + 非 iOS 守卫）
+- web：`node --test src/pages/date-range/host-bridge.test.mjs`（8 例：四通路 + 优先级 + 非 iOS 守卫）；
+  `node --test src/use/timeTypeNormalize.test.mjs`（`"0"` 不回退 7、ISO/`+0000` 转毫秒）
 - iOS 链路静态确认：半屏 `ZXJSWebPopoverView` → `ZXJSWebLoader`（UA 追加 `MTCoreApiJS/<ver>`，
   `/MTCoreApi/i` 可匹配）→ `ZXJSWKWebViewBridge` 注册 `aiChat` 模块 → `selectDateRange` handler

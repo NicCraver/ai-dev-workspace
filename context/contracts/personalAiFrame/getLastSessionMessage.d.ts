@@ -3,6 +3,8 @@
  * POST /sessionMsg/getLastSessionMessage
  * 用途：点击 AI 框打开时调用，不确定是否有 AI 会话记录
  * Changelog:
+ * - 2026-08-28 `agentSetDataRangeExpandVo` 补 startTime/endTime（timeType=0）；
+ *   get 可能回 ISO 字符串或毫秒，timeType 可能是 `"0"`。
  * - 2026-07-14 新增 POST /sessionMsg/getLastSessionMessage
  * - 2026-07-16 对齐 YApi：入参新增 `code`；`wpsCode` 标 @unconfirmed（web 现网发送、文档未列）；
  *   `agentSetDataRangeExpandVo` 子项 dataRangeType/choose 必填，dataRangeType 含 3-个人知识/4-共享知识；
@@ -255,8 +257,12 @@ export type PersonalAiFrameAgentSetDataRangeItem = Required<
 
 /** 聊天中存的选中数据（回参必填） */
 export interface PersonalAiFrameAgentSetDataRangeExpandVo {
-  /** 选择的时间类型 */
-  timeType: number;
+  /** 选择的时间类型。0=自定义；接口可能回字符串 "0" */
+  timeType: number | string;
+  /** timeType=0 时的区间起，毫秒或 ISO 字符串 */
+  startTime?: number | string | null;
+  /** timeType=0 时的区间止，毫秒或 ISO 字符串 */
+  endTime?: number | string | null;
   /** 智能体知识范围 */
   dataRangeList: PersonalAiFrameAgentSetDataRangeItem[];
   /** 联网搜索：0-未开启；1-开启 */

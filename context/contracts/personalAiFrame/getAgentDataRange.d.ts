@@ -2,6 +2,7 @@
  * 契约：个人AI框域 · 知识范围获取
  * POST /agentSetDataRangeExpand/getAgentDataRange
  * Changelog:
+ * - 2026-08-28 回参补 startTime/endTime（timeType=0）；日期可能为 ISO 串，timeType 可能为 `"0"`。
  * - 2026-07-29 @unconfirmed 回参新增三个全选标记 groupAndAccountSelectAll /
  *   organizationGroupSelectAll / outreachGroupSelectAll（0/1，与 saveDataRange 入参对称）。
  *   起因：这三个标记表达「用户勾了全选」的意图，只由「选择数据来源」弹窗产出；而 saveDataRange
@@ -90,8 +91,12 @@ export interface PersonalAiFrameGetAgentDataRangeData {
   agentId?: string;
   /** 智能体知识范围 */
   dataRangeList?: PersonalAiFrameAgentDataRangeItem[];
-  /** 选择的时间类型 */
-  timeType?: number;
+  /** 选择的时间类型。0=自定义；接口可能回字符串 "0" */
+  timeType?: number | string;
+  /** timeType=0 时的区间起，毫秒或 ISO 字符串 */
+  startTime?: number | string | null;
+  /** timeType=0 时的区间止，毫秒或 ISO 字符串 */
+  endTime?: number | string | null;
   /** 选择的时间名称 */
   timeName?: string;
   /** 可选时间类型集合 */

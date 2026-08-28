@@ -2,6 +2,9 @@
  * 契约：个人AI框域 · 知识范围记忆
  * POST /agentSetDataRangeExpand/saveDataRange
  * Changelog:
+ * - 2026-08-28 timeType=0（自定义）时 save/get 携带 startTime/endTime（毫秒）。
+ *   get 侧日期字段可能按 ISO 字符串序列化（含 `+0000`），前端须归一为毫秒；
+ *   timeType 也可能是字符串 `"0"`，与 number 0 同义，禁止 `|| 7`。
  * - 2026-07-29 对齐 YApi（2026-07-28 更新）：新增 groupAndAccountSelectAll /
  *   organizationGroupSelectAll / outreachGroupSelectAll 三个全选标记（0/1，非必填）。
  *   语义：表达「用户勾了全选」的意图，后端据此在新增群时自动把新群补进 dataRangeScopeList。
@@ -32,8 +35,12 @@ export interface PersonalAiFrameSaveDataRangeReq {
    * 单项 choose：0-未选中；1-选中
    */
   dataRangeList?: PersonalAiFrameDataRangeChoose[];
-  /** 时间类型（一定有值） */
-  timeType?: number;
+  /** 时间类型（一定有值）。0=自定义区间；接口偶发字符串 "0" */
+  timeType?: number | string;
+  /** timeType=0 时的区间起（毫秒）；非 0 传 null 清理 */
+  startTime?: number | string | null;
+  /** timeType=0 时的区间止（毫秒）；非 0 传 null 清理 */
+  endTime?: number | string | null;
   /** 联网搜索：0-未开启；1-开启 */
   netSearch?: number;
   /** 深度思考：0-未开启；1-开启 */
