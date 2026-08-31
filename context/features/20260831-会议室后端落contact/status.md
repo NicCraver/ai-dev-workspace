@@ -1,6 +1,6 @@
 # Status：会议室后端落 contact
 
-> 最后更新：2026-08-31（plan 完成，12 个任务待执行）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-31（plan 补齐测试矩阵，14 个任务待执行）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -17,8 +17,9 @@
 
 ## 待办 / 阻塞
 
-- (contact) plan.md 已就绪（12 个任务），从 Task 1「错误码与信封基础」开工
-- (contact) 前 3 个任务是纯函数 TDD（26 个单测），Task 4 起需连测试库 192.168.10.31 并手动执行建表脚本
+- (contact) plan.md 已就绪（14 个任务），从 Task 1「错误码与信封基础」开工
+- (contact) 测试分五层：纯函数 JUnit（50 例）+ Service Mockito（不连库）+ Controller `@WebMvcTest`（不连库）+ curl 端到端；验收基准是 Node 端已有的 77 个测试用例
+- (contact) 前 4 个任务是纯函数 TDD，Task 4 起需连测试库 192.168.10.31 并手动执行建表脚本
 - (阻塞分期 4) 管理员怎么判待定：2026-09-01 问后端同事，问题清单见 spec「管理员判定」小节
 - (运维) 网关 `/meetingApi` → `zx-contact` 的前缀映射待确认，不阻塞开发
 - (meeting web) 联调阶段要改 `web/src/server/module/*.js` 的路径与方法（Node 的 `PUT /资源/:id` → contact 惯例的 `POST /动作/{id}`），只改路径不改逻辑
@@ -34,7 +35,8 @@
 - 2026-08-31 代码参照 `com.zgiot.zx.position` 的分层写法
 - 2026-08-31 错误码不进 contact 的 `ErrCodeBean` 体系，改用域内 `@RestControllerAdvice(basePackages="com.zgiot.zx.meetingroom")` 直接产出 M40xx，不污染全局
 - 2026-08-31 `MeetingTimeKit.slotFloor` 取**向下**取整，与前端 `TL.nextOpen` 一致；Node 服务端的 `nextOpen` 是向上取整，两边本来就不一致（17:43 时前端可选 17:30、Node 会拒），Java 侧按「当前半格可预约」统一
-- 2026-08-31 业务规则（时间换算、11 条校验、区间重叠）抽成不依赖 Spring/DB 的纯函数，26 个 JUnit 单测；CRUD 与聚合查询靠 curl 验收（contact 无集成测试基建）
+- 2026-08-31 业务规则抽成不依赖 Spring/DB 的纯函数（时间 / 预定校验 / 会议室校验），用 JUnit 4 做 TDD；Service 层用 Mockito mock Mapper、Controller 层用 `@WebMvcTest`，都不连库；只有端到端用 curl。不用 `@SpringBootTest` 当主力（要连 MySQL/Redis/Eureka，冷启动 66 秒）
+- 2026-08-31 对照 Node 测试发现并修正 5 处计划错误：默认主题无姓名时是「同事」不是「我」、非本人操作回 M4004 不是 M4003、会议室校验实为 11 条、字典改名要级联重写会议室、会议室默认值是 07:00/23:00/90/循环 false
 - 2026-08-31 **全企业开放，不设白名单**（先前定的 `meeting.corp.whitelist=6` 已撤销）；试点范围由运营控制微应用入口可见性，后端不限制
 - 2026-08-31 PC 切企业会清空已打开的微应用（`open-panel.vue:139`），会议室被关闭、重开时拿到新 corpId，**不存在 stale corpId**（早前判断有误已更正）
 - 2026-08-31 多企业：可见/可预定范围**仅本企业**，不做集团子树、不做关联企业；外协不特判
