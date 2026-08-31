@@ -50,4 +50,4 @@ meeting 仓库 `main` 工作区脏。booking `time.test.js` 本轮 24 通过。
 - 2026-08-31 当日当前半格（含已开始未结束）可预约，整格结束后才禁用
 - 2026-08-31 日轴叠字：用户选区 > 当前时刻 > 整点刻度
 - 2026-08-31 PC 点会议室名直接预约，默认最近一小时；弹窗时间为飞书式日期+15 分钟时刻
-- 2026-08-31 会议室**后端**落在新接入的 `apps/contact`（`zx-contact`，Spring Boot 微服务），不再扩 `apps/meeting/server`（后者只作本地开发临时服务端）。约定见 `context/platforms/contact.md`；本地 Maven 环境（私服 + 6 个私有依赖）已打通，首次 `mvn package` 验证中
+- 2026-08-31 会议室**后端**落在新接入的 `apps/contact`（`zx-contact`，Spring Boot 微服务），不再扩 `apps/meeting/server`（后者只作本地开发临时服务端）。约定见 `context/platforms/contact.md`；本地 Maven 环境已打通（settings.xml 需两处改：阿里云 mirror 排除 zgiot 三仓、给 http 仓库加 `<blocked>false</blocked>` 绕开 Maven 3.9 的 http 封锁），私有依赖走同事导出的本地仓库，公司 Nexus 上缺 `zx-parent` / `zx-mq-producer` / `zx-log-core` / `asyncTool`。首次 `mvn package` 待离线仓库就位后验证
