@@ -2,30 +2,32 @@
 
 > 最后更新：2026-08-31 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
-分支：web 待建 ｜ ios `feat/ios-agent-date-range`（当前分支，可另起）
+分支：web `dev-date-range`（领先 origin 5）｜ ios `feat/ios-agent-date-range`（领先 origin 2）
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| 上报桥提共用模块（`hostReportBridge`）+ 单测 | ⬜ | — | — | — |
-| `AcDialog` 加 `hideClose` | ⬜ | — | — | — |
-| `SelectDataRangeDialog` 移动变体（全屏壳 / 导航栏 / 常驻搜索） | ⬜ | — | — | — |
-| 合并保存入参纯函数 + 单测 | ⬜ | — | — | — |
-| 新页 `/m/data-range` + 注册 `reportDataRange` | ⬜ | — | — | — |
-| 全屏 webview 容器 + `reportDataRange` handler | — | — | ⬜ | — |
-| 筛选条入口切到 webview | — | ⬜ 本轮不做 | ⬜ | — |
-| `bridge.md` 登记 + impl-notes | ⬜ | — | — | — |
-| 真机 / 浏览器自测 | ⬜ | — | ⬜ | — |
+| 上报桥提共用模块（`hostReportBridge`）+ 单测 | ✅ | — | — | — |
+| `AcDialog` 加 `hideClose` | ✅ | — | — | — |
+| `SelectDataRangeDialog` 移动变体（全屏壳 / 导航栏 / 常驻搜索） | ✅ | — | — | — |
+| 合并保存入参纯函数 + 单测 | ✅ | — | — | — |
+| 新页 `/m/data-range` + 注册 `reportDataRange` | ✅ | — | — | — |
+| 全屏 webview 容器 + `reportDataRange` handler | — | — | 🚧 代码已写，待 Xcode 编译 | — |
+| 筛选条入口切到 webview | — | ⬜ 本轮不做 | 🚧 代码已写，待真机 | — |
+| `bridge.md` 登记 + impl-notes | ✅ | — | — | — |
+| 真机 / 浏览器自测 | 🚧 浏览器 UI 已过 | — | ⬜ 待人工真机 8 项 | — |
 
 desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRangeDialog`，形态不变。
 
 ## 待办 / 阻塞
 
+- (ios) **需人工 Xcode clean build**（`zhixinApp.xcworkspace` / `zhixinAppTest` + iPhone 15 iOS 17），AI 不代跑
+- (ios) **需人工真机 8 项**，尤其第 6 项：改数据范围后确认时间档与联网搜索没被冲掉
 - (android) 本轮不做：协议已按三端设计（`window.WebView.reportDataRange`），后续照抄 iOS
 - (web) 移动 Home 经 `selectDataRangeScope` 拉原生页的老链路本轮不切，下一步改成直调组件
 - (ios) 原生 `ZXPersonalAiPickerController` 暂不下线——`selectDataRangeScope` 桥入口还在用它
-- (web) 移动变体的搜索层与键盘顶起、安全区表现只能真机验，浏览器自测覆盖不到
+- (web) 移动变体的搜索层与键盘顶起、安全区表现只能真机验；浏览器里搜「李权泓」结果层会盖住列表，但自动化 fill 未触发 focus 时 candidates 为空、会先出空态
 
 ## 关键决策记录
 
