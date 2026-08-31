@@ -28,6 +28,31 @@
 
 优先级 android > ios > parent > none。完整契约见 `context/bridge.md`「selectDateRange 上报」。
 
+## 自定义档选项行 UI 约定（四端同一份）
+
+时间面板里 type=0 那一行：档名后面**常驻**一个类 input 的区间框，不把区间拼进档名括号
+（固定档才是 `近3天(08/29-08/31)` 这种拼法）。
+
+| 状态 | 框内 | 文字色 |
+|------|------|--------|
+| 当前档=自定义且有区间 | `M/D~M/D` | 深灰 `#595959` |
+| 无区间 / 当前档不是自定义 | `请选择时间` | 浅灰 `#8F959E`（grayMedium） |
+
+框样式：白底、`#E0E0E0` 0.5 描边、圆角 4、高 22、左右内边距 6、字号 12。
+整行（含框）可点，点了就拉起 `/date-range`。
+
+**区间文案的年份规则（易错）**：起止**各自单独**判是否本年——本年 `M/D`，非本年 `YY/M/D`。
+所以 `25/5/6~8/31` 是合法输出（起 2025 带年、止 2026 本年不带）。
+不要写成「同年只在左端带一次年」：起止同为去年时右端会漏年，被读成今年（iOS 曾这么写，已修）。
+
+各端落点：web `TimeSelector.vue` + `useTimeData.formatTimeRange`；PC `agent-memory-bar.vue`
+`.time-range-input` + `date-range-format.js`；安卓 `DataTimePopupAdapter` + `item_agent_time_range.xml`
+（`bg_time_range_input`）+ `DateRangeTextUtil`；iOS 群条/个人条共用 `ZXAIAgentTimeRangeBoxLabel`
+（声明在 `ZXAIAgentFilterBar.h`）+ `ZXAIAgentTimeData customRangeTextWithStartMs:endMs:`。
+
+> ⚠️ web / PC 目前**无区间时不显示框**（`v-if="hasRange"`），与安卓/iOS 的常驻占位不一致；
+> 要拉齐得改这两处的 `v-if` 并补占位文案。
+
 ## 联调坑
 
 ### 1. wnsdk 业务载荷必须**平铺**在参数顶层——`success`/`error` 传不下去，套 `data` 也传不下去
