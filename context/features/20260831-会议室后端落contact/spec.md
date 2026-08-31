@@ -47,20 +47,19 @@
 - **查不到有效 user 就拒绝**（返回 `M4002`）。这一步顺带堵住了伪造 `zxCorpId` 越权：即使 header 被改成别的企业，该账号在那个企业没有 user 记录，直接拒。
 - 所有查询（看板、我的预定、冲突检测、管理员列表）一律带 `corpId` 条件，索引照 contact 惯例以 corpId 打头。
 
-### ⚠️ 已知前端缺陷（PC 端切企业后 corpId 不更新）
+### PC 端切企业的实际行为（已勘察，链路是通的）
 
-勘察 `apps/desktop` 得到，**不是本 spec 引入的问题，但会议室会撞上**：
+会议室以**微应用**形态挂在 PC 端应用面板里。切企业时：
 
-- 切企业（`components/layouts/new-aside-menu.vue:790` `selectCorpHandler`）只做两件事：`SetCorpId(corpId)` 写 vuex + 存本地 db。
-- `components/common/webview-control.vue:165` 的 `watch: {}` 是**空的**，不监听企业变化；corpId 只在 `formatURL()`（同文件 `:335`）首次拼 URL 时写进 query。
-- `views/main.vue:18` 的 router-view 外面套了 `<keep-alive>`，页面切走再回来不重建。
+- `views/open-panel.vue:139` 的 `LoginCompany` deep watch：corpId 变化 → `getAllmic("companyChange")` 重拉该企业微应用列表 + `openAppList.splice(0)` **清空已打开的微应用** + 回到应用列表页。`openAppList` 正是 `v-for` 渲染 `webview-control` 的数据源，清空即销毁 webview。
+- `views/main.vue:587` 的同名 watch 同时 `SetMicroApps([])`、`hasOpenMail=false`、停邮件轮询。
+- 重新打开会议室时，`components/common/webview-control.vue:335` 的 `formatURL()` 按当前 `LoginCompany.corpId` 重拼 URL。
 
-**后果**：在企业 A 打开会议室 → 切到企业 B → 会议室页面仍按 A 的 corpId 发请求。
+**结论：切企业 = 会议室被关闭 + 重开时拿到新 corpId，不存在 stale corpId。** 多企业在前端这一侧是天然支持的。
 
-**本 spec 的应对**：服务端不信前端 corpId（见上），所以**不会发生越权取数**——请求会被按 session 里的当前企业处理，或因该账号在目标企业无 user 而被拒。但用户体验上会出现「切了企业，会议室还是旧企业的数据 / 报错」。彻底修要前端配合，二选一，本功能不做，另立任务：
+> 注：`webview-control` 组件自身 `watch: {}` 为空、不监听企业变化——但上层已经把它销毁了，所以不影响。别被这个组件的空 watch 误导。
 
-1. PC 端在 `selectCorpHandler` 里通知已打开的 webview 重载（给 `webview-control` 补 `watch` + 重建 URL）；
-2. 或 meeting web 每次请求前从宿主 bridge 现取 corpId，不再依赖启动时的 URL 参数。
+服务端仍然**不信前端传的 corpId**（见上），这是纵深防御，不是因为前端不可靠。
 
 ## 数据模型（4 张表）
 
