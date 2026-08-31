@@ -54,7 +54,7 @@ src/main/java/com/zgiot/zx/<域>/
 ## 已知坑
 - ⚠️ **`src/main/resources/application.properties` 里明文提交了大量生产/测试凭据**（MySQL 账号密码、阿里云 AccessKey、RSA 私钥、飞书 appSecret、GDB 账号）。改这个文件时不要新增凭据，也别把本地密码顺手提交上去；泄露风险应向后端负责人反馈。
 - `.gitignore` 里有一行 `*.yml`——yml 配置一律不入库，配置只走 properties + 配置中心（Nacos / Spring Cloud Config）。
-- `localconfig/application.properties` 是 GBK 编码（终端直接 cat 是乱码），改它请用编辑器指定编码，别整文件重写。
+- `localconfig/application.properties` 里的中文**已经被编码转换毁掉**（GBK 残字节 + U+FFFD 混在一起，不可还原），只有 key/value 的 ASCII 部分可用。别试图"修正编码"，要中文注释就重写那几行。
 - `logging.level.root=DEBUG` 写死在主配置里，本地起服务日志量极大。
 - 启动类打了 `@Lazy` **专为绕开循环依赖**；新增 Bean 若形成环，先想办法拆依赖，别再加 `@Lazy` 掩盖。
 - `ContactApplication` 启动时会跑 `CommandLineRunner`（开放注册默认部门初始化）与全量反射扫描（`Reflections("com.zgiot.zx")`），冷启动偏慢，属正常。
