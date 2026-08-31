@@ -6,7 +6,7 @@
 bash scripts/code-status.sh
 ```
 
-覆盖：编排仓 `context` + `apps/web` / `android` / `ios` / `desktop` + `meeting` / `action-center`。
+覆盖：编排仓 `context` + `apps/web` / `android` / `ios` / `desktop` + `meeting` / `action-center` / `contact`。
 
 ## 输出要求
 
@@ -16,7 +16,7 @@ bash scripts/code-status.sh
 
 | 列 | 填什么 |
 |----|--------|
-| 端 | `编排仓` / `Web` / `Android` / `iOS` / `PC` / `meeting` / `action-center`（脚本里的 `context`→编排仓，`desktop`→PC） |
+| 端 | `编排仓` / `Web` / `Android` / `iOS` / `PC` / `meeting` / `action-center` / `contact`（脚本里的 `context`→编排仓，`desktop`→PC） |
 | 分支 | 当前分支名 |
 | 与远端 | `synced` / `ahead N` / `behind N` / `ahead N·behind M` / `no upstream` |
 | 工作区 | 见下 |

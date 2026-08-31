@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 工作区与 git 状态汇总：context 编排仓 + 智信四端（web/android/ios/desktop）
-# + 另两个性质不同的仓库（meeting 个人项目、action-center 公司另一 web 项目/参考源）。
+# + 另三个性质不同的仓库（meeting 个人项目、action-center 公司另一 web 项目/参考源、contact 后端服务）。
 # 用法: bash scripts/code-status.sh [--short]
 # 各 AI 工具斜杠命令均调用此脚本，保证输出一致；语义总结由 AI 撰写，脚本只输出事实。
 set -euo pipefail
@@ -16,9 +16,11 @@ REPOS=(
   "android|apps/android"
   "ios|apps/ios"
   "desktop|apps/desktop"
-  # 下面两个不是智信的端：meeting=个人项目（准备推进到公司），action-center=公司另一 web 项目（参考源）
+  # 下面三个不是智信的端：meeting=个人项目（准备推进到公司），action-center=公司另一 web 项目（参考源），
+  # contact=通讯录/组织架构后端服务（Spring Boot）
   "meeting|apps/meeting"
   "action-center|apps/action-center"
+  "contact|apps/contact"
 )
 
 count_dirty() {
@@ -128,7 +130,7 @@ summarize_repo() {
 
 # ── 输出 ──────────────────────────────────────────────
 if [[ "$SHORT" -eq 0 ]]; then
-  echo "=== 工作区状态（context + 智信四端 + meeting / action-center）==="
+  echo "=== 工作区状态（context + 智信四端 + meeting / action-center / contact）==="
   active_file="$ROOT/context/features/ACTIVE"
   if [[ -f "$active_file" ]]; then
     idx=0
