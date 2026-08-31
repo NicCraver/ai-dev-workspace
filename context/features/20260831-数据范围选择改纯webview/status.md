@@ -1,17 +1,42 @@
-# Status：选择时间范围改造为纯webview
+# Status：数据范围选择改纯 webview
 
 > 最后更新：2026-08-31 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+
+分支：web 待建 ｜ ios `feat/ios-agent-date-range`（当前分支，可另起）
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| 页面开发（mock） | ⬜ | ⬜ | ⬜ | ⬜ |
-| 接口联调 | ⬜ | ⬜ | ⬜ | ⬜ |
-| 自测通过 | ⬜ | ⬜ | ⬜ | ⬜ |
+| 上报桥提共用模块（`hostReportBridge`）+ 单测 | ⬜ | — | — | — |
+| `AcDialog` 加 `hideClose` | ⬜ | — | — | — |
+| `SelectDataRangeDialog` 移动变体（全屏壳 / 导航栏 / 常驻搜索） | ⬜ | — | — | — |
+| 合并保存入参纯函数 + 单测 | ⬜ | — | — | — |
+| 新页 `/m/data-range` + 注册 `reportDataRange` | ⬜ | — | — | — |
+| 全屏 webview 容器 + `reportDataRange` handler | — | — | ⬜ | — |
+| 筛选条入口切到 webview | — | ⬜ 本轮不做 | ⬜ | — |
+| `bridge.md` 登记 + impl-notes | ⬜ | — | — | — |
+| 真机 / 浏览器自测 | ⬜ | — | ⬜ | — |
+
+desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRangeDialog`，形态不变。
 
 ## 待办 / 阻塞
-<!-- 每条注明端。例：- (ios) 等后端 v2 字段上线，阻塞联调 -->
+
+- (android) 本轮不做：协议已按三端设计（`window.WebView.reportDataRange`），后续照抄 iOS
+- (web) 移动 Home 经 `selectDataRangeScope` 拉原生页的老链路本轮不切，下一步改成直调组件
+- (ios) 原生 `ZXPersonalAiPickerController` 暂不下线——`selectDataRangeScope` 桥入口还在用它
+- (web) 移动变体的搜索层与键盘顶起、安全区表现只能真机验，浏览器自测覆盖不到
 
 ## 关键决策记录
-<!-- 只记会影响后续实现的决策，一行一条，带日期 -->
+
+- 2026-08-31 四端复用 `SelectDataRangeDialog`，不新建组件；移动端只改壳 / 导航栏 / 搜索三处
+- 2026-08-31 web 落库、回传只报 `{ok:true}`：`saveDataRange` 是全量记忆写入，
+  由 web 先 `getAgentDataRange` 取底再合并，避免冲掉 timeType / startTime / endTime / netSearch
+- 2026-08-31 页挂 **mobile 入口**（`/m/data-range`）而非 main：main 入口拿不到
+  `mpa/mobile/App.vue` 的 `extendModule` 注册，`/date-range` 已在此栽过
+- 2026-08-31 页需登录态 → `needCode:YES` 带 userCode；与免鉴权的 `/date-range` 不同
+- 2026-08-31 iOS **全屏**承载、原生不画导航栏：左返回 / 中标题 / 右涉密全由 web 画
+  （涉密气泡文案走 `getSecretButtonTip`，原生画就得再实现一遍）
+- 2026-08-31 新桥 `reportDataRange`，载荷 `{type:"data-range:confirm",ok:true}` / `cancel`，
+  必须**平铺**（同 `selectDateRange` 的坑）
+- 2026-08-31 移动搜索用「常驻输入框 + 全屏结果层」，不跳路由、不做搜索子页
