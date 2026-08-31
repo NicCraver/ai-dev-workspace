@@ -58,15 +58,14 @@
 唯一被否掉的写法：「同年只在左端带一次年」——起止同为去年时右端漏年，`24/5/6~8/31`
 会被读成今年（iOS 原写法，已修）。
 
-> 2026-08-31 曾短暂改成「跨年两端都带年」（`25/12/10~26/6/26`），当天即按「当前年不显示年」
-> 回到上表口径。四端都已回改，勿再按 26/6/26 那版实现。
+> 2026-08-31 曾短暂把四端改成「跨年两端都带年」（`25/12/10~26/6/26`），当天按
+> 「当前年不显示年」回到上表口径；web / PC 的那次改动已整体回退，两端代码保持原样未动。
 
-各端落点：web `timeRangeFormat.js`（含 4 例单测；`useTimeData` 只做 re-export，因为它依赖
-`@/utils` 别名、node --test 直测不了）+ `TimeSelector.vue`；PC `date-range-format.js`
-（含 5 例单测）+ `agent-memory-bar.vue` `.time-range-input`；安卓 `DateRangeTextUtil`
+各端落点：web `useTimeData.formatTimeRange`（`TimeSelector.vue` 消费）；PC
+`date-range-format.js` + `agent-memory-bar.vue` `.time-range-input`；安卓 `DateRangeTextUtil`
 + `DataTimePopupAdapter` + `item_agent_time_range.xml`（`bg_time_range_input`）；
 iOS `ZXAIAgentTimeData customRangeTextWithStartMs:endMs:` + 群条/个人条共用
-`ZXAIAgentTimeRangeBoxLabel`（声明在 `ZXAIAgentFilterBar.h`）。
+`ZXAIAgentTimeRangeBoxLabel`（声明在 `ZXAIAgentFilterBar.h`）。四端逻辑等价，无单测。
 
 > ⚠️ web / PC 目前**无区间时不显示框**（`v-if="hasRange"`），与安卓/iOS 的常驻占位不一致；
 > 要拉齐得改这两处的 `v-if` 并补占位文案。
