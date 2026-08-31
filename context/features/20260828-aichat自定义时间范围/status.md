@@ -1,6 +1,6 @@
 # Status：aichat自定义时间范围
 
-> 最后更新：2026-08-31（回填修复）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-31（时间弹层点固定档关闭）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 分支：web `dev-date-range` ｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
 
@@ -15,10 +15,12 @@
 | 弹层宽度按内容自适应 | — | ✅ 本就 WRAP_CONTENT | ✅ 时间/知识类型两个面板 | — |
 | 记忆 save/get 对照安卓补齐 | — | 参照源 | ✅ 4 处（详见 impl-notes） | — |
 | 单测 | ✅ host-bridge 9 例 | — | — | — |
-| 真机自测 | ⬜ 未自测（代码已改完） | ✅ 同事已过 + 本人复验 | 🚧 回填修复待复验 | ✅ 同事已过 |
+| 真机自测 | ⬜ 未自测（代码已改完） | 🚧 时间弹层关闭待复验 | 🚧 回填修复待复验 | ✅ 同事已过 |
 | 「请选择时间」打开 webview 不回填旧区间 | — | ✅ 仅 timeType=0 带 query | 🚧 已对齐安卓判据，待真机 | — |
 
 > 本迭代只动桥接层；功能主体（timeType=0 落库、载荷上送）此前已完成。
+
+**2026-08-31 时间弹层**：@智能体过滤条选固定档（近一周等）应立刻关 PopupWindow；点「自定义」不关，半屏 /date-range 叠在列表上。原先固定档漏了 dismiss、自定义反而 dismiss。已改 `PersonalAiFilterBar` 与群条 `GroupChatAgentDataCheckView`。
 
 **2026-08-31 回填修复**：iOS 占位「请选择时间」打开 webview 不得带旧区间；已重新列入 ACTIVE 待真机复验。
 
