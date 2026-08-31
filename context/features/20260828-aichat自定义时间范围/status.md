@@ -1,6 +1,6 @@
 # Status：aichat自定义时间范围
 
-> 最后更新：2026-08-31（时间弹层点固定档关闭）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-31（iOS 占位打开日历不回填）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 分支：web `dev-date-range` ｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
 
@@ -16,7 +16,7 @@
 | 记忆 save/get 对照安卓补齐 | — | 参照源 | ✅ 4 处（详见 impl-notes） | — |
 | 单测 | ✅ host-bridge 9 例 | — | — | — |
 | 真机自测 | ⬜ 未自测（代码已改完） | 🚧 时间弹层关闭待复验 | 🚧 回填修复待复验 | ✅ 同事已过 |
-| 「请选择时间」打开 webview 不回填旧区间 | — | ✅ 仅 timeType=0 带 query | 🚧 已对齐安卓判据，待真机 | — |
+| 「请选择时间」打开 webview 不回填旧区间 | — | ✅ 仅 timeType=0 带 query | 🚧 框内无区间文案则不带 query，待真机 | — |
 
 > 本迭代只动桥接层；功能主体（timeType=0 落库、载荷上送）此前已完成。
 
@@ -31,7 +31,7 @@
 - (web) 本地 node_modules 缺 prettier，`pnpm format` 未跑（`vue-tsc --noEmit` 已过，退出 0）。
 - (web/pc) 待定：无区间时是否也常驻显示占位框，与安卓/iOS 拉齐（当前 `v-if="hasRange"` 隐藏）。
   区间文案口径同理有意分叉（移动端整体判当年 + 补零），要不要拉齐是产品决定。
-- (ios) 2026-08-31：占位「请选择时间」打开 /date-range 仍回填旧区间——已改成与安卓相同（仅当前档=自定义才带 start/end）；待真机确认日历为未选。
+- (ios) 2026-08-31：占位「请选择时间」打开 /date-range 回填旧区间——回填判据改为与框内文案一致（当前档=自定义 **且** 框里有区间文案才带 start/end）；get 回填非有效自定义时清掉本地旧区间。待真机确认日历为未选。
 - (ios) 并发 get 无 generation 防护（安卓有），快速连点数据胶囊理论上会被旧响应回写。详见 impl-notes。
 - **未 push**：android `master-3.6.23` ahead 5、ios `feat/ios-agent-date-range` 无 upstream；
   web `dev-date-range` 已 push 到 `ec188c4`。
