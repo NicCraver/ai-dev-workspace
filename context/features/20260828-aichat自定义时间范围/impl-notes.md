@@ -46,14 +46,26 @@
 仍参与 RelativeLayout 量宽，框会被推到「近一周(08/25-08/31)」那么长之后；其余行保持
 `INVISIBLE` 以维持列宽一致。
 
-**区间文案的年份规则（易错）**：起止**各自单独**判是否本年——本年 `M/D`，非本年 `YY/M/D`。
-所以 `25/5/6~8/31` 是合法输出（起 2025 带年、止 2026 本年不带）。
-不要写成「同年只在左端带一次年」：起止同为去年时右端会漏年，被读成今年（iOS 曾这么写，已修）。
+**区间文案的年份口径**（2026-08-31 定，四端同一份）：
 
-各端落点：web `TimeSelector.vue` + `useTimeData.formatTimeRange`；PC `agent-memory-bar.vue`
-`.time-range-input` + `date-range-format.js`；安卓 `DataTimePopupAdapter` + `item_agent_time_range.xml`
-（`bg_time_range_input`）+ `DateRangeTextUtil`；iOS 群条/个人条共用 `ZXAIAgentTimeRangeBoxLabel`
-（声明在 `ZXAIAgentFilterBar.h`）+ `ZXAIAgentTimeData customRangeTextWithStartMs:endMs:`。
+| 区间 | 输出 | 说明 |
+|------|------|------|
+| 跨年（起止年份不同） | `25/12/10~26/6/26` | **两端都带**两位年 |
+| 同年 · 本年 | `5/6~8/31` | 两端都不带年 |
+| 同年 · 非本年 | `24/5/6~24/8/31` | 两端都带年 |
+
+被否掉的两种旧写法（都出现过，别回退）：
+
+1. 「每端各自判本年」——跨年时右端若落在本年就不带年（`25/12/10~6/26`），终点年份只能靠
+   「没写年 = 今年」推断，跨年区间读着像少了半截。web/PC/安卓原先都是这套。
+2. 「同年只在左端带一次年」——起止同为去年时右端漏年，`24/5/6~8/31` 被读成今年（iOS 原写法）。
+
+各端落点：web `timeRangeFormat.js`（含 4 例单测；`useTimeData` 只做 re-export，因为它依赖
+`@/utils` 别名、node --test 直测不了）+ `TimeSelector.vue`；PC `date-range-format.js`
+（含 5 例单测）+ `agent-memory-bar.vue` `.time-range-input`；安卓 `DateRangeTextUtil`
++ `DataTimePopupAdapter` + `item_agent_time_range.xml`（`bg_time_range_input`）；
+iOS `ZXAIAgentTimeData customRangeTextWithStartMs:endMs:` + 群条/个人条共用
+`ZXAIAgentTimeRangeBoxLabel`（声明在 `ZXAIAgentFilterBar.h`）。
 
 > ⚠️ web / PC 目前**无区间时不显示框**（`v-if="hasRange"`），与安卓/iOS 的常驻占位不一致；
 > 要拉齐得改这两处的 `v-if` 并补占位文案。
