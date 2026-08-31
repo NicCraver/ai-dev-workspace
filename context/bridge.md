@@ -136,12 +136,15 @@ web 分流：`payload.ok` → 新；有 `payload.scopes` → 老。取消：`cod
 | 宿主 | 调用形态 |
 |------|---------|
 | android | `window.WebView.selectDateRange(JSON.stringify(payload))` |
-| ios | `wnsdk.aiChat.selectDateRange({ data: payload, success, error })` |
+| ios | `wnsdk.aiChat.selectDateRange({ ...payload, success, error })`（业务字段**平铺**，勿套 `data`） |
 | PC iframe | `window.parent.postMessage(payload, "*")` |
 
 **iOS 两个必踩的坑（已修，勿回退）**：
 
-1. **载荷必须放 `data`**。wnsdk 内部把参数里的 `success` / `error` 当回调函数取走（`var o=a.success, n=a.error, d=a.data` → `callHandler(proto, handlerName, d, cb)`），只有 `data` 会下发原生。曾把 payload 塞进 `success`，原生收到空 data，一律按取消收口。
+1. **载荷必须平铺在参数顶层**（既不能放 `success`，也不能套 `data`）。wnsdk `callInner` 的实际行为是：把**整个参数对象**复制一份、只把 `success`/`error`/`dataFilter` 置空，然后整个当作 `data` 下发原生（`n=extend({},params); n.success=n.error=n.dataFilter=undefined; callHandler(proto, handlerName, n, cb)`）。
+   - 塞进 `success` → 被当回调取走，原生收到空 data；
+   - 套一层 `data: payload` → 原生收到 `{"data":{...}}`，顶层没有 `type`，按「非法载荷 → 取消」收口：**弹层关了但区间回不来**（2026-08-31 iOS 真机验出）。
+   - 平铺即与 `selectDataRangeScope`（业务参数平铺）一致；原生解析平铺优先，另留 `data` / `success` 嵌套兼容分支。
 2. **`/date-range` 页必须自行注册 namespace**。该页属 main 入口，`mpa/mobile/App.vue` 的 `extendModule` 不作用于它；且 `@tjmt/wnsdk` 是 UMD 包，经 Vite 走 CommonJS 分支打包**不挂 `window.wnsdk`**。故页面 `onMounted` 自注册 `selectDateRange`（`os:["MTCoreApi"]`，一次性上报无需 `isLongCb`），并把实例传给 `postToHost`。非 iOS 客户端不得触碰 `wnsdk.aiChat`——os 不匹配时模块 getter 会弹 `showError`。
 
 原生 ACK：`code=0`，`result="{\"ok\":true}"`；web 侧 fire-and-forget，不消费。

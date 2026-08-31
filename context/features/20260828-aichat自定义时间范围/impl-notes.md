@@ -23,28 +23,39 @@
 | 宿主 | 通路 |
 |------|------|
 | android | `window.WebView.selectDateRange(JSON.stringify(payload))` |
-| ios | `wnsdk.aiChat.selectDateRange({ data: payload, success, error })` |
+| ios | `wnsdk.aiChat.selectDateRange({ ...payload, success, error })`（平铺，勿套 `data`） |
 | PC iframe | `window.parent.postMessage(payload, "*")` |
 
 优先级 android > ios > parent > none。完整契约见 `context/bridge.md`「selectDateRange 上报」。
 
 ## 联调坑
 
-### 1. wnsdk 的 `success` / `error` 是保留回调键，业务数据只能放 `data`
+### 1. wnsdk 业务载荷必须**平铺**在参数顶层——`success`/`error` 传不下去，套 `data` 也传不下去
 
-wnsdk 内部：
+wnsdk 真正的行为（`lib/wnsdk.min.js`，两段拼起来看）：
 
 ```js
-var o = a.success, n = a.error, ..., d = a.data;
-// → callHandler(proto, handlerName, d, cb)
+// callInner：整个参数对象复制一份，只把三个保留键置空，然后当作 data
+callInner = function (e, a, o) {
+  var n = extend({}, stripUndefined(e));
+  n.success = void 0; n.error = void 0; n.dataFilter = void 0;
+  r({ handlerName, data: n, proto, success: e.success, error: e.error, ... }, a, o);
+};
+// 派发层：d = a.data → callHandler(proto, handlerName, d, cb)
 ```
 
-把 payload 塞进 `success` 时，wnsdk 把它当回调函数取走，下发原生的 `data` 为空。
-原生侧表现：handler 触发但解析不出 `type`，按「非法载荷 → 取消」收口，
-用户看到的是**弹窗关不掉、数据回不来**。
+即：**下发原生的 `data` = 整个参数对象（剔除 `success`/`error`/`dataFilter`）**，不是 `params.data`。
+两种错法都会让原生解析不出 `type`，按「非法载荷 → 取消」收口：
+
+| 写法 | 原生收到 | 现象 |
+|------|---------|------|
+| payload 塞 `success` | `{}`（被当回调取走） | 弹窗关不掉、数据回不来 |
+| payload 套 `data: payload` | `{"data":{...}}` | **弹层关了但区间回不来**（× 关闭正常，正因为取消路径与它同归一处，看不出差别） |
+| payload 平铺 ✅ | `{type,startTime,endTime}` | 正常 |
 
 对照可用范例：`selectDataRangeScope`（`personalAiDataRangeScopeMessage.js`）——业务参数平铺，
-`success`/`error` 传函数。
+`success`/`error` 传函数。**这是同一个坑踩了两次**：第一次只纠正了「别放 `success`」，
+误以为要放 `data`，第二次才读 `callInner` 源码定死平铺。
 
 ### 2. main 入口页拿不到 wnsdk，必须页面内自注册
 
@@ -66,9 +77,9 @@ wnsdk 的模块 getter 在 os 不匹配（PC/h5 访问 `os:["MTCoreApi"]` 的 ap
 
 ### 4. 原生解析用平铺优先
 
-wnsdk 下发给原生 handler 的就是 `data` 对应的字典，所以 iOS 侧 `type` 直接在顶层。
-解析顺序：顶层有 `type` → 直接用；否则回落 `success`/`error` 嵌套（兼容早期写法）。
-非法载荷一律按取消收口，不写脏态。
+wnsdk 下发给原生 handler 的就是「参数对象剔除回调键」，所以 iOS 侧 `type` 直接在顶层。
+解析顺序：顶层有 `type` → 直接用；否则回落 `data` 嵌套（旧 web 包配新客户端）；
+再否则回落 `success`/`error` 嵌套（兼容最早写法）。非法载荷一律按取消收口，不写脏态。
 
 ### 5. web：筛选条已是「自定义」，打开列表却高亮「近一周」
 
@@ -81,7 +92,8 @@ wnsdk 下发给原生 handler 的就是 `data` 对应的字典，所以 iOS 侧 
 
 ## 验证
 
-- web：`node --test src/pages/date-range/host-bridge.test.mjs`（8 例：四通路 + 优先级 + 非 iOS 守卫）；
+- web：`node --test src/pages/date-range/host-bridge.test.mjs`（9 例：四通路 + 优先级 + 非 iOS 守卫
+  + 「模拟 wnsdk 下发原生的 data 里 type 在顶层」，后者固化平铺契约，防再套 `data`）；
   `node --test src/use/timeTypeNormalize.test.mjs`（`"0"` 不回退 7、ISO/`+0000` 转毫秒）
 - iOS 链路静态确认：半屏 `ZXJSWebPopoverView` → `ZXJSWebLoader`（UA 追加 `MTCoreApiJS/<ver>`，
   `/MTCoreApi/i` 可匹配）→ `ZXJSWKWebViewBridge` 注册 `aiChat` 模块 → `selectDateRange` handler

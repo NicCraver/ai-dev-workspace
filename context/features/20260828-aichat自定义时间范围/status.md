@@ -1,6 +1,6 @@
 # Status：aichat自定义时间范围
 
-> 最后更新：2026-08-28 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-31 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 分支：web `dev-date-range` ｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
 
@@ -9,21 +9,25 @@
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 记忆条自定义档 + /date-range 页 | ✅ | ✅ | ✅ | ✅ |
-| 宿主回传桥接 | ✅ 修 wnsdk 通路（实例注入 + 载荷放 data） | ✅ window.WebView | ✅ 平铺解析兼容 | ✅ parent.postMessage |
-| 单测 | ✅ host-bridge 8 例 | — | — | — |
-| 真机自测 | ⬜ | ✅ 同事已过 | 🚧 待本人真机验 | ✅ 同事已过 |
+| 宿主回传桥接 | ✅ 修 wnsdk 通路（实例注入 + 载荷**平铺**） | ✅ window.WebView | ✅ 平铺优先 + data/success 嵌套兼容 | ✅ parent.postMessage |
+| 单测 | ✅ host-bridge 9 例 | — | — | — |
+| 真机自测 | ⬜ | ✅ 同事已过 | 🚧 确认回显缺陷已定位并修，待重验 | ✅ 同事已过 |
 
 > 本迭代只动桥接层；功能主体（timeType=0 落库、载荷上送）此前已完成。
 
 ## 待办 / 阻塞
 
-- (ios) 待真机自测：打开半屏日历 → 取消应关层不写脏态；确认应关层并回填区间到记忆条胶囊。
+- (ios) 待真机复验（web 需重新出包）：确认应关层 + 胶囊显「自定义」+ 重开时间面板 type=0 选中且带 M/D~M/D。
+  2026-08-31 真机验出「× 能关、确认无回显」，根因见下（web 载荷套了一层 `data`），web + iOS 均已改。
 - (web) 自定义档回显：确认后筛选条是「自定义」、再打开列表应仍选中自定义（不要回到近一周）。代码已修，待页面自测。
 - (web) 本地 node_modules 缺 prettier，`pnpm format` 未跑（vue-tsc --noEmit 已过，退出 0）。
 
 ## 关键决策记录
 
-- 2026-08-28 载荷统一放 wnsdk 的 `data` 键；`success`/`error` 仅作回调，不承载业务数据（wnsdk 内部只下发 `data`）。
+- 2026-08-31 **推翻 08-28 的「放 data」结论**：wnsdk `callInner` 是把**整个参数对象**（剔除
+  `success`/`error`/`dataFilter`）当作 `data` 下发原生，所以业务字段必须**平铺**；套 `data` 会让原生
+  收到 `{"data":{...}}`、顶层无 `type`，按取消收口——表现为「弹层关了但区间回不来」。
+  与 `selectDataRangeScope` 的平铺写法一致；单测新增一例模拟原生 data 固化该契约。
 - 2026-08-28 `/date-range` 页自注册 `selectDateRange` namespace（main 入口拿不到 mobile 的注册、UMD 不挂 window），桥实例显式注入，不再探测 `window.wnsdk`。
 - 2026-08-28 非 iOS 客户端不访问 `wnsdk.aiChat`（os 不匹配会弹 showError），已加守卫测试。
 - 2026-08-28 iOS 解析平铺优先、保留 `success`/`error` 嵌套兼容分支。
