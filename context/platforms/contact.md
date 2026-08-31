@@ -12,14 +12,25 @@
 
 ## 常用命令
 ```bash
-# 在 apps/contact/ 根执行（必须用 JDK 8）
-export JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
-mvn -DskipTests clean package     # 产出 target/zx-contact-1.0.0.jar
-mvn test                          # 单测（现有测试多为手工联调用途，未必全绿）
-mvn spring-boot:run               # 本地起服务
+# 在 apps/contact/ 根执行。JAVA_HOME 必须指到 JDK 8（下面这个路径是本机唯一可用的 8 版 JDK）
+export JAVA_HOME=/Users/nic/Library/Java/JavaVirtualMachines/corretto-1.8.0_392/Contents/Home
+mvn -o -DskipTests clean package  # 离线构建，约 17s，产出 target/zx-contact-1.0.0.jar（150MB fat jar）
+mvn -o test                       # 单测（现有测试多为手工联调用途，未必全绿）
+mvn -o spring-boot:run            # 本地起服务，端口 7004
 ```
-> ⚠️ **当前构建跑不通，缺前置条件**：本机 `~/.m2/` 无 `com.zgiot` 私有依赖（`zx-parent` / `zx-common` / `zx-mq-producer` / `zx-log-core` / `zx-action-sdk` / `asyncTool`），也没有 `~/.m2/settings.xml` 配公司 Nexus 镜像。首次构建前需要拿到公司私服地址并写 `settings.xml`。
-> ⚠️ 本机 `mvn -v` 默认跑在 JDK 26 上，项目是 Java 8，**不显式设 `JAVA_HOME` 必炸**。
+> ✅ 2026-08-31 首次构建通过：1465 个源文件编译成功。
+
+**环境是怎么配起来的（重装时照做）**：
+1. `~/.m2/settings.xml`（公司版）必须改两处，否则必炸：
+   - 阿里云 mirror 原本 `<mirrorOf>*</mirrorOf>` 会把公司私服也劫持 → 改成 `<mirrorOf>*,!zgiot,!zgiot-releases,!zgiot-snapshots</mirrorOf>`
+   - Maven 3.9 默认封杀 http 仓库（报 `maven-default-http-blocker` / `Blocked mirror`）→ 给 zgiot 三个仓库各加一条同 url 的 mirror 并写 `<blocked>false</blocked>`
+2. **公司 Nexus（`192.168.5.41:8081`，匿名可读）只有 `zx-common` 和 `zx-action-sdk` 1.0.6/1.0.8**，缺 `zx-parent` / `zx-mq-producer` / `zx-log-core` / `asyncTool`，`zx-action-sdk` 也没有 pom 要的 1.0.16 → **私有依赖只能从同事导出的本地仓库拿**（`ideamaven.zip` 解压合并进 `~/.m2/repository/`）。
+3. 用别人的本地仓库后必须清掉解析元数据，否则离线报 `present, but unavailable`：
+   `cd ~/.m2/repository && find . -name _remote.repositories -delete && find . -name '*.lastUpdated' -delete && find . -name resolver-status.properties -delete`
+4. 之后一律加 `-o` 离线跑。不加 `-o` 时每个公共依赖都要先去公司 Nexus 试三个仓库再 fallback 阿里云，慢到不可用（5 分钟走不完 50 个依赖）。
+
+> ⚠️ `/usr/libexec/java_home -v 1.8` 在本机返回的是 **Oracle JavaAppletPlugin 的 JRE**（无 javac），用它会报 `No compiler is provided in this environment`。必须写死上面的 corretto 路径。
+> ⚠️ 裸 `mvn` 默认跑在 JDK 26 上，项目是 Java 8，不设 `JAVA_HOME` 必炸。
 
 ## 目录与分层约定
 ```
