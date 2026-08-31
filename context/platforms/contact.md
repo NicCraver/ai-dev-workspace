@@ -16,9 +16,14 @@
 export JAVA_HOME=/Users/nic/Library/Java/JavaVirtualMachines/corretto-1.8.0_392/Contents/Home
 mvn -o -DskipTests clean package  # 离线构建，约 17s，产出 target/zx-contact-1.0.0.jar（150MB fat jar）
 mvn -o test                       # 单测（现有测试多为手工联调用途，未必全绿）
-mvn -o spring-boot:run            # 本地起服务，端口 7004
+
+# 起服务：必须带这两个 -D 让内网绕过 Clash 代理，否则连不上 MySQL（见「已知坑」第一条）
+java "-DsocksNonProxyHosts=192.168.*|10.*|127.0.0.1|localhost" \
+     "-Dhttp.nonProxyHosts=192.168.*|10.*|127.0.0.1|localhost" \
+     -jar target/zx-contact-1.0.0.jar \
+     --eureka.client.register-with-eureka=false      # 本地调试别把自己注册进测试环境 Eureka
 ```
-> ✅ 2026-08-31 首次构建通过：1465 个源文件编译成功。
+> ✅ 2026-08-31 首次构建 + 启动通过：1465 个源文件编译成功；`Started ContactApplication in 66s`，端口 7004，`/swagger-ui.html` 200，`/v2/api-docs` 报 49 个分组 / 596 条路径。
 
 **环境是怎么配起来的（重装时照做）**：
 1. `~/.m2/settings.xml`（公司版）必须改两处，否则必炸：
@@ -63,6 +68,7 @@ src/main/java/com/zgiot/zx/<域>/
 - 实际返回与契约不符时：先改契约，再改代码，并在活跃功能 `impl-notes.md` 的「联调坑」补一条。
 
 ## 已知坑
+- ⚠️ **Clash 会掐掉 JVM 的内网连接（最坑的一个，排查花了最久）**：macOS 系统 SOCKS 代理被 Clash Verge 设成 `127.0.0.1:7890`，JVM 默认继承系统代理，于是 JDBC / Redis / Eureka 全被塞进代理并被掐断，报 `Communications link failure` + `EOFException: Expected to read 4 bytes, read 0 bytes`。**迷惑点：`nc`/`curl` 测同一端口全是通的**，只有 Java 不行；判据是 `Socket.getLocalSocketAddress()` 返回 `127.0.0.1/...` 而不是 VPN 网卡地址。系统里那份 `socksNonProxyHosts` 写的是 CIDR `192.168.0.0/16`，**Java 不认 CIDR**，必须写通配 `192.168.*`。修法见上面的启动命令。
 - ⚠️ **`src/main/resources/application.properties` 里明文提交了大量生产/测试凭据**（MySQL 账号密码、阿里云 AccessKey、RSA 私钥、飞书 appSecret、GDB 账号）。改这个文件时不要新增凭据，也别把本地密码顺手提交上去；泄露风险应向后端负责人反馈。
 - `.gitignore` 里有一行 `*.yml`——yml 配置一律不入库，配置只走 properties + 配置中心（Nacos / Spring Cloud Config）。
 - `localconfig/application.properties` 里的中文**已经被编码转换毁掉**（GBK 残字节 + U+FFFD 混在一起，不可还原），只有 key/value 的 ASCII 部分可用。别试图"修正编码"，要中文注释就重写那几行。
