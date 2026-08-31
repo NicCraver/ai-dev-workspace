@@ -1,6 +1,6 @@
 # Status：会议室后端落 contact
 
-> 最后更新：2026-08-31（spec 完成）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-31（plan 完成，12 个任务待执行）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -8,6 +8,7 @@
 
 | 阶段 | contact（Java） | meeting web |
 |------|-----------------|-------------|
+| 计划编制（spec + plan） | ✅ | — |
 | 建表 + 实体/Mapper + 字典 CRUD | ⬜ | — |
 | 会议室 CRUD + 列表过滤分页 | ⬜ | — |
 | 看板 + 冲突检测 + 预定创建（批次事务） | ⬜ | — |
@@ -16,7 +17,8 @@
 
 ## 待办 / 阻塞
 
-- (contact) 按 spec 分期 1 开工：建表脚本 + 四个实体
+- (contact) plan.md 已就绪（12 个任务），从 Task 1「错误码与信封基础」开工
+- (contact) 前 3 个任务是纯函数 TDD（26 个单测），Task 4 起需连测试库 192.168.10.31 并手动执行建表脚本
 - (阻塞分期 4) 管理员怎么判待定：2026-09-01 问后端同事，问题清单见 spec「管理员判定」小节
 - (运维) 网关 `/meetingApi` → `zx-contact` 的前缀映射待确认，不阻塞开发
 - (meeting web) 联调阶段要改 `web/src/server/module/*.js` 的路径与方法（Node 的 `PUT /资源/:id` → contact 惯例的 `POST /动作/{id}`），只改路径不改逻辑
@@ -30,6 +32,9 @@
 - 2026-08-31 租户/用户从 contact 的 `SessionContext` 取，替代 Node 的 `zxCorpId/zxUserId` header
 - 2026-08-31 管理员判定 ⏸ **待定**，2026-09-01 问后端同事。先抽 `MeetingAdminChecker` 接口 + 配置项临时实现，只影响分期 4
 - 2026-08-31 代码参照 `com.zgiot.zx.position` 的分层写法
+- 2026-08-31 错误码不进 contact 的 `ErrCodeBean` 体系，改用域内 `@RestControllerAdvice(basePackages="com.zgiot.zx.meetingroom")` 直接产出 M40xx，不污染全局
+- 2026-08-31 `MeetingTimeKit.slotFloor` 取**向下**取整，与前端 `TL.nextOpen` 一致；Node 服务端的 `nextOpen` 是向上取整，两边本来就不一致（17:43 时前端可选 17:30、Node 会拒），Java 侧按「当前半格可预约」统一
+- 2026-08-31 业务规则（时间换算、11 条校验、区间重叠）抽成不依赖 Spring/DB 的纯函数，26 个 JUnit 单测；CRUD 与聚合查询靠 curl 验收（contact 无集成测试基建）
 - 2026-08-31 **全企业开放，不设白名单**（先前定的 `meeting.corp.whitelist=6` 已撤销）；试点范围由运营控制微应用入口可见性，后端不限制
 - 2026-08-31 PC 切企业会清空已打开的微应用（`open-panel.vue:139`），会议室被关闭、重开时拿到新 corpId，**不存在 stale corpId**（早前判断有误已更正）
 - 2026-08-31 多企业：可见/可预定范围**仅本企业**，不做集团子树、不做关联企业；外协不特判
