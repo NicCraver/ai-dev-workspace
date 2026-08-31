@@ -19,6 +19,7 @@
 - **时间模型**：`date` 存 `char(10)` 的 `YYYY-MM-DD`，`startMin` / `endMin` 存当天零点起的分钟数 `smallint`。响应同时回 `start` / `end` 的 `HH:mm`。
 - **时区**：一律 `Asia/Shanghai`。
 - **corpId 只从 `SessionContext.getCurrentAppUser().getCorpId()` 取**，忽略前端传的任何 corpId 参数。
+- **所有提示文案与默认值逐字照抄 Node 源码**，不要自己润色。前端按 `msg` 直接展示，`server/tests/*.test.ts` 里的断言就是验收标准。
 - **注释写中文。**
 - **提交只碰 `apps/contact`**，不要顺手改 `apps/meeting`。
 
@@ -51,6 +52,64 @@ src/test/java/com/zgiot/zx/meetingroom/
 
 dbscript/2026/V1_0_20260901_meetingroom_DDL.sql
 ```
+
+## 测试策略与覆盖矩阵
+
+`apps/meeting` 的 Node 端已有 **77 个非 agent 测试用例**（`server/tests/`），它们就是这次移植的行为契约。Java 侧按下表逐层补齐，**不要只测纯函数**。
+
+| 层 | 手段 | 依赖 | 对应 Node 测试 | 用例数 |
+|---|---|---|---|---|
+| 纯函数（时间） | JUnit 4 | 无 | `time.test.ts` 8 例 | 12 |
+| 纯函数（预定规则） | JUnit 4 | 无 | `booking.test.ts` 中的校验类 | 22 |
+| 纯函数（会议室规则） | JUnit 4 | 无 | `room.test.ts` 6 例 | 16 |
+| Service（冲突/批次/级联/状态） | JUnit 4 + Mockito（`spring-boot-starter-test` 自带） | mock Mapper，不连库 | `booking.test.ts` / `dict.test.ts` 行为类 | 24 |
+| Controller（路由/信封/参数） | `@WebMvcTest` + `@MockBean` | 只加载 MVC，不连库/Redis/Eureka | `routes.test.ts` 16 例 + `httpApi.test.ts` 10 例 | 20 |
+| 端到端 | curl 脚本 | 连测试库 | 手工 | 12 条 |
+
+> **为什么不用 `@SpringBootTest` 做主力**：contact 启动要连 MySQL + Redis + Eureka + MQ，冷启动 66 秒，做不了快速反馈。`@WebMvcTest` 只加载 Web 层、Service 全部 `@MockBean`，秒级完成，足以覆盖路由与信封。真连库的验证放 curl。
+
+**必须覆盖的行为清单**（逐条来自 Node 测试名，移植时打勾）：
+
+预定：
+- [ ] 11:00-13:00 与既有 10:00-12:00 重叠 → `M4010`
+- [ ] 12:00-13:00 与既有 11:00-12:00 首尾相接 → 成功（半开区间）
+- [ ] 当天早于当前半格 → 「该时段已过期」
+- [ ] 08:00-09:00 超出开放 09:00-18:00 → 「不在开放时间内」
+- [ ] 超过 今天+bookAheadDays → 「超出可提前预定范围」
+- [ ] 停用会议室不可预定
+- [ ] **非预定人不能释放**；本人释放后看板不再显示该占用
+- [ ] 15 分钟时长被拒
+- [ ] 日历上不存在的日期（如 2026-02-30）→ `M4000`
+- [ ] 空主题 + 有姓名 → 「张三预定的会议」
+- [ ] **空主题 + 无姓名 → 「同事预定的会议」**
+- [ ] 主题超 50 字被拒
+- [ ] 已释放的时段可被重新预定
+- [ ] 已结束的预定不能释放
+- [ ] 开放时间不在整半点时，未对齐的开始时间被拒；09:30 可以
+- [ ] **看板不泄漏其它企业的预定**；facilities 是脏数据时不崩
+- [ ] 本人可改主题与时段，重叠检测排除自身
+- [ ] 已结束的预定不能改；改动写审计
+- [ ] 每周循环在可提前范围内展开，**任一天冲突整批回滚**
+- [ ] `dates` 多日在一个事务内落库
+- [ ] `dates` 与 `repeatWeekly` 不能同时传
+- [ ] 会议室不允许循环时拒绝 `repeatWeekly`
+- [ ] 「我的」保留已释放与已结束历史；管理员看全部；**陌生人读审计被拒**
+
+会议室：
+- [ ] 启用状态下重名被拒
+- [ ] 停用之后可以重名
+- [ ] 把重名的那个改回启用时给出冲突提示
+- [ ] 空名称 → `M4000`
+- [ ] `openStart == openEnd` 被拒
+- [ ] **新建时楼宇不在启用字典里 → 被拒**
+
+字典：
+- [ ] 首次访问初始化默认楼宇与设施
+- [ ] 同类型重名被拒
+- [ ] 被会议室引用的楼宇不可删
+- [ ] **楼宇改名级联重写所有会议室的 buildingName；设施改名重写 rooms.facilities**
+
+---
 
 ---
 
@@ -521,6 +580,22 @@ public class BookingRulesTest {
     }
 
     @Test
+    public void 无姓名时默认主题用同事() {
+        SlotDraft draft = BookingRules.validateSlot(room(), "2026-09-01", "09:00", "10:00",
+                null, null, null, "2026-09-01", 480);
+        Assert.assertEquals("同事预定的会议", draft.getTitle());
+    }
+
+    @Test
+    public void 姓名过长时默认主题要截断() {
+        String longName = new String(new char[60]).replace('\0', '甲');
+        SlotDraft draft = BookingRules.validateSlot(room(), "2026-09-01", "09:00", "10:00",
+                null, null, longName, "2026-09-01", 480);
+        Assert.assertEquals(50, draft.getTitle().length());
+        Assert.assertTrue(draft.getTitle().endsWith("预定的会议"));
+    }
+
+    @Test
     public void 日期非法() {
         Assert.assertEquals(MeetingCode.BAD_REQUEST + "|请选择日期",
                 codeOf(() -> validate("2026-13-01", "09:00", "10:00", null, "2026-09-01", 480)));
@@ -721,10 +796,20 @@ public final class BookingRules {
     private BookingRules() {
     }
 
-    /** 未填主题时的默认值 */
+    /** 主题后缀 */
+    private static final String TITLE_SUFFIX = "预定的会议";
+
+    /**
+     * 未填主题时的默认值。无姓名时用「同事」；姓名过长先截断，保证总长不超 TITLE_MAX。
+     * 对应 Node 的 defaultBookingTitle。
+     */
     public static String defaultTitle(String userName) {
-        String name = StringUtils.isBlank(userName) ? "我" : userName.trim();
-        return name + "预定的会议";
+        String name = StringUtils.isBlank(userName) ? "同事" : userName.trim();
+        int maxName = TITLE_MAX - TITLE_SUFFIX.length();
+        if (name.length() > maxName) {
+            name = name.substring(0, maxName);
+        }
+        return name + TITLE_SUFFIX;
     }
 
     /** 区间是否重叠；首尾相接（前一场 end == 后一场 start）不算冲突 */
@@ -846,7 +931,7 @@ public final class BookingRules {
 ```bash
 mvn -o test -Dtest=BookingRulesTest
 ```
-预期：`Tests run: 16, Failures: 0, Errors: 0`。
+预期：`Tests run: 18, Failures: 0, Errors: 0`。
 
 - [ ] **Step 5: 提交**
 
@@ -907,11 +992,11 @@ CREATE TABLE `meeting_room` (
   `capacity` int(11) NOT NULL DEFAULT '0' COMMENT '容纳人数',
   `facilities` varchar(500) NOT NULL DEFAULT '[]' COMMENT '设施，JSON数组字符串',
   `locationNote` varchar(200) DEFAULT NULL COMMENT '位置备注',
-  `openStart` char(5) NOT NULL DEFAULT '08:00' COMMENT '开放开始 HH:mm',
-  `openEnd` char(5) NOT NULL DEFAULT '22:00' COMMENT '开放结束 HH:mm',
-  `bookAheadDays` int(11) NOT NULL DEFAULT '30' COMMENT '可提前预定天数 7/30/90/180',
+  `openStart` char(5) NOT NULL DEFAULT '07:00' COMMENT '开放开始 HH:mm',
+  `openEnd` char(5) NOT NULL DEFAULT '23:00' COMMENT '开放结束 HH:mm',
+  `bookAheadDays` int(11) NOT NULL DEFAULT '90' COMMENT '可提前预定天数 7/30/90/180',
   `needApproval` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否需审批（一期只存不用）',
-  `allowRecurring` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否允许循环预定',
+  `allowRecurring` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否允许循环预定',
   `allowPreempt` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否允许抢占（一期只存不用）',
   `enabled` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否启用',
   `creator` bigint(20) unsigned NOT NULL COMMENT '创建人accountId',
@@ -1428,6 +1513,8 @@ import java.util.List;
 @Service
 public class MeetingDictService extends BaseService<MeetingDict> {
 
+    /** 名称最大字数 */
+    public static final int NAME_MAX = 20;
     /** 楼宇 */
     public static final String TYPE_BUILDING = "building";
     /** 设施 */
@@ -1463,39 +1550,86 @@ public class MeetingDictService extends BaseService<MeetingDict> {
         String type = normalizeType(req.getType());
         String name = StringUtils.trimToEmpty(req.getName());
         if (StringUtils.isBlank(name)) {
-            throw MeetingBizException.badRequest("请填写名称");
+            throw MeetingBizException.badRequest("请输入名称");
+        }
+        if (name.length() > NAME_MAX) {
+            throw MeetingBizException.badRequest("名称不超过 20 个字");
         }
         if (exists(corpId, type, name, null)) {
-            throw MeetingBizException.badRequest("名称已存在");
+            throw MeetingBizException.badRequest("同类型下已有相同名称");
         }
 
         MeetingDict dict = new MeetingDict();
         dict.setCorpId(corpId);
         dict.setType(type);
         dict.setName(name);
-        dict.setSort(req.getSort() == null ? 0 : req.getSort());
+        dict.setSort(normalizeSort(req.getSort()));
         dict.setEnabled(1);
         this.insert(dict);
         return toDto(dict, 0);
     }
 
-    /** 修改名称与排序，类型不可改 */
-    @Transactional(readOnly = false)
+    /**
+     * 修改名称与排序，类型不可改。
+     * 改名要级联：楼宇改名重写所有会议室的 buildingName；设施改名逐个重写 rooms.facilities。
+     * 对应 Node dict.ts 的同名事务，漏了会导致会议室指向不存在的字典项。
+     */
+    @Transactional(readOnly = false, rollbackFor = Exception.class)
     public MeetingDictRspDTO update(String corpId, String id, MeetingDictSaveReqDTO req) {
         MeetingDict dict = mustGet(corpId, id);
+        String oldName = dict.getName();
         String name = StringUtils.trimToEmpty(req.getName());
         if (StringUtils.isBlank(name)) {
-            throw MeetingBizException.badRequest("请填写名称");
+            throw MeetingBizException.badRequest("请输入名称");
+        }
+        if (name.length() > NAME_MAX) {
+            throw MeetingBizException.badRequest("名称不超过 20 个字");
         }
         if (exists(corpId, dict.getType(), name, id)) {
-            throw MeetingBizException.badRequest("名称已存在");
+            throw MeetingBizException.badRequest("同类型下已有相同名称");
         }
+
         dict.setName(name);
-        if (req.getSort() != null) {
-            dict.setSort(req.getSort());
-        }
+        dict.setSort(normalizeSort(req.getSort()));
         this.updateById(dict);
+
+        if (!name.equals(oldName)) {
+            cascadeRename(corpId, dict.getType(), oldName, name);
+        }
         return toDto(dict, countUsage(corpId, dict));
+    }
+
+    /** 字典改名后同步会议室上的冗余名称 */
+    private void cascadeRename(String corpId, String type, String oldName, String newName) {
+        if (TYPE_BUILDING.equals(type)) {
+            MeetingRoom patch = new MeetingRoom();
+            patch.setBuildingName(newName);
+            meetingRoomMapper.update(patch, new QueryWrapper<MeetingRoom>()
+                    .eq(MeetingRoom.TBL_CORPID, corpId)
+                    .eq(MeetingRoom.TBL_BUILDINGNAME, oldName));
+            return;
+        }
+        List<MeetingRoom> rooms = meetingRoomMapper.selectList(new QueryWrapper<MeetingRoom>()
+                .eq(MeetingRoom.TBL_CORPID, corpId));
+        for (MeetingRoom room : rooms) {
+            List<String> facilities = MeetingRoomService.parseFacilities(room.getFacilities());
+            if (!facilities.contains(oldName)) {
+                continue;
+            }
+            List<String> renamed = new ArrayList<>();
+            for (String item : facilities) {
+                renamed.add(oldName.equals(item) ? newName : item);
+            }
+            MeetingRoom patch = new MeetingRoom();
+            patch.setId(room.getId());
+            patch.setFacilities(com.alibaba.fastjson.JSON.toJSONString(renamed));
+            meetingRoomMapper.updateById(patch);
+        }
+    }
+
+    /** sort 只接受正整数，非法归 1，对应 Node 的 nextSort */
+    private int normalizeSort(Integer sort) {
+        return sort != null && sort > 0 ? sort : 1;
     }
 
     /** 启用 / 停用 */
@@ -1549,7 +1683,7 @@ public class MeetingDictService extends BaseService<MeetingDict> {
                 .eq("id", id)
                 .eq(MeetingDict.TBL_CORPID, corpId));
         if (dict == null) {
-            throw MeetingBizException.notFound("字典不存在");
+            throw MeetingBizException.notFound("字典项不存在");
         }
         return dict;
     }
@@ -1698,13 +1832,416 @@ curl -s --noproxy '*' -X POST -H "Content-Type: application/json" \
   -d '{"type":"facility","name":"音响","sort":9}' \
   "http://127.0.0.1:7004/meetingRoom/dicts/create"
 ```
-预期：`code` 为 `M0000`，`data.usageCount` 为 `0`。重复执行第二次预期 `{"code":"M4000","msg":"名称已存在"}`。
+预期：`code` 为 `M0000`，`data.usageCount` 为 `0`。重复执行第二次预期 `{"code":"M4000","msg":"同类型下已有相同名称"}`。
+
+再验级联改名——把「奥城」改成「奥城A座」后，原本挂在奥城的会议室 `buildingName` 必须一起变：
+```bash
+curl -s --noproxy '*' -X POST -H "Content-Type: application/json" \
+  -H "zxAccountId: <accountId>" -H "zxCorpId: 6" -H "zxClientType: 1" \
+  -d '{"name":"奥城A座","sort":1}' "http://127.0.0.1:7004/meetingRoom/dicts/update/<buildingDictId>"
+curl -s --noproxy '*' -H "zxAccountId: <accountId>" -H "zxCorpId: 6" -H "zxClientType: 1" \
+  "http://127.0.0.1:7004/meetingRoom/rooms?page=1&pageSize=50"
+```
+预期：列表里原属奥城的会议室 `buildingName` 全部变成 `奥城A座`。
 
 - [ ] **Step 5: 提交**
 
 ```bash
 git add src/main/java/com/zgiot/zx/meetingroom/dto src/main/java/com/zgiot/zx/meetingroom/service/MeetingDictService.java src/main/java/com/zgiot/zx/meetingroom/controller/MeetingDictController.java
 git commit -m "feat(meetingroom): 字典 CRUD 与默认字典初始化"
+```
+
+---
+
+### Task 6b: 会议室校验规则 RoomRules（纯函数）
+
+**Files:**
+- Create: `src/main/java/com/zgiot/zx/meetingroom/rule/RoomDraft.java`
+- Create: `src/main/java/com/zgiot/zx/meetingroom/rule/RoomRules.java`
+- Test: `src/test/java/com/zgiot/zx/meetingroom/RoomRulesTest.java`
+
+**Interfaces:**
+- Consumes: `MeetingTimeKit`、`MeetingBizException`
+- Produces: `RoomDraft`（规范化后的会议室字段，全 getter）；`RoomRules.FLOOR_OPTIONS`（`List<String>`，"1层".."20层"）；`RoomRules.BOOK_AHEAD`（`List<Integer>` 7/30/90/180）；`RoomRules.normalize(MeetingRoomSaveReqDTO req, List<String> facilityOrder)` → `RoomDraft`；`RoomRules.validate(RoomDraft draft, List<String> allFacilities, List<String> enabledFacilities, List<String> enabledBuildings, RoomDraft current)` → `void`（不过抛 `M4000`，`current` 为 null 表示新建）。
+
+> 这些规则与文案逐条抄自 `apps/meeting/server/src/domain/room.ts` 的 `normalizePayload` / `validateNormalized`，**默认值也照抄**：`openStart=07:00`、`openEnd=23:00`、`bookAheadDays=90`、`needApproval/allowRecurring/allowPreempt=false`、`enabled=true`。
+
+- [ ] **Step 1: 写失败的测试**
+
+```java
+package com.zgiot.zx.meetingroom;
+
+import com.zgiot.zx.meetingroom.common.MeetingBizException;
+import com.zgiot.zx.meetingroom.dto.MeetingRoomSaveReqDTO;
+import com.zgiot.zx.meetingroom.rule.RoomDraft;
+import com.zgiot.zx.meetingroom.rule.RoomRules;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+public class RoomRulesTest {
+
+    private static final List<String> ALL_FACILITY = Arrays.asList("电视", "白板", "投影");
+    private static final List<String> ENABLED_FACILITY = Arrays.asList("电视", "白板");
+    private static final List<String> ENABLED_BUILDING = Arrays.asList("奥城", "生态城");
+
+    private MeetingRoomSaveReqDTO req() {
+        MeetingRoomSaveReqDTO req = new MeetingRoomSaveReqDTO();
+        req.setName("A401");
+        req.setBuildingName("奥城");
+        req.setFloorName("4层");
+        req.setCapacity(10);
+        req.setFacilities(Arrays.asList("白板", "电视"));
+        return req;
+    }
+
+    private String msgOf(Runnable run) {
+        try {
+            run.run();
+            return "NO_EXCEPTION";
+        } catch (MeetingBizException e) {
+            return e.getMessage();
+        }
+    }
+
+    private void validate(MeetingRoomSaveReqDTO req) {
+        RoomDraft draft = RoomRules.normalize(req, ALL_FACILITY);
+        RoomRules.validate(draft, ALL_FACILITY, ENABLED_FACILITY, ENABLED_BUILDING, null);
+    }
+
+    @Test
+    public void 默认值照抄Node() {
+        MeetingRoomSaveReqDTO req = req();
+        RoomDraft draft = RoomRules.normalize(req, ALL_FACILITY);
+        Assert.assertEquals("07:00", draft.getOpenStart());
+        Assert.assertEquals("23:00", draft.getOpenEnd());
+        Assert.assertEquals(90, draft.getBookAheadDays());
+        Assert.assertFalse(draft.isNeedApproval());
+        Assert.assertFalse(draft.isAllowRecurring());
+        Assert.assertFalse(draft.isAllowPreempt());
+        Assert.assertTrue(draft.isEnabled());
+    }
+
+    @Test
+    public void 设施去重并按字典顺序排列() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setFacilities(Arrays.asList("白板", "电视", "白板"));
+        RoomDraft draft = RoomRules.normalize(req, ALL_FACILITY);
+        Assert.assertEquals(Arrays.asList("电视", "白板"), draft.getFacilities());
+    }
+
+    @Test
+    public void 空名称() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setName("  ");
+        Assert.assertEquals("请输入名称", msgOf(() -> validate(req)));
+    }
+
+    @Test
+    public void 名称超三十字() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setName(new String(new char[31]).replace('\0', '甲'));
+        Assert.assertEquals("名称不超过 30 个字", msgOf(() -> validate(req)));
+    }
+
+    @Test
+    public void 分组超二十字() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setGroupName(new String(new char[21]).replace('\0', '乙'));
+        Assert.assertEquals("分组不超过 20 个字", msgOf(() -> validate(req)));
+    }
+
+    @Test
+    public void 备注超一百字() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setLocationNote(new String(new char[101]).replace('\0', '丙'));
+        Assert.assertEquals("备注不超过 100 个字", msgOf(() -> validate(req)));
+    }
+
+    @Test
+    public void 楼宇为空() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setBuildingName("");
+        Assert.assertEquals("请选择或输入建筑", msgOf(() -> validate(req)));
+    }
+
+    @Test
+    public void 楼层必须在枚举内() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setFloorName("21层");
+        Assert.assertEquals("请选择楼层", msgOf(() -> validate(req)));
+        Assert.assertEquals(20, RoomRules.FLOOR_OPTIONS.size());
+        Assert.assertEquals("1层", RoomRules.FLOOR_OPTIONS.get(0));
+    }
+
+    @Test
+    public void 容纳人数范围() {
+        MeetingRoomSaveReqDTO tooSmall = req();
+        tooSmall.setCapacity(0);
+        Assert.assertEquals("请输入容纳人数（1-999整数）", msgOf(() -> validate(tooSmall)));
+        MeetingRoomSaveReqDTO tooBig = req();
+        tooBig.setCapacity(1000);
+        Assert.assertEquals("请输入容纳人数（1-999整数）", msgOf(() -> validate(tooBig)));
+    }
+
+    @Test
+    public void 开放时间非法() {
+        MeetingRoomSaveReqDTO bad = req();
+        bad.setOpenStart("25:00");
+        bad.setOpenEnd("23:00");
+        Assert.assertEquals("请选择开放时间", msgOf(() -> validate(bad)));
+    }
+
+    @Test
+    public void 结束不晚于开始() {
+        MeetingRoomSaveReqDTO same = req();
+        same.setOpenStart("09:00");
+        same.setOpenEnd("09:00");
+        Assert.assertEquals("结束时间必须晚于开始时间", msgOf(() -> validate(same)));
+    }
+
+    @Test
+    public void 可提前范围只能是白名单() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setBookAheadDays(15);
+        Assert.assertEquals("请选择可提前预定范围", msgOf(() -> validate(req)));
+    }
+
+    @Test
+    public void 未知设施被拒() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setFacilities(Collections.singletonList("咖啡机"));
+        Assert.assertEquals("存在未知设施", msgOf(() -> validate(req)));
+    }
+
+    @Test
+    public void 已停用设施新建时被拒() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setFacilities(Collections.singletonList("投影")); // 在 ALL 里但不在 ENABLED 里
+        Assert.assertEquals("存在未知设施", msgOf(() -> validate(req)));
+    }
+
+    @Test
+    public void 编辑时允许保留原有的停用设施与楼宇() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setFacilities(Collections.singletonList("投影"));
+        req.setBuildingName("老楼");
+        RoomDraft current = RoomRules.normalize(req, ALL_FACILITY);
+        RoomDraft draft = RoomRules.normalize(req, ALL_FACILITY);
+        // current 带着同样的停用设施与楼宇，编辑时不应报错
+        RoomRules.validate(draft, ALL_FACILITY, ENABLED_FACILITY, ENABLED_BUILDING, current);
+    }
+
+    @Test
+    public void 新建时楼宇必须在启用字典内() {
+        MeetingRoomSaveReqDTO req = req();
+        req.setBuildingName("没登记的楼");
+        Assert.assertEquals("请选择启用中的建筑", msgOf(() -> validate(req)));
+    }
+}
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+```bash
+mvn -o test -Dtest=RoomRulesTest
+```
+预期：编译失败，`找不到符号: 类 RoomRules`。
+
+- [ ] **Step 3: 写实现**
+
+`RoomDraft.java`：
+
+```java
+package com.zgiot.zx.meetingroom.rule;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+import java.util.List;
+
+/** 规范化后的会议室字段 */
+@Getter
+@AllArgsConstructor
+public class RoomDraft {
+
+    private final String name;
+    private final String groupName;
+    private final String buildingName;
+    private final String floorName;
+    private final int capacity;
+    private final List<String> facilities;
+    private final String locationNote;
+    private final String openStart;
+    private final String openEnd;
+    private final int bookAheadDays;
+    private final boolean needApproval;
+    private final boolean allowRecurring;
+    private final boolean allowPreempt;
+    private final boolean enabled;
+}
+```
+
+`RoomRules.java`：
+
+```java
+package com.zgiot.zx.meetingroom.rule;
+
+import com.zgiot.zx.meetingroom.common.MeetingBizException;
+import com.zgiot.zx.meetingroom.common.MeetingTimeKit;
+import com.zgiot.zx.meetingroom.dto.MeetingRoomSaveReqDTO;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * 会议室字段规范化与校验，纯函数。
+ * 规则与文案逐条抄自 apps/meeting/server/src/domain/room.ts，前端按 msg 直接展示。
+ */
+public final class RoomRules {
+
+    /** 楼层枚举 1层..20层 */
+    public static final List<String> FLOOR_OPTIONS;
+    /** 可提前预定天数白名单 */
+    public static final List<Integer> BOOK_AHEAD = Collections.unmodifiableList(
+            Arrays.asList(7, 30, 90, 180));
+
+    static {
+        List<String> floors = new ArrayList<>();
+        for (int i = 1; i <= 20; i++) {
+            floors.add(i + "层");
+        }
+        FLOOR_OPTIONS = Collections.unmodifiableList(floors);
+    }
+
+    private RoomRules() {
+    }
+
+    /**
+     * 规范化：去空白、设施去重并按字典顺序排列、补默认值。
+     *
+     * @param facilityOrder 设施字典的展示顺序，用于排序；不在其中的排最后
+     */
+    public static RoomDraft normalize(MeetingRoomSaveReqDTO req, List<String> facilityOrder) {
+        List<String> unique = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        if (req.getFacilities() != null) {
+            for (String item : req.getFacilities()) {
+                String value = String.valueOf(item);
+                if (seen.add(value)) {
+                    unique.add(value);
+                }
+            }
+        }
+        unique.sort((a, b) -> {
+            int ia = facilityOrder.indexOf(a);
+            int ib = facilityOrder.indexOf(b);
+            int sa = ia == -1 ? Integer.MAX_VALUE : ia;
+            int sb = ib == -1 ? Integer.MAX_VALUE : ib;
+            return Integer.compare(sa, sb);
+        });
+
+        return new RoomDraft(
+                StringUtils.trimToEmpty(req.getName()),
+                StringUtils.trimToNull(req.getGroupName()),
+                StringUtils.trimToEmpty(req.getBuildingName()),
+                StringUtils.trimToEmpty(req.getFloorName()),
+                req.getCapacity() == null ? Integer.MIN_VALUE : req.getCapacity(),
+                unique,
+                StringUtils.trimToNull(req.getLocationNote()),
+                StringUtils.isBlank(req.getOpenStart()) ? "07:00" : req.getOpenStart().trim(),
+                StringUtils.isBlank(req.getOpenEnd()) ? "23:00" : req.getOpenEnd().trim(),
+                req.getBookAheadDays() == null ? 90 : req.getBookAheadDays(),
+                Boolean.TRUE.equals(req.getNeedApproval()),
+                Boolean.TRUE.equals(req.getAllowRecurring()),
+                Boolean.TRUE.equals(req.getAllowPreempt()),
+                req.getEnabled() == null || req.getEnabled());
+    }
+
+    /**
+     * 校验。任何一条不过抛 M4000。
+     *
+     * @param current 编辑时传原值，允许保留原本已停用的设施与楼宇；新建传 null
+     */
+    public static void validate(RoomDraft draft, List<String> allFacilities,
+                                List<String> enabledFacilities, List<String> enabledBuildings,
+                                RoomDraft current) {
+        if (StringUtils.isBlank(draft.getName())) {
+            throw MeetingBizException.badRequest("请输入名称");
+        }
+        if (draft.getName().length() > 30) {
+            throw MeetingBizException.badRequest("名称不超过 30 个字");
+        }
+        if (draft.getGroupName() != null && draft.getGroupName().length() > 20) {
+            throw MeetingBizException.badRequest("分组不超过 20 个字");
+        }
+        if (draft.getLocationNote() != null && draft.getLocationNote().length() > 100) {
+            throw MeetingBizException.badRequest("备注不超过 100 个字");
+        }
+        if (StringUtils.isBlank(draft.getBuildingName())) {
+            throw MeetingBizException.badRequest("请选择或输入建筑");
+        }
+        if (!FLOOR_OPTIONS.contains(draft.getFloorName())) {
+            throw MeetingBizException.badRequest("请选择楼层");
+        }
+        if (draft.getCapacity() < 1 || draft.getCapacity() > 999) {
+            throw MeetingBizException.badRequest("请输入容纳人数（1-999整数）");
+        }
+
+        Integer startMin = MeetingTimeKit.parseHm(draft.getOpenStart());
+        Integer endMin = MeetingTimeKit.parseHm(draft.getOpenEnd());
+        if (startMin == null || endMin == null) {
+            throw MeetingBizException.badRequest("请选择开放时间");
+        }
+        if (endMin <= startMin) {
+            throw MeetingBizException.badRequest("结束时间必须晚于开始时间");
+        }
+        if (!BOOK_AHEAD.contains(draft.getBookAheadDays())) {
+            throw MeetingBizException.badRequest("请选择可提前预定范围");
+        }
+
+        Set<String> all = new HashSet<>(allFacilities);
+        Set<String> allowed = new HashSet<>(enabledFacilities);
+        if (current != null) {
+            allowed.addAll(current.getFacilities());
+        }
+        for (String facility : draft.getFacilities()) {
+            if (!all.contains(facility) || !allowed.contains(facility)) {
+                throw MeetingBizException.badRequest("存在未知设施");
+            }
+        }
+
+        boolean buildingOk = current != null
+                ? draft.getBuildingName().equals(current.getBuildingName())
+                    || enabledBuildings.contains(draft.getBuildingName())
+                : enabledBuildings.contains(draft.getBuildingName());
+        if (!buildingOk) {
+            throw MeetingBizException.badRequest("请选择启用中的建筑");
+        }
+    }
+}
+```
+
+- [ ] **Step 4: 跑测试确认通过**
+
+```bash
+mvn -o test -Dtest=RoomRulesTest
+```
+预期：`Tests run: 16, Failures: 0, Errors: 0`。
+
+- [ ] **Step 5: 提交**
+
+```bash
+git add src/main/java/com/zgiot/zx/meetingroom/rule src/test/java/com/zgiot/zx/meetingroom/RoomRulesTest.java
+git commit -m "feat(meetingroom): 会议室校验规则纯函数与单测"
 ```
 
 ---
@@ -1844,11 +2381,11 @@ import java.util.List;
 @Service
 public class MeetingRoomService extends BaseService<MeetingRoom> {
 
-    /** 允许的可提前预定天数 */
-    private static final List<Integer> BOOK_AHEAD = Arrays.asList(7, 30, 90, 180);
-
     @Autowired
     private MeetingRoomMapper meetingRoomMapper;
+
+    @Autowired
+    private MeetingDictMapper meetingDictMapper;
 
     /** 列表，支持关键字（名称）、启用状态、楼宇、楼层过滤 */
     public PageRsp<MeetingRoomRspDTO> list(String corpId, String keyword, Boolean enabled,
@@ -1890,7 +2427,7 @@ public class MeetingRoomService extends BaseService<MeetingRoom> {
     public MeetingRoomRspDTO create(String corpId, MeetingRoomSaveReqDTO req) {
         MeetingRoom room = new MeetingRoom();
         room.setCorpId(corpId);
-        applyPayload(room, req);
+        applyPayload(corpId, room, req, null);
         this.insert(room);
         return toDto(room);
     }
@@ -1898,7 +2435,7 @@ public class MeetingRoomService extends BaseService<MeetingRoom> {
     @Transactional(readOnly = false)
     public MeetingRoomRspDTO update(String corpId, String id, MeetingRoomSaveReqDTO req) {
         MeetingRoom room = mustGet(corpId, id);
-        applyPayload(room, req);
+        applyPayload(corpId, room, req, room);
         this.updateById(room);
         return toDto(room);
     }
@@ -1906,6 +2443,10 @@ public class MeetingRoomService extends BaseService<MeetingRoom> {
     @Transactional(readOnly = false)
     public MeetingRoomRspDTO setEnabled(String corpId, String id, boolean enabled) {
         MeetingRoom room = mustGet(corpId, id);
+        // 停用的会议室可以重名，重新启用时要再查一次
+        if (enabled && existsEnabledName(corpId, room.getName(), id)) {
+            throw MeetingBizException.badRequest("已有同名的启用会议室");
+        }
         room.setEnabled(enabled ? 1 : 0);
         this.updateById(room);
         return toDto(room);
@@ -1928,7 +2469,7 @@ public class MeetingRoomService extends BaseService<MeetingRoom> {
     /** 转成校验用快照 */
     public RoomSnapshot toSnapshot(MeetingRoom room) {
         return new RoomSnapshot(room.getId(), room.getOpenStart(), room.getOpenEnd(),
-                room.getBookAheadDays() == null ? 30 : room.getBookAheadDays(),
+                room.getBookAheadDays() == null ? 90 : room.getBookAheadDays(),
                 room.getEnabled() != null && room.getEnabled() == 1,
                 room.getAllowRecurring() != null && room.getAllowRecurring() == 1);
     }
@@ -1981,41 +2522,80 @@ public class MeetingRoomService extends BaseService<MeetingRoom> {
         return room;
     }
 
-    private void applyPayload(MeetingRoom room, MeetingRoomSaveReqDTO req) {
-        String name = StringUtils.trimToEmpty(req.getName());
-        if (StringUtils.isBlank(name)) {
-            throw MeetingBizException.badRequest("请填写会议室名称");
-        }
-        if (StringUtils.isBlank(req.getBuildingName()) || StringUtils.isBlank(req.getFloorName())) {
-            throw MeetingBizException.badRequest("请选择楼宇与楼层");
+    /**
+     * 规范化 + 校验 + 落字段。校验逻辑全在 RoomRules（纯函数），这里只负责取字典与查重名。
+     *
+     * @param existing 编辑时传原实体，新建传 null
+     */
+    private void applyPayload(String corpId, MeetingRoom room, MeetingRoomSaveReqDTO req, MeetingRoom existing) {
+        List<String> allFacilities = dictNames(corpId, MeetingDictService.TYPE_FACILITY, false);
+        List<String> enabledFacilities = dictNames(corpId, MeetingDictService.TYPE_FACILITY, true);
+        List<String> enabledBuildings = dictNames(corpId, MeetingDictService.TYPE_BUILDING, true);
+
+        RoomDraft draft = RoomRules.normalize(req, allFacilities);
+        RoomDraft current = existing == null ? null : toDraft(existing);
+        RoomRules.validate(draft, allFacilities, enabledFacilities, enabledBuildings, current);
+
+        // 启用中的会议室不能重名；停用的可以重名
+        if (draft.isEnabled() && existsEnabledName(corpId, draft.getName(),
+                existing == null ? null : existing.getId())) {
+            throw MeetingBizException.badRequest("已有同名的启用会议室");
         }
 
-        Integer openStart = MeetingTimeKit.parseHm(req.getOpenStart());
-        Integer openEnd = MeetingTimeKit.parseHm(req.getOpenEnd());
-        if (openStart == null || openEnd == null || openStart >= openEnd) {
-            throw MeetingBizException.badRequest("开放时间无效");
-        }
+        room.setName(draft.getName());
+        room.setGroupName(draft.getGroupName());
+        room.setBuildingName(draft.getBuildingName());
+        room.setFloorName(draft.getFloorName());
+        room.setCapacity(draft.getCapacity());
+        room.setFacilities(JSON.toJSONString(draft.getFacilities()));
+        room.setLocationNote(draft.getLocationNote());
+        room.setOpenStart(draft.getOpenStart());
+        room.setOpenEnd(draft.getOpenEnd());
+        room.setBookAheadDays(draft.getBookAheadDays());
+        room.setNeedApproval(draft.isNeedApproval() ? 1 : 0);
+        room.setAllowRecurring(draft.isAllowRecurring() ? 1 : 0);
+        room.setAllowPreempt(draft.isAllowPreempt() ? 1 : 0);
+        room.setEnabled(draft.isEnabled() ? 1 : 0);
+    }
 
-        int bookAhead = req.getBookAheadDays() == null ? 30 : req.getBookAheadDays();
-        if (!BOOK_AHEAD.contains(bookAhead)) {
-            throw MeetingBizException.badRequest("可提前预定天数只能是 7/30/90/180");
+    /** 取某类字典的名称，按 sort、name 排序；onlyEnabled=true 时只要启用的 */
+    private List<String> dictNames(String corpId, String type, boolean onlyEnabled) {
+        QueryWrapper<MeetingDict> wrapper = new QueryWrapper<MeetingDict>()
+                .eq(MeetingDict.TBL_CORPID, corpId)
+                .eq(MeetingDict.TBL_TYPE, type);
+        if (onlyEnabled) {
+            wrapper.eq(MeetingDict.TBL_ENABLED, 1);
         }
+        wrapper.orderByAsc(MeetingDict.TBL_SORT).orderByAsc(MeetingDict.TBL_NAME);
+        List<String> names = new ArrayList<>();
+        for (MeetingDict dict : meetingDictMapper.selectList(wrapper)) {
+            names.add(dict.getName());
+        }
+        return names;
+    }
 
-        room.setName(name);
-        room.setGroupName(StringUtils.trimToNull(req.getGroupName()));
-        room.setBuildingName(req.getBuildingName().trim());
-        room.setFloorName(req.getFloorName().trim());
-        room.setCapacity(req.getCapacity() == null ? 0 : req.getCapacity());
-        room.setFacilities(JSON.toJSONString(req.getFacilities() == null
-                ? new ArrayList<String>() : req.getFacilities()));
-        room.setLocationNote(StringUtils.trimToNull(req.getLocationNote()));
-        room.setOpenStart(req.getOpenStart().trim());
-        room.setOpenEnd(req.getOpenEnd().trim());
-        room.setBookAheadDays(bookAhead);
-        room.setNeedApproval(Boolean.TRUE.equals(req.getNeedApproval()) ? 1 : 0);
-        room.setAllowRecurring(Boolean.FALSE.equals(req.getAllowRecurring()) ? 0 : 1);
-        room.setAllowPreempt(Boolean.TRUE.equals(req.getAllowPreempt()) ? 1 : 0);
-        room.setEnabled(Boolean.FALSE.equals(req.getEnabled()) ? 0 : 1);
+    private boolean existsEnabledName(String corpId, String name, String excludeId) {
+        QueryWrapper<MeetingRoom> wrapper = new QueryWrapper<MeetingRoom>()
+                .eq(MeetingRoom.TBL_CORPID, corpId)
+                .eq(MeetingRoom.TBL_NAME, name)
+                .eq(MeetingRoom.TBL_ENABLED, 1);
+        if (StringUtils.isNotBlank(excludeId)) {
+            wrapper.ne("id", excludeId);
+        }
+        Integer count = meetingRoomMapper.selectCount(wrapper);
+        return count != null && count > 0;
+    }
+
+    private RoomDraft toDraft(MeetingRoom room) {
+        return new RoomDraft(room.getName(), room.getGroupName(), room.getBuildingName(),
+                room.getFloorName(), room.getCapacity() == null ? 0 : room.getCapacity(),
+                parseFacilities(room.getFacilities()), room.getLocationNote(),
+                room.getOpenStart(), room.getOpenEnd(),
+                room.getBookAheadDays() == null ? 90 : room.getBookAheadDays(),
+                room.getNeedApproval() != null && room.getNeedApproval() == 1,
+                room.getAllowRecurring() != null && room.getAllowRecurring() == 1,
+                room.getAllowPreempt() != null && room.getAllowPreempt() == 1,
+                room.getEnabled() != null && room.getEnabled() == 1);
     }
 }
 ```
@@ -2806,7 +3386,7 @@ git commit -m "feat(meetingroom): 预定创建、冲突检测与批次事务"
 
 **Interfaces:**
 - Consumes: Task 9 的 `BookingService#findOverlap/#writeAudit/#toDto`、`MeetingAdminChecker`（Task 11 才有实现，本任务先只按「本人可见」实现，Task 11 再接管理员）
-- Produces: `BookingService#listMine(MeetingCurrentUser)` → `List<BookingMineDTO>`；`#update(MeetingCurrentUser, String id, BookingUpdateReqDTO)` → `BookingRspDTO`；`#release(MeetingCurrentUser, String id)` → `BookingRspDTO`；`#listAudits(MeetingCurrentUser, String bookingId, boolean isAdmin)` → `List<BookingAuditRspDTO>`；`#mustGetOwn(String corpId, String id)` → `MeetingBooking`。
+- Produces: `BookingService#listMine(MeetingCurrentUser)` → `List<BookingMineDTO>`；`#update(MeetingCurrentUser, String id, BookingUpdateReqDTO)` → `BookingRspDTO`；`#release(MeetingCurrentUser, String id)` → `BookingRspDTO`；`#listAudits(MeetingCurrentUser, String bookingId, boolean isAdmin)` → `List<BookingAuditRspDTO>`；`#mustGetOwn(String corpId, String userId, String id)` → `MeetingBooking`（非本人回 M4004）。
 
 - [ ] **Step 1: 写 DTO**
 
@@ -2900,7 +3480,7 @@ public class BookingAuditRspDTO {
     /** 修改预定：只能改本人的、未结束的；不能换会议室 */
     @Transactional(readOnly = false, rollbackFor = Exception.class)
     public BookingRspDTO update(MeetingCurrentUser user, String id, BookingUpdateReqDTO req) {
-        MeetingBooking booking = mustGetOwn(user.getCorpId(), id);
+        MeetingBooking booking = mustGetOwn(user.getCorpId(), user.getUserId(), id);
         assertEditable(booking);
 
         MeetingRoom room = meetingRoomService.mustGetEnabled(user.getCorpId(), booking.getRoomId());
@@ -2935,7 +3515,7 @@ public class BookingAuditRspDTO {
     /** 释放：软删除，置 releasedAt */
     @Transactional(readOnly = false, rollbackFor = Exception.class)
     public BookingRspDTO release(MeetingCurrentUser user, String id) {
-        MeetingBooking booking = mustGetOwn(user.getCorpId(), id);
+        MeetingBooking booking = mustGetOwn(user.getCorpId(), user.getUserId(), id);
         if (booking.getReleasedAt() != null) {
             return toDto(booking);
         }
@@ -2987,12 +3567,16 @@ public class BookingAuditRspDTO {
         return result;
     }
 
-    /** 必须是本企业本人的预定 */
-    public MeetingBooking mustGetOwn(String corpId, String id) {
+    /**
+     * 必须是本企业、且是本人的预定。
+     * 注意：非本人一律回 M4004「预定不存在」而不是 M4003，
+     * 与 Node 端一致（booking.ts 的 host_user_id 校验），避免泄漏他人预定的存在性。
+     */
+    public MeetingBooking mustGetOwn(String corpId, String userId, String id) {
         MeetingBooking booking = meetingBookingMapper.selectOne(new QueryWrapper<MeetingBooking>()
                 .eq("id", id)
                 .eq(MeetingBooking.TBL_CORPID, corpId));
-        if (booking == null) {
+        if (booking == null || !StringUtils.equals(booking.getHostUserId(), userId)) {
             throw MeetingBizException.notFound("预定不存在");
         }
         return booking;
@@ -3462,6 +4046,353 @@ git commit -m "feat(booking): 前端切到 contact 的会议室接口"
 ```
 
 ---
+
+---
+
+### Task 13: Service 层测试（Mockito，不连库）
+
+**Files:**
+- Test: `src/test/java/com/zgiot/zx/meetingroom/BookingServiceTest.java`
+- Test: `src/test/java/com/zgiot/zx/meetingroom/MeetingDictServiceTest.java`
+
+**Interfaces:**
+- Consumes: Task 9–11 的 `BookingService`、Task 6 的 `MeetingDictService`
+- Produces: 无生产代码，只补自动化验证
+
+> `spring-boot-starter-test` 已带 Mockito 2.x，直接用 `@RunWith(MockitoJUnitRunner.class)` + `@InjectMocks`，不启动 Spring、不连数据库，秒级跑完。
+
+- [ ] **Step 1: 写冲突与归属的测试**
+
+```java
+package com.zgiot.zx.meetingroom;
+
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.zgiot.zx.meetingroom.common.MeetingBizException;
+import com.zgiot.zx.meetingroom.common.MeetingCode;
+import com.zgiot.zx.meetingroom.entity.MeetingBooking;
+import com.zgiot.zx.meetingroom.mapper.MeetingBookingMapper;
+import com.zgiot.zx.meetingroom.service.BookingService;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+@RunWith(MockitoJUnitRunner.class)
+public class BookingServiceTest {
+
+    @Mock
+    private MeetingBookingMapper meetingBookingMapper;
+
+    @InjectMocks
+    private BookingService bookingService;
+
+    private MeetingBooking booking(String id, int startMin, int endMin, String hostUserId) {
+        MeetingBooking booking = new MeetingBooking();
+        booking.setId(id);
+        booking.setCorpId("6");
+        booking.setRoomId("101");
+        booking.setDate("2026-09-01");
+        booking.setStartMin(startMin);
+        booking.setEndMin(endMin);
+        booking.setHostUserId(hostUserId);
+        return booking;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void givenBookings(List<MeetingBooking> rows) {
+        Mockito.when(meetingBookingMapper.selectList(Mockito.any(Wrapper.class))).thenReturn(rows);
+    }
+
+    @Test
+    public void 重叠时段能被找出来() {
+        givenBookings(Collections.singletonList(booking("1", 600, 720, "u1"))); // 10:00-12:00
+        MeetingBooking hit = bookingService.findOverlap("6", "101", "2026-09-01", 660, 780, null);
+        Assert.assertNotNull(hit);
+        Assert.assertEquals("1", hit.getId());
+    }
+
+    @Test
+    public void 首尾相接不算冲突() {
+        givenBookings(Collections.singletonList(booking("1", 600, 720, "u1")));
+        Assert.assertNull(bookingService.findOverlap("6", "101", "2026-09-01", 720, 780, null));
+    }
+
+    @Test
+    public void 修改时排除自身() {
+        givenBookings(Arrays.asList(booking("1", 600, 720, "u1")));
+        // excludeId 交给 SQL 过滤，这里模拟 mapper 已经排除后返回空
+        givenBookings(Collections.emptyList());
+        Assert.assertNull(bookingService.findOverlap("6", "101", "2026-09-01", 600, 720, "1"));
+    }
+
+    @Test
+    public void 非本人取预定返回不存在() {
+        Mockito.when(meetingBookingMapper.selectOne(Mockito.any(Wrapper.class)))
+                .thenReturn(booking("1", 600, 720, "u1"));
+        try {
+            bookingService.mustGetOwn("6", "u2", "1");
+            Assert.fail("应当抛异常");
+        } catch (MeetingBizException e) {
+            Assert.assertEquals(MeetingCode.NOT_FOUND, e.getCode());
+            Assert.assertEquals("预定不存在", e.getMessage());
+        }
+    }
+}
+```
+
+- [ ] **Step 2: 跑测试**
+
+```bash
+mvn -o test -Dtest=BookingServiceTest
+```
+预期：`Tests run: 4, Failures: 0, Errors: 0`。
+
+- [ ] **Step 3: 写字典级联的测试**
+
+```java
+package com.zgiot.zx.meetingroom;
+
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.zgiot.zx.meetingroom.entity.MeetingDict;
+import com.zgiot.zx.meetingroom.entity.MeetingRoom;
+import com.zgiot.zx.meetingroom.mapper.MeetingDictMapper;
+import com.zgiot.zx.meetingroom.mapper.MeetingRoomMapper;
+import com.zgiot.zx.meetingroom.service.MeetingDictService;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.Collections;
+
+@RunWith(MockitoJUnitRunner.class)
+public class MeetingDictServiceTest {
+
+    @Mock
+    private MeetingDictMapper meetingDictMapper;
+
+    @Mock
+    private MeetingRoomMapper meetingRoomMapper;
+
+    @InjectMocks
+    private MeetingDictService meetingDictService;
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void 楼宇改名要级联重写会议室() {
+        MeetingDict dict = new MeetingDict();
+        dict.setId("d1");
+        dict.setCorpId("6");
+        dict.setType(MeetingDictService.TYPE_BUILDING);
+        dict.setName("奥城");
+        dict.setSort(1);
+        dict.setEnabled(1);
+        Mockito.when(meetingDictMapper.selectOne(Mockito.any(Wrapper.class))).thenReturn(dict);
+        Mockito.when(meetingDictMapper.selectCount(Mockito.any(Wrapper.class))).thenReturn(0);
+        Mockito.when(meetingRoomMapper.selectCount(Mockito.any(Wrapper.class))).thenReturn(0);
+
+        com.zgiot.zx.meetingroom.dto.MeetingDictSaveReqDTO req =
+                new com.zgiot.zx.meetingroom.dto.MeetingDictSaveReqDTO();
+        req.setName("奥城A座");
+        req.setSort(1);
+        meetingDictService.update("6", "d1", req);
+
+        ArgumentCaptor<MeetingRoom> patch = ArgumentCaptor.forClass(MeetingRoom.class);
+        Mockito.verify(meetingRoomMapper).update(patch.capture(), Mockito.any(Wrapper.class));
+        Assert.assertEquals("奥城A座", patch.getValue().getBuildingName());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void 设施改名要重写会议室的facilities() {
+        MeetingDict dict = new MeetingDict();
+        dict.setId("d2");
+        dict.setCorpId("6");
+        dict.setType(MeetingDictService.TYPE_FACILITY);
+        dict.setName("电视");
+        dict.setSort(1);
+        dict.setEnabled(1);
+        Mockito.when(meetingDictMapper.selectOne(Mockito.any(Wrapper.class))).thenReturn(dict);
+        Mockito.when(meetingDictMapper.selectCount(Mockito.any(Wrapper.class))).thenReturn(0);
+        Mockito.when(meetingRoomMapper.selectCount(Mockito.any(Wrapper.class))).thenReturn(0);
+
+        MeetingRoom room = new MeetingRoom();
+        room.setId("r1");
+        room.setFacilities("[\"电视\",\"白板\"]");
+        Mockito.when(meetingRoomMapper.selectList(Mockito.any(Wrapper.class)))
+                .thenReturn(Collections.singletonList(room));
+
+        com.zgiot.zx.meetingroom.dto.MeetingDictSaveReqDTO req =
+                new com.zgiot.zx.meetingroom.dto.MeetingDictSaveReqDTO();
+        req.setName("大屏");
+        meetingDictService.update("6", "d2", req);
+
+        ArgumentCaptor<MeetingRoom> patch = ArgumentCaptor.forClass(MeetingRoom.class);
+        Mockito.verify(meetingRoomMapper).updateById(patch.capture());
+        Assert.assertEquals("[\"大屏\",\"白板\"]", patch.getValue().getFacilities());
+    }
+}
+```
+
+> `this.updateById(dict)` 走的是 `BaseService` 里 `@Autowired` 的 `mapper` 字段，Mockito 注入不到时会 NPE。
+> 解决：测试里用 `org.springframework.test.util.ReflectionTestUtils.setField(meetingDictService, "mapper", meetingDictMapper)` 在 `@Before` 里补上。
+
+- [ ] **Step 4: 跑测试**
+
+```bash
+mvn -o test -Dtest=MeetingDictServiceTest
+```
+预期：`Tests run: 2, Failures: 0, Errors: 0`。
+
+- [ ] **Step 5: 提交**
+
+```bash
+git add src/test/java/com/zgiot/zx/meetingroom
+git commit -m "test(meetingroom): Service 层冲突、归属与字典级联测试"
+```
+
+---
+
+### Task 14: Controller 层测试（@WebMvcTest，不连库）
+
+**Files:**
+- Test: `src/test/java/com/zgiot/zx/meetingroom/BookingControllerTest.java`
+
+**Interfaces:**
+- Consumes: Task 9–11 的 Controller 与 `MeetingExceptionHandler`
+- Produces: 无生产代码
+
+> 只加载 MVC 层，Service 与 Resolver 全部 `@MockBean`，不碰 MySQL / Redis / Eureka。验证路由能通、信封形状正确、业务异常被 `@RestControllerAdvice` 正确转码。
+
+- [ ] **Step 1: 写测试**
+
+```java
+package com.zgiot.zx.meetingroom;
+
+import com.zgiot.zx.meetingroom.common.MeetingAdminChecker;
+import com.zgiot.zx.meetingroom.common.MeetingBizException;
+import com.zgiot.zx.meetingroom.common.MeetingCurrentUser;
+import com.zgiot.zx.meetingroom.common.MeetingExceptionHandler;
+import com.zgiot.zx.meetingroom.common.MeetingUserResolver;
+import com.zgiot.zx.meetingroom.controller.BookingController;
+import com.zgiot.zx.meetingroom.service.BookingService;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.Collections;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@RunWith(SpringRunner.class)
+@WebMvcTest(controllers = BookingController.class)
+@Import(MeetingExceptionHandler.class)
+public class BookingControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private BookingService bookingService;
+
+    @MockBean
+    private MeetingUserResolver userResolver;
+
+    @MockBean
+    private MeetingAdminChecker adminChecker;
+
+    private void givenUser() {
+        Mockito.when(userResolver.current())
+                .thenReturn(new MeetingCurrentUser("6", "a1", "u1", "李明", "研发部"));
+    }
+
+    @Test
+    public void 我的预定返回M0000信封() throws Exception {
+        givenUser();
+        Mockito.when(bookingService.listMine(Mockito.any())).thenReturn(Collections.emptyList());
+        mockMvc.perform(get("/meetingRoom/bookings/mine"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("M0000"))
+                .andExpect(jsonPath("$.data").isArray());
+    }
+
+    @Test
+    public void 冲突异常转成M4010() throws Exception {
+        givenUser();
+        Mockito.when(bookingService.create(Mockito.any(), Mockito.any()))
+                .thenThrow(MeetingBizException.conflict("该时段已被占用"));
+        mockMvc.perform(post("/meetingRoom/bookings/create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"roomId\":\"101\",\"date\":\"2026-09-01\",\"start\":\"09:00\",\"end\":\"10:00\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("M4010"))
+                .andExpect(jsonPath("$.msg").value("该时段已被占用"))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    public void 非管理员访问管理员列表被拒() throws Exception {
+        givenUser();
+        Mockito.when(adminChecker.isAdmin("6", "a1", "u1")).thenReturn(false);
+        mockMvc.perform(get("/meetingRoom/bookings/admin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("M4003"))
+                .andExpect(jsonPath("$.msg").value("无管理权限"));
+    }
+
+    @Test
+    public void 缺用户信息返回M4002() throws Exception {
+        Mockito.when(userResolver.current())
+                .thenThrow(MeetingBizException.noUser("缺少用户信息，请重新登录"));
+        mockMvc.perform(get("/meetingRoom/bookings/mine"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("M4002"));
+    }
+}
+```
+
+- [ ] **Step 2: 跑测试**
+
+```bash
+mvn -o test -Dtest=BookingControllerTest
+```
+预期：`Tests run: 4, Failures: 0, Errors: 0`。
+> 若 `@WebMvcTest` 因为启动类上的 `@ComponentScan(excludeFilters=...)`、`@EnableFeignClients` 而尝试加载全量上下文，就退一步：去掉 `@WebMvcTest`，改用 `MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(new MeetingExceptionHandler()).build()` 手工装配，断言不变。
+
+- [ ] **Step 3: 全量跑一遍会议室的测试**
+
+```bash
+mvn -o test -Dtest='Meeting*Test,Booking*Test,RoomRulesTest'
+```
+预期：全绿，合计 60+ 用例。
+
+- [ ] **Step 4: 提交**
+
+```bash
+git add src/test/java/com/zgiot/zx/meetingroom
+git commit -m "test(meetingroom): Controller 路由与信封测试"
+```
 
 ## 收尾
 
