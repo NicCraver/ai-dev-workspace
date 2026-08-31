@@ -1,6 +1,6 @@
 # Status：会议室前端重构
 
-> 最后更新：2026-08-31（当前半格直到结束仍可预约）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-31（日轴叠字优先显示用户选区）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -15,19 +15,15 @@
 
 android / ios / desktop 不单独立项：会议室以内嵌 WebView 复用 meeting web。
 
-meeting 仓库 `main` 工作区脏。web 单测 97 通过。
+meeting 仓库 `main` 工作区脏。booking `time.test.js` 本轮 24 通过。
+
+2026-08-31：PC 日轴标签叠字时优先保留用户选区（`tl-axis-pick`），隐藏重叠的整点刻度与「当前时刻」；周轴原有 `hideWeekNowLabel` 不变。浏览器验证：选 18:00–18:30 后轴上只剩选区两端，无 18:07。
 
 2026-08-31：当日当前 30 分钟格在结束前仍可点选（17:43 仍可选 17:30）；上一整格才算过期。`TL.nextOpen` 改为向下取整，PC/移动点击「已过期」判断与之一致。
 
 2026-08-31 助手快捷指令走真实接口：找空闲用看板、我的会打开预定列表、取消最近一场走释放确认。
 
-> 2026-08-31 晚：本轮会话只推进了 `20260828-aichat自定义时间范围`（ios / android），
-> **未动 meeting 代码**。下面的脏区是上一轮重构留下的，原样待提交，非新产出。
-
-未提交清单（`apps/meeting`，tip `398ae09`）：20 个已改文件（admin 四页 + RoomFilters/RoomTable、
-移动预定各 sheet/modal、`booking/time.js` 与其单测、`style.css` / `styles/tokens.css` / `uno.config.js`），
-5 项未跟踪（`components/base/`、`components/popup/`、`DialogOrSheet.vue`、
-`tests/designChrome.test.js` 与 `tests/tokens.test.js`、`styles/element.css` 与 `styles/vant.css`）。
+未提交清单（`apps/meeting`）含上一轮设计系统脏区，以及本轮 `time.js` / `PcTimelineBoard.vue` / `time.test.js`。
 
 ## 待办 / 阻塞
 
@@ -44,3 +40,4 @@ meeting 仓库 `main` 工作区脏。web 单测 97 通过。
 - 2026-08-31 周视图跨天拖选保持已定钟点，不随下一列左缘跳到 00:00
 - 2026-08-31 手动预约 / AI 找空闲 / driver.js 引导共用同一预约弹窗与 POST /bookings
 - 2026-08-31 当日当前半格（含已开始未结束）可预约，整格结束后才禁用
+- 2026-08-31 日轴叠字：用户选区 > 当前时刻 > 整点刻度
