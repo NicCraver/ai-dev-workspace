@@ -47,15 +47,15 @@ webview 加载 web 页、H5 选完主动上报、宿主据此关层。本 spec �
   - (web) 新页 `src/mpa/mobile/pages/data-range.vue`
   - (web) `SelectDataRangeDialog.vue` 加移动变体（壳 / 导航栏 / 搜索）
   - (web) 上报桥：把 `pages/date-range/host-bridge.js` 的通道判定提成参数化共用模块，两页复用
-  - (ios) 全屏 webview 容器 + `reportDataRange` handler + 筛选条入口改开 webview
+  - (web) 移动 Home 个人 AI 框直调 `SelectDataRangeDialog`（不再走 `selectDataRangeScope` 原生页）
+  - (ios) 全屏 webview 容器 + `reportDataRange` handler + **原生会话筛选条**入口改开 webview
   - (docs) `context/bridge.md` 登记 `reportDataRange`
 
 - 本期不做：
   - 安卓接同一套（协议已按三端设计，安卓照抄即可）
-  - web 移动 Home 经 `selectDataRangeScope` 拉原生页的老链路（下一步改成直调组件）
   - 删除 iOS 原生 `ZXPersonalAiPickerController`（`selectDataRangeScope` 桥入口还在用它）
   - 改 `SelectDataRangePopup.vue`（定时任务 persist=false 继续用）
-  - 改 PC：`DataScopeBar` 继续内联同一个 Dialog，PC 形态不变
+  - 改 PC 形态：`DataScopeBar` 继续内联同一个 Dialog
 
 ## 关键设计决策
 

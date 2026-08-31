@@ -13,8 +13,9 @@
 | `SelectDataRangeDialog` 移动变体（全屏壳 / 导航栏 / 常驻搜索） | ✅ | — | — | — |
 | 合并保存入参纯函数 + 单测 | ✅ | — | — | — |
 | 新页 `/m/data-range` + 注册 `reportDataRange` | ✅ | — | — | — |
+| 移动 Home 个人 AI 框直调 Dialog（不再走原生） | 🚧 代码已切，待浏览器/真机 | — | — | — |
 | 全屏 webview 容器 + `reportDataRange` handler | — | — | 🚧 代码已写，待 Xcode 编译 | — |
-| 筛选条入口切到 webview | — | ⬜ 本轮不做 | 🚧 代码已写，待真机 | — |
+| 原生会话筛选条入口切到 webview | — | ⬜ 本轮不做 | 🚧 代码已写，待真机 | — |
 | `bridge.md` 登记 + impl-notes | ✅ | — | — | — |
 | 真机 / 浏览器自测 | 🚧 浏览器 UI 已过 | — | ⬜ 待人工真机 8 项 | — |
 
@@ -22,10 +23,10 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
 
 ## 待办 / 阻塞
 
+- (web) 移动 Home 已切直调 `SelectDataRangeDialog`（mobile 全屏）；定时任务 persist=false 仍走 XPopup。待浏览器/真机确认：点胶囊出 Dialog、不进原生选人页；确定后时间档/联网不被冲
 - (ios) **需人工 Xcode clean build**（`zhixinApp.xcworkspace` / `zhixinAppTest` + iPhone 15 iOS 17），AI 不代跑
 - (ios) **需人工真机 8 项**，尤其第 6 项：改数据范围后确认时间档与联网搜索没被冲掉
 - (android) 本轮不做：协议已按三端设计（`window.WebView.reportDataRange`），后续照抄 iOS
-- (web) 移动 Home 经 `selectDataRangeScope` 拉原生页的老链路本轮不切，下一步改成直调组件
 - (ios) 原生 `ZXPersonalAiPickerController` 暂不下线——`selectDataRangeScope` 桥入口还在用它
 - (web) 移动变体的搜索层与键盘顶起、安全区表现只能真机验；浏览器里搜「李权泓」结果层会盖住列表，但自动化 fill 未触发 focus 时 candidates 为空、会先出空态
 
@@ -42,3 +43,4 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
 - 2026-08-31 新桥 `reportDataRange`，载荷 `{type:"data-range:confirm",ok:true}` / `cancel`，
   必须**平铺**（同 `selectDateRange` 的坑）
 - 2026-08-31 移动搜索用「常驻输入框 + 全屏结果层」，不跳路由、不做搜索子页
+- 2026-08-31 **个人 AI 框（web Home）直调组件**：已经在 H5 里，不必再调 `selectDataRangeScope` 让原生开第二层。原生会话筛选条仍走 `/m/data-range` webview。

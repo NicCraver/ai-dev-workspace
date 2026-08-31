@@ -2,6 +2,16 @@
 
 > 平台无关的逻辑提炼。其它端（安卓、web 移动 Home）照这份接，不要回头读 web/iOS 源码。
 
+## 两条入口，不要混
+
+| 宿主 | 怎么开 | 关页 / 落库 |
+|------|--------|-------------|
+| 原生会话筛选条（iOS/安卓原生胶囊） | 开全屏 webview 加载 `/m/data-range` | web 落库后上报 `{ok:true}`，原生关页再 get |
+| **web 个人 AI 框**（Home `DataScopeBar`，含移动 WebView 内嵌） | **页内直调** `SelectDataRangeDialog`（mobile 全屏变体） | 开层前 get 留底，确定时 `buildSaveDataRangePayload` 再 save。**不调** `selectDataRangeScope` |
+| 定时任务 persist=false | 命令式 XPopup（`SelectDataRangePopup`） | 只回填触发项，不写记忆 |
+
+个人 AI 框本身就是 H5：再走原生选人页等于套娃，而且会把「请选择时间 / 回填」这类状态拆到两层。
+
 ## 交互链路
 
 1. 筛选条点「数据范围」→ 原生开**全屏、无原生导航栏**的 webview
