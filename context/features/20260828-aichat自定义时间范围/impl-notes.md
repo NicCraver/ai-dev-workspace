@@ -70,6 +70,24 @@ iOS `ZXAIAgentTimeData customRangeTextWithStartMs:endMs:` + 群条/个人条共�
 > ⚠️ web / PC 目前**无区间时不显示框**（`v-if="hasRange"`），与安卓/iOS 的常驻占位不一致；
 > 要拉齐得改这两处的 `v-if` 并补占位文案。
 
+## 记忆（会话记忆 save/get）四端对照
+
+安卓 `PersonalAiFilterHost` 是这条链路最完整的一版，iOS 2026-08-31 照它补齐了四处：
+
+1. **`timeType=0` 不能当空值回退**（同 web 的 `"0"≠丢档`）。iOS 有三处 `timeType > 0 ? timeType : 7`：
+   群条/个人条的 `updateWithDataRangeList:`、个人条的 `currentTimeType`。最毒的是 `currentTimeType`：
+   `save` 前会 `zx_syncPersonalAiStateFromFilterBar` 从筛选条读回 controller，自定义档在这一步被读成
+   7 → **上送服务端的一直是近一周**，UI 胶囊却显示「自定义」，退出重进就打回原形。判据改 `>= 0`。
+2. **切回固定档要显式把区间清成 null**。安卓 `saveToServer` 在 `timeType != 0` 时
+   `params.put("startTime", null)`；iOS 原先是「不带这两个 key」，服务端不覆盖 → 旧区间残留在记忆里。
+3. **未 get 回填前不许用空 `dataRangeList` 覆盖服务端**。安卓与 iOS 个人条都有这条守卫，
+   iOS 群条原先缺，已补。「全不选」时列表仍有条目（`choose=0`），不会被守卫误挡。
+4. **筛选条与 controller 的区间要双向同步**。iOS `sync` 原先只同步档位不同步区间；
+   现在 `timeType==0` 时从筛选条取现场区间，否则清空 controller 的 `startTime/endTime`。
+
+尚未对齐的一处（已知，暂不改）：安卓 `fetchAndBind` 用 `generation` 序号防并发 get 的旧响应覆盖新状态，
+iOS 只有 `memoryFetched` 布尔标记，快速连点数据胶囊时理论上可能被旧响应回写。
+
 ## 联调坑
 
 ### 1. wnsdk 业务载荷必须**平铺**在参数顶层——`success`/`error` 传不下去，套 `data` 也传不下去
