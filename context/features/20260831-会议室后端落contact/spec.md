@@ -130,7 +130,25 @@
 
 **默认字典**：某企业首次进看板时，若 `meeting_dict` 无该企业数据，初始化「奥城 / 生态城」「电视 / 白板 / 投影」（对应 `ensureDefaultDicts`）。
 
-**管理员判定**：Node 端读环境变量 `MEETING_ADMIN_USER_IDS`（逗号分隔）。Java 侧同样走配置项 `meeting.admin.userIds`，**先不接角色系统**——接角色是二期的事，一期保持行为一致。
+**管理员判定：⏸ 待定（2026-09-01 问后端同事后再定）**
+
+- 抽成一个接口 `MeetingAdminChecker#isAdmin(corpId, accountId)`，**先用配置项 `meeting.admin.userIds` 实现**（照搬 Node 端的 `MEETING_ADMIN_USER_IDS`），定了之后只换实现类，不动调用方。
+- **不阻塞分期 1–3**：Node 端只有 `/bookings/admin` 与审计可见性用到管理员判定，`routes/dicts.ts` / `routes/rooms.ts` 都没挂 `requireAdmin`。只有分期 4 依赖它。
+
+**候选方案（勘察 contact 已有体系）**
+
+`corp_manager` 表：`corpId` + `accountId` + `userId` + `sysLevel`（0 负责人 / 1 主管理员 / 2 子管理员）。美腾（corpId=6）实际是 1 个负责人、1 个主管理员、17 个子管理员。
+`corp_manager_authority.authDetailInfo` 是按「基础模块 + 微应用」勾选的 JSON：`{"selectAllBasic":..,"selectAllApps":..,"selectBasics":[{"id":"001","label":"通讯录管理"}..],"selectApps":[{"typeId":"1","typeName":"平台应用",..}]}`。
+
+1. 只认 `sysLevel in (0,1)`——单表查询，零配置零新表；但美腾只有 2 人能管。
+2. 再加上 `sysLevel=2` 且 `authDetailInfo.selectApps` 勾了会议室微应用的——最贴合平台体系，但要解析 JSON、要会议室在平台注册 appId、要人去管理后台逐个勾。
+3. 会议室自建 `meeting_admin` 表——最灵活不依赖平台配置，代价是多一张表和一套管理界面（前端目前没有）。
+
+**要问后端同事的**
+- 新微应用接管理员权限，公司标准做法是哪种？`authDetailInfo` 的 `selectApps` 有没有约定的 appId 来源与写入方？
+- `sysLevel=2` 的子管理员在别的微应用里通常是怎么判的，有没有现成的公共方法可以直接调（省得我自己解析 JSON）？
+- 会议室要不要注册成平台微应用才能进这套权限体系？注册流程是谁做？
+- `corp_manager` 里的 `userId` 是否一定有值（有的记录只有 accountId），能不能直接拿它当 hostUserId 的对照。
 
 ## 代码落位
 
