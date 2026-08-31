@@ -16,9 +16,45 @@
 2. **错误码必须原样保留**：`M4000` 参数/业务校验、`M4001` 缺企业、`M4002` 缺用户、`M4003` 无管理权限、`M4004` 不存在、`M4010` 时段被占用。这些码目前没有走 contact 的 `ErrCodeBean` 体系（那套是 `C_D_001` 风格），**不要改成 contact 风格**，否则前端提示与 agent 端 `M4010` 分支（`agentTurn.ts:177`）全废。
 3. **建表**：同库 `zx_contact`。**表名下划线 + 列名驼峰**（现有表就是 `account_platform` / `accountId`，因为 `map-underscore-to-camel-case=false`）。
 4. **主键**：`id-type=input`，实体继承 `BaseEntity`（`id` 为 String 雪花），插入走 `BaseService.insert()` 自动补 `id` / `creator` / `createAt` / `updator` / `updateAt`。**不要用自增**。
-5. **租户与用户**：Node 端从 header `zxCorpId` / `zxUserId` / `zxUserName` / `zxUserDept` 取；Java 侧改为从 contact 现成的 `SessionContext` 取（`BaseController` 已接入）。这是唯一允许与 Node 端不一致的地方，因为智信统一鉴权在网关+session。
+5. **租户与用户**：见下面「多企业」整节，这是本功能最容易做错的地方。
 6. **时间表示**：沿用 Node 的模型——`date`（`YYYY-MM-DD` 字符串）+ `startMin` / `endMin`（当天零点起的分钟数，int）。冲突查询靠 `(roomId, date, startMin, endMin)` 区间比较，**别改成 datetime**，否则跨端时区与冲突判定要重写。响应里同时回 `start` / `end` 的 `HH:mm` 字符串（前端直接渲染用）。
 7. **时区**：Node 端所有"现在"走 `shanghaiNow()`。Java 侧固定 `Asia/Shanghai`（Dockerfile 已设 `TZ`），判过期/可提前预定天数都用它。
+
+## 多企业（重点，勘察自 contact + desktop 源码）
+
+### contact 现有模型
+
+| 机制 | 事实 |
+|---|---|
+| 账号 vs 成员 | `account`（登录账号）与 `user`（企业内成员）分离。一个 `accountId` 在 N 个企业各有一条 `user`（`user.corpId` + `user.accountId`，`user.id` 各不相同，逻辑删除 `isDel`） |
+| 请求上下文 | `zx-common` 的 `AAuthFilter` 从 header 读 `zxAccountId` / `zxCorpId` / `zxClientType`（日志原文「API 网关接受的 corpId 为」），塞进 `SessionContext`。`getCurrentAppUser()` 只给 `accountId` + `corpId`，**没有 userId** |
+| 租户隔离 | 所有业务表带 `corpId` 列，索引一律 corpId 打头（`dept` / `user` / `position` 都是这个套路） |
+| 企业树 | `Corp.pid` + `pids`（物化路径祖先链），集团—子公司 |
+| 企业间关联 | `corp_and_corp_rel`：relType = 直属 / 上级 / 下级 / 其他 / **个人外协**，带 relState |
+| 跨企业细粒度授权 | `multiorg/dataauthority`（`TbSourceAuthority*`）：部门/用户粒度，带 direction、toCorpId、objectType。会议室**用不到** |
+
+### 本功能的处理方式
+
+- **可见/可预定范围：仅本企业**。`meeting_room.corpId` 严格等于当前企业，不做集团子树、不做关联企业。外协一期不特判——外协人员在目标企业本就有 `user` 记录，自然能订。
+- **corpId 取值：只认 `SessionContext`，忽略前端传的 `zxCorpId` 业务参数**。前端 URL query / 自定义 header 里的 corpId 一律不参与业务判断。
+- **userId 必须服务端推导**：用 `(accountId, corpId)` 查 `user` 表（`isDel=0`）拿企业内 `user.id`，作为 `hostUserId`；`user.name` 作 `hostUserName`，部门名作 `hostDept`。**不要直接存 accountId**——同一个人在不同企业是不同 user.id，存 accountId 会让「我的预定」跨企业串台。
+- **查不到有效 user 就拒绝**（返回 `M4002`）。这一步顺带堵住了伪造 `zxCorpId` 越权：即使 header 被改成别的企业，该账号在那个企业没有 user 记录，直接拒。
+- 所有查询（看板、我的预定、冲突检测、管理员列表）一律带 `corpId` 条件，索引照 contact 惯例以 corpId 打头。
+
+### ⚠️ 已知前端缺陷（PC 端切企业后 corpId 不更新）
+
+勘察 `apps/desktop` 得到，**不是本 spec 引入的问题，但会议室会撞上**：
+
+- 切企业（`components/layouts/new-aside-menu.vue:790` `selectCorpHandler`）只做两件事：`SetCorpId(corpId)` 写 vuex + 存本地 db。
+- `components/common/webview-control.vue:165` 的 `watch: {}` 是**空的**，不监听企业变化；corpId 只在 `formatURL()`（同文件 `:335`）首次拼 URL 时写进 query。
+- `views/main.vue:18` 的 router-view 外面套了 `<keep-alive>`，页面切走再回来不重建。
+
+**后果**：在企业 A 打开会议室 → 切到企业 B → 会议室页面仍按 A 的 corpId 发请求。
+
+**本 spec 的应对**：服务端不信前端 corpId（见上），所以**不会发生越权取数**——请求会被按 session 里的当前企业处理，或因该账号在目标企业无 user 而被拒。但用户体验上会出现「切了企业，会议室还是旧企业的数据 / 报错」。彻底修要前端配合，二选一，本功能不做，另立任务：
+
+1. PC 端在 `selectCorpHandler` 里通知已打开的 webview 重载（给 `webview-control` 补 `watch` + 重建 URL）；
+2. 或 meeting web 每次请求前从宿主 bridge 现取 corpId，不再依赖启动时的 URL 参数。
 
 ## 数据模型（4 张表）
 
