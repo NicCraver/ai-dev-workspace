@@ -1,6 +1,6 @@
 # Status：会议室前端重构
 
-> 最后更新：2026-08-31（快捷指令直发 agent）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-08-31（PC 会议室格加号预约 + 飞书式时间）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -31,7 +31,7 @@ meeting 仓库 `main` 工作区脏。booking `time.test.js` 本轮 24 通过。
 
 2026-08-31 助手快捷指令走真实接口：找空闲用看板、我的会打开预定列表、取消最近一场走释放确认。
 
-未提交清单（`apps/meeting`）含上一轮设计系统脏区，以及本轮 `time.js` / `PcTimelineBoard.vue` / `time.test.js` / `booking.css`。
+未提交清单（`apps/meeting`）含上一轮设计系统脏区，以及本轮 `PcTimelineBoard.vue` / `CreateScheduleModal.vue` / `DateTimeRangeField.vue` / `bookingDefaults.js` / `datetimeRange.js` / `booking.css`。
 
 ## 待办 / 阻塞
 
@@ -49,4 +49,5 @@ meeting 仓库 `main` 工作区脏。booking `time.test.js` 本轮 24 通过。
 - 2026-08-31 手动预约 / AI 找空闲 / driver.js 引导共用同一预约弹窗与 POST /bookings
 - 2026-08-31 当日当前半格（含已开始未结束）可预约，整格结束后才禁用
 - 2026-08-31 日轴叠字：用户选区 > 当前时刻 > 整点刻度
+- 2026-08-31 PC 点会议室名直接预约，默认最近一小时；弹窗时间为飞书式日期+15 分钟时刻
 - 2026-08-31 会议室**后端**落在新接入的 `apps/contact`（`zx-contact`，Spring Boot 微服务），不再扩 `apps/meeting/server`（后者只作本地开发临时服务端）。约定见 `context/platforms/contact.md`；本地 Maven 环境（私服 + 6 个私有依赖）已打通，首次 `mvn package` 验证中
