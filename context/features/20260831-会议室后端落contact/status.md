@@ -17,6 +17,7 @@
 ## 待办 / 阻塞
 
 - (contact) 按 spec 分期 1 开工：建表脚本 + 四个实体
+- (待确认) 生产库里美腾的 corpId 是否也是 `6`（测试库已确认），上线前核对
 - (运维) 网关 `/meetingApi` → `zx-contact` 的前缀映射待确认，不阻塞开发
 - (desktop, 另立任务) PC 端切企业后已打开的内嵌 webview corpId 不更新（`webview-control.vue:165` 的 `watch` 为空 + `main.vue:18` 的 keep-alive）。服务端不信前端 corpId 所以不会越权，但会出现「切了企业还是旧数据」，要前端配合修
 - (meeting web) 联调阶段要改 `web/src/server/module/*.js` 的路径与方法（Node 的 `PUT /资源/:id` → contact 惯例的 `POST /动作/{id}`），只改路径不改逻辑
@@ -30,6 +31,7 @@
 - 2026-08-31 租户/用户从 contact 的 `SessionContext` 取，替代 Node 的 `zxCorpId/zxUserId` header
 - 2026-08-31 管理员判定一期仍走配置项 `meeting.admin.userIds`，不接角色系统
 - 2026-08-31 代码参照 `com.zgiot.zx.position` 的分层写法
+- 2026-08-31 一期只对美腾 `corpId=6` 开放，走配置项 `meeting.corp.whitelist`（不硬编码），非白名单企业返回新增码 `M4005`「当前企业未开通会议室」。`6` 仅在测试库查证，生产库待确认
 - 2026-08-31 多企业：可见/可预定范围**仅本企业**，不做集团子树、不做关联企业；外协不特判
 - 2026-08-31 corpId **只认 `SessionContext`**（网关经 `zxCorpId` header 注入），忽略前端业务参数里的 corpId
 - 2026-08-31 `hostUserId` 存企业内 `user.id`（用 `(accountId, corpId)` 查得），**不存 accountId**，否则跨企业「我的预定」串台；查不到 user 直接拒（`M4002`），顺带堵伪造 corpId
