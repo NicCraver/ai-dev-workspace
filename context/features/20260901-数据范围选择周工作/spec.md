@@ -1,24 +1,68 @@
-# Spec：数据范围选择周工作
+# Spec：选择数据范围 · 周工作
 
-> 由 Superpowers brainstorm 产出后覆盖本模板。最后更新：2026-09-01
+> 最后更新：2026-09-01
 
 ## 背景与目标
-<!-- 为什么做、解决什么问题、成功标准 -->
+
+个人 AI 框「选择数据范围」目前只能选知识 / 聊天对象。产品要在同一弹窗里再选「周工作」的团队与人员，让问答能带上对应周报。
+
+成功标准：PC Dialog 与移动 Popup 都能切到「周工作」tab，按设计稿完成全部 / 关注 / 所属 / 主管的列表、勾选、已选汇总；本期不接真实周工作树接口，用本地 mock 把界面和交互跑通。
 
 ## 用户流程
-<!-- 主流程 + 关键分支，按步骤描述 -->
+
+1. 打开「选择数据范围」（PC Dialog / 移动 Popup / `/zx/data-range` iframe / `/m/data-range`）。
+2. 标题栏出现一级 tab：**知识、聊天** | **周工作**（图 1）。默认停在「知识、聊天」，原对话列表 / 最近 / 组织架构不变。
+3. 点「周工作」进入图 2 / 图 3：
+   - 二级 tab：全部 / 关注 / 所属 / 主管
+   - 右侧搜索「搜索团队、人员」（本地过滤当前视图）
+   - 筛选项：
+     - **全部**：胶囊「全部 N / 团队 N / 人员 N」；列表是组织树
+     - **关注 / 所属 / 主管**：胶囊只有「团队 N / 人员 N」；列表是扁平名单（所属、主管与关注同一套交互）
+4. 树节点：
+   - 有团队报告的部门：蓝色报告图标 + 行尾「含团队工作」勾选
+   - 无团队报告的部门：蓝色层叠图标，无「含团队工作」
+   - 人员：头像 + 名
+   - 表头「全部」勾当前视图所有人；「全选含团队工作」勾所有有报告的板块（仅「全部」树）
+5. 底栏「已选：N 个」= 知识聊天选中 + 周工作选中。展开后按「知识、聊天 / 周工作」分组，可单条删除。清空已选两边一起清。
+6. 确定：知识聊天仍走现有 `dataRangeScopeList`；周工作选择先留在前端状态。接口未就绪，**本期不把周工作写入 saveDataRange**，但必须把记忆里已有的 `weekWork*` 原样回传，避免冲掉后端已存值。
 
 ## 范围
+
 - 本期做：
+  - web PC Dialog + 移动 Popup 的周工作 tab、四级子 tab、筛选胶囊、树 / 扁平列表、勾选、已选分组
+  - 本地 mock 数据（对齐设计稿里的部门 / 人名）
+  - `buildSaveDataRangePayload` 透传记忆中的 `weekWork*`
 - 本期不做：
+  - 周工作树 / 关注 / 所属 / 主管的真实接口
+  - `dataRangeList` 含 type=5 才出 tab（接口没有，**打开即显示 tab**；接口到位后改为：`dataRangeList` 里 type=5 且 choose=1 才显示）
+  - android / ios / desktop 原生页（它们已内嵌 web 页）
+  - 胶囊文案 `showRangeTxt` 的前端计算
 
 ## 各端差异点
-<!-- 默认四端行为一致；只列出必须不一致的地方（如系统权限、原生能力） -->
 
-| 差异点 | web | android | ios | desktop |
-|--------|-----|---------|-----|---------|
+| 差异点 | web | android / ios / desktop |
+|--------|-----|-------------------------|
+| 入口 | PC=`SelectDataRangeDialog`，移动=`SelectDataRangePopup` | 已改为 iframe / 整页 webview，跟 web 走 |
+| 搜索 | PC：二级 tab 行内 `SearchInput`；移动：同一套（周工作不走「搜索联系人、群组」那层） | 同 web |
 
 ## 依赖的接口
-<!-- 列出 contracts/ 中对应契约文件；接口未定时写"待定"并记录假设 -->
 
-## 待用户确认的问题
+契约已在 `context/contracts/personalAiFrame/_shared.d.ts` 的 `PersonalAiFrameWeekWorkFields`：
+
+| 字段 | 含义 |
+|------|------|
+| `weekWorkScopeList` | `{scopeDataType, scopeDataId}[]`：1 人员 / 2 板块 / 3 选中部门（自动增减子级人员）/ 4 选中部门（自动增减子级板块） |
+| `weekWorkSelectAllAccount` / `Plate` | 全部人 / 全部板块 |
+| `weekWorkSelectAllAttentionAccount` / `Plate` | 关注全部人 / 板块 |
+| `weekWorkSelectAllBelongTeamAccount` / `Plate` | 所属全部人 / 板块 |
+| `weekWorkSelectAllManageTeamAccount` / `Plate` | 主管全部人 / 板块 |
+| `showRangeTxt` | 胶囊文案（get 回参；本期不消费） |
+
+`getAgentDataRange` 的 `dataRangeList[].dataRangeType` 增加 **5-周工作**。本期 mock 不读这些字段。
+
+## 关键决策
+
+- 2026-09-01 周工作选中 key 用 `ww_{type}_{id}`，与知识聊天的 `1_id` / `3_id` 隔离
+- 2026-09-01 部门左勾选 = type 3（联动子孙人员）；「含团队工作」= type 2（本板块）；两套互不替代
+- 2026-09-01 关注 / 所属 / 主管同一套扁平列表，不复用「全部」那棵树
+- 2026-09-01 接口未到：tab 常显；save 不写周工作勾选，只透传记忆
