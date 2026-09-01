@@ -31,7 +31,8 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 |------|------|
 | `picker/weekWorkModel.js` | key `ww_{type}_{id}`、树展开、部门联动人员、板块独立、已选只计 type 1/2 |
 | `picker/weekWorkMock.js` | 全部树 + 关注/所属/主管扁平 mock |
-| `picker/WeekWorkPicker.vue` | 二级 tab、搜索、胶囊、树 / 扁平列表、「含团队工作」 |
+| `picker/WeekWorkPicker.vue` | 二级 tab、搜索、胶囊、树 / 扁平列表、「含团队工作」；部门图标改 SvgIcon `ww-report` / `ww-noreport`（对齐行动中心 TreeNode） |
+| `assets/svg/ww-report.svg` `ww-noreport.svg` | 有团队报告 / 无报告层叠图标。层叠从行动中心 `dept-tree-icon.svg` 拷贝 |
 | `SelectDataRangeDialog.vue` / `SelectDataRangePopup.vue` | 标题栏「知识、聊天 / 周工作」；底栏已选分组 |
 | `dataRangeSavePayload.js` | 透传记忆里的 `weekWork*`，避免冲掉后端已存值 |
 | `tests/weekWorkModel.test.mjs` | 18 例全绿（含 payload 透传） |
@@ -58,4 +59,4 @@ pnpm exec vue-tsc --noEmit → 无本功能相关报错
 - 2026-09-01 先做前端界面交互，接口后补；打开即显示周工作 tab
 - 2026-09-01 所属、主管与关注同一套扁平列表
 - 2026-09-01 周工作 key 用 `ww_{type}_{id}`，与知识聊天 key 隔离
-- 2026-09-01 部门左勾选 = type 3（联动子孙人员）；「含团队工作」= type 2；底栏已选不计 type 3/4
+- 2026-09-01 部门图标对齐行动中心 TreeNode：有报告 `ww-report`，无报告 `ww-noreport`（层叠即 `dept-tree-icon`）
