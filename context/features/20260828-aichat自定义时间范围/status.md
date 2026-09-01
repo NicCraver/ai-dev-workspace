@@ -1,8 +1,10 @@
 # Status：aichat自定义时间范围
 
-> 最后更新：2026-09-01（web 已合入 `feat/data-scope-storage-group`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（本功能未推进，只记分支变动：安卓 / iOS 仓库当前检出的是配色功能的分支）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 分支：web `dev-date-range`（HEAD `17b6fc8`，含自定义时间框常显占位）已 merge 进 `feat/data-scope-storage-group`（`d245908`）｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
+
+> **2026-09-01 注意**：做「三端 markdown 配色」时，安卓仓库从 `master-3.6.23`、iOS 仓库从 `feat/ios-agent-date-range` 各切了一条 `fix/chat-bubble-color` 并停在上面。本功能**未提交**的改动（安卓 `ConversationFragment` / `GroupChatAgentDataCheckView` / `PersonalAiFilterBar`，iOS `ZXAIAgentFilterBar` / `ZXAIAgentTimeData.h·m` / `ZXRCIMBaseChatController+AgentFilter` / `+PersonalAiFilter` / `ZXPersonalAiFilterBar`）跟着工作区留在了新分支上，内容没丢。继续做本功能前先 `git switch` 回各自分支（未提交改动会跟着切回去）。
 
 ## 平台矩阵
 
