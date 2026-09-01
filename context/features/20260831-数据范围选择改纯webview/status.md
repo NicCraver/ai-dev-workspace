@@ -91,3 +91,8 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
   两个连带点：loader 的关页 / 内部跳转依赖 `self.navigationController`，所以要套一层
   `ZXNavigationController` 再 present；`transitioningDelegate` 是 weak，转场对象必须静态强持有。
   关页从 `popViewControllerAnimated` 改成 `dismissViewControllerAnimated`。
+- 2026-09-01 **胶囊连点开出两层页**：换 userCode 是异步的，双击会并发跑两遍
+  `openDataRangePickerWithAgentId`，present 两层，且后一层把前一层的 confirm/cancel 回调顶掉。
+  在 manager 里加 `_zxDataRangeOpening` 标记（present 完成 / 各失败分支 / 关页时复位），
+  在场判断用 `_zxDataRangeWebController.presentingViewController` 而非弱引用非空
+  ——页面自行关闭后 controller 可能还没 dealloc，用非空判断会误锁住下一次打开。
