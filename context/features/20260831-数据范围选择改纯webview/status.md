@@ -4,7 +4,7 @@
 
 分支：web `feat/data-scope-storage-group`（领先 origin 3，脏 1：`OrgPicker` 行高）｜ ios `feat/ios-agent-date-range`（领先 origin 2）
 
-> **2026-09-01**：iOS 仓库当前检出的不是 `feat/ios-agent-date-range`，而是从它切出的 `fix/chat-bubble-color`（配色功能，`7af667bf4`）。回本功能前先切回去。web 仓库未动。
+> **2026-09-01**：iOS 仍在 `feat/ios-agent-date-range`，但分支上多了一条与本功能无关的配色 commit `7af667bf4`（三端 markdown 配色，ff-only 合进来的）。本功能提 MR 时留意别把它一并带走。web 仓库未动。
 
 ## 平台矩阵
 

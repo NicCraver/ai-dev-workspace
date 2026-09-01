@@ -1,6 +1,6 @@
 # Status：三端 markdown 标题上蓝 + 自己发气泡调浅
 
-> 最后更新：2026-09-01（用户三端验收通过，各自 commit 到 `fix/chat-bubble-color` 分支，未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（用户三端验收通过，三端 commit 已 ff-only 合回各自原分支，未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 两条视觉调整，来源是用户对照 web 端提的：
 
@@ -53,14 +53,15 @@ apps/desktop: npx eslint <8 个改动文件>                                  # 
 
 | 端 | 分支 | commit |
 |---|---|---|
-| desktop | `fix/chat-bubble-color`（从 `master-3.4.27` 切） | `bfe59c82` 配色；`d27bfc41` 合并转发宽度溢出（上一条功能，同分支） |
-| android | `fix/chat-bubble-color`（从 `master-3.6.23` 切） | `89febfb4e` |
-| ios | `fix/chat-bubble-color`（从 `feat/ios-agent-date-range` 切） | `7af667bf4` |
+| desktop | `master-3.4.27` | `bfe59c82` 配色；`d27bfc41` 合并转发宽度溢出（上一条功能）|
+| android | `master-3.6.23` | `89febfb4e` |
+| ios | `feat/ios-agent-date-range` | `7af667bf4` |
 
 ## 待办 / 阻塞
 
-- 三端分支均未 push；`master-3.4.27` / `master-3.6.23` 是联调主干，走 MR，别直推
-- iOS 的分支是从 `feat/ios-agent-date-range` 切出来的，含那条功能的历史；提 MR 前确认目标分支，必要时 rebase 到主干
+- 三端均未 push；`master-3.4.27` / `master-3.6.23` 是联调主干，走 MR，别直推
+- (desktop) `master-3.4.27` 与 origin **已分叉**：本地 2 条（`d27bfc41` `bfe59c82`）、远端 3 条。push 前先 pull / rebase
+- (ios) 提交落在 `feat/ios-agent-date-range`（「数据范围改纯 webview」的分支），配色与那条功能混在同一分支上；提 MR 前确认目标分支，必要时 cherry-pick `7af667bf4` 到主干
 - 各端工作区仍留着别的活跃功能的脏文件（安卓 3 个 filter / fragment，iOS 5 个 AgentFilter / TimeData，PC 3 个本地调试配置），本次都没 stage
 
 ## 关键决策记录

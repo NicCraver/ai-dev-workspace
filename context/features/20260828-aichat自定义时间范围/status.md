@@ -4,7 +4,7 @@
 
 分支：web `dev-date-range`（HEAD `17b6fc8`，含自定义时间框常显占位）已 merge 进 `feat/data-scope-storage-group`（`d245908`）｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
 
-> **2026-09-01 注意**：做「三端 markdown 配色」时，安卓仓库从 `master-3.6.23`、iOS 仓库从 `feat/ios-agent-date-range` 各切了一条 `fix/chat-bubble-color` 并停在上面。本功能**未提交**的改动（安卓 `ConversationFragment` / `GroupChatAgentDataCheckView` / `PersonalAiFilterBar`，iOS `ZXAIAgentFilterBar` / `ZXAIAgentTimeData.h·m` / `ZXRCIMBaseChatController+AgentFilter` / `+PersonalAiFilter` / `ZXPersonalAiFilterBar`）跟着工作区留在了新分支上，内容没丢。继续做本功能前先 `git switch` 回各自分支（未提交改动会跟着切回去）。
+> **2026-09-01**：「三端 markdown 配色」的提交已 ff-only 合回原分支，临时分支删掉了，安卓仍在 `master-3.6.23`、iOS 仍在 `feat/ios-agent-date-range`。本功能未提交的改动（安卓 `ConversationFragment` / `GroupChatAgentDataCheckView` / `PersonalAiFilterBar`，iOS `ZXAIAgentFilterBar` / `ZXAIAgentTimeData.h·m` / `ZXRCIMBaseChatController+AgentFilter` / `+PersonalAiFilter` / `ZXPersonalAiFilterBar`）一直在工作区，没丢。注意两端分支上现在多了一条配色 commit（安卓 `89febfb4e`、iOS `7af667bf4`）。
 
 ## 平台矩阵
 

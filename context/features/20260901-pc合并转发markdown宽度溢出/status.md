@@ -21,7 +21,7 @@ web / android / ios 本回合未改。2026-09-01 用户运行时点开该条合�
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| desktop | fix/chat-bubble-color（含 `master-3.4.27` 全部历史） | 未 push | 仅本地调试 3 件 | **本功能** | 6 文件已提交 `d27bfc41`；`.env.test` / `electron-builder.yml` / `package.json` 未 stage |
+| desktop | master-3.4.27 | 与 origin 分叉（本地 2 · 远端 3） | 仅本地调试 3 件 | **本功能** | 6 文件已提交 `d27bfc41`；`.env.test` / `electron-builder.yml` / `package.json` 未 stage |
 | contact | feat/meetingroom | 无 upstream | 干净 | 会议室后端 | 未改 |
 | 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
 
@@ -48,8 +48,8 @@ npx vitest run test/unit/markdown-fold-model.spec.js        # 12 passed
 
 ## 待办 / 阻塞
 
-- 功能本身已完成并验收：6 文件提交在 `d27bfc41`。该 commit 现在位于分支 `fix/chat-bubble-color`（从 `master-3.4.27` 切出，配色那条功能的 `bfe59c82` 在它之上）
-- (desktop) 未 push；合入前先拉远端，勿直推 `master-3.4.27` 联调分支。两条 commit 在同一分支上，若要分开提 MR 需先拆分支
+- 功能本身已完成并验收：6 文件提交在 `d27bfc41`，位于 `master-3.4.27`；配色那条功能的 `bfe59c82` 在它之上（同分支，两条 commit 属两个功能，若要分开提 MR 需先拆）
+- (desktop) 未 push，且 `master-3.4.27` 与 origin 已分叉（本地 2 条、远端 3 条），push 前先 pull / rebase；勿直推联调分支
 
 ## 关键决策记录
 
