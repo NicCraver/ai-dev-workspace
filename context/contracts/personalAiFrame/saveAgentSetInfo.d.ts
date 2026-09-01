@@ -2,6 +2,8 @@
  * 契约：个人AI框域 · 保存/发布 Agent 设置信息（不含知识库）
  * POST /agentSetBasic/saveAgentSetInfo
  * Changelog:
+ * - 2026-09-01 dataRangeList 增加 5-周工作；ability.eventTaskList.dealMeans.aiParaInfo
+ *   增加 weekWorkScopeList 与 8 个 weekWorkSelectAll*（showRangeTxt 本接口入参文档未列）。
  * - 2026-08-12 fixedTimeTask 的 selectMyAiBox / sendAiMessageScopeVOList / displayFormat 改为可选（get 回参不含）
  * - 2026-07-14 新增 POST /agentSetBasic/saveAgentSetInfo
  */
@@ -11,6 +13,7 @@ import type {
   PersonalAiFrameAttachment,
   PersonalAiFrameDataRangeChoose,
   PersonalAiFrameGuideQuestion,
+  PersonalAiFrameWeekWorkFields,
 } from './_shared';
 
 /** 操作类型：0-保存并预览；1-发布 */
@@ -47,7 +50,7 @@ export interface PersonalAiFrameAgentSetDataRangeConfig {
   agentVersionId?: string;
   /**
    * 智能体数据范围
-   * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件
+   * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；5-周工作
    */
   dataType?: number;
   /** 0-禁用；1-启用 */
@@ -69,7 +72,11 @@ export interface PersonalAiFrameAgentSetQaSet {
 }
 
 /** 推送 AI 框分析参数 */
-export interface PersonalAiFrameAgentSetAiParaInfo {
+export interface PersonalAiFrameAgentSetAiParaInfo
+  extends PersonalAiFrameWeekWorkFields {
+  /**
+   * 单项 dataRangeType：0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享；5-周工作
+   */
   dataRangeList?: PersonalAiFrameDataRangeChoose[];
   /** 聊天文本选择的时间条件类型 */
   timeType?: number;

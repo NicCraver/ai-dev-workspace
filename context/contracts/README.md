@@ -34,6 +34,10 @@ contracts/
 │  ├─ shareFileDataList.d.ts    # POST /agentFileShare/shareFileDataList
 │  ├─ saveAgentSetInfo.d.ts     # POST /agentSetBasic/saveAgentSetInfo
 │  ├─ getAgentSetInfo.d.ts      # POST /agentSetBasic/getAgentSetInfo
+│  ├─ getFixTaskList.d.ts       # POST /agentSetBasic/getFixTaskList
+│  ├─ saveAgentFixedTimeTask.d.ts # POST /agentSetBasic/saveAgentFixedTimeTask
+│  ├─ saveAllAgentFixedTimeTask.d.ts # POST /agentSetBasic/saveAllAgentFixedTimeTask
+│  ├─ publishAgentFixedTimeTask.d.ts # POST /agentSetBasic/publishAgentFixedTimeTask
 │  ├─ getSecretButtonTip.d.ts   # POST /personalAiFrame/getSecretButtonTip
 │  ├─ getBadgePushInfo.d.ts     # POST /agentSetBasic/getBadgePushInfo
 │  ├─ groupGet.groupAgentRels.d.ts # POST /api/chat/v1/group/get（智能体片段）

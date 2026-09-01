@@ -3,6 +3,8 @@
  * POST /sessionMsg/getLastSessionMessage
  * 用途：点击 AI 框打开时调用，不确定是否有 AI 会话记录
  * Changelog:
+ * - 2026-09-01 `agentSetDataRangeExpandVo` 增加周工作记忆（weekWorkScopeList / 8 个
+ *   weekWorkSelectAll* / showRangeTxt）；dataRangeType 含 5-周工作。
  * - 2026-08-28 `agentSetDataRangeExpandVo` 补 startTime/endTime（timeType=0）；
  *   get 可能回 ISO 字符串或毫秒，timeType 可能是 `"0"`。
  * - 2026-07-14 新增 POST /sessionMsg/getLastSessionMessage
@@ -17,6 +19,7 @@ import type {
   PersonalAiFrameDataRangeChoose,
   PersonalAiFrameDataRangeScope,
   PersonalAiFrameGuideQuestion,
+  PersonalAiFrameWeekWorkFields,
 } from './_shared';
 
 /** ai 会话归属条件类型 */
@@ -249,14 +252,15 @@ export interface PersonalAiFrameSessionAiRoleInfo {
 
 /**
  * 聊天中存的选中数据 · 知识范围单项（dataRangeType / choose 必填）
- * dataRangeType：0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人知识；4-共享知识
+ * dataRangeType：0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人知识；4-共享知识；5-周工作
  */
 export type PersonalAiFrameAgentSetDataRangeItem = Required<
   Pick<PersonalAiFrameDataRangeChoose, 'dataRangeType' | 'choose'>
 >;
 
 /** 聊天中存的选中数据（回参必填） */
-export interface PersonalAiFrameAgentSetDataRangeExpandVo {
+export interface PersonalAiFrameAgentSetDataRangeExpandVo
+  extends PersonalAiFrameWeekWorkFields {
   /** 选择的时间类型。0=自定义；接口可能回字符串 "0" */
   timeType: number | string;
   /** timeType=0 时的区间起，毫秒或 ISO 字符串 */

@@ -4,6 +4,7 @@
  * 分类：智信AI框-会话 · AT智能体
  * 维护人：苑立杰
  * Changelog:
+ * - 2026-09-01 dataRangeList 可含 5-周工作（与 saveDataRange 对齐）
  * - 2026-07-28 新增 POST /v1/aiRobtChat（对齐后端文档）；路径拼写为 aiRobtChat（后端原样）；
  *   入参含 dataRangeScopeList / agentId；响应 data 为空对象；
  *   PC 现网 timeType / netSearch / deepThink 传 string；msgUID 在 IM 发送成功后回填
@@ -54,7 +55,7 @@ export interface PersonalAiFrameAiRobtChatReq {
   /**
    * 智能体数据范围
    * 单项 dataRangeType：0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件
-   * （与 saveDataRange 共用类型时还可含 3-个人 / 4-分享）
+   * （与 saveDataRange 共用类型时还可含 3-个人 / 4-分享 / 5-周工作）
    * 单项 choose：0-未选中；1-选中
    * @note 后端文档标 string；与域内其它契约统一用 number，联调若需 string 再改
    */

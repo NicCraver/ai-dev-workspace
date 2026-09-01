@@ -1,6 +1,6 @@
 # Status：数据范围选择改纯 webview
 
-> 最后更新：2026-09-01 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（契约补周工作字段）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 分支：web `feat/data-scope-storage-group`（领先 origin 1，工作区干净）｜ ios `feat/ios-agent-date-range`（领先 origin 4，脏 6 个文件，属另一功能的时间弹层改动）
 
@@ -24,8 +24,19 @@
 | 原生会话筛选条入口切到 webview | — | ⬜ 本轮不做 | 🚧 代码已写，待真机 | — |
 | `bridge.md` 登记 + impl-notes | ✅ | — | — | — |
 | 真机 / 浏览器自测 | ✅ PC + 移动都过 | — | ⬜ 待人工真机 | — |
+| 契约：dataRangeType=5 周工作 + weekWork* / showRangeTxt | ✅ context | — | — | — |
 
 desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRangeDialog`，形态不变。
+
+### 本回合各端现状（code-status）
+
+本回合只改 context 契约与本 status，未动 apps 代码。
+
+| 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
+|---|---|---|---|---|---|
+| context | main | ahead 103 | 契约 + 本 status | **本功能** | 周工作字段 |
+| web | feat/data-scope-storage-group | ahead 1 | SelectDataRangePopup.vue | 本功能 | 非本次契约改动 |
+| 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
 
 ## 验证记录（2026-09-01 浏览器实测）
 
@@ -45,8 +56,15 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
 > 底栏显示「已选 65 个」而 save 传 66 条：差的 1 条是收纳组（`scopeDataType=4`），
 > 胶囊与已选计数按本分支规则排除它，save 照传。**不是 bug**。
 
+## 本回合（契约）
+
+只动 `context/contracts/personalAiFrame/`：`dataRangeType` 增加 **5-周工作**；get/save 知识范围、会话记忆、Agent 设置 `aiParaInfo`、定时任务四接口补 `weekWorkScopeList` 与 8 个 `weekWorkSelectAll*`；get 与定时任务 save 另有 `showRangeTxt`。共用类型在 `_shared.d.ts` 的 `PersonalAiFrameWeekWorkFields`。
+
+`saveDataRange` 仍是全量写入：合并记忆时必须透传 `weekWork*`，省略会把后端已存的周工作选择冲掉。各端调用代码本回合未改。
+
 ## 待办 / 阻塞
 
+- (全端) `saveDataRange` 全量合并须透传 `weekWorkScopeList` 与 8 个 `weekWorkSelectAll*`，省略会冲掉后端周工作记忆
 - (web) `OrgPicker` 部门/人员层行高已从 60px 改为 48px（与公司层、`row-height` 对齐）。人员行仍是 40px 头像 + 双行文案，需打开弹层目视是否挤
 - (web) **动画可能重叠**：`/m/data-range` 里 `SelectDataRangePopup` 带 XPopup 的底部滑入，
   而 iOS 已改成整页右滑入 push，进场会有双重感。真机看着别扭就去掉页内那层 XPopup

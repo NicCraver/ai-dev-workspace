@@ -2,6 +2,8 @@
  * 契约：个人AI框域 · 获取 Agent 设置信息（不含知识库）
  * POST /agentSetBasic/getAgentSetInfo
  * Changelog:
+ * - 2026-09-01 回参 ability.eventTaskList.dealMeans.aiParaInfo 增加周工作记忆与 showRangeTxt
+ *   （dataRangeType 含 5-周工作）；与 saveAgentSetInfo 共用 AiParaInfo。
  * - 2026-08-12 回参 data 增加 hideChat（1-隐藏聊天记录/聊天文件相关配置）
  * - 2026-08-12 新增 POST /agentSetBasic/getAgentSetInfo
  */

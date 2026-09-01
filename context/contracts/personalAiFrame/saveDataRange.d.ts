@@ -2,6 +2,8 @@
  * 契约：个人AI框域 · 知识范围记忆
  * POST /agentSetDataRangeExpand/saveDataRange
  * Changelog:
+ * - 2026-09-01 dataRangeType 增加 5-周工作；入参增加 weekWorkScopeList 与 8 个 weekWorkSelectAll* 标记。
+ *   showRangeTxt 本接口入参文档未列（仅 get 回参 / 定时任务 save 有）。
  * - 2026-08-28 timeType=0（自定义）时 save/get 携带 startTime/endTime（毫秒）。
  *   get 侧日期字段可能按 ISO 字符串序列化（含 `+0000`），前端须归一为毫秒；
  *   timeType 也可能是字符串 `"0"`，与 number 0 同义，禁止 `|| 7`。
@@ -18,20 +20,22 @@ import type { ApiResponse } from '../_common';
 import type {
   PersonalAiFrameDataRangeChoose,
   PersonalAiFrameDataRangeScope,
+  PersonalAiFrameWeekWorkFields,
 } from './_shared';
 
 /** 全选标记：1-勾选了全部；0-未勾选全部 */
 export type PersonalAiFrameSelectAllFlag = 0 | 1;
 
 /** POST /agentSetDataRangeExpand/saveDataRange 入参 */
-export interface PersonalAiFrameSaveDataRangeReq {
+export interface PersonalAiFrameSaveDataRangeReq
+  extends Omit<PersonalAiFrameWeekWorkFields, 'showRangeTxt'> {
   /** 当前登录账号 id；mock: '280' */
   accountId: string;
   /** 智能体 id */
   agentId: string;
   /**
    * 智能体数据范围
-   * 单项 dataRangeType：0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享
+   * 单项 dataRangeType：0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享；5-周工作
    * 单项 choose：0-未选中；1-选中
    */
   dataRangeList?: PersonalAiFrameDataRangeChoose[];

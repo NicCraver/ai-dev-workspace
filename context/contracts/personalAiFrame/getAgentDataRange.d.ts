@@ -2,6 +2,8 @@
  * 契约：个人AI框域 · 知识范围获取
  * POST /agentSetDataRangeExpand/getAgentDataRange
  * Changelog:
+ * - 2026-09-01 对齐后端 2026-08-31：dataRangeType 增加 5-周工作；回参增加
+ *   weekWorkScopeList、8 个 weekWorkSelectAll*、showRangeTxt。
  * - 2026-08-28 回参补 startTime/endTime（timeType=0）；日期可能为 ISO 串，timeType 可能为 `"0"`。
  * - 2026-07-29 @unconfirmed 回参新增三个全选标记 groupAndAccountSelectAll /
  *   organizationGroupSelectAll / outreachGroupSelectAll（0/1，与 saveDataRange 入参对称）。
@@ -20,6 +22,7 @@
 
 import type { ApiResponse } from '../_common';
 import type { PersonalAiFrameSelectAllFlag } from './saveDataRange';
+import type { PersonalAiFrameWeekWorkFields } from './_shared';
 
 /** POST /agentSetDataRangeExpand/getAgentDataRange 入参 */
 export interface PersonalAiFrameGetAgentDataRangeReq {
@@ -51,7 +54,7 @@ export interface PersonalAiFrameAgentDataRangeItem {
   iconBgColor?: string;
   /**
    * 智能体数据范围标记
-   * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享（现网文案「群聊、私聊知识」）
+   * 0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件；3-个人；4-分享（现网文案「群聊、私聊知识」）；5-周工作
    * 个人 AI 实测回参常见 1/2/3/4，可能不含 0
    */
   dataRangeType?: number;
@@ -86,7 +89,8 @@ export interface PersonalAiFrameAgentDataRangeScopeItem {
 }
 
 /** POST /agentSetDataRangeExpand/getAgentDataRange 业务 data */
-export interface PersonalAiFrameGetAgentDataRangeData {
+export interface PersonalAiFrameGetAgentDataRangeData
+  extends PersonalAiFrameWeekWorkFields {
   /** 智能体 id */
   agentId?: string;
   /** 智能体知识范围 */

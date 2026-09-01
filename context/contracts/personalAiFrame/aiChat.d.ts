@@ -3,6 +3,7 @@
  * POST /v1/aiChat
  * 分类：流式会话接口（SSE）
  * Changelog:
+ * - 2026-09-01 dataRangeList 可含 5-周工作（与 saveDataRange 对齐）
  * - 2026-07-16 新增 POST /v1/aiChat（对齐后端文档）；入参含 dataRangeScopeList；
  *   附件 analysisStatus 补 3-大小超限（见 _shared）；SSE 分片回参按 web 现网消费标注 @unconfirmed
  */
@@ -73,7 +74,7 @@ export interface PersonalAiFrameAiChatReq {
   /**
    * 智能体数据范围
    * 单项 dataRangeType：0-内置知识/维护的知识库；1-聊天记录-文本；2-聊天中的文件
-   * （与 saveDataRange 共用类型时还可含 3-个人 / 4-分享）
+   * （与 saveDataRange 共用类型时还可含 3-个人 / 4-分享 / 5-周工作）
    * 单项 choose：0-未选中；1-选中
    */
   dataRangeList?: PersonalAiFrameDataRangeChoose[];
