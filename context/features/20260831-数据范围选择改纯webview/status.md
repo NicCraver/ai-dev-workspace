@@ -20,7 +20,7 @@
 | 新页 `/m/data-range` + 注册 `reportDataRange` | ✅ | — | — | — |
 | 移动 Home 个人 AI 框直调组件（不再走原生） | ✅ 浏览器实测通过 | — | — | — |
 | 移动 popup 全屏 + 去顶圆角 + 涉密入口 | ✅ | — | — | — |
-| 整页 push webview（右滑入）+ `reportDataRange` handler | — | — | 🚧 代码已写，待 Xcode 编译 | — |
+| 整页 webview（模态右滑入）+ `reportDataRange` handler | — | — | 🚧 代码已写，待 Xcode 编译 | — |
 | 原生会话筛选条入口切到 webview | — | ⬜ 本轮不做 | 🚧 代码已写，待真机 | — |
 | `bridge.md` 登记 + impl-notes | ✅ | — | — | — |
 | 真机 / 浏览器自测 | ✅ PC + 移动都过 | — | ⬜ 待人工真机 | — |
@@ -78,7 +78,16 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
 - 2026-09-01 移动 popup **补涉密入口**，文案与 PC 同源 `getSecretButtonTip`，失败回退静态文案。
 - 2026-09-01 顶部「知识、聊天 / 周工作」tab **暂时撤回**标题形态（PC + 移动都撤），
   周工作另开分支做。撤掉的实现在 `4ba8463` / `06ae524` 两条提交里，重做时可直接捡。
-- 2026-09-01 **iOS 承载改整页 push（右滑入）**，不再用 `ZXJSWebPopoverView` + `HXContainerUtils`
-  底部弹层容器：换成 `ZXJSWebLoader` + `pushViewController`，`style="-1"` 隐藏原生导航栏。
-  连带两处必改——userCode 要**自己换好再拼**（`ZXJSWebLoader.loadHTML` 不像 popover 那样自动换），
-  关页从 `shareView tappedCancel` 改成 `popViewControllerAnimated`（弱引用持有，手势返回后自动失效）。
+- 2026-09-01 **iOS 承载改整页右滑入**，不再用 `ZXJSWebPopoverView` + `HXContainerUtils`
+  底部弹层容器：换成 `ZXJSWebLoader`，`style="-1"` 隐藏原生导航栏。
+  连带一处必改——userCode 要**自己换好再拼**（`ZXJSWebLoader.loadHTML` 不像 popover 那样自动换）。
+- 2026-09-01 **不能用 push，改 `UIModalPresentationOverFullScreen` 模态 + 自定义右滑入转场**
+  （`ZXAgentSlideInTransition`，私有类放在 `ZXAIAgentManager.m` 里）。
+  真机现象：push 打开、确认关闭后**筛选条整条消失**。根因在
+  `ZXRCIMBaseChatController.m:210 viewDidDisappear`——清 `atMessageModels`、
+  `zx_hidePersonalAiFilterBar`、`zx_resetAgentFilterSessionState`；push 让聊天页真消失一次，
+  pop 回来 `zx_refreshPersonalAiFilterBar` 因 `zx_hasPersonalAgentMention` 已为假直接 hide。
+  OverFullScreen 下 presenting 的 view 不被移除，聊天页收不到消失回调，状态原样保留。
+  两个连带点：loader 的关页 / 内部跳转依赖 `self.navigationController`，所以要套一层
+  `ZXNavigationController` 再 present；`transitioningDelegate` 是 weak，转场对象必须静态强持有。
+  关页从 `popViewControllerAnimated` 改成 `dismissViewControllerAnimated`。
