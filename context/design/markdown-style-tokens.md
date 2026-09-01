@@ -9,7 +9,7 @@
 1. **不对齐绝对数值，对齐相对倍率 + 颜色 + 结构。** 三端正文基准字号本来就不同（PC 13px / 安卓 15sp / iOS 16pt），硬对齐数值反而不对齐观感。
 2. **不吃框架默认值。** 三端 drift 的根因就是各自吃了 UnoCSS `presetTypography` / Markwon `MarkwonTheme` 的默认值。每端必须有一个显式的「样式常量入口」，所有值从本表抄。
 3. **颜色一律半透明黑**（表格、代码、引用、hr）。消息气泡底色有淡蓝（自己发）和白（收到）两种，写死浅灰白叠上去会突兀。
-   > 2026-09-01：自己发的气泡底色三端统一调浅到 `#EBF2FF`（原 PC `#D7E5FF` / 安卓 · iOS `#DEE8FF`）。半透明黑的表格线、代码底在更浅的底上对比反而更足，本表的百分比不用跟着改。气泡色本身不属于 markdown token，入口见下表脚注。
+   > 2026-09-01：自己发的气泡底色三端统一调浅到 `#F0F5FF`（原 PC 实际生效值 `#CCE0FE`、安卓 · iOS `#DEE8FF`）。半透明黑的表格线、代码底在更浅的底上对比反而更足，本表的百分比不用跟着改。气泡色本身不属于 markdown token，入口见下表脚注。
 
 ## Token 表
 
@@ -56,7 +56,7 @@
 | PC | `apps/desktop/src/renderer/assets/styles/markdown.scss`（全局，`main.js` 引入；`.md-html-wrapper` 下一套规则，**不挂 `prose`**） |
 | 安卓 | `apps/android/IM/src/main/java/com/im/message_type/robot/ZXMarkwonFactory.java` 的 `configureTheme()`；表格控件 `ZXMarkdownTableView`；段栈 `ZXMarkdownContentView` |
 | iOS | `apps/ios/SmartMessage/ZX_Base/ZX_Manager/Markdown/ZXMarkdownStyle.m` 的 `defaultStyleWithBaseAttributes:` |
-| 气泡底色（非 markdown token，但正文配色依赖它） | PC `msg-list.vue` / `reply-msg-list.vue` / `winbox-wrapper.vue` 的 `.message-item-self .msg-box`；安卓 `base_util/res/drawable/shape_solid_dee8ff_...16dp.xml`（**文件名是历史命名**，取值已是 `@color/color_EBF2FF`）；iOS `ZX_Defines/ZXUiMacro.h` 的 `Color_Chat_ZZ_Send`。web 无聊天气泡 |
+| 气泡底色（非 markdown token，但正文配色依赖它） | PC **以 `chat-box.vue` 为准**：`.chat-box-organization .message-item-self .msg-box` 带 `!important`，会盖掉 `msg-list.vue` / `reply-msg-list.vue` / `winbox-wrapper.vue` 里那份基底色，两处要一起改；折叠遮罩渐变 `foldParentBg_Or_Send`（`msg-txt-fold-expand.vue` / `msg-reply.vue`）也吃这个色；自己发的 ActionCard 头部另有 `.message-wrapper-self .actioncard-header`（比气泡深一档）。安卓 `base_util/res/drawable/shape_solid_dee8ff_...16dp.xml`（**文件名是历史命名**，色值直接写在 solid 上）。iOS `ZX_Defines/ZXUiMacro.h` 的 `Color_Chat_ZZ_Send`；字号设置页另有一张预览图 `zx_chat_cell_bubble_sender.imageset`。web 无聊天气泡 |
 | web（表格 + 行内代码） | `apps/web/src/components/common/AcMarkdown.vue`：表格走 `.tableWrapper` / `table`；行内 `code` 走 `:not(pre) > code`（干掉 prose 的 `code::before/after` 反引号）。直播 DOM 的表格外壳来自 Tiptap `TableView`（`resizable: false` 时总会包一层）；`EditorWrapper` 仅在 `markdownAsHtml` 时打开 `renderWrapper`，让 `getHTML()` 也带外壳。横滚条 6px、表底恒 8px，**不对齐** PC 列里溢出时 4px+20px 那套 gutter。单元格 `max-width: 187.5px`（375/2）后换行。PC 会话列是 **max-width 375px**（不要 min-width，短列随内容）。横滚要生效：气泡链路上每层 `min-width: 0` + `max-width: 100%`，不要 `max-width: max-content`。波浪下划线走 `ExtendUnderline` + `ExtendInlineSpanStyle` 的 `text-decoration`。 |
 
 ## 内联 HTML 标签（2026-08-25）

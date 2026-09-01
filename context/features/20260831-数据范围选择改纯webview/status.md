@@ -1,8 +1,8 @@
 # Status：数据范围选择改纯 webview
 
-> 最后更新：2026-09-01（已本地合并 `dev-date-range` 并 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
-分支：web `feat/data-scope-storage-group`（已与 origin 同步；脏 1：`OrgPicker` 行高未提交）｜ ios `feat/ios-agent-date-range`（领先 origin 2）
+分支：web `feat/data-scope-storage-group`（领先 origin 6，脏 1：`OrgPicker` 行高）｜ ios `feat/ios-agent-date-range`（领先 origin 2）
 
 ## 平台矩阵
 
@@ -23,7 +23,6 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
 
 ## 待办 / 阻塞
 
-- (web) 2026-09-01 已 `merge --no-ff origin/dev-date-range`（`d245908`）并 push。冲突 2 处：`Chat.vue` 两边 import 都留；`FilterBar.vue` 保留本分支 PPT 移动双页，TimeSelector 改用 `rangeStartMs`/`rangeEndMs`。相关单测 40 例通过。两套宿主桥并存：`/date-range` 用 `pages/date-range/host-bridge.js`（`selectDateRange`），`/m/data-range` 用 `utils/hostReportBridge.js`（`reportDataRange`），未强行合一
 - (web) `OrgPicker` 部门/人员层行高已从 60px 改为 48px（与公司层、`row-height` 对齐）。人员行仍是 40px 头像 + 双行文案，需打开弹层目视是否挤
 - (web) 移动 Home 已切直调 `SelectDataRangePopup`（XPopup）；PC 仍是 Dialog。不进原生选人页。待浏览器确认胶囊打开底部弹层；确定后时间档/联网不被冲
 - (ios) **需人工 Xcode clean build**（`zhixinApp.xcworkspace` / `zhixinAppTest` + iPhone 15 iOS 17），AI 不代跑
