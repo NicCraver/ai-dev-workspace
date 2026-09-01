@@ -66,8 +66,6 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
 
 - (全端) `saveDataRange` 全量合并须透传 `weekWorkScopeList` 与 8 个 `weekWorkSelectAll*`，省略会冲掉后端周工作记忆
 - (web) `OrgPicker` 部门/人员层行高已从 60px 改为 48px（与公司层、`row-height` 对齐）。人员行仍是 40px 头像 + 双行文案，需打开弹层目视是否挤
-- (web) **动画可能重叠**：`/m/data-range` 里 `SelectDataRangePopup` 带 XPopup 的底部滑入，
-  而 iOS 已改成整页右滑入 push，进场会有双重感。真机看着别扭就去掉页内那层 XPopup
 - (web) **测试环境是旧包**：真机截图里 `/m/data-range` 出的还是 PC `el-dialog`（440 宽、居中、
   带已撤掉的「知识、聊天 / 周工作」tab）。当前分支源码早已是全屏 `SelectDataRangePopup`
   且 关闭 / 取消 都走 `emit("close")` → 页面上报 cancel。**须重新构建部署再验**，别照旧包提 bug
@@ -95,6 +93,13 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
   点开 `absolute inset-0 z-20` 一层，顶部 `SearchInput`（`nextTick` 后 focus 拉键盘）+ 取消，
   下面 `AiBoxSearchPanel` 占满，形态照抄 `SelectAiBoxPopupSearch`。
   勾选直接写同一个 `selectedKeySet`，「取消」只关层清关键字、不撤选。
+- 2026-09-01 **双重进场动画落地解法**：`XPopup` 加 `instant` prop，为真时把 `<Transition>`
+  的 name 换成没有对应 CSS 的 `x-instant`（不是删 Transition——`after-leave` 还得触发，
+  否则 `close` 事件发不出）。`/m/data-range` 传 `instant`，页内即时显示，进场只剩原生那一次。
+- 2026-09-01 **确定改为「落库 → 提示 → 再上报关页」**：原生收到 `data-range:confirm`
+  立刻去重拉记忆，上报早于落库就会读到旧值。页里加 `saving` 防连点 +
+  `showLoadingToast(forbidClick)` 挡住保存期间的点击，`saveAgentDataRange` resolve 后
+  弹「已保存」，停 600ms 再上报。失败则关 toast、提示重试、不上报不关页。
 - 2026-08-31 **个人 AI 框（web Home）直调组件，不走原生**：移动端 XPopup（`SelectDataRangePopup`），PC 仍 Dialog。原生会话筛选条仍走 `/m/data-range` webview。
 - 2026-09-01 `/m/data-range` **改渲染 `SelectDataRangePopup`**，不给 Dialog 补 mobile 变体：
   Popup 本就是全屏形态，页里原先传的 `mobile` prop 与 `@cancel` 在重构后的 Dialog 上根本不存在
