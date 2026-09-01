@@ -1,6 +1,6 @@
 # Status：会议室新增「位置描述」字段
 
-> 最后更新：2026-09-01 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（本机 Java 联调已验存回显；meeting 代码仍混在脏区未单独 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 会议室除名称、建筑、楼层外，再维护一条「怎么找到这间屋子」的描述，例如「3号会议室在7层711办公室」「2号会议室在715财务办公室旁边」。
 
@@ -22,15 +22,15 @@
 | 管理端列表展示 | — | — | ✅ |
 | PC 看板房间弹窗 | — | — | ✅ |
 | 移动端房间详情 / 房间卡片 | — | — | ✅ |
-| 运行时联调（起服务点一遍） | ⬜ | ⬜ | ⬜ |
+| 运行时联调（起服务点一遍） | ✅ 本机 Java | ⬜ 未用 SQLite 当验收 | ✅ 管理端新建「联调B1」填「联调1层东侧」改西侧能回显 |
 
 ## 本回合各端现状（code-status）
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| contact | feat/meetingroom | 无 upstream | 干净 | **本功能** | 已 commit，未 push |
-| meeting | — | — | 大量 | **本功能** + 会议室前端重构 | 本功能改动**未单独 commit**：工作区里混着前端重构的在途改动，避免混提 |
-| 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
+| contact | feat/meetingroom | 无 upstream | 脏(1) | 会议室后端落contact | 仅 `meeting.admin.userIds`，与本字段无关，勿提交密码 |
+| meeting | main | ahead 4 | 脏(77) | **本功能** + 前端重构 + 切 Java | `room.ts` / 管理表单 / 看板弹窗仍未单独 commit |
+| 其余 | — | — | — | 其它活跃功能 | web 周工作脏区不归本功能 |
 
 ## 本次改动
 
@@ -80,12 +80,12 @@ apps/meeting:            pnpm build 通过（server tsc → vue-tsc → main/zx/
 
 ## 待办 / 阻塞
 
-- (全端) 未起服务做运行时联调：管理端新建/编辑填位置描述 → 列表列、PC 房间弹窗、移动端房间卡片/详情各看一遍；重点验「清空已填的位置描述并保存」能落 null（这正是 `FieldStrategy.IGNORED` 要解决的）
-- (meeting) 本功能改动混在前端重构的脏区里未单独提交，等重构那条线收口时一起提
-- (contact) `context/contracts/` 下没有会议室房间的契约文件（只有 agent 与 bookingLifecycle），本次没地方同步；要补的话得新开 `contracts/meeting/room.d.ts`
+- (meeting web) 「清空已填的位置描述再保存」落 null 本机 Java 联调未单独点；PC 弹窗 / 移动卡片只随管理端回显验过，未单独扫一遍
+- (meeting) 本功能改动混在前端重构 + Task 12 脏区里未单独提交，不要 `git add -A`
+- (contact) `context/contracts/` 下没有会议室房间的契约文件（只有 agent 与 bookingLifecycle）；要补得新开 `contracts/meeting/room.d.ts`
 
 ## 关键决策记录
 
 - 2026-09-01 **新增独立字段而不是复用 locationNote**（用户选择）。复用会让现存的通用备注（投影线、使用须知）语义变味
 - 2026-09-01 上限 50 字：位置指引写不了那么长，比 locationNote 的 100 字短一档，也在表单上区分开两者定位
-- 2026-09-01 Node 端保留同步实现——前端目前仍打 `/meetingApi` → Node（Java 侧的 Task 12 切路径没做），不同步改 Node 的话本地根本存不进这个字段
+- 2026-09-01 Node 仍保留同步实现（助手未配 Java 基址时走 SQLite）。2026-09-01 起本机 Vite 已把非 agent 的 `/meetingApi` 打到 Java，联调位置描述以 MySQL 为准，不要用演示种子当验收
