@@ -9,11 +9,11 @@
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 根因（克隆气泡未锁列宽） | — | — | — | ✅ |
-| 合并转发详情 / 回复列表补宽度锁 | — | — | — | 🚧 |
+| 合并转发详情 / 回复列表补宽度锁 | — | — | — | ✅ |
 | markdown 单测回归 | — | — | — | ✅ |
-| 运行时点开合并记录自测 | — | — | — | ⬜ |
+| 运行时点开合并记录自测 | — | — | — | ✅ |
 
-web / android / ios 本回合未改。代码已写、单测绿，运行时未点开该条合并记录，详情格不算完成。
+web / android / ios 本回合未改。2026-09-01 用户运行时点开该条合并记录确认已修复：气泡不溢出、宽表横滚。
 
 ## 本回合各端现状（code-status）
 
@@ -44,12 +44,11 @@ npx vitest run test/unit/markdown-render.spec.js              # 26 passed
 npx vitest run test/unit/markdown-fold-model.spec.js        # 12 passed
 ```
 
-Electron 运行时未点开该条合并记录（无桌面应用窗口可操作）。
+运行时：用户在 PC 端打开该条合并转发记录，确认气泡不超窗口、正文正常折行、宽表出现横滚条。
 
 ## 待办 / 阻塞
 
-- (desktop) `npm run dev:test` 打开该条合并记录：气泡不超出窗口，正文折行，宽表出现横滚条。本地调试三文件保持脏、勿 stage
-- (desktop) 业务文件 + 单测未 commit
+- (desktop) 5 个业务文件 + 1 个单测未 commit（`markdown.scss` / `msg-list` / `msg-actioncard` / `reply-msg-list` / `winbox-wrapper` / `markdown-table-overflow.spec.js`）；本地调试三文件保持脏、勿 stage
 - (desktop) 分支 behind 1，合入前先拉远端，勿 push 到 `master-3.4.27` 联调分支
 
 ## 关键决策记录
