@@ -2,9 +2,9 @@
 
 > 最后更新：2026-09-01 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
-分支：web `feat/data-scope-storage-group`（领先 origin 3，脏 1：`OrgPicker` 行高）｜ ios `feat/ios-agent-date-range`（领先 origin 2）
+分支：web `feat/data-scope-storage-group`（领先 origin 1，工作区干净）｜ ios `feat/ios-agent-date-range`（领先 origin 3）
 
-> **2026-09-01**：iOS 仍在 `feat/ios-agent-date-range`，但分支上多了一条与本功能无关的配色 commit `7af667bf4`（三端 markdown 配色，ff-only 合进来的）。本功能提 MR 时留意别把它一并带走。web 仓库未动。
+> **2026-09-01**：web 侧未 push 的 3 条本地提交 + `OrgPicker` 行高改动已 squash 成一条 `42f376e`（`feat(选择数据范围): /m/data-range 改用全屏 popup，host-bridge 收敛，行高对齐 48px`），工作区已干净。iOS 仍在 `feat/ios-agent-date-range`，但分支上多了一条与本功能无关的配色 commit `7af667bf4`（三端 markdown 配色，ff-only 合进来的）。本功能提 MR 时留意别把它一并带走。
 
 ## 平台矩阵
 

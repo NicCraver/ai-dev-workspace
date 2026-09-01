@@ -1,10 +1,10 @@
 # Status：aichat自定义时间范围
 
-> 最后更新：2026-09-01（本功能未推进，只记分支变动：安卓 / iOS 仓库当前检出的是配色功能的分支）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（安卓侧时间弹层改动已提交 `ab9b723b0`；iOS 侧 6 文件仍未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 分支：web `dev-date-range`（HEAD `17b6fc8`，含自定义时间框常显占位）已 merge 进 `feat/data-scope-storage-group`（`d245908`）｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
 
-> **2026-09-01**：「三端 markdown 配色」的提交已 ff-only 合回原分支，临时分支删掉了，安卓仍在 `master-3.6.23`、iOS 仍在 `feat/ios-agent-date-range`。本功能未提交的改动（安卓 `ConversationFragment` / `GroupChatAgentDataCheckView` / `PersonalAiFilterBar`，iOS `ZXAIAgentFilterBar` / `ZXAIAgentTimeData.h·m` / `ZXRCIMBaseChatController+AgentFilter` / `+PersonalAiFilter` / `ZXPersonalAiFilterBar`）一直在工作区，没丢。注意两端分支上现在多了一条配色 commit（安卓 `89febfb4e`、iOS `7af667bf4`）。
+> **2026-09-01**：「三端 markdown 配色」的提交已 ff-only 合回原分支，临时分支删掉了，安卓仍在 `master-3.6.23`、iOS 仍在 `feat/ios-agent-date-range`。本功能的安卓侧改动（`GroupChatAgentDataCheckView` / `PersonalAiFilterBar`：自定义档不关弹层 + PopupWindow 透明底）已提交 `ab9b723b0`；iOS 侧仍未提交（ `ZXAIAgentFilterBar` / `ZXAIAgentTimeData.h·m` / `ZXRCIMBaseChatController+AgentFilter` / `+PersonalAiFilter` / `ZXPersonalAiFilterBar`，共 6 个文件，改的是 /date-range 回填判定 `shouldPrefillDateRangeForTimeType:`）。两端分支上还各压着一条配色 commit（安卓 `89febfb4e`、iOS `7af667bf4`），提 MR 时留意。
 
 ## 平台矩阵
 
@@ -35,7 +35,7 @@
   区间文案口径同理有意分叉（移动端整体判当年 + 补零），要不要拉齐是产品决定。
 - (ios) 2026-08-31：占位「请选择时间」打开 /date-range 回填旧区间——回填判据改为与框内文案一致（当前档=自定义 **且** 框里有区间文案才带 start/end）；get 回填非有效自定义时清掉本地旧区间。待真机确认日历为未选。
 - (ios) 并发 get 无 generation 防护（安卓有），快速连点数据胶囊理论上会被旧响应回写。详见 impl-notes。
-- **未 push**：android `master-3.6.23` 已与 origin 同步但仍有脏区、ios `feat/ios-agent-date-range` ahead 2；
+- **未 push**：android `master-3.6.23` ahead 3（含本功能 `ab9b723b0`）、ios `feat/ios-agent-date-range` ahead 3 且 iOS 侧 6 文件仍是脏的；
   web `dev-date-range` 已在 origin（`17b6fc8`），并已合入 `feat/data-scope-storage-group`。
 
 ## 关键决策记录
