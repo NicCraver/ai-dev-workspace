@@ -21,7 +21,7 @@ web / android / ios 本回合未改。2026-09-01 用户运行时点开该条合�
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| desktop | master-3.4.27 | behind 1 | 本功能 6 文件 + 本地调试 3 件 | **本功能** | `.env.test` / `electron-builder.yml` / `package.json` 勿 stage |
+| desktop | master-3.4.27 | behind 1（未 push） | 仅本地调试 3 件 | **本功能** | 6 文件已提交 `d27bfc41`；`.env.test` / `electron-builder.yml` / `package.json` 未 stage |
 | contact | feat/meetingroom | 无 upstream | 干净 | 会议室后端 | 未改 |
 | 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
 
