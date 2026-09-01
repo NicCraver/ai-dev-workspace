@@ -1,13 +1,13 @@
 # Status：数据范围选择改纯 webview
 
-> 最后更新：2026-09-01（契约补周工作字段）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（iOS 未推送 7 条 + 脏区已 squash 并 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
-分支：web `feat/data-scope-storage-group`（领先 origin 1，工作区干净）｜ ios `feat/ios-agent-date-range`（领先 origin 4，脏 6 个文件，属另一功能的时间弹层改动）
+分支：web `feat/data-scope-storage-group`（synced）｜ ios `feat/ios-agent-date-range`（synced，`7a96ed086`）
 
 > **2026-09-01 晚**：web 已部署测试环境，PC / 移动两端在浏览器实测通过（见下「验证记录」）。
-> iOS 承载方式改定：**整页 push（右滑入）**，不再用底部弹层容器。
+> iOS 承载方式改定：**OverFullScreen 模态 + 自定义右滑入**（不用 push，避免聊天页 `viewDidDisappear` 清筛选条）。
 
-> **2026-09-01**：web 侧未 push 的 3 条本地提交 + `OrgPicker` 行高改动已 squash 成一条 `42f376e`（`feat(选择数据范围): /m/data-range 改用全屏 popup，host-bridge 收敛，行高对齐 48px`），工作区已干净。iOS 仍在 `feat/ios-agent-date-range`，但分支上多了一条与本功能无关的配色 commit `7af667bf4`（三端 markdown 配色，ff-only 合进来的）。本功能提 MR 时留意别把它一并带走。
+> **2026-09-01**：iOS 本地 7 条（数据范围 + 配色 `7af667bf4`）与 6 个未提交时间回填文件已 squash 成 `7a96ed086` 并 push。提 MR 时配色会跟着这条走，拆不出来了。
 
 ## 平台矩阵
 
@@ -31,13 +31,13 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
 
 ### 本回合各端现状（code-status）
 
-本回合只改 context 契约与本 status，未动 apps 代码。
+本回合只 squash/push iOS，未改其它端代码。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| context | main | ahead 103 | 契约 + 本 status | **本功能** | 周工作字段 |
-| web | feat/data-scope-storage-group | ahead 1 | SelectDataRangePopup.vue | 本功能 | 非本次契约改动 |
-| 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
+| ios | feat/ios-agent-date-range | synced | 干净 | **本功能** + 时间回填 + 配色 | HEAD `7a96ed086` 已 push |
+| web | feat/data-scope-storage-group | synced | 干净 | 本功能 | — |
+| android | master-3.6.23 | ahead 3 | 脏(5) | 其它 | 本回合未改 |
 
 ## 验证记录（2026-09-01 浏览器实测）
 
