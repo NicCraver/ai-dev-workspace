@@ -1,6 +1,6 @@
 # Status：会议室后端落 contact
 
-> 最后更新：2026-09-01（contact 侧 Task 2–14 完成，Task 12 跳过；全量 60 例 JUnit 绿）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（首轮审查 12 个问题已修 11 个；63 例 JUnit 绿）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -11,7 +11,8 @@
 | 计划编制（spec + plan） | ✅ | — |
 | 14 个任务实现（55 个单测绿） | ✅ | — |
 | 首轮代码审查 | ✅ | — |
-| P0 缺陷修复（4 条） | ⬜ | — |
+| P0 缺陷修复（4 条） | ✅ | — |
+| P1 修复（5 条）+ P2 文案对齐 | ✅ | — |
 | 错误码与域内异常信封（Task 1） | ✅ | — |
 | 建表 + 实体/Mapper + 字典 CRUD | ✅ | — |
 | 会议室 CRUD + 列表过滤分页 | ✅ | — |
@@ -20,6 +21,9 @@
 | 切 baseURL 与路径、逐屏联调 | — | ⬜ |
 
 ## 待办 / 阻塞
+
+- (contact, 需外部确认) surefire 已圈定 `com/zgiot/zx/meetingroom/**`，但 `pom.xml` 仍解除了父 POM 的 `maven.test.skip`。**上线前问后端同事父 POM 为什么焊死跳过测试**，确认这个改动可接受
+- (contact) 唯一没修的一条：`meeting_booking` 没有数据库层唯一约束，防并发靠 `SELECT ... FOR UPDATE` 行锁。多实例部署下有效（同一行锁在 MySQL 上），但 DDL 兜底更稳，视上线节奏再补
 
 - (meeting web) **Task 12 未做**（超出 contact 范围）：改 `apps/meeting/web/src/server/module/*.js` 路径与方法；依赖运维确认网关 `/meetingApi` → `zx-contact`。`/agent/*` 继续打 Node
 - (阻塞分期 4) 管理员判定仍待定：目前只读 `meeting.admin.userIds`（`ConfigMeetingAdminChecker`）。2026-09-01 问后端同事，问题清单见 spec「管理员判定」
@@ -46,6 +50,24 @@ Tests run: 60, Failures: 0, Errors: 0, Skipped: 0
 分项：RoomRules 16 + MeetingAdminChecker 5 + MeetingDictService 2 + BookingController 4 + BookingService 4 + BookingRules 19 + MeetingTimeKit 7 + MeetingExceptionHandler 3 = 60。
 
 测试库 `192.168.10.31:3306/zx_contact` 已执行 `dbscript/2026/V1_0_20260901_meetingroom_DDL.sql`，四张 `meeting_*` 表存在。curl 已验字典/会议室/看板/预定创建与冲突/批次回滚/我的预定/释放/审计/me/admin。
+
+## 首轮审查修复（2026-09-01，commit 3043607a6）
+
+审查记录见 `review-01.md`，12 条里修了 11 条：
+
+- 状态枚举 `finished` → `ended`（前端 `mine.js` 的 `MINE_STATUS_LABEL` 只认 4 个值，写错会渲染成 undefined）
+- `mustGetOwn` 补 `releasedAt` 校验，已释放的预定不能再改/再释放，一律 M4004（原来能改，且冲突检测查不出来，会留脏记录）
+- 会议室分组/位置备注、预定备注加 `@TableField(strategy = FieldStrategy.IGNORED)`，绕开全局 `field-strategy=not_empty` 导致的「清空保存不生效」
+- 「我的预定」排序对齐 Node：进行中/待开始升序在前，已结束/已释放倒序在后
+- 管理员列表补 `id` 兜底排序（`createAt` 是秒级，同批建的会翻页漏行）
+- `Collator` 改 `ThreadLocal`（compare 会写实例游标，static 单例并发会串数据）
+- 看板 date 校验与查询统一用 trim 后的值（原来校验 trim、查询用原串，带空白的入参会显示全天空闲）
+- 预定创建/修改前 `SELECT ... FOR UPDATE` 锁会议室行，串行化「查冲突 → 落库」
+- `ensureDefaults` 改幂等（撞唯一键跳过），本类自调用时 `@Transactional` 本就不生效
+- 错误码补 `M4009`，字典删除/类型/会议室重名文案逐字对齐 Node
+- surefire 圈定 `com/zgiot/zx/meetingroom/**`：原先解除父 POM 的 `maven.test.skip` 会把 16 个历史测试类（6 个 `@SpringBootTest`，要真库）拖进 `mvn test`，实测 8 个 error
+
+验证：`mvn -o test` → 63 例全绿；`mvn -o -DskipTests package` → BUILD SUCCESS。
 
 ## 关键决策记录
 
