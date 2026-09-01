@@ -10,21 +10,21 @@
 |------|-----|---------|-----|---------|
 | spec | — | ✅ | ✅ | ✅ |
 | plan | — | ⬜ | ⬜ | ⬜ |
-| 回填分类（复制 / 修改 / 撤回再编辑） | — | ⬜ | ⬜ | ⬜ |
-| 自己的补齐 agentKind=personal | — | ⬜ | ⬜ | ⬜ |
-| 别人的降级为黑字 | — | ⬜ | ⬜ | ⬜ |
-| 删 @ 后关掉筛选条 | — | 🚧 退格按 chip 收紧，未真机验 | 🚧 同左；粘贴/草稿区间 clamp + 后续输入不再继承 @ 色，未真机验 | 🚧 退格误吞正文后已收紧，未起客户端验 |
+| 回填分类（复制 / 修改 / 撤回再编辑） | — | 🚧 代码已写，未真机验 | 🚧 代码已写，未真机验 | ⬜ |
+| 自己的补齐 agentKind=personal | — | 🚧 同左 | 🚧 同左 | ⬜ |
+| 别人的降级为黑字 | — | 🚧 同左 | 🚧 同左 | ⬜ |
+| 删 @ 后关掉筛选条 | — | 🚧 退格按 chip 收紧，未真机验 | 🚧 同左 | 🚧 退格误吞正文后已收紧，未起客户端验 |
 | 真机 / 客户端自测 | — | ⬜ | ⬜ | ⬜ |
 
 ## 本回合各端现状（code-status）
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| android | master-3.6.23 | ahead 5 | 脏(1) `RichEditText.java` | **本功能** | 未 commit；先前 merge 的 startTime/endTime 已在 ahead 里 |
-| ios | feat/ios-agent-date-range | synced | 脏(8) 输入框 @ 退格相关 | **本功能**（叠在数据范围分支上） | 未单独开分支、未 commit |
-| desktop | master-3.4.27 | synced | 脏(4) | **本功能** + 本地调试 3 件勿提交 | 只提交 `send-box.vue`；`.env.test` / `electron-builder.yml` / `package.json` 勿提交 |
-| web | feat/data-scope-storage-group | synced | 脏(8) | 数据范围选择周工作 | 本回合未改 |
-| context | main | ahead 115 | 本功能 spec/status/impl-notes | **本功能** | — |
+| android | master-3.6.23 | ahead 5 | 脏(4) mention 回填分类 + 退格 | **本功能** | 未 commit |
+| ios | feat/ios-agent-date-range | synced | 脏(10) 回填分类叠在数据范围分支 | **本功能** | 未单独开分支、未 commit |
+| desktop | master-3.4.27 | synced | 脏(4) | **本功能** + 本地调试 3 件勿提交 | 回填分类未做；只提交 `send-box.vue` |
+| web | feat/data-scope-storage-group | synced | 脏(11) | 数据范围选择周工作 | 本回合未改本功能 |
+| context | main | ahead 117 | 本功能 impl-notes/status | **本功能** | — |
 
 ## 本次改动
 
@@ -32,24 +32,24 @@
 
 | 文件 | 改动 |
 |------|------|
-| `RichEditText` | @ span 回填时收到「@姓名 」；退格若 span 盖住正文先收回 chip，只在光标贴 chip 末尾才整删 |
+| `RestoreAgentMention` | 新类：`ga_` 对群 `AgentInfo(belongType=3)` → group；对当前人个人 `AgentInfo` → personal；否则 drop |
+| `MsgDraftRichConvertUtil.getRealMentionList` | 粘贴/修改/草稿/撤回再编辑都走这里，不再凡 `ga_` 一律保留 |
+| `MentionBlock.hasGroupAgentMention` / `isGroupAgentBlock` | 去掉「无 kind + ga_ → 群」兜底，避免自己的个人 AI 点亮群条 |
 
 **apps/ios**（未 commit）
 
 | 文件 | 改动 |
 |------|------|
-| `ZXIMCellLogic` | `clampedAtUserChipRange` / `shouldDeleteWholeAtUserOnBackspace` |
-| 小输入 / 全屏输入退格 | 只在 chip 末尾整删；中间删只认 chip 内部 |
-| 粘贴 / 修改 / 草稿 / 撤回再编辑 | extra 下标过长时收到 chip |
-| 插入 @、粘贴、草稿后 | 后续输入用黑字，避免 @ 色撑到「测试1」 |
-
-**apps/desktop**（本回合未再改，仍是上一轮 `send-box.vue`）
+| `ZXIMCellLogic keepRestoredAgentAtModel` | 对 `groupAgentRel` / `groupAgentRels`（内存缓存优先）分类 |
+| 粘贴 `didPasteAtModels` | drop 的去掉高亮、不进 `atMessageModels` |
+| 修改 / 草稿 / 撤回再编辑 | 分类后再高亮 |
+| `zx_hasGroupAgentMention` | 只认 `agentKind=group` |
 
 ## 待办 / 阻塞
 
-- (三端) `@李权泓的AI框22 测试1` 只删末尾「1」应得 `@… 测试`，@ 仍在；光标在 @ 后空格再退格才整颗去掉并关条——代码已按此写，未真机/客户端验
-- spec 已补 iOS 真实入口；plan 仍未写
-- 复制/修改分流（自己的 personal / 别人的降级）三端代码尚未开始
+- (android / ios) 真机：图一自己的 `@赵彬华个人AI框` 应出个人条「全部类型」，不要「无（不关联任何数据）」；图二别人的 `@李权泓的 AI 框 22` 应黑字、无筛选条
+- (desktop) 回填分类未做
+- plan 仍未写
 
 ## 关键决策记录
 
@@ -57,5 +57,5 @@
 - 2026-09-01 显示名仍用 agentName，不改成「自己的个人AI框」
 - 2026-09-01 群 AI 框复制/修改维持现状（高亮 + 群筛选条 + 群回复）
 - 2026-09-01 **iOS extra.atUserList 没有 agentKind**，回填必须对 groupAgentRels，不能从 extra 读 kind
-- 2026-09-01 PC 退格关条：列表按 id 比对 + 删整颗 mention；**不得**在 `mentionBox + 正文 + hideSpan` 三节点时把删「测试1」当成删 @
-- 2026-09-01 三端退格统一：@ 区块只覆盖 chip；整删仅发生在 chip 末尾，删后面正文不得吃掉 @
+- 2026-09-01 去掉回填路径上「无 kind + ga_ → 群」兜底，否则自己的个人 AI 会点亮群筛选条
+- 2026-09-01 三端退格统一：@ 区块只覆盖 chip；整删仅发生在 chip 末尾

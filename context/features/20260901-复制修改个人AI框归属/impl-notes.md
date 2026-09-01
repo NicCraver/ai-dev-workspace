@@ -5,7 +5,14 @@
 
 ## 状态流转
 
-回填分类见 spec。本条补充输入框退格与 @ 区间：
+回填分类见 spec：
+
+- 智能体账号 `ga_` 回填时按**当前登录人 + 本群关系**重分类，不信任消息 extra 的 `agentKind`，不用 `ga_` 前缀当群。
+- 本群 `groupAgentRel.agentAccountId` 对上 → 群：高亮、群筛选条、发送走群。
+- `groupAgentRels` 里 `accountId === 当前人` 且 `agentAccountId` 对上 → 个人：高亮、个人筛选条（「全部类型」）、发送走个人。
+- 否则 drop：文案留在输入框，去掉 mention / 高亮，不进 @ 列表，不出筛选条，发送当普通文本。
+
+退格与 @ 区间：
 
 - chip = `@` + 显示名 + 尾部空格（与插入 @ 时写入的文案一致）
 - 高亮 / mention 区块只覆盖 chip，不得把后面普通正文算进去
