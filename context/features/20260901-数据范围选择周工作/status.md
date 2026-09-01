@@ -19,7 +19,7 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| web | feat/data-scope-storage-group | synced | 脏(8) | **本功能** | Dialog/Popup + WeekWorkPicker + mock，未 commit |
+| web | feat/data-scope-storage-group | synced | 脏(12) | **本功能** | 含行动中心 3 张 PNG，未 commit |
 | context | main | ahead 113 | 脏(本功能文档) | 本功能 | spec/plan/status |
 | 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
 
@@ -31,17 +31,17 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 |------|------|
 | `picker/weekWorkModel.js` | key `ww_{type}_{id}`、树展开、部门联动人员、板块独立、已选只计 type 1/2 |
 | `picker/weekWorkMock.js` | 全部树 + 关注/所属/主管扁平 mock |
-| `picker/WeekWorkPicker.vue` | 二级 tab、搜索、胶囊、树 / 扁平列表、「含团队工作」；部门图标改 SvgIcon `ww-report` / `ww-noreport`（对齐行动中心 TreeNode） |
-| `assets/svg/ww-report.svg` `ww-noreport.svg` | 有团队报告 / 无报告层叠图标。层叠从行动中心 `dept-tree-icon.svg` 拷贝 |
+| `picker/WeekWorkPicker.vue` | 二级 tab、搜索、胶囊、树 / 扁平列表、「含团队工作」 |
+| `picker/WeekWorkOrgIcon.vue` | 组织图标：`mw-report` / `mw-dept` / `o5-group`（从行动中心拷来的 PNG） |
 | `SelectDataRangeDialog.vue` / `SelectDataRangePopup.vue` | 标题栏「知识、聊天 / 周工作」；底栏已选分组 |
 | `dataRangeSavePayload.js` | 透传记忆里的 `weekWork*`，避免冲掉后端已存值 |
-| `tests/weekWorkModel.test.mjs` | 18 例全绿（含 payload 透传） |
+| `tests/weekWorkModel.test.mjs` | 19 例全绿（含 payload 透传、图标 kind） |
 
 ## 验证
 
 ```
 apps/web: node --test picker/tests/weekWorkModel.test.mjs picker/tests/dataRangeSavePayload.test.mjs
-→ 18 pass / 0 fail
+→ 19 pass / 0 fail
 pnpm exec vue-tsc --noEmit → 无本功能相关报错
 ```
 
@@ -59,4 +59,4 @@ pnpm exec vue-tsc --noEmit → 无本功能相关报错
 - 2026-09-01 先做前端界面交互，接口后补；打开即显示周工作 tab
 - 2026-09-01 所属、主管与关注同一套扁平列表
 - 2026-09-01 周工作 key 用 `ww_{type}_{id}`，与知识聊天 key 隔离
-- 2026-09-01 部门图标对齐行动中心 TreeNode：有报告 `ww-report`，无报告 `ww-noreport`（层叠即 `dept-tree-icon`）
+- 2026-09-01 组织图标用行动中心 PNG：团队工作 `mw-report`，部门/板块 `mw-dept`，名称含「组」`o5-group`
