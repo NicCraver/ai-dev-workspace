@@ -1,6 +1,6 @@
 # Status：会议室后端落 contact
 
-> 最后更新：2026-09-01（Task 12：本机 Vite 代理切 Java，李权泓账号浏览器 11 项已点过）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（Task 12 已联调；自动化 306 全绿，apps 仍未单独 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -49,11 +49,15 @@
 ## 验证
 
 ```
-mvn -o test -Dtest='Meeting*Test,Booking*Test,RoomRulesTest'
-Tests run: 60, Failures: 0, Errors: 0, Skipped: 0
+# 2026-09-01 本机再跑
+apps/contact  JAVA_HOME=corretto-1.8  mvn -o test
+  Tests run: 66, Failures: 0, Errors: 0, Skipped: 0
+  RoomRules 19 + Admin 5 + Dict 2 + BookingController 4 + BookingService 7
+  + BookingRules 19 + TimeKit 7 + ExceptionHandler 3
+apps/meeting  pnpm test
+  server 125 pass / web 115 pass / 0 fail
+apps/meeting  pnpm typecheck  （server tsc + web vue-tsc）通过
 ```
-
-分项：RoomRules 16 + MeetingAdminChecker 5 + MeetingDictService 2 + BookingController 4 + BookingService 4 + BookingRules 19 + MeetingTimeKit 7 + MeetingExceptionHandler 3 = 60。
 
 测试库 `192.168.10.31:3306/zx_contact` 已执行 `dbscript/2026/V1_0_20260901_meetingroom_DDL.sql`，四张 `meeting_*` 表存在。curl 已验字典/会议室/看板/预定创建与冲突/批次回滚/我的预定/释放/审计/me/admin。
 
