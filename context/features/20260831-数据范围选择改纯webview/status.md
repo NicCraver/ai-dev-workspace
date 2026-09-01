@@ -26,8 +26,10 @@
 | `bridge.md` 登记 + impl-notes | ✅ | — | — | — |
 | 真机 / 浏览器自测 | ✅ PC + 移动都过 | — | ⬜ 待人工真机 | — |
 | 契约：dataRangeType=5 周工作 + weekWork* / showRangeTxt | ✅ context | — | — | — |
+| 新页 `/zx/data-range`（PC 弹窗形态）+ iframe 内嵌 | ✅ | — | — | ✅ lint 过，待真机 |
 
-desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRangeDialog`，形态不变。
+PC（Electron）也切了：`personal-ai-memory-bar` 的 a-modal 里换成 `data-range-iframe`，
+本端 2557 行的 `personal-ai-data-scope-dialog` + `personal-ai-data-scope/` 已无人引用（未删）。
 
 ### 本回合各端现状（code-status）
 
@@ -72,6 +74,11 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
   且 关闭 / 取消 都走 `emit("close")` → 页面上报 cancel。**须重新构建部署再验**，别照旧包提 bug
 - (ios) **需人工 Xcode clean build**（`zhixinApp.xcworkspace` / `zhixinAppTest` + iPhone 15 iOS 17），AI 不代跑
 - (ios) **需人工真机 8 项**，尤其第 6 项：改数据范围后确认时间档与联网搜索没被冲掉
+- (desktop) **需真机自测**：`npm run dev:test` 起应用，@个人 AI → 点「数据范围」胶囊，
+  验 4 点——① iframe 拿得到 token（能拉出会话列表）② 确定后弹窗关、胶囊数字刷新
+  ③ 取消 / 遮罩点击不改状态 ④ 440×580 正好贴满，无双层圆角/白边
+- (desktop) `personal-ai-data-scope-dialog.vue` 与 `personal-ai-data-scope/` 五个文件
+  （共 2557 行）已成死代码，确认 PC 真机没问题后再删，本轮不动
 - (android) **需真机自测**：`./gradlew installOnTestDebug` 后进群 @个人 AI，点「数据范围」胶囊，
   验 4 点——① 整页 webview 打开且带登录态（能拉出会话列表）② 确定后关页、胶囊数字刷新
   ③ 取消 / 物理返回不改任何状态 ④ 保存失败时不关页
@@ -111,6 +118,17 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
   `scopeDataType` 服务端时数字时字符串，统一 `integerValue` 比。
   提交时该文件同时带着「自定义时间范围」功能的未提交改动，用
   `git diff` 拆 hunk + `git apply --cached` 只暂存本功能那两块，别把别人的活一起提了。
+- 2026-09-01 **PC（Electron）改内嵌 iframe，不做独立窗口**：照抄本仓已有的
+  `date-range-iframe`（自定义时间区间早就是这么干的）——`a-modal` 壳 + `<iframe>`，
+  上报走 `window.parent.postMessage`（`hostReportBridge` 的 parent 分支，无需任何新桥）。
+  三个连带点：
+  ① **登录态白拿**：`loginUtil` 在 iframe 里会自动向 `window.top` 发 `"getToken"`，
+     宿主 `App.vue` 的 message 监听回 `setToken`，页面什么都不用做（`/date-range` 是免鉴权页，没走这条）。
+  ② **壳去 chrome**：标题 / 涉密 / 关闭 / 取消确定全由 web 的 `SelectDataRangeDialog` 画，
+     所以 a-modal 设 `:closable="false"` 且删掉 title slot；圆角阴影留给 a-modal，
+     web 页把 `.el-dialog` 的圆角阴影和 `.ac-dialog-modal` 遮罩去掉，440×580 正好贴满。
+  ③ **本端不再 save**：web 页落库后只上报，宿主收到 confirm 走 `refresh-memory-scopes`
+     重拉记忆刷胶囊，不能再 `memory-change`（会二次 save，且用的是本端旧 scopes）。
 - 2026-09-01 **安卓：新加 `SelectDataRangeWeb` 钩子，不改既有 `SelectDataRangeScope`**。
   两条入口并存——筛选条走 webview，AI 框 H5 的 `selectDataRangeScope` 桥仍开原生多选页
   （与 iOS 保留 `ZXPersonalAiPickerController` 同理，老 web 包还在调）。
