@@ -1,10 +1,10 @@
 # Status：aichat自定义时间范围
 
-> 最后更新：2026-09-01（安卓侧时间弹层改动已提交 `ab9b723b0`；iOS 侧 6 文件仍未提交）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（iOS 回填改动已随 `7a96ed086` squash 并 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 分支：web `dev-date-range`（HEAD `17b6fc8`，含自定义时间框常显占位）已 merge 进 `feat/data-scope-storage-group`（`d245908`）｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
 
-> **2026-09-01**：「三端 markdown 配色」的提交已 ff-only 合回原分支，临时分支删掉了，安卓仍在 `master-3.6.23`、iOS 仍在 `feat/ios-agent-date-range`。本功能的安卓侧改动（`GroupChatAgentDataCheckView` / `PersonalAiFilterBar`：自定义档不关弹层 + PopupWindow 透明底）已提交 `ab9b723b0`；iOS 侧仍未提交（ `ZXAIAgentFilterBar` / `ZXAIAgentTimeData.h·m` / `ZXRCIMBaseChatController+AgentFilter` / `+PersonalAiFilter` / `ZXPersonalAiFilterBar`，共 6 个文件，改的是 /date-range 回填判定 `shouldPrefillDateRangeForTimeType:`）。两端分支上还各压着一条配色 commit（安卓 `89febfb4e`、iOS `7af667bf4`），提 MR 时留意。
+> **2026-09-01**：「三端 markdown 配色」已 ff-only 合回原分支。安卓弹层改动在 `ab9b723b0`（未 push，`master-3.6.23` ahead 3）。iOS 回填判定 `shouldPrefillDateRangeForTimeType:` 已打进 `7a96ed086` 并 push 到 `feat/ios-agent-date-range`（该条还混了数据范围整页 webview 与配色）。真机仍欠：占位「请选择时间」打开日历应为未选。
 
 ## 平台矩阵
 
@@ -18,7 +18,7 @@
 | 记忆 save/get 对照安卓补齐 | — | 参照源 | ✅ 4 处（详见 impl-notes） | — |
 | 单测 | ✅ host-bridge 9 例 | — | — | — |
 | 真机自测 | ⬜ 未自测（代码已改完） | 🚧 时间弹层关闭待复验 | 🚧 回填修复待复验 | ✅ 同事已过 |
-| 「请选择时间」打开 webview 不回填旧区间 | — | ✅ 仅 timeType=0 带 query | 🚧 框内无区间文案则不带 query，待真机 | — |
+| 「请选择时间」打开 webview 不回填旧区间 | — | ✅ 仅 timeType=0 带 query | 🚧 代码已随 `7a96ed086` push，待真机 | — |
 
 > 本迭代只动桥接层；功能主体（timeType=0 落库、载荷上送）此前已完成。
 
@@ -35,7 +35,8 @@
   区间文案口径同理有意分叉（移动端整体判当年 + 补零），要不要拉齐是产品决定。
 - (ios) 2026-08-31：占位「请选择时间」打开 /date-range 回填旧区间——回填判据改为与框内文案一致（当前档=自定义 **且** 框里有区间文案才带 start/end）；get 回填非有效自定义时清掉本地旧区间。待真机确认日历为未选。
 - (ios) 并发 get 无 generation 防护（安卓有），快速连点数据胶囊理论上会被旧响应回写。详见 impl-notes。
-- **未 push**：android `master-3.6.23` ahead 3（含本功能 `ab9b723b0`）、ios `feat/ios-agent-date-range` ahead 3 且 iOS 侧 6 文件仍是脏的；
+- **未 push**：android `master-3.6.23` ahead 3（含本功能 `ab9b723b0`，另有脏 5）。
+  iOS `feat/ios-agent-date-range` 已 synced（`7a96ed086`）。
   web `dev-date-range` 已在 origin（`17b6fc8`），并已合入 `feat/data-scope-storage-group`。
 
 ## 关键决策记录
