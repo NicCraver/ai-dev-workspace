@@ -1,8 +1,8 @@
 # Status：aichat自定义时间范围
 
-> 最后更新：2026-08-31（iOS 占位打开日历不回填）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（web 已合入 `feat/data-scope-storage-group`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
-分支：web `dev-date-range` ｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
+分支：web `dev-date-range`（HEAD `17b6fc8`，含自定义时间框常显占位）已 merge 进 `feat/data-scope-storage-group`（`d245908`）｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
 
 ## 平台矩阵
 
@@ -10,7 +10,7 @@
 |------|-----|---------|-----|---------|
 | 记忆条自定义档 + /date-range 页 | ✅ | ✅ | ✅ | ✅ |
 | 宿主回传桥接 | ✅ 修 wnsdk 通路（实例注入 + 载荷**平铺**） | ✅ window.WebView | ✅ 平铺优先 + data/success 嵌套兼容 | ✅ parent.postMessage |
-| 自定义档选项行 UI（常驻区间框 + 占位） | ⬜ 无值时仍不显框 | ✅ 占位「请选择时间」+ 紧贴档名 | ✅ 占位 | ⬜ 无值时仍不显框 |
+| 自定义档选项行 UI（常驻区间框 + 占位） | 🚧 `17b6fc8` 已合入数据范围分支，未页面自测 | ✅ 占位「请选择时间」+ 紧贴档名 | ✅ 占位 | ⬜ 无值时仍不显框 |
 | 区间文案（移动端口径：跨年两端带年 + 月日补零） | — 保持原口径，未动 | ✅ DateRangeTextUtil | ✅ ZXAIAgentTimeData | — 保持原口径，未动 |
 | 弹层宽度按内容自适应 | — | ✅ 本就 WRAP_CONTENT | ✅ 时间/知识类型两个面板 | — |
 | 记忆 save/get 对照安卓补齐 | — | 参照源 | ✅ 4 处（详见 impl-notes） | — |
@@ -33,8 +33,8 @@
   区间文案口径同理有意分叉（移动端整体判当年 + 补零），要不要拉齐是产品决定。
 - (ios) 2026-08-31：占位「请选择时间」打开 /date-range 回填旧区间——回填判据改为与框内文案一致（当前档=自定义 **且** 框里有区间文案才带 start/end）；get 回填非有效自定义时清掉本地旧区间。待真机确认日历为未选。
 - (ios) 并发 get 无 generation 防护（安卓有），快速连点数据胶囊理论上会被旧响应回写。详见 impl-notes。
-- **未 push**：android `master-3.6.23` ahead 5、ios `feat/ios-agent-date-range` 无 upstream；
-  web `dev-date-range` 已 push 到 `ec188c4`。
+- **未 push**：android `master-3.6.23` 已与 origin 同步但仍有脏区、ios `feat/ios-agent-date-range` ahead 2；
+  web `dev-date-range` 已在 origin（`17b6fc8`），并已合入 `feat/data-scope-storage-group`。
 
 ## 关键决策记录
 
