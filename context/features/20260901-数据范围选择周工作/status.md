@@ -1,6 +1,6 @@
 # Status：选择数据范围 · 周工作
 
-> 最后更新：2026-09-01 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（web 周工作界面仍在脏区，未 commit、未打开弹窗自测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -17,11 +17,13 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
 ## 本回合各端现状（code-status）
 
+`bash scripts/code-status.sh`：智信 web 脏区全是周工作 picker / 图标，与会议室无关。
+
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| web | feat/data-scope-storage-group | synced | 脏 | **本功能** | 未 commit |
-| context | main | ahead | 脏(本功能 spec/status) | 本功能 | 本回合改「全部」勾选规则 |
-| 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
+| web | feat/data-scope-storage-group | synced | 脏(12) | **本功能** | 弹窗/payload/图标/WeekWorkPicker 未 commit |
+| context | main | ahead 124 | 干净 | — | 本功能文档此前已提交 |
+| meeting / contact | — | — | 脏 | 会议室其它功能 | 不归本功能 |
 
 ## 本次改动
 
