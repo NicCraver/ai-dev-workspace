@@ -68,7 +68,7 @@
 | `selectDataRangeScope` | —（wnsdk `aiChat.selectDataRangeScope` / 安卓 `window.WebView.selectDataRangeScope`） | web→原生 | `{ agentId:string, accountId?:string }`（安卓为该对象的 JSON 字符串；**禁止**传 `initialScopes`） | 见下「selectDataRangeScope 回传」 | ios / android | 原生落库 ACK 改造中（见 plan-数据范围原生落库） |
 | `openKnowledgeDoc` | —（wnsdk `aiChat.openKnowledgeDoc`） | web→原生 | `{ docId:string, agentId:string, agentVersionId?:number, docName?:string, fromType?:number }` | 见下「openKnowledgeDoc 回传」 | **仅 ios** | 新增（知识来源文件下载进度与取消） |
 | `selectDateRange` | —（wnsdk `aiChat.selectDateRange` / 安卓 `window.WebView.selectDateRange`） | **web→原生（上报）** | 见下「selectDateRange 上报」 | ios：ACK `{"ok":true}`；安卓无回参 | ios / android | 新增（记忆条自定义时间区间 timeType=0） |
-| `reportDataRange` | —（wnsdk `aiChat.reportDataRange` / 安卓 `window.WebView.reportDataRange`） | **web→原生（上报）** | 见下「reportDataRange 上报」 | ios：ACK `{"ok":true}` | ios（安卓待接） | 新增（数据范围选择改纯 webview） |
+| `reportDataRange` | —（wnsdk `aiChat.reportDataRange` / 安卓 `window.WebView.reportDataRange`） | **web→原生（上报）** | 见下「reportDataRange 上报」 | ios：ACK `{"ok":true}` | ios / android | 新增（数据范围选择改纯 webview） |
 
 ### `selectAiAgent` 回传（ios → web）
 
@@ -165,7 +165,7 @@ web 分流：`payload.ok` → 新；有 `payload.scopes` → 老。取消：`cod
 
 | 宿主 | 调用形态 |
 |------|---------|
-| android | `window.WebView.reportDataRange(JSON.stringify(payload))`（待接） |
+| android | `window.WebView.reportDataRange(JSON.stringify(payload))`；原生 `setResult` 带 `select_data_range_ack_ok` + `finish()`，宿主收到 ACK 再重拉记忆 |
 | ios | `wnsdk.aiChat.reportDataRange({ ...payload, success, error })`（业务字段**平铺**） |
 | PC iframe | `window.parent.postMessage(payload, "*")` |
 
@@ -210,6 +210,7 @@ H5（移动端 AI 会话页）点知识来源具体链接时调用。**整条链
 
 ## Changelog
 
+- 2026-09-01 `reportDataRange` **安卓接上**：`WebloaderControl` 的 `JsInterface` 加 `@JavascriptInterface reportDataRange`，按 `bean.pageUrl.contains("/m/data-range")` 限定生效；confirm → `setResult(RESULT_OK, select_data_range_ack_ok=true)`，cancel/非法 → `setResult(RESULT_CANCELED)`，随后 `finish()`。承载页是 `APIMainActivity` + `QuickBean(needUserCode=1, pageStyle=-1)`。物理返回走 `APIMainActivity.onBackPressed`，虽回 `RESULT_OK` 但不带 ACK 键，宿主按取消处理。
 - 2026-08-31 登记 `reportDataRange`（ios，web→原生上报；安卓待接）：全屏 webview 加载 `/ai-chat/m/data-range`，web 以 `getAgentDataRange` 为底 `saveDataRange` 后上报 `{type:"data-range:confirm",ok:true}` / `cancel`。载荷必须平铺（同 `selectDateRange`）。判定共用 `hostReportBridge.js`。
 - 2026-08-28 登记 `selectDateRange`（ios / android，web→原生上报）：`/date-range` 页确认/取消回传 `{type,startTime,endTime}`。iOS 修两处：载荷从 `success` 键移到 `data`（`success`/`error` 是 wnsdk 保留回调键），`/date-range` 页自注册 namespace（main 入口无 wnsdk，UMD 也不挂 window）；原生解析改平铺优先、保留嵌套兼容。
 - 2026-08-18 新增 `openKnowledgeDoc`（仅 ios）：H5 点知识来源链接改由原生全包（元数据 + 授权 + OSS 签名 + 下载进度 + 预览），回传 `{status:success|cancel}`，失败 `code=-1`；安卓未实现，web 按 UA 降级。

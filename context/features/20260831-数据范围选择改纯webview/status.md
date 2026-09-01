@@ -20,8 +20,8 @@
 | 新页 `/m/data-range` + 注册 `reportDataRange` | ✅ | — | — | — |
 | 移动 Home 个人 AI 框直调组件（不再走原生） | ✅ 浏览器实测通过 | — | — | — |
 | 移动 popup 全屏 + 去顶圆角 + 涉密入口 | ✅ | — | — | — |
-| 整页 webview（模态右滑入）+ `reportDataRange` handler | — | — | 🚧 代码已写，待 Xcode 编译 | — |
-| 原生会话筛选条入口切到 webview | — | ⬜ 本轮不做 | 🚧 代码已写，待真机 | — |
+| 整页 webview（模态右滑入）+ `reportDataRange` handler | — | ✅ `APIMainActivity` 承载 | ✅ 真机验过 | — |
+| 原生会话筛选条入口切到 webview | — | ✅ 编译通过，待真机 | ✅ 真机验过 | — |
 | 「数据+N」排除收纳组（`scopeDataType=4`） | ✅ 早已如此 | — | ✅ 本轮补 | — |
 | `bridge.md` 登记 + impl-notes | ✅ | — | — | — |
 | 真机 / 浏览器自测 | ✅ PC + 移动都过 | — | ⬜ 待人工真机 | — |
@@ -72,7 +72,11 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
   且 关闭 / 取消 都走 `emit("close")` → 页面上报 cancel。**须重新构建部署再验**，别照旧包提 bug
 - (ios) **需人工 Xcode clean build**（`zhixinApp.xcworkspace` / `zhixinAppTest` + iPhone 15 iOS 17），AI 不代跑
 - (ios) **需人工真机 8 项**，尤其第 6 项：改数据范围后确认时间档与联网搜索没被冲掉
-- (android) 本轮不做：协议已按三端设计（`window.WebView.reportDataRange`），后续照抄 iOS
+- (android) **需真机自测**：`./gradlew installOnTestDebug` 后进群 @个人 AI，点「数据范围」胶囊，
+  验 4 点——① 整页 webview 打开且带登录态（能拉出会话列表）② 确定后关页、胶囊数字刷新
+  ③ 取消 / 物理返回不改任何状态 ④ 保存失败时不关页
+- (android) 原生 `SelectDataRangeActivity` 暂不下线——AI 框 H5 的 `selectDataRangeScope` 桥还在用它
+  （与 iOS 保留 `ZXPersonalAiPickerController` 同理）
 - (ios) 原生 `ZXPersonalAiPickerController` 暂不下线——`selectDataRangeScope` 桥入口还在用它
 - (web) 移动变体的搜索层与键盘顶起、安全区表现只能真机验；浏览器里搜「李权泓」结果层会盖住列表，但自动化 fill 未触发 focus 时 candidates 为空、会先出空态
 
@@ -107,6 +111,17 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
   `scopeDataType` 服务端时数字时字符串，统一 `integerValue` 比。
   提交时该文件同时带着「自定义时间范围」功能的未提交改动，用
   `git diff` 拆 hunk + `git apply --cached` 只暂存本功能那两块，别把别人的活一起提了。
+- 2026-09-01 **安卓：新加 `SelectDataRangeWeb` 钩子，不改既有 `SelectDataRangeScope`**。
+  两条入口并存——筛选条走 webview，AI 框 H5 的 `selectDataRangeScope` 桥仍开原生多选页
+  （与 iOS 保留 `ZXPersonalAiPickerController` 同理，老 web 包还在调）。
+  承载用 `APIMainActivity` + `QuickBean(needUserCode=1, pageStyle=-1)`：
+  安卓的 userCode 由框架自己换（比 iOS 省事，iOS 得手动 `logicRequestUserCodeHandler`），
+  `pageStyle=-1` 关掉原生标题栏，页面自带 header。
+  requestCode 复用 239（`SELECT_DATA_RANGE_SCOPE`），`PersonalAiFilterHost.handleActivityResult`
+  原有的 ACK 分支不用改。
+  `reportDataRange` JS 方法按 `bean.pageUrl.contains("/m/data-range")` 限定，
+  避免任何 webview 都能触发关页。**物理返回**走 `APIMainActivity.onBackPressed`，
+  它会 `setResult(RESULT_OK)` 但不带 `select_data_range_ack_ok`，宿主判 false → 按取消处理，正好。
 - 2026-08-31 **个人 AI 框（web Home）直调组件，不走原生**：移动端 XPopup（`SelectDataRangePopup`），PC 仍 Dialog。原生会话筛选条仍走 `/m/data-range` webview。
 - 2026-09-01 `/m/data-range` **改渲染 `SelectDataRangePopup`**，不给 Dialog 补 mobile 变体：
   Popup 本就是全屏形态，页里原先传的 `mobile` prop 与 `@cancel` 在重构后的 Dialog 上根本不存在
