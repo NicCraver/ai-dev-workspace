@@ -10,45 +10,37 @@
 |------|-----|---------|-----|---------|
 | spec | — | ✅ | ✅ | ✅ |
 | plan | — | ⬜ | ⬜ | ⬜ |
-| 回填分类（复制 / 修改 / 撤回再编辑） | — | 🚧 代码已写，未真机验 | 🚧 粘贴时序已修，未真机验 | ⬜ |
-| 自己的补齐 agentKind=personal | — | 🚧 同左 | 🚧 同左 | ⬜ |
-| 别人的降级为黑字 | — | 🚧 同左 | 🚧 粘贴先写进框再去高亮 | ⬜ |
-| 删 @ 后关掉筛选条 | — | 🚧 软键盘逐字删也会关条 | 🚧 同左 | 🚧 退格误吞正文后已收紧，未起客户端验 |
-| 真机 / 客户端自测 | — | ⬜ | ⬜ | ⬜ |
+| 回填分类（复制 / 修改 / 撤回再编辑） | — | ✅ | ✅ | ⬜ |
+| 自己的补齐 agentKind=personal | — | ✅ | ✅ | ⬜ |
+| 别人的降级为黑字 | — | ✅ | ✅ | ⬜ |
+| 删 @ 后关掉筛选条 | — | ✅ | ✅ | ✅ 退格只删 chip |
+| 真机 / 客户端自测 | — | ✅ | ✅ | ✅ 退格路径 |
 
 ## 本回合各端现状（code-status）
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| android | master-3.6.23 | ahead 5 | 脏(7) 回填分类 + 退格关条 | **本功能** | 未 commit |
-| ios | feat/ios-agent-date-range | synced | 脏(10) 回填分类叠在数据范围分支 | **本功能** | 未单独开分支、未 commit |
-| desktop | master-3.4.27 | synced | 脏(4) | **本功能** + 本地调试 3 件勿提交 | 回填分类未做；只提交 `send-box.vue` |
+| android | master-3.6.23 | synced | 干净 | **本功能** | `f5656de2b` 已 push |
+| ios | feat/ios-agent-date-range | synced | 干净 | **本功能** | `db782e3d2` 已 push |
+| desktop | master-3.4.27 | synced | 脏(3) 本地调试勿提交 | **本功能** | `77b325c2` 已 push；回填分类未做 |
 | web | feat/data-scope-storage-group | synced | 脏(12) | 数据范围选择周工作 | 本回合未改本功能 |
-| context | main | ahead 119 | 本功能 impl-notes/status | **本功能** | — |
+| context | main | ahead 120 | — | **本功能** | — |
 
 ## 本次改动
 
-**apps/ios**（未 commit）
+用户已真机验过：iOS 粘贴别人变黑、安卓删 @ 后关筛选条、PC 退格不误吞正文。三端已 commit + push。
 
-| 文件 | 改动 |
-|------|------|
-| `ZXChatTextView paste:` | 粘贴内容写进输入框**之后**再 `didPasteAtModels`。原先先分类去高亮、再把蓝色 paste 盖回去，所以「修改别人」黑、「复制粘贴别人」仍蓝 |
-| `ZXRCIMBaseChatController+ToolBar didPasteAtModels` | 去高亮后保住光标 |
+| 端 | 分支 | commit |
+|---|---|---|
+| android | `master-3.6.23` | `f5656de2b` fix(agent): 复制修改个人AI框按当前人重分类，删@后关筛选条 |
+| ios | `feat/ios-agent-date-range` | `db782e3d2` fix(agent): 粘贴后再去掉别人个人AI框高亮，按当前人重分类 |
+| desktop | `master-3.4.27` | `77b325c2` fix(input): 退格只删紧贴的@芯片，不把删正文当成删@ |
 
-**apps/android**（未 commit）
-
-| 文件 | 改动 |
-|------|------|
-| `RichEditText` type==0 | 软键盘退格逐字删也会 `judgeAtSpanWhenBatchDeleteChars`；空 span 不算还在 |
-| `PersonalAiFilterHost.hide` | 条子摘掉且容器无子 view 时 GONE，避免空条占着 |
-| `RongExtension` / `ConversationLargeInputView` | 无智能体 @ 时先关个人条再关群条；大输入也把容器 GONE |
+PC 未 stage `.env.test` / `electron-builder.yml` / `package.json`。
 
 ## 待办 / 阻塞
 
-- (ios) 真机：复制别人的 `@李权泓的 AI 框 22` 粘贴到对话框应为黑字、无筛选条（修改路径用户已确认没问题）
-- (android) 真机：删掉自己的 `@个人AI框` 后筛选条应消失（软键盘退格，不只硬件 DEL）
-- (android / ios) 真机：自己的 `@赵彬华个人AI框` 应出个人条「全部类型」
-- (desktop) 回填分类未做
+- (desktop) 回填分类未做：复制/修改别人的个人 AI 框仍可能按 extra 原样高亮
 - plan 仍未写
 
 ## 关键决策记录
