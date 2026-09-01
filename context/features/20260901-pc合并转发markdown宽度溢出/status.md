@@ -1,27 +1,27 @@
 # Status：PC 合并转发 markdown 宽度溢出
 
-> 最后更新：2026-09-01（重做最小补丁：3 文件锁列宽，单测 9/9 绿，未运行时自测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
-群 AI 框 ActionCard 合并转发后，聊天记录窗里正文右侧被裁切，表格没有横滚条。会话列表里同条消息不溢出——8 月已给会话气泡加过宽度锁，合并转发详情是另一套克隆布局，当时漏了。
+群 AI 框 ActionCard 合并转发后，聊天记录窗里正文右侧被裁切，表格没有横滚条。会话列表里同条消息不溢出——8 月已给会话气泡加过宽度锁，合并转发详情是另一套克隆布局，当时漏了。只锁 `.message-wrapper` 不够：头像旁还有一层 `display:flex` 包着气泡，缺 `min-width:0` 时宽表仍按内容撑开，外层 `overflow:hidden` 裁掉右侧。
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 根因（克隆气泡未锁列宽） | — | — | — | ✅ |
-| 合并转发详情 / 回复列表补宽度锁 | — | — | — | ✅ |
+| 合并转发详情 / 回复列表补宽度锁 | — | — | — | 🚧 |
 | markdown 单测回归 | — | — | — | ✅ |
 | 运行时点开合并记录自测 | — | — | — | ⬜ |
 
-web / android / ios 本回合未改。iOS 横滚功能当时也写过「聚合 / 合并转发看一眼」，不在本回合范围。
+web / android / ios 本回合未改。代码已写、单测绿，运行时未点开该条合并记录，详情格不算完成。
 
 ## 本回合各端现状（code-status）
 
-本回合只动 `apps/desktop`：重做最小补丁，3 个业务文件（未 commit）。其余脏区与本功能无关。
+本回合只动 `apps/desktop`（`master-3.4.27`，behind 1）。其余脏区与本功能无关。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| desktop | master-3.4.27 | behind 1 | 3 业务文件 + 1 单测 + 本地调试 3 件 | **本功能** | 改 `winbox-wrapper` / `reply-msg-list` / `msg-list`；`.env.test`、`electron-builder.yml`、`package.json` 勿 stage |
+| desktop | master-3.4.27 | behind 1 | 本功能 6 文件 + 本地调试 3 件 | **本功能** | `.env.test` / `electron-builder.yml` / `package.json` 勿 stage |
 | contact | feat/meetingroom | 无 upstream | 干净 | 会议室后端 | 未改 |
 | 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
 
@@ -29,28 +29,31 @@ web / android / ios 本回合未改。iOS 横滚功能当时也写过「聚合 /
 
 | 文件 | 改动 |
 |------|------|
-| `popwin/winbox-wrapper.vue` | `.message-wrapper` 加 `min-width:0` + `max-width:100%`；`.msg-box` 加 `max-width:100%`；消息内容行加 `minWidth:0` / `maxWidth:100%` |
-| `chitchat/reply-msg-list.vue` | 同上（消息内容行原本只有 `maxWidth`，补 `minWidth:0`） |
-| `chitchat/message/msg-list.vue` | 消息内容行补 `minWidth:0`（原本靠 `overflow:hidden` 兜住，显式化，三套一致） |
-
-`markdown.scss` / `msg-actioncard.vue` 无需再改，`d987d746` 的锁已在库里。
+| `popwin/winbox-wrapper.vue` | 消息列 `flex:1` + `min-width:0`；内容行补 `minWidth:0` / `width:100%`；头像 `flex-shrink:0` |
+| `chitchat/reply-msg-list.vue` | 同一套锁（回复列表是另一套克隆） |
+| `chitchat/message/msg-list.vue` | 内容行 / `.person-message` 显式 `min-width:0`，三套一致 |
+| `msgtype/msg-actioncard.vue` | 去掉 `min-width:200px`（会顶住缩窄）；卡片与 v-html 层跟列宽 |
+| `assets/styles/markdown.scss` | `.md-table-wrap` 写 `width:100%`，外壳跟列走、表 `max-content` 才能比外壳宽从而画出横条 |
+| `test/unit/markdown-table-overflow.spec.js` | 三套克隆都要锁列宽；O5 三列表仍包在横滚容器里 |
 
 ## 验证
 
 ```
 npx vitest run test/unit/markdown-table-overflow.spec.js   # 9 passed
-npx eslint <三个文件>                                       # 无输出
+npx vitest run test/unit/markdown-render.spec.js              # 26 passed
+npx vitest run test/unit/markdown-fold-model.spec.js        # 12 passed
 ```
 
-单测文件 `test/unit/markdown-table-overflow.spec.js` 在工作区里本来就带着未提交的新增用例（断言三套气泡都锁列宽 + `md-table-wrap` 有 `overflow-x:auto`），本回合直接跑它做回归。
+Electron 运行时未点开该条合并记录（无桌面应用窗口可操作）。
 
 ## 待办 / 阻塞
 
-- (desktop) 运行时自测未做：`npm run dev:test` 打开合并转发详情、回复列表，确认宽表横条出现且正文不被裁
-- (desktop) 三个业务文件 + 单测未 commit
+- (desktop) `npm run dev:test` 打开该条合并记录：气泡不超出窗口，正文折行，宽表出现横滚条。本地调试三文件保持脏、勿 stage
+- (desktop) 业务文件 + 单测未 commit
 - (desktop) 分支 behind 1，合入前先拉远端，勿 push 到 `master-3.4.27` 联调分支
 
 ## 关键决策记录
 
-- 2026-09-01 不重写 markdown 管线。会话列表 `d987d746` 已锁 `min-width:0` + `max-width:100%`；合并转发详情 / 回复列表抄同一套即可
-- 2026-09-01 用户不要今日工作区补丁，5 文件已 restore
+- 2026-09-01 不重写 markdown 管线。表仍 `width:max-content`，横滚走既有 `.md-table-wrap`
+- 2026-09-01 只锁 `.message-wrapper` 不够，必须连内容行那层 `display:flex` 一起允许缩到列宽
+- 2026-09-01 用户不要当日第一版工作区补丁，曾 restore；本回合按截图重做并补内层 flex / 表外壳
