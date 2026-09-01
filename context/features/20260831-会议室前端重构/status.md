@@ -1,6 +1,6 @@
 # Status：会议室前端重构
 
-> 最后更新：2026-08-31（助手无空档 3 秒回默认态）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（meeting 脏区仍在；`pnpm test` web 115 / server 125 全绿）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -15,7 +15,15 @@
 
 android / ios / desktop 不单独立项：会议室以内嵌 WebView 复用 meeting web。
 
-meeting 仓库 `main` 工作区脏。booking `time.test.js` 本轮 24 通过。
+## 本回合各端现状（code-status）
+
+| 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
+|---|---|---|---|---|---|
+| meeting | main | ahead 4 | 脏(77) | **本功能** + 位置描述 + 切 Java | chrome/tokens/base 组件仍未提交；勿整仓 add |
+| contact | feat/meetingroom | 无 upstream | 脏(1) | 会议室后端落contact | 管理员白名单，不归本功能 |
+| web | feat/data-scope-storage-group | synced | 脏(12) | 数据范围周工作 | 不归本功能 |
+
+meeting 工作区脏。2026-09-01 `pnpm test`：server 125、web 115，含 `time.test.js` 24 条，全绿。类型检查通过。
 
 2026-08-31：日轴避让窗口从 40 分钟收到 30，去掉选区中点 48 分钟隐藏。80px 小时格下选 18:00–18:30 仍显示 19:00。浏览器验证 has19=true。
 
@@ -37,8 +45,8 @@ meeting 仓库 `main` 工作区脏。booking `time.test.js` 本轮 24 通过。
 
 ## 待办 / 阻塞
 
-- (web) 设计系统重构（admin chrome、tokens、base 组件）仍有未提交脏区
-- (web) 浏览器过一遍：引导五步、主按钮预约、AI「立即预约」预填提交
+- (web) 设计系统重构（admin chrome、tokens、base 组件）仍有未提交脏区，且与位置描述、Task 12 混在同一工作区
+- (web) 引导五步 / 主按钮预约本功能未在本回合重新点；助手找空闲已在切 Java 联调里点过（写入的是 MySQL）
 
 ## 关键决策记录
 
