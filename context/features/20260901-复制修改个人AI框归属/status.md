@@ -10,44 +10,44 @@
 |------|-----|---------|-----|---------|
 | spec | — | ✅ | ✅ | ✅ |
 | plan | — | ⬜ | ⬜ | ⬜ |
-| 回填分类（复制 / 修改 / 撤回再编辑） | — | 🚧 代码已写，未真机验 | 🚧 代码已写，未真机验 | ⬜ |
+| 回填分类（复制 / 修改 / 撤回再编辑） | — | 🚧 代码已写，未真机验 | 🚧 粘贴时序已修，未真机验 | ⬜ |
 | 自己的补齐 agentKind=personal | — | 🚧 同左 | 🚧 同左 | ⬜ |
-| 别人的降级为黑字 | — | 🚧 同左 | 🚧 同左 | ⬜ |
-| 删 @ 后关掉筛选条 | — | 🚧 退格按 chip 收紧，未真机验 | 🚧 同左 | 🚧 退格误吞正文后已收紧，未起客户端验 |
+| 别人的降级为黑字 | — | 🚧 同左 | 🚧 粘贴先写进框再去高亮 | ⬜ |
+| 删 @ 后关掉筛选条 | — | 🚧 软键盘逐字删也会关条 | 🚧 同左 | 🚧 退格误吞正文后已收紧，未起客户端验 |
 | 真机 / 客户端自测 | — | ⬜ | ⬜ | ⬜ |
 
 ## 本回合各端现状（code-status）
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| android | master-3.6.23 | ahead 5 | 脏(4) mention 回填分类 + 退格 | **本功能** | 未 commit |
+| android | master-3.6.23 | ahead 5 | 脏(7) 回填分类 + 退格关条 | **本功能** | 未 commit |
 | ios | feat/ios-agent-date-range | synced | 脏(10) 回填分类叠在数据范围分支 | **本功能** | 未单独开分支、未 commit |
 | desktop | master-3.4.27 | synced | 脏(4) | **本功能** + 本地调试 3 件勿提交 | 回填分类未做；只提交 `send-box.vue` |
-| web | feat/data-scope-storage-group | synced | 脏(11) | 数据范围选择周工作 | 本回合未改本功能 |
-| context | main | ahead 117 | 本功能 impl-notes/status | **本功能** | — |
+| web | feat/data-scope-storage-group | synced | 脏(12) | 数据范围选择周工作 | 本回合未改本功能 |
+| context | main | ahead 119 | 本功能 impl-notes/status | **本功能** | — |
 
 ## 本次改动
-
-**apps/android**（未 commit）
-
-| 文件 | 改动 |
-|------|------|
-| `RestoreAgentMention` | 新类：`ga_` 对群 `AgentInfo(belongType=3)` → group；对当前人个人 `AgentInfo` → personal；否则 drop |
-| `MsgDraftRichConvertUtil.getRealMentionList` | 粘贴/修改/草稿/撤回再编辑都走这里，不再凡 `ga_` 一律保留 |
-| `MentionBlock.hasGroupAgentMention` / `isGroupAgentBlock` | 去掉「无 kind + ga_ → 群」兜底，避免自己的个人 AI 点亮群条 |
 
 **apps/ios**（未 commit）
 
 | 文件 | 改动 |
 |------|------|
-| `ZXIMCellLogic keepRestoredAgentAtModel` | 对 `groupAgentRel` / `groupAgentRels`（内存缓存优先）分类 |
-| 粘贴 `didPasteAtModels` | drop 的去掉高亮、不进 `atMessageModels` |
-| 修改 / 草稿 / 撤回再编辑 | 分类后再高亮 |
-| `zx_hasGroupAgentMention` | 只认 `agentKind=group` |
+| `ZXChatTextView paste:` | 粘贴内容写进输入框**之后**再 `didPasteAtModels`。原先先分类去高亮、再把蓝色 paste 盖回去，所以「修改别人」黑、「复制粘贴别人」仍蓝 |
+| `ZXRCIMBaseChatController+ToolBar didPasteAtModels` | 去高亮后保住光标 |
+
+**apps/android**（未 commit）
+
+| 文件 | 改动 |
+|------|------|
+| `RichEditText` type==0 | 软键盘退格逐字删也会 `judgeAtSpanWhenBatchDeleteChars`；空 span 不算还在 |
+| `PersonalAiFilterHost.hide` | 条子摘掉且容器无子 view 时 GONE，避免空条占着 |
+| `RongExtension` / `ConversationLargeInputView` | 无智能体 @ 时先关个人条再关群条；大输入也把容器 GONE |
 
 ## 待办 / 阻塞
 
-- (android / ios) 真机：图一自己的 `@赵彬华个人AI框` 应出个人条「全部类型」，不要「无（不关联任何数据）」；图二别人的 `@李权泓的 AI 框 22` 应黑字、无筛选条
+- (ios) 真机：复制别人的 `@李权泓的 AI 框 22` 粘贴到对话框应为黑字、无筛选条（修改路径用户已确认没问题）
+- (android) 真机：删掉自己的 `@个人AI框` 后筛选条应消失（软键盘退格，不只硬件 DEL）
+- (android / ios) 真机：自己的 `@赵彬华个人AI框` 应出个人条「全部类型」
 - (desktop) 回填分类未做
 - plan 仍未写
 
@@ -59,3 +59,5 @@
 - 2026-09-01 **iOS extra.atUserList 没有 agentKind**，回填必须对 groupAgentRels，不能从 extra 读 kind
 - 2026-09-01 去掉回填路径上「无 kind + ga_ → 群」兜底，否则自己的个人 AI 会点亮群筛选条
 - 2026-09-01 三端退格统一：@ 区块只覆盖 chip；整删仅发生在 chip 末尾
+- 2026-09-01 **iOS 粘贴必须先写入再分类去高亮**，否则会把蓝色覆盖回来
+- 2026-09-01 **Android 软键盘退格不走 KEYCODE_DEL**，要在逐字删除后检查是否还剩智能体 mention
