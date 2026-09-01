@@ -3998,7 +3998,7 @@ git commit -m "feat(meetingroom): me/health 与管理员判定接口、管理员
 
 > 本任务动的是 `apps/meeting` 仓库，**单独提交**，不要和 contact 的改动混在一个 commit。
 
-- [ ] **Step 1: 逐个改路径**
+- [x] **Step 1: 逐个改路径**（2026-09-01 本机：module 仍写 `/meetingApi` 相对路径，代理改写成 `/meetingRoom`）
 
 按下表把 `web/src/server/module/*.js` 里的请求改掉；方法从 `PUT`/`DELETE` 统一改成 `POST`，请求体与响应结构**不变**：
 
@@ -4026,26 +4026,24 @@ git commit -m "feat(meetingroom): me/health 与管理员判定接口、管理员
 
 `/agent/*` 两个接口**保持不变**，仍打 Node 服务。
 
-- [ ] **Step 2: 类型检查**
+- [x] **Step 2: 类型检查**
 
 ```bash
 cd apps/meeting && pnpm -F @meeting/web exec vue-tsc --noEmit
 ```
 预期：exit 0。
 
-- [ ] **Step 3: 逐屏点一遍**
+- [x] **Step 3: 逐屏点一遍**（本机 `/meeting/` 三参数入口；PC `/meeting/zx/` 未单独点）
 
 浏览器打开后台与预定页，依次验证：字典增删改、会议室增删改、看板渲染与排序、单条预定、多日预定、冲突提示文案、我的预定状态、释放后看板消失、审计弹窗。
 
-- [ ] **Step 4: 提交**
+- [ ] **Step 4: 提交**（meeting 脏区混有其它功能，不要 `git add -A`；只 stage Task 12 相关文件）
 
 ```bash
 cd apps/meeting
 git add web/src/server
 git commit -m "feat(booking): 前端切到 contact 的会议室接口"
 ```
-
----
 
 ---
 
