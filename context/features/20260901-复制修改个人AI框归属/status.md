@@ -13,7 +13,7 @@
 | 回填分类（复制 / 修改 / 撤回再编辑） | — | ⬜ | ⬜ | ⬜ |
 | 自己的补齐 agentKind=personal | — | ⬜ | ⬜ | ⬜ |
 | 别人的降级为黑字 | — | ⬜ | ⬜ | ⬜ |
-| 删 @ 后关掉筛选条 | — | ⬜ | ⬜ | 🚧 代码已改，未起客户端验 |
+| 删 @ 后关掉筛选条 | — | ⬜ | ⬜ | 🚧 退格误吞正文后已收紧，未起客户端验 |
 | 真机 / 客户端自测 | — | ⬜ | ⬜ | ⬜ |
 
 ## 本回合各端现状（code-status）
@@ -36,7 +36,7 @@
 
 ## 待办 / 阻塞
 
-- (desktop) 起 PC 客户端：@ 自己的个人 AI → 出个人条 → 退格删掉 @ → 条应立刻关；群 AI 同样
+- (desktop) 起 PC：`@李权泓的AI框22 测试1` 只删末尾「1」应得 `@… 测试`，@ 仍在；光标在 @ 后空格再退格才整颗去掉并关条
 - spec 已补 iOS 真实入口（paste / setupInputTextWithSelectModel / ZXChatRecallAtList）及 extra 不带 kind；plan 仍未写
 - 复制/修改分流三端代码尚未开始
 
@@ -46,4 +46,4 @@
 - 2026-09-01 显示名仍用 agentName，不改成「自己的个人AI框」
 - 2026-09-01 群 AI 框复制/修改维持现状（高亮 + 群筛选条 + 群回复）
 - 2026-09-01 **iOS extra.atUserList 没有 agentKind**，回填必须对 groupAgentRels，不能从 extra 读 kind
-- 2026-09-01 PC 退格关条：列表按 id 比对 + 删整颗 mention，空壳不当还在 @
+- 2026-09-01 PC 退格关条：列表按 id 比对 + 删整颗 mention；**不得**在 `mentionBox + 正文 + hideSpan` 三节点时把删「测试1」当成删 @
