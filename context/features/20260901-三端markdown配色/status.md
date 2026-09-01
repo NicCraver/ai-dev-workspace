@@ -1,6 +1,6 @@
 # Status：三端 markdown 标题上蓝 + 自己发气泡调浅
 
-> 最后更新：2026-09-01（三端代码改完，仅安卓编译验证过；PC / iOS 未运行时自测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-01（用户三端验收通过，各自 commit 到 `fix/chat-bubble-color` 分支，未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 两条视觉调整，来源是用户对照 web 端提的：
 
@@ -14,8 +14,10 @@
 | 标题色（H1–H4 → `#3E7EFF`） | 基准（早已是） | ✅ | ✅ | ✅ |
 | 自己发气泡底 → `#F0F5FF` | 无聊天气泡 | ✅ | ✅ | ✅ |
 | token 表登记 | ✅ | — | — | — |
-| 编译 / 单测 | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | ⬜ 未编译 | ⬜ 未跑 |
-| 运行时自测 | — | ⬜ | ⬜ | ⬜ |
+| 卡头 / 折叠蒙层跟色 | — | ✅ | ✅ | ✅ |
+| 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译（用户已装机验收） | ✅ eslint 无输出 |
+| 运行时验收 | — | ✅ | ✅ | ✅ |
+| commit | — | ✅ `89febfb4e` | ✅ `7af667bf4` | ✅ `bfe59c82` |
 
 ## 本次改动
 
@@ -42,16 +44,24 @@
 
 ```
 apps/android: ./gradlew :IM:compileOnTestDebugJavaWithJavac --offline   # 通过
+apps/desktop: npx eslint <8 个改动文件>                                  # 无输出
 ```
 
-PC 未跑 `npm run dev:test`，iOS 未 `xcodebuild`。三端都没做真机 / 运行时看色。
+2026-09-01 用户三端运行时验收通过：标题变蓝、自己发的气泡与卡头变浅、安卓「查看更多」蒙层不再压出色带。
+
+## commit（均未 push）
+
+| 端 | 分支 | commit |
+|---|---|---|
+| desktop | `fix/chat-bubble-color`（从 `master-3.4.27` 切） | `bfe59c82` 配色；`d27bfc41` 合并转发宽度溢出（上一条功能，同分支） |
+| android | `fix/chat-bubble-color`（从 `master-3.6.23` 切） | `89febfb4e` |
+| ios | `fix/chat-bubble-color`（从 `feat/ios-agent-date-range` 切） | `7af667bf4` |
 
 ## 待办 / 阻塞
 
-- (desktop) 起 `dev:test` 看：标题变蓝、自己发气泡变浅、表格线在更浅底上仍清楚
-- (android) `assembleOnTestDebug` 装真机，看群 AI 卡片标题色与右侧气泡
-- (ios) Xcode 编译 + 真机；重点看标题里带链接的情况（链接不该被染成标题色）
-- 三端改动均未 commit
+- 三端分支均未 push；`master-3.4.27` / `master-3.6.23` 是联调主干，走 MR，别直推
+- iOS 的分支是从 `feat/ios-agent-date-range` 切出来的，含那条功能的历史；提 MR 前确认目标分支，必要时 rebase 到主干
+- 各端工作区仍留着别的活跃功能的脏文件（安卓 3 个 filter / fragment，iOS 5 个 AgentFilter / TimeData，PC 3 个本地调试配置），本次都没 stage
 
 ## 关键决策记录
 
