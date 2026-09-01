@@ -22,6 +22,7 @@
 | 移动 popup 全屏 + 去顶圆角 + 涉密入口 | ✅ | — | — | — |
 | 整页 webview（模态右滑入）+ `reportDataRange` handler | — | — | 🚧 代码已写，待 Xcode 编译 | — |
 | 原生会话筛选条入口切到 webview | — | ⬜ 本轮不做 | 🚧 代码已写，待真机 | — |
+| 「数据+N」排除收纳组（`scopeDataType=4`） | ✅ 早已如此 | — | ✅ 本轮补 | — |
 | `bridge.md` 登记 + impl-notes | ✅ | — | — | — |
 | 真机 / 浏览器自测 | ✅ PC + 移动都过 | — | ⬜ 待人工真机 | — |
 | 契约：dataRangeType=5 周工作 + weekWork* / showRangeTxt | ✅ context | — | — | — |
@@ -100,6 +101,12 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
   立刻去重拉记忆，上报早于落库就会读到旧值。页里加 `saving` 防连点 +
   `showLoadingToast(forbidClick)` 挡住保存期间的点击，`saveAgentDataRange` resolve 后
   弹「已保存」，停 600ms 再上报。失败则关 toast、提示重试、不上报不关页。
+- 2026-09-01 **iOS 胶囊「数据+N」跳过 `scopeDataType=4`**（`ZXPersonalAiFilterBar`
+  加 `zx_countableScopeCount:`）：收纳组只是容器，成员在 `dataRangeScopeList` 里各占一条，
+  算上它比实际多。口径与 web 底栏「已选 N 个」对齐；save 仍照传该条。
+  `scopeDataType` 服务端时数字时字符串，统一 `integerValue` 比。
+  提交时该文件同时带着「自定义时间范围」功能的未提交改动，用
+  `git diff` 拆 hunk + `git apply --cached` 只暂存本功能那两块，别把别人的活一起提了。
 - 2026-08-31 **个人 AI 框（web Home）直调组件，不走原生**：移动端 XPopup（`SelectDataRangePopup`），PC 仍 Dialog。原生会话筛选条仍走 `/m/data-range` webview。
 - 2026-09-01 `/m/data-range` **改渲染 `SelectDataRangePopup`**，不给 Dialog 补 mobile 变体：
   Popup 本就是全屏形态，页里原先传的 `mobile` prop 与 `@cancel` 在重构后的 Dialog 上根本不存在
