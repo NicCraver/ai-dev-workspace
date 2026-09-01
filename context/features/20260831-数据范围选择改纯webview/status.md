@@ -68,6 +68,9 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
 - (web) `OrgPicker` 部门/人员层行高已从 60px 改为 48px（与公司层、`row-height` 对齐）。人员行仍是 40px 头像 + 双行文案，需打开弹层目视是否挤
 - (web) **动画可能重叠**：`/m/data-range` 里 `SelectDataRangePopup` 带 XPopup 的底部滑入，
   而 iOS 已改成整页右滑入 push，进场会有双重感。真机看着别扭就去掉页内那层 XPopup
+- (web) **测试环境是旧包**：真机截图里 `/m/data-range` 出的还是 PC `el-dialog`（440 宽、居中、
+  带已撤掉的「知识、聊天 / 周工作」tab）。当前分支源码早已是全屏 `SelectDataRangePopup`
+  且 关闭 / 取消 都走 `emit("close")` → 页面上报 cancel。**须重新构建部署再验**，别照旧包提 bug
 - (ios) **需人工 Xcode clean build**（`zhixinApp.xcworkspace` / `zhixinAppTest` + iPhone 15 iOS 17），AI 不代跑
 - (ios) **需人工真机 8 项**，尤其第 6 项：改数据范围后确认时间档与联网搜索没被冲掉
 - (android) 本轮不做：协议已按三端设计（`window.WebView.reportDataRange`），后续照抄 iOS
@@ -87,6 +90,11 @@ desktop 不涉及：PC 的 `DataScopeBar` 继续内联同一个 `SelectDataRange
 - 2026-08-31 新桥 `reportDataRange`，载荷 `{type:"data-range:confirm",ok:true}` / `cancel`，
   必须**平铺**（同 `selectDateRange` 的坑）
 - 2026-08-31 移动搜索用「常驻输入框 + 全屏结果层」，不跳路由、不做搜索子页
+- 2026-09-01 移动 popup 搜索**落成整屏搜索层**（原先直接挂 `AiBoxSearchBox`，
+  那是 PC 的 320px `Teleport` 下拉，手机上盖不住也难点）：入口换成一个假搜索框按钮，
+  点开 `absolute inset-0 z-20` 一层，顶部 `SearchInput`（`nextTick` 后 focus 拉键盘）+ 取消，
+  下面 `AiBoxSearchPanel` 占满，形态照抄 `SelectAiBoxPopupSearch`。
+  勾选直接写同一个 `selectedKeySet`，「取消」只关层清关键字、不撤选。
 - 2026-08-31 **个人 AI 框（web Home）直调组件，不走原生**：移动端 XPopup（`SelectDataRangePopup`），PC 仍 Dialog。原生会话筛选条仍走 `/m/data-range` webview。
 - 2026-09-01 `/m/data-range` **改渲染 `SelectDataRangePopup`**，不给 Dialog 补 mobile 变体：
   Popup 本就是全屏形态，页里原先传的 `mobile` prop 与 `@cancel` 在重构后的 Dialog 上根本不存在
