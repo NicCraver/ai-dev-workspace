@@ -9,7 +9,7 @@
 1. **不对齐绝对数值，对齐相对倍率 + 颜色 + 结构。** 三端正文基准字号本来就不同（PC 13px / 安卓 15sp / iOS 16pt），硬对齐数值反而不对齐观感。
 2. **不吃框架默认值。** 三端 drift 的根因就是各自吃了 UnoCSS `presetTypography` / Markwon `MarkwonTheme` 的默认值。每端必须有一个显式的「样式常量入口」，所有值从本表抄。
 3. **颜色一律半透明黑**（代码、引用、hr）。消息气泡底色有淡蓝和白两种，写死浅灰白叠上去会突兀。
-   **例外：表格单元格底 `#fff`、表头字重 600。** 2026-09-02 产品要求格子自己是白底，靠字重区分表头，不再用半透明黑当表头底。
+   **例外：表格表体单元格底 `#fff`；表头底仍 `rgba(0,0,0,.08)`，表头字重 600。**
    > 2026-09-02：普通自己发退回线上色（PC `#CCE0FE`、安卓 / iOS `#DEE8FF`）。`#F0F5FF` 只属于自己发的 ActionCard（转发 AI 回复、定时用我身份），并加 `1px #F4F6F8` 描边（对齐 web `BaseMsgCard` 白卡，无 box-shadow）。半透明黑百分比不用跟着改。气泡色本身不属于 markdown token，入口见下表脚注。
 
 ## Token 表
@@ -32,8 +32,9 @@
 | 引用竖条实现 | 必须覆盖整段，不能只覆盖第一行 | `border-left` | Markwon `BlockQuoteSpan`（leading margin） | **真视图画**（独立引用块）。字符 `▎` 逐行前缀只能落在逻辑行首，软换行后面几行就没有了 |
 | 任务列表 | 1em 方框 + 勾，选中色 `#3E7EFF` | `appearance: none` 自绘（**不能靠 `accent-color`**，disabled 的原生 checkbox 会被整个画成灰色） | `TaskListPlugin` 传 primary | 字符染 primary；`☐` 放大 1.15 拉平（它比 `☑` 小一圈） |
 | hr | 1px `rgba(0,0,0,.12)`，上下 0.75em | | | |
-| 表格 · 单元格底 | `#fff`（含表头） | | | |
-| 表格 · 表头字重 | `600`（semibold），不再用半透明黑底区分 | `font-weight: 600` | API 28+ `Typeface.create(_, 600, false)`；以下退 medium | `UIFontWeightSemibold` |
+| 表格 · 表体单元格底 | `#fff` | | | |
+| 表格 · 表头底 | `rgba(0,0,0,.08)`（不改） | | 8% 黑 `0x14000000` | 4% 黑（iOS 原值） |
+| 表格 · 表头字重 | `600`（semibold） | `font-weight: 600` | API 28+ `Typeface.create(_, 600, false)`；以下退 medium | `UIFontWeightSemibold` |
 | 表格 · 边框 | 1px `rgba(0,0,0,.22)`，**单线、无圆角** | 12% 在自己发的淡蓝气泡上几乎看不见格子 | 每格只画右+下，容器画左+上（否则相邻格叠成 2px） | 去圆角 |
 | 表格 · cell padding | 竖 0.35em 横 0.6em | 5/8 px | 5/9 dp | 6/10 pt |
 | 表格 · 换行 | 单元格有列宽上限，超出折行；多列仍靠横滚。不要把整表设成 100% 宽再换行（会挤成一列一个字）。短列随内容，不要 min-width 把窄表撑开 | `max-width: 375px`（整段设计稿宽） | 列宽上限 360dp | 列宽上限 24em（384pt） |
