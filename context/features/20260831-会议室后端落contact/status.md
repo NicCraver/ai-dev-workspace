@@ -1,6 +1,6 @@
 # Status：会议室后端落 contact
 
-> 最后更新：2026-09-01（Task 12 已联调；自动化 306 全绿，apps 仍未单独 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（本机再起 Java jar + Vite；swagger/`/me` 200；apps 仍未单独 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -35,20 +35,26 @@
 
 ## 本回合各端现状（code-status）
 
-本回合推进 Task 12：meeting 切 Java + 浏览器 11 条；contact 仅本地追加管理员白名单。web / android / ios / desktop 脏区与本功能无关。
+本回合没改业务代码：起 `zx-contact` jar（7004，不注册 Eureka）+ `pnpm dev:web`（6273）。`/swagger-ui.html` 与 `/meetingRoom/me` 均 200。Node 助手（3100）未起。meeting / contact 脏区仍是 09-01 未拆的提交，不是本回合新改的。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| meeting | main | ahead 4 | 脏(77) | **本功能** + 前端重构等混杂 | Task 12：代理/路径/query 鉴权/agent 转调 Java；勿整仓提交 |
-| contact | feat/meetingroom | 无 upstream | 脏(1) | **本功能** | 仅 `meeting.admin.userIds=1880150191235940353`，勿提交密码 |
-| web | feat/data-scope-storage-group | synced | 脏(12) | 数据范围选择周工作 | 本回合未改本功能 |
-| android | master-3.6.23 | synced | 干净 | 其它 | — |
-| ios | feat/ios-agent-date-range | synced | 干净 | 其它 | — |
-| desktop | master-3.4.27 | synced | 脏(3) 本地调试勿提交 | 其它 | — |
+| meeting | main | ahead 4 | 脏(77) | **本功能** + 前端重构 + 位置描述混杂 | 勿整仓提交 |
+| contact | feat/meetingroom | 无 upstream | 脏(1) | **本功能** | 仅 `application.properties` 的 `meeting.admin.userIds`，勿提交 |
+| web | feat/data-scope-storage-group | synced | 干净 | 旁路 | 本回合未改 |
+| android | master-3.6.23 | synced | 干净 | 旁路 | — |
+| ios | feat/ios-agent-date-range | synced | 干净 | 旁路 | — |
+| desktop | master-3.4.27 | synced | 脏(3) | 旁路 | `.env.test` / `electron-builder.yml` / `package.json` 本地调试勿提交 |
 
 ## 验证
 
 ```
+# 2026-09-02 本机再起服务（未重跑单测）
+apps/contact  java -jar target/zx-contact-1.0.0.jar（9-01 已打的包）
+  swagger-ui.html → 200；GET /meetingRoom/me?zxAccountId=…&zxCorpId=6&zxClientType=app → 200
+apps/meeting  pnpm dev:web → http://localhost:6273/meeting/  ready
+  助手仍代理 localhost:3100，本回合未起 Node
+
 # 2026-09-01 本机再跑
 apps/contact  JAVA_HOME=corretto-1.8  mvn -o test
   Tests run: 66, Failures: 0, Errors: 0, Skipped: 0
