@@ -41,6 +41,7 @@
 ## 待办 / 阻塞
 
 - (ios) 真机再验：自己发 AI 卡左上仍是圆角，表格/长文不溢出卡体，四周浅阴影还在
+- (android) 真机验：自己发 AI 卡浅底 + 描边 + 四周浅阴影；普通自己发言仍是线上蓝
 - (android) 2026-09-02 **自己发「查看更多」蒙层色带（已改代码，请再验）**：气泡 solid 已退回 `#DEE8FF`，但 `zu_zhi_robot_card_more_own_send.9.png` 9/1 仍停在 `#F0F5FF`，会在气泡上压出一条浅色带。已从调浅前提交还原 9-patch。收到消息的白色那张没动。
 - 三端均未 commit / 未 push；`master-3.4.27` / `master-3.6.23` 是联调主干，走 MR，别直推
 - PC 勿提交 `.env.test` / `electron-builder.yml` / `package.json`
