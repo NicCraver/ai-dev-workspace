@@ -1,6 +1,6 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-09-02（iOS ≥3 列上限改为含格内边距，待客户端验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（三端列宽三档已 push，待客户端验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -19,9 +19,9 @@
 | 行内代码：干掉 prose 反引号 + 浅底胶囊 | ✅ | — | — | — |
 | 内联 span：background / padding / border-radius | ✅ 代码已补，页面未点 | — | — | — |
 | 波浪下划线 `text-decoration: wavy` | ✅ 代码已补，页面未点 | — | — | — |
-| 一/两列表格 `width:100%` 铺满容器 | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 代码 | 🚧 代码 | 🚧 代码 |
-| 两列表首列内容 `min-width:5em`（标签列不被挤扁） | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 代码 | 🚧 代码 | 🚧 代码 |
-| 三列以上单列上限 = 半个气泡（JS 写 CSS 变量） | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 布局前算 | 🚧 上限改封整列宽（含 padding），待验 | 🚧 JS 打标（无 :has/cqw） |
+| 一/两列表格 `width:100%` 铺满容器 | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 已 push `9a3b6d172` | 🚧 已 push `6e964addc` | 🚧 已 push `0d00470c` |
+| 两列表首列内容 `min-width:5em`（标签列不被挤扁） | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 同左 | 🚧 同左 | 🚧 同左 |
+| 三列以上单列上限 = 半个气泡（JS 写 CSS 变量） | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 同左 | 🚧 上限含 padding，同 commit | 🚧 JS 打标，同 commit |
 
 > T0–T5 的 ✅ 是代码 + `vue-tsc`。真机格子在你看过之前保持 🚧。
 
@@ -35,24 +35,24 @@
 | ios | `feat/ios-file-download-progress` | synced | 脏 6 | 不涉及 |
 | desktop | **`feat/gfm-markdown`** | synced | 脏 3 | 表格宽度已 push `d987d746`。剩 `.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
 
-## 本回合各端现状（code-status，2026-09-02 iOS 多列看不全两列）
+## 本回合各端现状（code-status，2026-09-02 三端已 push）
 
-本回合只改 `apps/ios` 表格列上限 + 本功能 docs。desktop 脏区里 `.env.test` / `electron-builder.yml` / `package.json` 是本地调试，禁止提交。
+表格列宽与气泡配色打在**同一条** commit 里推到当前分支。desktop 剩 `.env.test` / `electron-builder.yml` / `package.json` 本地调试，未提交。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| desktop | master-3.4.27 | synced | 脏(12)：业务 + 本地调试勿提交 | **本功能** | 本回合未改 |
-| android | master-3.6.23 | synced | 脏(9) 本功能+气泡皮肤 | **本功能** | 本回合未改；`setMaxWidth` 已含 padding |
-| ios | feat/ios-agent-date-range | synced | 脏(9) 本功能+气泡图 | **本功能** | ≥3 列 cap 改封整列宽 |
+| desktop | master-3.4.27 | synced | 脏(3) 本地调试勿提交 | **本功能** | `0d00470c` 已 push |
+| android | master-3.6.23 | synced | 干净 | **本功能** | `9a3b6d172` 已 push |
+| ios | feat/ios-agent-date-range | synced | 干净 | **本功能** | `6e964addc` 已 push |
 | web | feat/data-scope-storage-group | synced | 干净 | 数据范围选择周工作 | 本回合未改 |
-| context | main | ahead 4 | 收尾前提交本功能 docs | **本功能** | — |
+| context | main | ahead 5 | 本功能 docs | **本功能** | — |
 
 ## 待办 / 阻塞
 
 - (ios) 2026-09-02 **≥3 列一屏看不全两列（已改代码，请再验）**：上限先封内容再加左右 padding，两列合计超出气泡约 4×单侧边距。已改成上限封整列宽（内容+padding），两列顶格时合计 = 可用宽。请看 4～5 列长文：气泡里应能完整看到两列，再横滑看后面的列。
 - (android / ios) 2026-09-02 **两列表横条 + 一列竖字（已改代码，请再验）**：未折行自然宽把第一列铺满，第二列剩 1 个字，表比外壳宽就画出横条。已改成两列都保 5 字下限、剩余按比例分满可用宽，1/2 列关掉横滚。请再看「项目及事项 / 长正文」那张两列表：应铺满气泡、两列都能读、没有横条。
 - (三端) 2026-09-02 **列宽三档代码已写、客户端未验**：验收清单：1 列表、2 列表（标签列 + 长正文）、3 列短字、4~5 列长文各看一遍——短表不被撑宽、标签列不被压成一个字、宽表一屏约两列可横滑、气泡不裁切。
-- (desktop) 提交时只带 `markdownTableOverflow.js` / `markdown.scss` / 对应 spec；`.env.test` / `electron-builder.yml` / `package.json` 禁止 stage。
+- (desktop) `.env.test` / `electron-builder.yml` / `package.json` 仍是本地调试，未随 `0d00470c` 提交。
 
 - (web) 2026-09-02 **一/两列表格铺满容器**：`AcMarkdown.vue` 加 `table:not(:has(tr:first-child > :nth-child(3))) { width:100% }`（首行没有第 3 格 => 列数 ≤ 2），并对这类表把单元格 `max-width` 放开为 `none`（否则每列封顶 187.5px，宽容器里撑不满）。先只写了两列的选择器，一列表格没进去，已改成按「不足 3 列」判定。已随 `7294897` 单独提交并 push 到 `feat/data-scope-storage-group`（只含这 2 个文件，数据范围的改动未混入）。**请在个人 AI 框看一条一列 / 两列表格**：应铺满气泡宽度，三列及以上维持原来的 max-content + 横滚。
 - (web) 2026-09-02 **三列及以上：单列上限 = 半个气泡**（不是定死宽）。规则在 `BaseMsgCard.vue` 非 scoped `<style>`：整行 `.zx-msg-row` 加 `container-type: inline-size`（块级、宽度来自父级，容器化不会塌；气泡/内容列是 shrink-to-fit，放那儿会塌成 `min-w-30`——这是之前那版窄条 bug 的根因），气泡内 `table:has(tr > :nth-child(3))` 的 `th/td` 只写 `max-width: calc(50cqw - 45px)`。45px = 头像 40 + 间距 10 + 气泡内边距的一半左右，把「半行」折算成「半个气泡」。headless 量（680 宽会话）：3 列短字表气泡收到 86px、列各 27（不再被撑满）；5 列短字表 564 宽无横滚；4 列长文列宽 207/295/295/284、外壳 596、横滚 1082（一屏两列 + 一截第三列）。先前那版「`width: 50cqw` 定死」已废弃：会把短内容也撑成半个气泡。**请看短表和宽表各一条**。
