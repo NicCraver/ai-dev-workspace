@@ -1,6 +1,6 @@
 # Status：三端 markdown 标题上蓝 + 自己发气泡分流
 
-> 最后更新：2026-09-02（PC 自己发 ActionCard 阴影已 push `0ed5a52e`，待热更新）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（iOS 阴影后超高卡片不折叠：量高前去裁切，自己发 ActionCard 也按限高折）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 2026-09-01 把所有自己发气泡调浅到 `#F0F5FF`。2026-09-02 按验收收窄：
 
@@ -15,7 +15,7 @@
 | 标题色（H1–H4 → `#3E7EFF`） | 基准 | ✅ | ✅ | ✅ |
 | 普通自己发退回线上色 | — | 🚧 已 push `9a3b6d172`，待真机 | 🚧 已 push `6e964addc`，待真机 | 🚧 已 push `0d00470c`，待热更新 |
 | 自己发 ActionCard 浅底 + `#F4F6F8` 描边 | 描边基准 | 🚧 同左 | 🚧 同左 | 🚧 同左 |
-| 自己发 ActionCard 卡体阴影 | — | 🚧 4dp ambient，待真机 | 🚧 内层裁圆角 + 宽度跟内缩，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
+| 自己发 ActionCard 卡体阴影 | — | 🚧 4dp ambient，待真机 | 🚧 阴影 + 圆角 + 折叠修复，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
 | token 表登记 | ✅ | — | — | — |
 | 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译 | ✅ eslint 无输出 |
 | 运行时验收 | — | ⬜ | ⬜ | ⬜ |
@@ -26,7 +26,7 @@
 |---|---|---|---|---|---|
 | desktop | master-3.4.27 | synced | 干净（配置信息） | **本功能** | 阴影已 push `0ed5a52e`；`.env.test` 等未提交 |
 | android | master-3.6.23 | synced | 脏(4)：本功能阴影 + 旁路表格/9-patch | **本功能** | 阴影仍未 commit |
-| ios | feat/ios-agent-date-range | synced | 脏(2)：本功能阴影修圆角 + `ZXIMChatCell` 旁路 | **本功能** | `ZXGroupRobotCell` 内层裁切，正文宽跟 4pt 内缩 |
+| ios | feat/ios-agent-date-range | synced | 脏：本功能阴影/圆角/折叠 + 旁路字色 | **本功能** | 量高前清裁切；自己发 ActionCard 也折 |
 | web | feat/data-scope-storage-group | synced | 干净 | 未改 | 只当描边基准 |
 | context | main | ahead | 本功能 docs | **本功能** | — |
 
@@ -36,7 +36,7 @@
 |---|---|---|
 | PC | `chat-box.vue` / `msg-list.vue` / `reply-msg-list.vue` / `winbox-wrapper.vue` | 自己发 ActionCard：`overflow: visible` + 4px margin + `0 0 4px` 阴影；内层 `.msg-actioncard` 再裁圆角。已 push `0ed5a52e` |
 | 安卓 | `ActionCardMessageItemProvider.java` | 自己发组织会话卡：4dp margin + 4dp elevation；API 28+ 关掉 spot、ambient 用 `rgba(31,35,41,.1)`；向上放开 clip。仍未 commit |
-| iOS | `ZXGroupRobotCell.m` | 阴影后左上变方、正文溢出：内容收到内层按圆角裁；排版宽度 = 气泡宽 − 32（气泡已内缩 8pt）。仍未 commit |
+| iOS | `ZXGroupRobotCell.m` / `ZXIMCellLogic.m` / `ZXIMChatCell.m` | 阴影后超高不折：量高度前去掉内层裁切；自己发 ActionCard 也按限高折叠；「查看更多」放到外壳上 |
 | context | impl-notes / status | 阴影从「仅 PC」改为三端同一 token |
 
 ## 待办 / 阻塞
@@ -54,7 +54,7 @@
 
 - 2026-09-02 三端阴影对齐 PC：`0 0 4px rgba(31,35,41,.1)`，不要 Material / UIKit 那种向下投影
 - 2026-09-02 阴影贴边看不见：外壳不能裁切；四边留约 4px，圆角裁切下放到内层。上阴影原先只有左右留空，紧贴时间条会被盖住
-- 2026-09-02 **iOS 自己发卡片**：外壳放开裁切后，直角标题条会盖住左上圆角、正文仍按旧宽度排会溢出。必须内层按圆角裁内容，排版宽度跟着内缩走
+- 2026-09-02 **iOS 自己发卡片折叠**：内层裁切若在量高度前还留着，会量到裁过的矮高度，超限也不出「查看更多」。量完再裁。自己发 ActionCard 发送人不是智能体账号，也要按限高折叠。
 - 2026-09-02 分流 = **自己发 + ActionCard**，不用 `fixTaskMessage`（转发会抹掉）
 - 2026-09-01 标题只染 H1–H4（仍有效）
 - 2026-09-01 PC 自己发气泡色有两层：`chat-box.vue` 的 `!important` 才是真生效（仍有效）
