@@ -1,6 +1,6 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-08-26（PC 表格宽度已 commit/push `d987d746`；仍等会话真机看窄表/宽表）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（web 列宽跟气泡走的三档规则已 commit/push `7294897`；真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -19,6 +19,9 @@
 | 行内代码：干掉 prose 反引号 + 浅底胶囊 | ✅ | — | — | — |
 | 内联 span：background / padding / border-radius | ✅ 代码已补，页面未点 | — | — | — |
 | 波浪下划线 `text-decoration: wavy` | ✅ 代码已补，页面未点 | — | — | — |
+| 一/两列表格 `width:100%` 铺满容器 | 🚧 代码已 push `7294897`，真机未验 | — | — | ⬜ 未对齐 |
+| 两列表首列内容 `min-width:5em`（标签列不被挤扁） | 🚧 代码已 push `7294897`，真机未验 | — | — | ⬜ 未对齐 |
+| 三列以上单列上限 `50cqw-45px`（不定死宽） | 🚧 代码已 push `7294897`，真机未验 | — | — | ⬜ 未对齐 |
 
 > T0–T5 的 ✅ 是代码 + `vue-tsc`。真机格子在你看过之前保持 🚧。
 
@@ -32,7 +35,24 @@
 | ios | `feat/ios-file-download-progress` | synced | 脏 6 | 不涉及 |
 | desktop | **`feat/gfm-markdown`** | synced | 脏 3 | 表格宽度已 push `d987d746`。剩 `.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
 
+## 本回合各端现状（code-status，2026-09-02）
+
+本回合只动 `apps/web` 一个文件；`meeting` / `contact` 的脏区属别的活跃功能，未碰。
+
+| 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
+|---|---|---|---|---|---|
+| web | `feat/data-scope-storage-group` | synced | 干净 | 数据范围选择周工作 | **本功能改动 `7294897` 已 push 到这条分支** |
+| desktop | master-3.4.27 | synced | 仅本地调试 3 件 | 复制修改个人AI框归属 | 未碰 |
+| android / ios | — | synced | 干净 | 其它功能 | 未碰 |
+| meeting / contact | — | — | 脏(85) / 脏(2) | 会议室各功能 | 未碰 |
+
 ## 待办 / 阻塞
+
+- (web) 2026-09-02 **一/两列表格铺满容器**：`AcMarkdown.vue` 加 `table:not(:has(tr:first-child > :nth-child(3))) { width:100% }`（首行没有第 3 格 => 列数 ≤ 2），并对这类表把单元格 `max-width` 放开为 `none`（否则每列封顶 187.5px，宽容器里撑不满）。先只写了两列的选择器，一列表格没进去，已改成按「不足 3 列」判定。已随 `7294897` 单独提交并 push 到 `feat/data-scope-storage-group`（只含这 2 个文件，数据范围的改动未混入）。**请在个人 AI 框看一条一列 / 两列表格**：应铺满气泡宽度，三列及以上维持原来的 max-content + 横滚。
+- (web) 2026-09-02 **三列及以上：单列上限 = 半个气泡**（不是定死宽）。规则在 `BaseMsgCard.vue` 非 scoped `<style>`：整行 `.zx-msg-row` 加 `container-type: inline-size`（块级、宽度来自父级，容器化不会塌；气泡/内容列是 shrink-to-fit，放那儿会塌成 `min-w-30`——这是之前那版窄条 bug 的根因），气泡内 `table:has(tr > :nth-child(3))` 的 `th/td` 只写 `max-width: calc(50cqw - 45px)`。45px = 头像 40 + 间距 10 + 气泡内边距的一半左右，把「半行」折算成「半个气泡」。headless 量（680 宽会话）：3 列短字表气泡收到 86px、列各 27（不再被撑满）；5 列短字表 564 宽无横滚；4 列长文列宽 207/295/295/284、外壳 596、横滚 1082（一屏两列 + 一截第三列）。先前那版「`width: 50cqw` 定死」已废弃：会把短内容也撑成半个气泡。**请看短表和宽表各一条**。
+- (web) 2026-09-02 **踩坑（已修）**：`container-type: inline-size` 先写在 `.tableWrapper` 上，导致外壳没有内容贡献，shrink-to-fit 的气泡塌成 `min-w-30`（用户截图里的窄条）。容器必须放在一个宽度确定的祖先上，所以改成气泡层 `width:100%` + 容器化。
+- (web) 2026-09-02 **两列表首列下限 5em**：`AcMarkdown.vue` 对两列表的 `tr > :first-child > *` 写 `min-width: 5em`（下限写在单元格内容上，不是单元格）。**为什么默认会被挤扁**：auto 布局先给每列 min-content，再把富余宽度按各列 `max-content` 的比例分；标签列 max-content ≈ 一行短词，正文列 ≈ 整段，量级差十倍，富余几乎全给了正文列，标签列就退到 min-content——中文逐字可断，min-content 就是 1 个字宽。踩坑（headless 逐个量过 292px 外壳）：① 单元格上的 `min-width: 33%/40%` **完全不生效**（表格单元格忽略百分比 min/max-width）；② `width: min(35%, max-content)` 也不生效，退化成 auto；③ `table-layout: fixed` 生效但会把表格固有宽度变成满宽，短两列表的气泡被撑到整行（465→630）；④ 固定 `width: 35%` 生效，但长短标签一律 35%（短标签 102px，本来 70px 就够）。最终取 5em 下限：长标签 110px（38%）、短标签 91px（31%），仍随内容变。**请看那条「项目/事项 / 关键信息」的两列表**；嫌窄就把 5em 调到 6~7em（7em 时长标签 133px / 46%）。
+- (web) 2026-09-02 兼容性缺口：`:has()` 要 Chrome 105+ / Safari 15.4+，容器查询单位 `cqw` 要 Chrome 105+ / Safari 16，都用 `@supports` / 选择器失效自然降级——老 WebView 上退回 `width:max-content` + 单元格 187.5px 上限（不坏，只是不铺满 / 不是恰好两列）。真要兜底得渲染后用 MutationObserver 打 class + JS 算宽，暂未做。
 
 - (web) 2026-08-25 **波浪下划线** 已 commit/push `f5616c5`：`<u>` / `<span style="text-decoration: underline wavy">` 原先只出直线。已加 `ExtendUnderline`（吃 `text-decoration-style`）+ `ExtendInlineSpanStyle` 的 `textDecoration`；`AcMarkdown` 补 `text-decoration-style: wavy`。表格边框 12%→22%、代码块 10% 黑底、引用竖条 28%。**请在个人 AI 框看这条样本。**
 - (web) 2026-08-25 **内联 HTML 高亮** 已在 `87d3921`：个人 AI 框这段 `<span style="background-color;padding;border-radius">` 看起来没样式。根因：`marked` 会把 HTML 透传，但 Tiptap 的 `textStyle` 只占位、`Color` 只吃字色，背景/内边距/圆角进不了 schema。已加 `ExtendInlineSpanStyle`（`EditorWrapper` + `htmlToMarkdown` 同源）。**请在个人 AI 框看这条样本。**
@@ -51,4 +71,7 @@
 - 2026-08-20 为让横滚在 flex 气泡里生效：`!max-w-unset` → `!max-w-full`，`ExpandableContent` / `AcMarkdown` 加 `min-w-0 max-w-full`。
 - 2026-08-20 子代理审查：无 Critical；status 已按真实进度改；`renderWrapper` 注释已写清 TableView vs getHTML。
 - 2026-08-20 旁路（PC GFM）：后端常把 `<reference>` 单独成行，解析器会当成独立块；PC 对齐安卓/iOS，解析前折掉标签前换行。表格后的标签必须塞进最后一格，否则 GFM 会丢掉。
+- 2026-09-02 `cqw` 只在聊天气泡内用（规则写在 BaseMsgCard）：没有查询容器时 `cqw` 会退回视口宽，人格设定 / AI 优化弹窗里的表会变成半屏一列，所以气泡外仍保留 187.5px 上限。
+- 2026-09-02 列宽基准从固定 187.5px 改成「气泡的一半」：187.5px 是按 375 设计稿写死的，气泡实际宽度随端/窗口变，只有容器查询单位 `50cqw` 能让「正好两列」在各宽度下都成立。
+- 2026-09-02 列数只能靠 CSS `:has()` 数（首行有没有第 3 格）——Tiptap `resizable:false` 不出 `colgroup`，也没有渲染后打 class 的钩子，纯 CSS 最省；不支持时优雅降级。用 `:not(:has(...:nth-child(3)))` 反向判定，一列两列一条规则覆盖。
 - 2026-08-24 web 行内代码：解析一直是 `marked` → `<code>`；看起来「不支持」是因为 UnoCSS `prose` 的 `code::before/after` 又画回反引号。按 token 表做成浅底胶囊并关掉伪元素。代码块黑底皮肤不动。
