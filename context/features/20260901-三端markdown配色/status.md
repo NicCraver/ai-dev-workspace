@@ -1,6 +1,6 @@
 # Status：三端 markdown 标题上蓝 + 自己发气泡分流
 
-> 最后更新：2026-09-02（iOS 已 push `9839d7393`，待真机）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（iOS 已合入 `master-3.5.32` `abd879309`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 2026-09-01 把所有自己发气泡调浅到 `#F0F5FF`。2026-09-02 按验收收窄：
 
@@ -15,7 +15,7 @@
 | 标题色（H1–H4 → `#3E7EFF`） | 基准 | ✅ | ✅ | ✅ |
 | 普通自己发退回线上色 | — | 🚧 已 push `9a3b6d172`，待真机 | 🚧 已 push `6e964addc`，待真机 | 🚧 已 push `0d00470c`，待热更新 |
 | 自己发 ActionCard 浅底 + `#F4F6F8` 描边 | 描边基准 | 🚧 同左 | 🚧 同左 | 🚧 同左 |
-| 自己发 ActionCard 卡体阴影 | — | 🚧 4dp ambient，待真机 | 🚧 已 push `9839d7393`，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
+| 自己发 ActionCard 卡体阴影 | — | 🚧 4dp ambient，待真机 | 🚧 已合入 `master-3.5.32` `abd879309`，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
 | token 表登记 | ✅ | — | — | — |
 | 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译 | ✅ eslint 无输出 |
 | 运行时验收 | — | ⬜ | ⬜ | ⬜ |
@@ -26,7 +26,7 @@
 |---|---|---|---|---|---|
 | desktop | master-3.4.27 | synced | 干净（配置信息） | **本功能** | 阴影已 push `0ed5a52e`；`.env.test` 等未提交 |
 | android | master-3.6.23 | synced | 脏(4)：本功能阴影 + 旁路表格/9-patch | **本功能** | 阴影仍未 commit |
-| ios | feat/ios-agent-date-range | synced | 干净 | **本功能** | `9839d7393` 已 push：内层裁圆角 + 全 ActionCard 折叠 |
+| ios | master-3.5.32 | synced | 干净 | **本功能** | `abd879309` 已合入功能分支；冲突取新实现并补回高亮 TextView |
 | web | feat/data-scope-storage-group | synced | 干净 | 未改 | 只当描边基准 |
 | context | main | ahead | 本功能 docs | **本功能** | — |
 
@@ -36,7 +36,7 @@
 |---|---|---|
 | PC | `chat-box.vue` / `msg-list.vue` / `reply-msg-list.vue` / `winbox-wrapper.vue` | 自己发 ActionCard：`overflow: visible` + 4px margin + `0 0 4px` 阴影；内层 `.msg-actioncard` 再裁圆角。已 push `0ed5a52e` |
 | 安卓 | `ActionCardMessageItemProvider.java` | 自己发组织会话卡：4dp margin + 4dp elevation；API 28+ 关掉 spot、ambient 用 `rgba(31,35,41,.1)`；向上放开 clip。仍未 commit |
-| iOS | `ZXIMCellLogic.m` / `ZXGroupRobotCell.m` / `ZXIMChatCell.m` | 已 push `9839d7393`：外壳 4pt glow、圆角改内层裁；折叠覆盖所有 ActionCard；转发卡正文不再掉 14pt 灰字；`cellSize` 写全高后仍夹限高 |
+| iOS | `ZXIMCellLogic.m` / `ZXGroupRobotCell.m` / `ZXIMChatCell.m` | 已随 `feat/ios-agent-date-range` 合入 `master-3.5.32`（`abd879309`） |
 | context | impl-notes / status | 阴影从「仅 PC」改为三端同一 token |
 
 ## 待办 / 阻塞
@@ -45,7 +45,7 @@
 - (ios) 真机再验：别人转发的超高 AI 卡（发送人普通账号、知识来源空）也应自动折并出「查看更多」
 - (android) 真机验：自己发 AI 卡浅底 + 描边 + 四周浅阴影；普通自己发言仍是线上蓝
 - (android) 2026-09-02 **自己发「查看更多」蒙层色带（已改代码，请再验）**：气泡 solid 已退回 `#DEE8FF`，但 `zu_zhi_robot_card_more_own_send.9.png` 9/1 仍停在 `#F0F5FF`，会在气泡上压出一条浅色带。已从调浅前提交还原 9-patch。收到消息的白色那张没动。
-- iOS 已 push 到 `feat/ios-agent-date-range`（`9839d7393`），真机再验阴影与别人转发卡折叠
+- iOS 已合入 `master-3.5.32`（`abd879309`），真机再验阴影、转发卡折叠、高亮居中
 - 安卓阴影仍未 commit；`master-3.6.23` 是联调主干，走 MR，别直推。PC 已按用户指定推到 `master-3.4.27`（`0ed5a52e`）
 - PC 勿提交 `.env.test` / `electron-builder.yml` / `package.json`（本地仍脏，未进本次提交）
 - 安卓还混着 markdown 表格列宽等旁路脏文件，提交时只挑本功能文件
@@ -53,6 +53,7 @@
 
 ## 关键决策记录
 
+- 2026-09-02 iOS 合入 `master-3.5.32`：冲突四处（ContentView 上间距、Style 表体白底、CellLogic 折叠）取功能分支；段栈 TextView 补回 `zx_makeMarkdownTextView`，否则丢掉 3.5.32 已有的高亮居中
 - 2026-09-02 三端阴影对齐 PC：`0 0 4px rgba(31,35,41,.1)`，不要 Material / UIKit 那种向下投影
 - 2026-09-02 阴影贴边看不见：外壳不能裁切；四边留约 4px，圆角裁切下放到内层。上阴影原先只有左右留空，紧贴时间条会被盖住
 - 2026-09-02 **ActionCard 折叠**：不要求智能体账号或知识来源。别人转发的 AI 卡（发送人是普通账号、知识来源为空）同样超限就要折，对齐安卓所有 ActionCard。微信绿气泡除外。
