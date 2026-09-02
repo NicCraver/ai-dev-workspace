@@ -1,6 +1,6 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-09-02（三档规则改 JS 打标兼容 PC Chrome 102，已 push `dd0a47d`；PC 客户端未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（web 已 push `dd0a47d`；impl-notes 重写供三端移植；PC 客户端未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -35,18 +35,22 @@
 | ios | `feat/ios-file-download-progress` | synced | 脏 6 | 不涉及 |
 | desktop | **`feat/gfm-markdown`** | synced | 脏 3 | 表格宽度已 push `d987d746`。剩 `.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
 
-## 本回合各端现状（code-status，2026-09-02）
+## 本回合各端现状（code-status，2026-09-02 收尾）
 
-本回合只动 `apps/web` 一个文件；`meeting` / `contact` 的脏区属别的活跃功能，未碰。
+本回合只动 `apps/web`（2 个文件）与 context 文档；`meeting` / `contact` / `desktop` 的脏区属别的功能，未碰。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| web | `feat/data-scope-storage-group` | synced | 干净 | 数据范围选择周工作 | **本功能改动 `7294897` 已 push 到这条分支** |
-| desktop | master-3.4.27 | synced | 仅本地调试 3 件 | 复制修改个人AI框归属 | 未碰 |
+| web | `feat/data-scope-storage-group` | synced | 干净 | 数据范围选择周工作 | **本功能 `dd0a47d` 已 push（rebase 到远端两条 data-range 之上）** |
+| context | main | synced | 干净 | **本功能** | `365556f` 已 push |
+| desktop | master-3.4.27 | synced | 仅本地调试 3 件 | 复制修改个人AI框归属 | 未碰，调试文件禁止提交 |
 | android / ios | — | synced | 干净 | 其它功能 | 未碰 |
-| meeting / contact | — | — | 脏(85) / 脏(2) | 会议室各功能 | 未碰 |
+| meeting / contact | — | ahead 4 / 无 upstream | 脏(85) / 脏(2) | 会议室各功能 | 未碰 |
 
 ## 待办 / 阻塞
+
+- (三端) 2026-09-02 **移植未开始**：列宽三档规则已写进 `impl-notes.md` 第 4 节（含「上限不是定死宽」「首列下限」「半个气泡要找宽度确定的父容器」「定死宽会被裁切边吃掉边框」四条踩坑）。desktop / iOS / android 按它实现即可，**不要读 web 源码**；desktop 尤其注意 Chrome 102 不支持 `:has()` / `cqw`。
+- (desktop / ios / android) 验收清单：1 列表、2 列表（标签列 + 长正文）、3 列短字、4~5 列长文各看一遍——短表不被撑宽、标签列不被压成一个字、宽表一屏约两列可横滑、气泡不裁切。
 
 - (web) 2026-09-02 **一/两列表格铺满容器**：`AcMarkdown.vue` 加 `table:not(:has(tr:first-child > :nth-child(3))) { width:100% }`（首行没有第 3 格 => 列数 ≤ 2），并对这类表把单元格 `max-width` 放开为 `none`（否则每列封顶 187.5px，宽容器里撑不满）。先只写了两列的选择器，一列表格没进去，已改成按「不足 3 列」判定。已随 `7294897` 单独提交并 push 到 `feat/data-scope-storage-group`（只含这 2 个文件，数据范围的改动未混入）。**请在个人 AI 框看一条一列 / 两列表格**：应铺满气泡宽度，三列及以上维持原来的 max-content + 横滚。
 - (web) 2026-09-02 **三列及以上：单列上限 = 半个气泡**（不是定死宽）。规则在 `BaseMsgCard.vue` 非 scoped `<style>`：整行 `.zx-msg-row` 加 `container-type: inline-size`（块级、宽度来自父级，容器化不会塌；气泡/内容列是 shrink-to-fit，放那儿会塌成 `min-w-30`——这是之前那版窄条 bug 的根因），气泡内 `table:has(tr > :nth-child(3))` 的 `th/td` 只写 `max-width: calc(50cqw - 45px)`。45px = 头像 40 + 间距 10 + 气泡内边距的一半左右，把「半行」折算成「半个气泡」。headless 量（680 宽会话）：3 列短字表气泡收到 86px、列各 27（不再被撑满）；5 列短字表 564 宽无横滚；4 列长文列宽 207/295/295/284、外壳 596、横滚 1082（一屏两列 + 一截第三列）。先前那版「`width: 50cqw` 定死」已废弃：会把短内容也撑成半个气泡。**请看短表和宽表各一条**。
