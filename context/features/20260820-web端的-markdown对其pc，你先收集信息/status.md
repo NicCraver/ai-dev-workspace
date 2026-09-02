@@ -1,6 +1,6 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-09-02（web 列宽跟气泡走的三档规则已 commit/push `7294897`；真机未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（三档规则改 JS 打标兼容 PC Chrome 102，已 push `dd0a47d`；PC 客户端未验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -19,9 +19,9 @@
 | 行内代码：干掉 prose 反引号 + 浅底胶囊 | ✅ | — | — | — |
 | 内联 span：background / padding / border-radius | ✅ 代码已补，页面未点 | — | — | — |
 | 波浪下划线 `text-decoration: wavy` | ✅ 代码已补，页面未点 | — | — | — |
-| 一/两列表格 `width:100%` 铺满容器 | 🚧 代码已 push `7294897`，真机未验 | — | — | ⬜ 未对齐 |
-| 两列表首列内容 `min-width:5em`（标签列不被挤扁） | 🚧 代码已 push `7294897`，真机未验 | — | — | ⬜ 未对齐 |
-| 三列以上单列上限 `50cqw-45px`（不定死宽） | 🚧 代码已 push `7294897`，真机未验 | — | — | ⬜ 未对齐 |
+| 一/两列表格 `width:100%` 铺满容器 | 🚧 已 push `dd0a47d`，客户端未验 | — | — | ⬜ 未对齐 |
+| 两列表首列内容 `min-width:5em`（标签列不被挤扁） | 🚧 已 push `dd0a47d`，客户端未验 | — | — | ⬜ 未对齐 |
+| 三列以上单列上限 = 半个气泡（JS 写 CSS 变量） | 🚧 已 push `dd0a47d`，客户端未验 | — | — | ⬜ 未对齐 |
 
 > T0–T5 的 ✅ 是代码 + `vue-tsc`。真机格子在你看过之前保持 🚧。
 
@@ -75,3 +75,21 @@
 - 2026-09-02 列宽基准从固定 187.5px 改成「气泡的一半」：187.5px 是按 375 设计稿写死的，气泡实际宽度随端/窗口变，只有容器查询单位 `50cqw` 能让「正好两列」在各宽度下都成立。
 - 2026-09-02 列数只能靠 CSS `:has()` 数（首行有没有第 3 格）——Tiptap `resizable:false` 不出 `colgroup`，也没有渲染后打 class 的钩子，纯 CSS 最省；不支持时优雅降级。用 `:not(:has(...:nth-child(3)))` 反向判定，一列两列一条规则覆盖。
 - 2026-08-24 web 行内代码：解析一直是 `marked` → `<code>`；看起来「不支持」是因为 UnoCSS `prose` 的 `code::before/after` 又画回反引号。按 token 表做成浅底胶囊并关掉伪元素。代码块黑底皮肤不动。
+
+## 2026-09-02 补：PC 端 Chrome 102 兼容返工
+
+`process.versions.chrome = 102.0.5005.167`——PC 端 Electron 内核比 `:has()`（Chrome 105）和容器查询单位 `cqw`（105/106）都老，
+上一版三档规则在 PC 上**整条不生效**，只有 web/移动的新内核能看到效果。已改成 JS 打标，新旧内核走同一条路径：
+
+| 层 | 做法 |
+|---|---|
+| `AcMarkdown.vue` `stampTables()` | 按首行单元格数给 `<table>` 打 `data-md-cols="1｜2｜3plus"`；3 列以上再用最近的 `.zx-msg-row` 宽度算 `Math.max(120, rowWidth/2 - 45)` 写进 `--md-cell-max` |
+| 触发时机 | `onMounted` + `watch(content)` + `MutationObserver`（childList/subtree，只读不写属性，不会自触发）+ `ResizeObserver`（观察消息行）；统一 rAF 合并，流式输出不会每 token 重算 |
+| 样式 | 只认 `table[data-md-cols=...]` 与 `var(--md-cell-max, 187.5px)`，不再有 `:has()` / `cqw` |
+| `BaseMsgCard.vue` | 删掉 `container-type` 与 cqw 规则，只留 `.zx-msg-row` 类名给脚本定位（已在模板注释「勿删」） |
+
+要点：
+- 气泡外（人格设定 / AI 优化弹窗）找不到 `.zx-msg-row`，不写变量，退回 187.5px——与改版前一致。
+- 两列表首列的 5em 下限同时写在单元格和其内容上：Tiptap 每格都是 `<p>`，但纯文本格时 `> *` 选不到，实测单元格自身那条仍能把 45.78px 抬到 70px。
+- headless 复跑 JS 路径，数值与 cqw 版逐格一致（3 列短字 86 / 5 列短字 564 / 3 列长文 563 / 4 列长文 596 + 横滚 1082）。
+- 仓库里另一处 `:has()` 在 `KnowledgeListTable.vue:738`，早有 JS 兜底，未动。
