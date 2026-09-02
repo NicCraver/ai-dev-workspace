@@ -1,6 +1,6 @@
 # Status：web markdown 表格对齐 PC
 
-> 最后更新：2026-09-02（三端落地列宽三档，均未客户端验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（iOS ≥3 列上限改为含格内边距，待客户端验）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -21,7 +21,7 @@
 | 波浪下划线 `text-decoration: wavy` | ✅ 代码已补，页面未点 | — | — | — |
 | 一/两列表格 `width:100%` 铺满容器 | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 代码 | 🚧 代码 | 🚧 代码 |
 | 两列表首列内容 `min-width:5em`（标签列不被挤扁） | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 代码 | 🚧 代码 | 🚧 代码 |
-| 三列以上单列上限 = 半个气泡（JS 写 CSS 变量） | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 布局前算 | 🚧 布局前算 | 🚧 JS 打标（无 :has/cqw） |
+| 三列以上单列上限 = 半个气泡（JS 写 CSS 变量） | 🚧 已 push `dd0a47d`，客户端未验 | 🚧 布局前算 | 🚧 上限改封整列宽（含 padding），待验 | 🚧 JS 打标（无 :has/cqw） |
 
 > T0–T5 的 ✅ 是代码 + `vue-tsc`。真机格子在你看过之前保持 🚧。
 
@@ -35,20 +35,21 @@
 | ios | `feat/ios-file-download-progress` | synced | 脏 6 | 不涉及 |
 | desktop | **`feat/gfm-markdown`** | synced | 脏 3 | 表格宽度已 push `d987d746`。剩 `.env.test` / `electron-builder.yml` / `package.json` **禁止提交** |
 
-## 本回合各端现状（code-status，2026-09-02 列宽三档移植）
+## 本回合各端现状（code-status，2026-09-02 iOS 多列看不全两列）
 
-本回合动 `apps/desktop` / `apps/android` / `apps/ios` 与 context 文档；**未读 web 源码**。desktop 脏区里 `.env.test` / `electron-builder.yml` / `package.json` 是本地调试，禁止提交。
+本回合只改 `apps/ios` 表格列上限 + 本功能 docs。desktop 脏区里 `.env.test` / `electron-builder.yml` / `package.json` 是本地调试，禁止提交。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| desktop | master-3.4.27 | synced | 脏(6)：3 业务 + 3 本地调试勿提交 | **本功能** | `stampTable` + scss 三档；单测 12 绿 |
-| android | master-3.6.23 | synced | 脏(4) 本功能 | **本功能** | `ZXMarkdownTableColPolicy` 单测绿 |
-| ios | feat/ios-agent-date-range | synced | 脏(6) 本功能 | **本功能** | 布局前算列宽；旋转进缓存 key |
+| desktop | master-3.4.27 | synced | 脏(12)：业务 + 本地调试勿提交 | **本功能** | 本回合未改 |
+| android | master-3.6.23 | synced | 脏(9) 本功能+气泡皮肤 | **本功能** | 本回合未改；`setMaxWidth` 已含 padding |
+| ios | feat/ios-agent-date-range | synced | 脏(9) 本功能+气泡图 | **本功能** | ≥3 列 cap 改封整列宽 |
 | web | feat/data-scope-storage-group | synced | 干净 | 数据范围选择周工作 | 本回合未改 |
-| context | main | ahead 1 | 本功能 docs | **本功能** | — |
+| context | main | ahead 4 | 收尾前提交本功能 docs | **本功能** | — |
 
 ## 待办 / 阻塞
 
+- (ios) 2026-09-02 **≥3 列一屏看不全两列（已改代码，请再验）**：上限先封内容再加左右 padding，两列合计超出气泡约 4×单侧边距。已改成上限封整列宽（内容+padding），两列顶格时合计 = 可用宽。请看 4～5 列长文：气泡里应能完整看到两列，再横滑看后面的列。
 - (android / ios) 2026-09-02 **两列表横条 + 一列竖字（已改代码，请再验）**：未折行自然宽把第一列铺满，第二列剩 1 个字，表比外壳宽就画出横条。已改成两列都保 5 字下限、剩余按比例分满可用宽，1/2 列关掉横滚。请再看「项目及事项 / 长正文」那张两列表：应铺满气泡、两列都能读、没有横条。
 - (三端) 2026-09-02 **列宽三档代码已写、客户端未验**：验收清单：1 列表、2 列表（标签列 + 长正文）、3 列短字、4~5 列长文各看一遍——短表不被撑宽、标签列不被压成一个字、宽表一屏约两列可横滑、气泡不裁切。
 - (desktop) 提交时只带 `markdownTableOverflow.js` / `markdown.scss` / 对应 spec；`.env.test` / `electron-builder.yml` / `package.json` 禁止 stage。
@@ -83,6 +84,7 @@
 - 2026-09-02 换绑必须清掉上次算出的列宽 / 可用宽，否则窄气泡会沿用宽消息的上限。
 - 2026-09-02 窗口缩放 / 旋转 / 分屏要重算；列表高度缓存若不含可用宽，旋转后会命中旧列宽。
 - 2026-09-02 两列表禁止横滚：列宽按可用宽分满（两列都有 5em 下限），不要按未折行自然宽把一列铺满。
+- 2026-09-02 ≥3 列上限封的是整列宽（含格内边距）。自绘表格若先封内容再加 padding，两列会超出气泡，一屏看不全两列。
 - 2026-08-24 web 行内代码：解析一直是 `marked` → `<code>`；看起来「不支持」是因为 UnoCSS `prose` 的 `code::before/after` 又画回反引号。按 token 表做成浅底胶囊并关掉伪元素。代码块黑底皮肤不动。
 
 ## 2026-09-02 补：PC 端 Chrome 102 兼容返工
