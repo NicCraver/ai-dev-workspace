@@ -13,7 +13,7 @@
 - 标题色 `#3E7EFF`，只作用于 H1–H4。
 - 分流：**自己发 + ActionCard**。不要用 `fixTaskMessage`——逐条转发会抹掉这个字段，转发后的 AI 卡会丢浅底。
 - 普通自己发：PC `#CCE0FE`，安卓 / iOS `#DEE8FF`。收到仍白。外协绿气泡不动。
-- 自己发 ActionCard：卡体 `#F0F5FF`，卡头 `#D7E5FF`（比体深一档），描边 `1px solid #F4F6F8`。
+- 自己发 ActionCard：卡体 `#F0F5FF`，卡头 `#D7E5FF`（比体深一档）。PC 试边框 `1px #E1E5EB`；安卓 / iOS 仍是 `1px #F4F6F8`。
 - 阴影目前只在 PC 试过一版，已改成边框 `1px #E1E5EB` 看效果。安卓 / iOS 还没有阴影。
 - markdown 里的半透明黑（表格线 / 代码 / 引用）不跟着气泡改。
 
