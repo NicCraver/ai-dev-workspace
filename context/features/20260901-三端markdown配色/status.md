@@ -1,78 +1,61 @@
-# Status：三端 markdown 标题上蓝 + 自己发气泡调浅
+# Status：三端 markdown 标题上蓝 + 自己发气泡分流
 
-> 最后更新：2026-09-01（用户三端验收通过，三端 commit 已 ff-only 合回各自原分支，未 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
-两条视觉调整，来源是用户对照 web 端提的：
+2026-09-01 把所有自己发气泡调浅到 `#F0F5FF`。2026-09-02 按验收收窄：
 
-1. markdown 标题（H1–H4）从正文黑改成 primary `#3E7EFF`，对齐 web `AcMarkdown.vue`。H5 / H6 不上色（web 也没上）。
-2. 自己发送消息的气泡底色调浅到 `#F0F5FF`。原值 PC 实际生效 `#CCE0FE`（`msg-list.vue` 那份 `#D7E5FF` 被 `chat-box.vue` 的 `!important` 盖着）、安卓 / iOS `#DEE8FF`，三端本来就不一致，顺手统一。先落了一版 `#EBF2FF`，用户看过实机后要求再浅一档。
+1. markdown 标题 H1–H4 `#3E7EFF` 不动。
+2. 普通自己发言退回线上色（PC `#CCE0FE`，安卓 / iOS `#DEE8FF`）。
+3. 自己发的 ActionCard（转发 AI 回复、定时用我身份）保留卡体 `#F0F5FF` + 卡头 `#D7E5FF`，并加 `1px #F4F6F8` 描边（对齐 web `BaseMsgCard` 白卡，无 box-shadow）。
 
 ## 平台矩阵
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| 标题色（H1–H4 → `#3E7EFF`） | 基准（早已是） | ✅ | ✅ | ✅ |
-| 自己发气泡底 → `#F0F5FF` | 无聊天气泡 | ✅ | ✅ | ✅ |
+| 标题色（H1–H4 → `#3E7EFF`） | 基准 | ✅ | ✅ | ✅ |
+| 普通自己发退回线上色 | — | 🚧 代码已改，待真机 | 🚧 代码已改，待真机 | 🚧 代码已改，待热更新 |
+| 自己发 ActionCard 浅底 + `#F4F6F8` 描边 | 描边基准 | 🚧 同左 | 🚧 同左 | 🚧 同左 |
 | token 表登记 | ✅ | — | — | — |
-| 卡头 / 折叠蒙层跟色 | — | ✅ | ✅ | ✅ |
-| 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译（用户已装机验收） | ✅ eslint 无输出 |
-| 运行时验收 | — | ✅ | ✅ | ✅ |
-| commit | — | ✅ `89febfb4e` | ✅ `7af667bf4` | ✅ `bfe59c82` |
+| 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译 | ✅ eslint 无输出 |
+| 运行时验收 | — | ⬜ | ⬜ | ⬜ |
 
-## 本次改动
+## 本回合各端现状（code-status）
+
+| 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
+|---|---|---|---|---|---|
+| desktop | master-3.4.27 | synced | 脏(12) | **本功能** + 表格列宽旁路 + 本地调试勿提交 | 本功能 6 个 vue |
+| android | master-3.6.23 | synced | 脏(9) | **本功能** + markdown 表格旁路 | 本功能 drawable + ActionCard/Text provider |
+| ios | feat/ios-agent-date-range | synced | 脏(9) | **本功能** + markdown 表格旁路 | 宏 + RobotCell + 预览 PNG |
+| web | feat/data-scope-storage-group | synced | 干净 | 未改 | 只当描边基准 |
+| context | main | ahead | 本功能 docs | **本功能** | — |
+
+## 本次改动（2026-09-02）
 
 | 端 | 文件 | 改动 |
 |---|---|---|
-| PC | `assets/styles/markdown.scss` | 新增 `h1~h4 { color: #3e7eff }` |
-| PC | `chat-box.vue` | **真正生效的那处**：`.chat-box-organization .message-item-self .msg-box` `#cce0fe !important` → `#f0f5ff`。选中行高亮 `#ebf2ff` 按用户要求不动 |
-| PC | `msg-list.vue` / `reply-msg-list.vue` / `winbox-wrapper.vue` | 基底色 `#d7e5ff` → `#f0f5ff`（被上面那条 `!important` 盖着，但同步改，免得下次又对不上） |
-| PC | `msg-txt-fold-expand.vue` / `msg-reply.vue` | 折叠遮罩渐变 `foldParentBg_Or_Send` 的落色跟气泡走 |
-| PC | `msgtype/msg-actioncard.vue` | 自己发的卡头 `#b2cbff` → `#d7e5ff`，与「白底卡 + `#EBF2FF` 头」保持同样的头体对比 |
-| 安卓 | `ZXMarkwonFactory.java` | `configureSpansFactory` 里 `appendFactory(Heading.class, …)` 给 H1–H4 追加 `ForegroundColorSpan(0xFF3E7EFF)` |
-| 安卓 | `base_util/res/drawable/shape_solid_dee8ff_lefttop_leftbottom_rightbottom_radius_16dp.xml` | `solid` 直接写 `#F0F5FF`（`color_F0F5FF` 定义在上层的 `basis_function_api`，base_util 引不到） |
-| 安卓 | `base_util/res/drawable/zu_zhi_robot_card_more_own_send.9.png` | 「查看更多」折叠遮罩重上色 `#DEE8FF` → `#F0F5FF`（保 alpha、保边框；四个 provider 都按 `isSend` 引这一张） |
-| 安卓 | `base_util/res/drawable/shape_vertical_graduated_transf0f5ff_to_f0f5ff.xml`（新） + `TextMessageItemProvider.java` | 引用单元折叠遮罩 `rl_refer_unit_expand` 按 `isSend && style==0` 换成淡蓝渐变，其余仍白 |
-| 安卓 | `base_util/res/drawable/shape_solid_c5d8ff_lefttop_radius_16dp.xml` | 自己发的卡头 `#C5D8FF` → `#D7E5FF`（只有 ActionCard 一处引用，直接改这张） |
-| iOS | `ZXGroupRobotCell.m:815` | 自己发的卡头 `#b2cbff` → `#D7E5FF`；收到的仍 `#EBF2FF` |
-| iOS | `ZXMarkdownStyle.h/.m` | 新增 `headerColor`（默认 `#3E7EFF`）与 `headerColorMaxLevel`（默认 4） |
-| iOS | `ZXMarkdownAttributedBuilder.m` | `CMARK_NODE_HEADING` 分支按层级染色，跳过已有独立颜色的片段（保住标题里的链接色） |
-| iOS | `ZX_Defines/ZXUiMacro.h` | `Color_Chat_ZZ_Send` `DEE8FF` → `F0F5FF` |
-| iOS | `zx_chat_cell_bubble_sender.imageset/*.png` | 填充色 `#E5EFFE` → `#F0F5FF`（字号设置页的气泡预览图，跟真实气泡对齐） |
-| context | `design/markdown-style-tokens.md` | 加「标题色」token 行；原则 3 补气泡底色变更；样式入口表补气泡色入口 |
-
-## 验证
-
-```
-apps/android: ./gradlew :IM:compileOnTestDebugJavaWithJavac --offline   # 通过
-apps/desktop: npx eslint <8 个改动文件>                                  # 无输出
-```
-
-2026-09-01 用户三端运行时验收通过：标题变蓝、自己发的气泡与卡头变浅、安卓「查看更多」蒙层不再压出色带。
-
-## commit（均未 push）
-
-| 端 | 分支 | commit |
-|---|---|---|
-| desktop | `master-3.4.27` | `bfe59c82` 配色；`d27bfc41` 合并转发宽度溢出（上一条功能）|
-| android | `master-3.6.23` | `89febfb4e` |
-| ios | `feat/ios-agent-date-range` | `7af667bf4` |
+| PC | `chat-box.vue` | 组织会话自己发退回 `#cce0fe`；`.msg-box-actioncard` `#f0f5ff` + `1px #f4f6f8` |
+| PC | `msg-list.vue` / `reply-msg-list.vue` / `winbox-wrapper.vue` | 基底同步；ActionCard 加 `msg-box-actioncard` |
+| PC | `msg-txt-fold-expand.vue` / `msg-reply.vue` | 折叠渐变跟回 `#cce0fe` |
+| 安卓 | `shape_solid_dee8ff_...16dp.xml` | solid 退回 `#DEE8FF` |
+| 安卓 | `shape_solid_f0f5ff_...16dp.xml`（新） | ActionCard 自己发：`#F0F5FF` + stroke `#F4F6F8` |
+| 安卓 | `ActionCardMessageItemProvider.java` | `isSend && style==0` 改引新 drawable |
+| 安卓 | `shape_vertical_graduated_transf0f5ff_to_f0f5ff.xml` | 文本折叠末端改回 `#DEE8FF`（文件名历史） |
+| iOS | `ZXUiMacro.h` | `Color_Chat_ZZ_Send` 退回 `#DEE8FF` |
+| iOS | `ZXGroupRobotCell.m` | 自己发覆盖 `#F0F5FF` + `Color_Gray` 描边（CAShapeLayer，避开 mask 裁边） |
+| iOS | `zx_chat_cell_bubble_sender.imageset` | 预览填充 `#F0F5FF` → `#DEE8FF` |
+| context | token 表 / impl-notes / plan | `#F0F5FF` 只属于自己发 ActionCard |
 
 ## 待办 / 阻塞
 
-- 三端均未 push；`master-3.4.27` / `master-3.6.23` 是联调主干，走 MR，别直推
-- (desktop) `master-3.4.27` 与 origin **已分叉**：本地 2 条（`d27bfc41` `bfe59c82`）、远端 3 条。push 前先 pull / rebase
-- (ios) 提交落在 `feat/ios-agent-date-range`（「数据范围改纯 webview」的分支），配色与那条功能混在同一分支上；提 MR 前确认目标分支，必要时 cherry-pick `7af667bf4` 到主干
-- 各端工作区仍留着别的活跃功能的脏文件（安卓 3 个 filter / fragment，iOS 5 个 AgentFilter / TimeData，PC 3 个本地调试配置），本次都没 stage
+- 三端真机 / 热更新：自己打的字 = 线上蓝；转发 AI 卡 / 定时用我身份 = 浅底 + `#F4F6F8` 描边
+- 三端均未 commit / 未 push；`master-3.4.27` / `master-3.6.23` 是联调主干，走 MR，别直推
+- PC 勿提交 `.env.test` / `electron-builder.yml` / `package.json`
+- 各端还混着 markdown 表格列宽等旁路脏文件，提交时只挑本功能文件
 
 ## 关键决策记录
 
-- 2026-09-01 标题只染 H1–H4，H5/H6 跟正文——照抄 web `AcMarkdown.vue` 的现状，它俩字号不缩小，上色会和正文里的强调混淆
-- 2026-09-01 安卓用 `appendFactory` 不用 `setFactory`：`setFactory` 会顶掉 Markwon 默认给标题挂的加粗与字号倍率 span
-- 2026-09-01 安卓不改 `color_DEE8FF` 的值，也不新建 `shape_solid_ebf2ff_*`：前者会连累群已读渐变 `shape_group_read_radius_16dp`，后者要改 IM / smart_message 二十多处引用。折中是只换那张 drawable 里 `solid` 的取值，文件名保留历史命名并在文件头注明
-- 2026-09-01 iOS 标题染色跳过「已有独立颜色」的片段，否则整段覆盖会把标题里的链接也染成标题色
-- 2026-09-01 PC 的自己发气泡色**有两层**：`msg-list.vue` 等三处是基底，`chat-box.vue` 的 `.chat-box-organization` 主题带 `!important` 覆盖，只改基底看不出任何变化（第一版就踩了这个坑）
-- 2026-09-01 气泡定 `#F0F5FF`，不再往浅走：PC 会话背景 `#F6F9FF`、iOS `#F5F8FF`，继续调浅气泡就贴到背景上、看不出形状
-- 2026-09-01 选中消息的行高亮仍是 `#EBF2FF`，与气泡 `#F0F5FF` 很接近，多选时气泡边界会发虚——用户明确选择不改
-- 2026-09-01 卡片标题条统一「比卡体深一档」：收到 = 白体 + `#EBF2FF` 头；自己发 = `#F0F5FF` 体 + `#D7E5FF` 头。三端原值各不同（PC `#B2CBFF`、安卓 `#C5D8FF`、iOS `#b2cbff`）
-- 2026-09-01 安卓「查看更多」的渐变是张 9-patch 图 `zu_zhi_robot_card_more_own_send.9.png`（末端写死 `#DEE8FF`），不是 shape，只能重上色；PC 用 `-webkit-mask-image` 渐隐、iOS 也没写死色，所以只有安卓需要改
-- 2026-09-01 待办里的 ToDo 卡片仍在用 `color_D7E5FF`（`shape_graduated_d7e5ff_to_d7e5ff_alpha70` 与 moreButton 底），本来就和气泡的 `DEE8FF` 不同色，属历史遗留，本回合不动
+- 2026-09-02 分流 = **自己发 + ActionCard**，不用 `fixTaskMessage`（转发会抹掉）
+- 2026-09-02 不做阴影。web `BaseMsgCard` 白卡只有 `border: 1px solid #F4F6F8`
+- 2026-09-01 标题只染 H1–H4（仍有效）
+- 2026-09-01 PC 自己发气泡色有两层：`chat-box.vue` 的 `!important` 才是真生效（仍有效）
+- 2026-09-01 安卓不改 `color_DEE8FF` 资源，只改那张历史命名 drawable 的 solid（仍有效；浅底改走新 drawable）
