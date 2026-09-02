@@ -13,11 +13,13 @@
 | 内嵌运行时准备脚本 | — | — | — | ✅ |
 | 主进程 dsh 进程管理 + IPC | — | — | — | ✅ |
 | 侧边栏入口 + 面板 | — | — | — | ✅ |
-| afterPack 打包接入 | — | — | — | ✅ 已用模拟 context 验证 |
+| afterPack 打包接入 | — | — | — | ✅ 真实构建流程验证 |
 | webpack 编译 | — | — | — | ✅ exit 0 |
+| 完整 electron-builder 打包 | — | — | — | ✅ exit 0（含 npmRebuild） |
+| 打包产物启动 | — | — | — | ✅ app 正常起，主进程存活 |
 | 无 Node 环境可用性 | — | — | — | ✅ `env -i` 验证通过 |
-| **GUI 自测（点侧边栏看界面）** | — | — | — | ⬜ **未做** |
-| 打包产物真机验证（无 Node 机器） | — | — | — | ⬜ |
+| **GUI 自测（点侧边栏看界面）** | — | — | — | ⬜ **未做，需登录账号** |
+| 无 Node 的**他人机器**验证 | — | — | — | ⬜ |
 
 > 仅 desktop 单端功能，其余三端不涉及。
 
@@ -87,16 +89,24 @@
 2. **打包位置副本同样可用**：用模拟 context 调 `afterPackHook`，把运行时拷进
    `<app>/Contents/Resources/dsh-runtime/`，执行位保留（`-rwxr-xr-x`），再次 `env -i` 启动成功、HTTP 200。
 3. **webpack 编译通过**（`node .electron-vue/build.js`，exit 0）；`npm run lint` 无告警。
+4. **完整 `electron-builder --dir` 打包通过**（exit 0，**含 `npmRebuild` 原生模块重编译**）。
+   产物 `build/mac-arm64/zhixin-test.app` 共 841MB，其中 `dsh-runtime` 417MB。
+   asar 内确认含 `dsh-ensure-started`、`dsh-runtime`、渲染层面板代码。
+5. **打包产物能启动**：`open` 起 app，主进程存活、共 5 个进程；未点入口时 dsh 子进程为 0，
+   符合懒挂载设计。
+6. **产物内的 runtime 可用**：从 `<app>/Contents/Resources/dsh-runtime/` 直接 `env -i` 启动，
+   HTTP 200，内嵌 Node 报 `v24.20.0`。
+
+> 关于 `npmRebuild`：本机 Node 24（非仓库要求的 14.21.3）下重编译**成功**。
+> `leveldown.node` 未变动；`sqlite3` 的 `lib/binding/napi-v3-darwin-arm64/node_sqlite3.node`
+> 被重新编译，但字节数与重编译前完全一致（1760432）——napi-v3 是稳定 ABI，与 Node/Electron
+> 版本无关。`node_modules` 无损伤。
 
 ## 待办 / 阻塞
 
 - **GUI 自测未做**：需要 `npm run dev:test` 起应用，登录后点侧边栏「Harness」，确认能出 dsh 界面。
-  代码路径已编译通过，但界面层没有人眼验证过。
-- 完整 `electron-builder` 打包未跑通：它会先 `npm rebuild leveldown sqlite3` 重编译原生模块，
-  与本仓库「禁止重装 pc 端依赖」冲突且极慢（本机 Node 24 也不是仓库要求的 Node 14）。
-  **需要在正常构建机（Node 14.21.3）上跑一次 `npm run pack:mac-test` 验证**。
-  afterPack 逻辑本身已单独验证过，风险点只在 electron-builder 整体流程。
-- 在**没装 Node 的机器**上验证安装包（最终验收标准）
+  代码路径已编译、打包、启动全部通过，但界面层没有人眼验证过——这是唯一还没被覆盖的环节。
+- 在**别人的、没装 Node 的机器**上装一次安装包（本机验证用的是 `env -i` 隔离，等价但不是真机）
 - 体积优化：275MB 里有约 120-150MB 是用不到的东西（别家模型 SDK、sharp、Web UI trajectory 包、全平台 node-pty prebuilds），可裁。**先保证能跑，裁剪单独做一轮并回归**
 - 模型端点与凭据：默认打公网 `platform.deepseek.com`，内网可用性与合规待确认
 - 安全：dsh 能跑 shell 改文件，装进员工客户端等于开了本地任意代码执行面。需要产品/安全过一轮审批策略（见 spec 第五节）
