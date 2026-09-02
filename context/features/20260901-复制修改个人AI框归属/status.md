@@ -10,7 +10,7 @@
 |------|-----|---------|-----|---------|
 | spec | — | ✅ | ✅ | ✅ |
 | plan | — | ⬜ | ⬜ | ⬜ |
-| 回填分类（复制 / 修改 / 撤回再编辑） | — | ✅ | ✅ | 🚧 粘贴/修改/草稿已接分类，待客户端验 |
+| 回填分类（复制 / 修改 / 撤回再编辑） | — | ✅ | ✅ | 🚧 已 push，待客户端验 |
 | 自己的补齐 agentKind=personal | — | ✅ | ✅ | 🚧 同左 |
 | 别人的降级为黑字 | — | ✅ | ✅ | 🚧 同左 |
 | 删 @ 后关掉筛选条 | — | ✅ | ✅ | ✅ 退格只删 chip |
@@ -20,7 +20,7 @@
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| desktop | master-3.4.27 | synced | 脏：send-box + restoreAgentMention；本地调试 3 件勿提交 | **本功能** | 未 commit |
+| desktop | master-3.4.27 | synced | 脏(3) 本地调试勿提交 | **本功能** | `e2e8b40b` 已 push |
 | android | master-3.6.23 | synced | 干净 | **本功能** | 已 push |
 | ios | feat/ios-agent-date-range | synced | 干净 | **本功能** | 已 push |
 | web | feat/data-scope-storage-group | synced | 脏(12) | 数据范围选择周工作 | 本回合未改本功能 |
@@ -28,7 +28,7 @@
 
 ## 本次改动
 
-**apps/desktop**（未 commit）
+**apps/desktop**（`e2e8b40b` 已 push 到 `master-3.4.27`）
 
 复制自己的个人 AI 框到输入框时，粘贴只 `push({id,name})`，没有 `agentKind`。无 kind 的 `ga_` 被当成群智能体，筛选条走群那套，看起来就像没识别成个人 AI。
 
