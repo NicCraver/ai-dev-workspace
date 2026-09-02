@@ -13,7 +13,7 @@
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 标题色（H1–H4 → `#3E7EFF`） | 基准 | ✅ | ✅ | ✅ |
-| 普通自己发退回线上色 | — | 🚧 代码已改，待真机 | 🚧 代码已改，待真机 | 🚧 代码已改，待热更新 |
+| 普通自己发退回线上色 | — | 🚧 已 push `9a3b6d172`，待真机 | 🚧 已 push `6e964addc`，待真机 | 🚧 已 push `0d00470c`，待热更新 |
 | 自己发 ActionCard 浅底 + `#F4F6F8` 描边 | 描边基准 | 🚧 同左 | 🚧 同左 | 🚧 同左 |
 | token 表登记 | ✅ | — | — | — |
 | 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译 | ✅ eslint 无输出 |
@@ -23,9 +23,9 @@
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| desktop | master-3.4.27 | synced | 脏(12) | **本功能** + 表格列宽旁路 + 本地调试勿提交 | 本功能 6 个 vue |
-| android | master-3.6.23 | synced | 脏(9) | **本功能** + markdown 表格旁路 | 本功能 drawable + ActionCard/Text provider |
-| ios | feat/ios-agent-date-range | synced | 脏(9) | **本功能** + markdown 表格旁路 | 宏 + RobotCell + 预览 PNG |
+| desktop | master-3.4.27 | synced | 脏(3) 本地调试勿提交 | **本功能** | 与表格列宽同一 commit `0d00470c` 已 push |
+| android | master-3.6.23 | synced | 干净 | **本功能** | 与表格列宽同一 commit `9a3b6d172` 已 push |
+| ios | feat/ios-agent-date-range | synced | 干净 | **本功能** | 与表格列宽同一 commit `6e964addc` 已 push |
 | web | feat/data-scope-storage-group | synced | 干净 | 未改 | 只当描边基准 |
 | context | main | ahead | 本功能 docs | **本功能** | — |
 
