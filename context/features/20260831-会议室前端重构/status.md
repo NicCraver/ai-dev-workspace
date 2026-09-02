@@ -1,6 +1,6 @@
 # Status：会议室前端重构
 
-> 最后更新：2026-09-02（首屏加载改为全屏；底栏/助手等数据到了再渲染）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（PC 选区不再抬高助手球；移动端仍避让底栏）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -17,7 +17,7 @@ android / ios / desktop 不单独立项：会议室以内嵌 WebView 复用 meet
 
 ## 本回合各端现状（code-status）
 
-本回合修 PC 看板首屏：`loading && 无房间` 时只渲染 `AcPageLoading`（`fullScreen` + `fixed inset-0 z-50`），底栏/时间轴/助手用 `v-else`。浏览器 Slow 请求下 a11y 树只有「数据加载中...」；接口回来后底栏、A401、助手芯片都在。
+本回合：PC 看板首屏全屏加载；选中时段后 **不再** 给助手球/输入条加 `lifted`（确认卡贴在格子上，不必抬）。移动端 `MobileBookingPage` 仍 `lifted`。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
@@ -30,7 +30,7 @@ android / ios / desktop 不单独立项：会议室以内嵌 WebView 复用 meet
 
 | 文件 | 改动 |
 |------|------|
-| `BookingBoardPage.vue` | 首屏 `bootLoading` 时不挂底栏/助手；加载层 `full-screen` |
+| `BookingBoardPage.vue` | 首屏 `bootLoading` 全屏加载；PC 去掉选区 `lifted` |
 | `AcPageLoading` | 已有 `fullScreen` → `fixed inset-0 z-50`（本回合接上） |
 
 ## 待办 / 阻塞
@@ -60,6 +60,7 @@ meeting 工作区脏。2026-09-01 `pnpm test`：server 125、web 115，含 `time
 
 ## 关键决策记录
 
+- 2026-09-02 **PC 选区不抬助手球**。`lifted` 只给移动端底栏选时条避让；PC 确认卡贴格子，抬高会像球自己飘上来
 - 2026-08-31 设计系统对齐，不改业务流程与接口
 - 2026-08-31 按需拷贝进 `apps/meeting/web`，不 submodule、不整库搬
 - 2026-08-31 现有弹窗保持 `v-if`；命令式 `showXxx` 只给新弹窗
