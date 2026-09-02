@@ -13,8 +13,10 @@
 | 内嵌运行时准备脚本 | — | — | — | ✅ |
 | 主进程 dsh 进程管理 + IPC | — | — | — | ✅ |
 | 侧边栏入口 + 面板 | — | — | — | ✅ |
-| afterPack 打包接入 | — | — | — | ✅ |
-| 本机 dev 自测 | — | — | — | 🚧 |
+| afterPack 打包接入 | — | — | — | ✅ 已用模拟 context 验证 |
+| webpack 编译 | — | — | — | ✅ exit 0 |
+| 无 Node 环境可用性 | — | — | — | ✅ `env -i` 验证通过 |
+| **GUI 自测（点侧边栏看界面）** | — | — | — | ⬜ **未做** |
 | 打包产物真机验证（无 Node 机器） | — | — | — | ⬜ |
 
 > 仅 desktop 单端功能，其余三端不涉及。
@@ -23,8 +25,11 @@
 
 | 端 | 分支 | 说明 |
 |---|---|---|
-| desktop | `feat/dsh-integration`（新建，自 `master-3.4.27`） | 本功能全部改动 |
+| desktop | `feat/dsh-integration`（新建，自 `master-3.4.27`） | `2d8b5821` 已提交，**未 push** |
 | context | main | 本功能文档 |
+
+> 提交时已按仓库禁忌排除 `.env.test` / `electron-builder.yml` / `package.json`——
+> 这三个文件工作区里的改动是本地调试用的（test 包名、arm64），与本功能无关。
 
 ## 方案要点
 
@@ -69,15 +74,29 @@
 | dsh 冷启动到监听 | ~1s（profile 已 seed） |
 | dsh 进程常驻内存 | RSS ~185MB |
 | 首页 HTTP | 200，14.5KB |
-| `@deepseek-ai/dsh` 依赖 | 453 包，275MB，装 13 分钟 |
-| Node 24.20.0 二进制 | 116MB |
-| 运行时合计 | 见下方「待办」中的实测结论 |
+| `@deepseek-ai/dsh` 依赖 | 453 包，275MB，装 10-13 分钟 |
+| 内嵌 Node 24.20.0 | 129MB |
+| **运行时合计** | **403MB**（`resources/dsh-runtime/`） |
+| afterPack 拷贝耗时 | 14.7s（417MB） |
+
+### 已完成的验证
+
+1. **无系统 Node 可用性**（本功能的核心验收点）
+   `env -i HOME=… DSH_HOME=… <内嵌node> <dsh bin> web --no-open --port 0`
+   —— 清空 PATH、不依赖系统任何 Node，启动成功，stdout 出 `dsh web: http://127.0.0.1:57486`，`curl` 200。
+2. **打包位置副本同样可用**：用模拟 context 调 `afterPackHook`，把运行时拷进
+   `<app>/Contents/Resources/dsh-runtime/`，执行位保留（`-rwxr-xr-x`），再次 `env -i` 启动成功、HTTP 200。
+3. **webpack 编译通过**（`node .electron-vue/build.js`，exit 0）；`npm run lint` 无告警。
 
 ## 待办 / 阻塞
 
-- 本机 `npm run dev` 起应用，点侧边栏 Harness 入口，确认能出 dsh 界面
-- 跑一次 `npm run build:dir`，确认 afterPack 把运行时拷进产物、内嵌 Node 有执行位
-- 在**没装 Node 的机器**上验证安装包（这是本功能的验收标准）
+- **GUI 自测未做**：需要 `npm run dev:test` 起应用，登录后点侧边栏「Harness」，确认能出 dsh 界面。
+  代码路径已编译通过，但界面层没有人眼验证过。
+- 完整 `electron-builder` 打包未跑通：它会先 `npm rebuild leveldown sqlite3` 重编译原生模块，
+  与本仓库「禁止重装 pc 端依赖」冲突且极慢（本机 Node 24 也不是仓库要求的 Node 14）。
+  **需要在正常构建机（Node 14.21.3）上跑一次 `npm run pack:mac-test` 验证**。
+  afterPack 逻辑本身已单独验证过，风险点只在 electron-builder 整体流程。
+- 在**没装 Node 的机器**上验证安装包（最终验收标准）
 - 体积优化：275MB 里有约 120-150MB 是用不到的东西（别家模型 SDK、sharp、Web UI trajectory 包、全平台 node-pty prebuilds），可裁。**先保证能跑，裁剪单独做一轮并回归**
 - 模型端点与凭据：默认打公网 `platform.deepseek.com`，内网可用性与合规待确认
 - 安全：dsh 能跑 shell 改文件，装进员工客户端等于开了本地任意代码执行面。需要产品/安全过一轮审批策略（见 spec 第五节）
