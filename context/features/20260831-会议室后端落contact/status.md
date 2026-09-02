@@ -1,6 +1,6 @@
 # Status：会议室后端落 contact
 
-> 最后更新：2026-09-02（并发抢订：行锁有效但 RR 快照会双订；已改 READ_COMMITTED + overlap FOR UPDATE）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（收尾：code-status 刷新；正式预定 M4010 有 toast，race 页没有）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -27,7 +27,8 @@
 
 - ~~(meeting web) Task 12 未做~~ **本机已做**：module 路径 PUT/DELETE→POST；Vite `/meetingApi/agent`→Node 3100，其余 `/meetingApi` rewrite 成 `/meetingRoom` 打 7004；query 鉴权 `zxAccountId`/`zxCorpId`/`zxClientType=app`。网关映射仍待运维，不阻塞本机
 - (meeting) 助手芯片「我今天有哪些会 / 取消最近一场」仍打 Node，但 LLM 只有 `search_availability`，取消会口头拒绝；找空闲确认预定已写入 Java MySQL（`李权泓预定的会议`），SQLite 无对应行
-- (meeting) 仓库脏区 77 项与前端重构/位置描述等混在一起，**Task 12 尚未单独 commit**；contact 仅本地追加 `meeting.admin.userIds`，不要提交密码
+- (meeting web) 正式预定提交失败会 toast 后端 `msg`（`M4010` →「该时段已被占用」），表单红字同步。`/meeting/race` 只写日志与判定，不弹 toast（开发页）。
+- (meeting) 仓库脏区 85 项与前端重构/位置描述等混在一起，**race 页与 Task 12 尚未单独 commit**；contact 的 `application.properties` 勿提交
 - (阻塞分期 4) 管理员判定仍待定：目前只读 `meeting.admin.userIds`（`ConfigMeetingAdminChecker`）。2026-09-01 问后端同事，问题清单见 spec「管理员判定」
 - (运维) 网关 `/meetingApi` → `zx-contact` 的前缀映射待确认，不阻塞 Java 开发
 - (contact) `MeetingUserResolver.dept` 先空字符串（仓库没有 DeptUserMapper）
@@ -35,16 +36,17 @@
 
 ## 本回合各端现状（code-status）
 
-做了并发抢订：HTTP 双 POST 先双双 `M0000`；修隔离后再测一成一败。meeting 加了 `/meeting/race`。contact 已重打 jar 并重启 7004。**不要提交** `application.properties`。
+`scripts/code-status.sh` 2026-09-02 13:01 左右：context `main` ahead 136 **干净**（上一笔 `1e14b55`）。本回合 apps 仍脏：meeting race 页、contact `BookingService` 隔离修复。智信四端本功能未动。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| meeting | main | ahead 4 | 脏(85) | **本功能** + 前端重构混杂 | 含 race 页；勿整仓提交 |
-| contact | feat/meetingroom | 无 upstream | 脏(2) | **本功能** | `BookingService` 隔离修复；properties 勿提交 |
+| meeting | main | ahead 4 | 脏(85) | **本功能** + 前端重构/位置描述混杂 | race 页未单独 commit；勿整仓提交 |
+| contact | feat/meetingroom | 无 upstream | 脏(2) | **本功能** | `BookingService.java`；`application.properties` 勿提交 |
+| context | main | ahead 136 | 干净→本收尾再提交 | **本功能** | — |
 | web | feat/data-scope-storage-group | synced | 干净 | 旁路 | 本回合未改 |
 | android | master-3.6.23 | synced | 干净 | 旁路 | — |
 | ios | feat/ios-agent-date-range | synced | 干净 | 旁路 | — |
-| desktop | master-3.4.27 | synced | 脏(3) | 旁路 | 本地调试勿提交 |
+| desktop | master-3.4.27 | synced | 脏(3) | 旁路 | `.env.test` 等本地调试勿提交 |
 
 ## 验证
 
