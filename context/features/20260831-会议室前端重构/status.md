@@ -1,6 +1,6 @@
 # Status：会议室前端重构
 
-> 最后更新：2026-09-01（meeting 脏区仍在；`pnpm test` web 115 / server 125 全绿）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（首屏加载改为全屏；底栏/助手等数据到了再渲染）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -17,11 +17,26 @@ android / ios / desktop 不单独立项：会议室以内嵌 WebView 复用 meet
 
 ## 本回合各端现状（code-status）
 
+本回合修 PC 看板首屏：`loading && 无房间` 时只渲染 `AcPageLoading`（`fullScreen` + `fixed inset-0 z-50`），底栏/时间轴/助手用 `v-else`。浏览器 Slow 请求下 a11y 树只有「数据加载中...」；接口回来后底栏、A401、助手芯片都在。
+
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| meeting | main | ahead 4 | 脏(77) | **本功能** + 位置描述 + 切 Java | chrome/tokens/base 组件仍未提交；勿整仓 add |
+| meeting | main | ahead 4 | 脏(多) | **本功能** + 位置描述 + 切 Java | 本回合只动 `BookingBoardPage` / 已有 `AcPageLoading.fullScreen`；勿整仓 add |
 | contact | feat/meetingroom | 无 upstream | 脏(1) | 会议室后端落contact | 管理员白名单，不归本功能 |
-| web | feat/data-scope-storage-group | synced | 脏(12) | 数据范围周工作 | 不归本功能 |
+
+## 本次改动
+
+**apps/meeting web**
+
+| 文件 | 改动 |
+|------|------|
+| `BookingBoardPage.vue` | 首屏 `bootLoading` 时不挂底栏/助手；加载层 `full-screen` |
+| `AcPageLoading` | 已有 `fullScreen` → `fixed inset-0 z-50`（本回合接上） |
+
+## 待办 / 阻塞
+
+- (web) 设计系统重构（admin chrome、tokens、base 组件）仍有未提交脏区，且与位置描述、Task 12 混在同一工作区
+- (web) 引导五步 / 主按钮预约本功能未在本回合重新点；助手找空闲已在切 Java 联调里点过（写入的是 MySQL）
 
 meeting 工作区脏。2026-09-01 `pnpm test`：server 125、web 115，含 `time.test.js` 24 条，全绿。类型检查通过。
 
@@ -42,11 +57,6 @@ meeting 工作区脏。2026-09-01 `pnpm test`：server 125、web 115，含 `time
 2026-08-31 助手查空档无命中（「没有符合条件的空档」）3 秒后回到快捷指令默认态；补信息类 need_more 不自动收起。浏览器注入该文案：0.5s 仍显示，~3.3s 芯片回来。
 
 未提交清单（`apps/meeting`）含上一轮设计系统脏区，以及本轮 `PcTimelineBoard.vue` / `CreateScheduleModal.vue` / `DateTimeRangeField.vue` / `bookingDefaults.js` / `datetimeRange.js` / `booking.css`。
-
-## 待办 / 阻塞
-
-- (web) 设计系统重构（admin chrome、tokens、base 组件）仍有未提交脏区，且与位置描述、Task 12 混在同一工作区
-- (web) 引导五步 / 主按钮预约本功能未在本回合重新点；助手找空闲已在切 Java 联调里点过（写入的是 MySQL）
 
 ## 关键决策记录
 
