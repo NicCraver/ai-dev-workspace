@@ -14,7 +14,7 @@
 - 分流：**自己发 + ActionCard**。不要用 `fixTaskMessage`——逐条转发会抹掉这个字段，转发后的 AI 卡会丢浅底。
 - 普通自己发：PC `#CCE0FE`，安卓 / iOS `#DEE8FF`。收到仍白。外协绿气泡不动。
 - 自己发 ActionCard：卡体 `#F0F5FF`，卡头 `#D7E5FF`（比体深一档），描边 `1px solid #F4F6F8`。
-- 阴影目前只在 PC：卡体外壳 `0 0 4px rgba(31,35,41,.1)`。安卓 / iOS 还没有。web 个人 AI 框白卡本身没有 box-shadow。
+- 阴影目前只在 PC：`0 0 4px rgba(31,35,41,.1)`。卡体外壳不能 `overflow:hidden`（会连阴影一起裁），内容圆角裁切放内层。左右各留 4px，避免会话列表横裁。安卓 / iOS 还没有。
 - markdown 里的半透明黑（表格线 / 代码 / 引用）不跟着气泡改。
 
 ## 各端实现要点

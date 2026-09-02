@@ -1,6 +1,6 @@
 # Status：三端 markdown 标题上蓝 + 自己发气泡分流
 
-> 最后更新：2026-09-02（PC ActionCard 卡体加阴影）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（PC 阴影左右被 overflow 裁切，卡体外壳改 visible + 左右留 4px）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 2026-09-01 把所有自己发气泡调浅到 `#F0F5FF`。2026-09-02 按验收收窄：
 
@@ -59,7 +59,7 @@
 ## 关键决策记录
 
 - 2026-09-02 分流 = **自己发 + ActionCard**，不用 `fixTaskMessage`（转发会抹掉）
-- 2026-09-02 不做全端阴影。web `BaseMsgCard` 白卡只有描边；**PC 卡体后加** `0 0 4px rgba(31,35,41,.1)`，安卓 / iOS 仍无阴影
+- 2026-09-02 PC 卡片阴影左右看不见：`.msg-box` 的 `overflow:hidden` + 圆角会裁自身 box-shadow；会话列表 `overflow-x:hidden` 再切贴边的 4px。卡体改为 `overflow:visible`，左右 `margin: 0 4px`，圆角裁切下放到内部 `.msg-actioncard`
 - 2026-09-01 标题只染 H1–H4（仍有效）
 - 2026-09-01 PC 自己发气泡色有两层：`chat-box.vue` 的 `!important` 才是真生效（仍有效）
 - 2026-09-01 安卓不改 `color_DEE8FF` 资源，只改那张历史命名 drawable 的 solid（仍有效；浅底改走新 drawable）
