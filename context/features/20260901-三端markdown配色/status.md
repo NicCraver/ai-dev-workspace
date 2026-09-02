@@ -59,7 +59,7 @@
 ## 关键决策记录
 
 - 2026-09-02 分流 = **自己发 + ActionCard**，不用 `fixTaskMessage`（转发会抹掉）
-- 2026-09-02 PC 卡片阴影左右看不见：`.msg-box` 的 `overflow:hidden` + 圆角会裁自身 box-shadow；会话列表 `overflow-x:hidden` 再切贴边的 4px。卡体改为 `overflow:visible`，左右 `margin: 0 4px`，圆角裁切下放到内部 `.msg-actioncard`
+- 2026-09-02 PC 卡片阴影贴边看不见：`.msg-box` 的 `overflow:hidden` + 圆角会裁自身 box-shadow；会话列表 `overflow-x:hidden` 再切贴边。卡体 `overflow:visible`，四边 `margin: 4px`，圆角裁切下放到内部 `.msg-actioncard`。上阴影原先只有左右留空，紧贴时间条会被盖住。
 - 2026-09-01 标题只染 H1–H4（仍有效）
 - 2026-09-01 PC 自己发气泡色有两层：`chat-box.vue` 的 `!important` 才是真生效（仍有效）
 - 2026-09-01 安卓不改 `color_DEE8FF` 资源，只改那张历史命名 drawable 的 solid（仍有效；浅底改走新 drawable）
