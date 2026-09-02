@@ -110,3 +110,18 @@ URL 引导一次后写入 session（`zxAccountId` / `meetingCorpId`），后续�
 - 冲突码 `M4010`，服务端文案「该时段已被占用」；看板 UI 可能再拼占用者姓名，不要当成契约变了。
 - 被设施引用的字典不能删（提示含引用房间数）；非本人改/释放预定 → `M4004`「预定不存在」（不是 `M4003`）。
 - 多日预定任一天冲突则整批不落库：冲突日看板 `busyEvents` 必须仍空。
+
+## 并发抢同一时段
+
+会议室行 `SELECT ... FOR UPDATE` **能**让后来者等到先到者提交。但 InnoDB 默认 **REPEATABLE READ** 下，`findOverlap` 若是普通 SELECT，读的是事务开始时的快照：后来者拿到行锁后仍看到「无人占用」，两人都会 `M0000`。
+
+本机 2026-09-02 双 POST 打 `/bookings/create` 已复现（同一 `A401` 08:00-08:30 两条记录）。日志里后来者的 `lockRoom` 确实等到先到者 `Committing` 之后才 `Total: 1`，紧接着 overlap `Total: 0`。
+
+处理：
+
+- `create` / `update` 事务隔离改为 `READ_COMMITTED`
+- `findOverlap` 末尾加 `FOR UPDATE`（加锁读看到已提交行）
+
+验收：两人同时订同一空档 → 一个 `M0000`、一个 `M4010`「该时段已被占用」。前端并发页 `/meeting/race`（演示门户入口「并发抢订测试」）两个 iframe 同时 POST。
+
+`meeting_booking` 仍无区间唯一约束，多实例靠行锁 + 读已提交；DDL 兜底以后再补。

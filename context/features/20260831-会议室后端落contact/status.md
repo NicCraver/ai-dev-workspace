@@ -1,6 +1,6 @@
 # Status：会议室后端落 contact
 
-> 最后更新：2026-09-02（本机再起 Java jar + Vite；swagger/`/me` 200；apps 仍未单独 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-02（并发抢订：行锁有效但 RR 快照会双订；已改 READ_COMMITTED + overlap FOR UPDATE）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -16,14 +16,14 @@
 | 错误码与域内异常信封（Task 1） | ✅ | — |
 | 建表 + 实体/Mapper + 字典 CRUD | ✅ | — |
 | 会议室 CRUD + 列表过滤分页 | ✅ | — |
-| 看板 + 冲突检测 + 预定创建（批次事务） | ✅ | — |
+| 看板 + 冲突检测 + 预定创建（批次事务） | ✅ 并发隔离已补 | ✅ `/meeting/race` 双页抢订 |
 | 修改 / 释放 / 审计 / 管理员列表 | ✅ | — |
 | 切 baseURL 与路径、逐屏联调 | — | ✅ 本机 `/meeting/`；PC `/meeting/zx/` 未单独点 |
 
 ## 待办 / 阻塞
 
 - (contact, 需外部确认) surefire 已圈定 `com/zgiot/zx/meetingroom/**`，但 `pom.xml` 仍解除了父 POM 的 `maven.test.skip`。**上线前问后端同事父 POM 为什么焊死跳过测试**，确认这个改动可接受
-- (contact) 唯一没修的一条：`meeting_booking` 没有数据库层唯一约束，防并发靠 `SELECT ... FOR UPDATE` 行锁。多实例部署下有效（同一行锁在 MySQL 上），但 DDL 兜底更稳，视上线节奏再补
+- (contact) `meeting_booking` 仍无区间唯一约束。行锁能串行化，但 **REPEATABLE READ + 普通 SELECT 会双订**（2026-09-02 已复现）。本机已改 `READ_COMMITTED` + overlap `FOR UPDATE`；DDL 兜底仍视上线节奏再补。**apps/contact 的 BookingService 尚未单独 commit**
 
 - ~~(meeting web) Task 12 未做~~ **本机已做**：module 路径 PUT/DELETE→POST；Vite `/meetingApi/agent`→Node 3100，其余 `/meetingApi` rewrite 成 `/meetingRoom` 打 7004；query 鉴权 `zxAccountId`/`zxCorpId`/`zxClientType=app`。网关映射仍待运维，不阻塞本机
 - (meeting) 助手芯片「我今天有哪些会 / 取消最近一场」仍打 Node，但 LLM 只有 `search_availability`，取消会口头拒绝；找空闲确认预定已写入 Java MySQL（`李权泓预定的会议`），SQLite 无对应行
@@ -35,25 +35,31 @@
 
 ## 本回合各端现状（code-status）
 
-本回合没改业务代码：起 `zx-contact` jar（7004，不注册 Eureka）+ `pnpm dev:web`（6273）。`/swagger-ui.html` 与 `/meetingRoom/me` 均 200。Node 助手（3100）未起。meeting / contact 脏区仍是 09-01 未拆的提交，不是本回合新改的。
+做了并发抢订：HTTP 双 POST 先双双 `M0000`；修隔离后再测一成一败。meeting 加了 `/meeting/race`。contact 已重打 jar 并重启 7004。**不要提交** `application.properties`。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| meeting | main | ahead 4 | 脏(77) | **本功能** + 前端重构 + 位置描述混杂 | 勿整仓提交 |
-| contact | feat/meetingroom | 无 upstream | 脏(1) | **本功能** | 仅 `application.properties` 的 `meeting.admin.userIds`，勿提交 |
+| meeting | main | ahead 4 | 脏(85) | **本功能** + 前端重构混杂 | 含 race 页；勿整仓提交 |
+| contact | feat/meetingroom | 无 upstream | 脏(2) | **本功能** | `BookingService` 隔离修复；properties 勿提交 |
 | web | feat/data-scope-storage-group | synced | 干净 | 旁路 | 本回合未改 |
 | android | master-3.6.23 | synced | 干净 | 旁路 | — |
 | ios | feat/ios-agent-date-range | synced | 干净 | 旁路 | — |
-| desktop | master-3.4.27 | synced | 脏(3) | 旁路 | `.env.test` / `electron-builder.yml` / `package.json` 本地调试勿提交 |
+| desktop | master-3.4.27 | synced | 脏(3) | 旁路 | 本地调试勿提交 |
 
 ## 验证
 
 ```
+# 2026-09-02 并发抢订
+apps/contact  重打 jar 并重启 7004（BookingService READ_COMMITTED + overlap FOR UPDATE）
+  修复前：两线程同时 POST 同一空档 → 两个 M0000（行锁等到了，overlap 仍 Total:0）
+  修复后：M0000 + M4010「该时段已被占用」
+apps/meeting  web 122 pass；浏览器 /meeting/race 两个 iframe 同时预定 → 「锁生效」
+apps/meeting  pnpm dev:web 6273；Node 助手 3100 仍在
+
 # 2026-09-02 本机再起服务（未重跑单测）
-apps/contact  java -jar target/zx-contact-1.0.0.jar（9-01 已打的包）
+apps/contact  java -jar target/zx-contact-1.0.0.jar（后被本回合重打覆盖）
   swagger-ui.html → 200；GET /meetingRoom/me?zxAccountId=…&zxCorpId=6&zxClientType=app → 200
 apps/meeting  pnpm dev:web → http://localhost:6273/meeting/  ready
-  助手仍代理 localhost:3100，本回合未起 Node
 
 # 2026-09-01 本机再跑
 apps/contact  JAVA_HOME=corretto-1.8  mvn -o test
@@ -108,3 +114,4 @@ apps/meeting  pnpm typecheck  （server tsc + web vue-tsc）通过
 - 2026-08-31 Task 1 实测：`zx-parent` 焊死 `maven.test.skip` + surefire `skipTests`，contact `pom.xml` 改成属性后 `mvn -o test` 才能跑；`GlobalExceptionAdvice.handleException(Exception)` 按 Advice 注册顺序会先于域内 handler 把异常收成 `M5002`，所以 `MeetingExceptionHandler` 加了 `@Order(HIGHEST_PRECEDENCE)`
 - 2026-09-01 Task 14 实测：`@WebMvcTest` 会因 `@ComponentScan`/`@EnableFeignClients` 拉全量上下文，Controller 测试改 `MockMvcBuilders.standaloneSetup` + `setControllerAdvice(MeetingExceptionHandler)`
 - 2026-09-01 Task 12：前端 base 仍 `/meetingApi`；本机把 `/meetingApi/agent` 留给 Node，其余改写成 `/meetingRoom` 打 7004。鉴权用 query 三参数，不用 Node 的 `zxUserId` header
+- 2026-09-02 并发：只锁会议室行不够。RR 下 overlap 必须加锁读或事务改 READ_COMMITTED，否则后来者等到锁仍双订
