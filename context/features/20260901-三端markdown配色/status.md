@@ -6,7 +6,7 @@
 
 1. markdown 标题 H1–H4 `#3E7EFF` 不动。
 2. 普通自己发言退回线上色（PC `#CCE0FE`，安卓 / iOS `#DEE8FF`）。
-3. 自己发的 ActionCard（转发 AI 回复、定时用我身份）保留卡体 `#F0F5FF` + 卡头 `#D7E5FF`，并加 `1px #F4F6F8` 描边。PC 卡体另加 `0 0 8px rgba(31,35,41,.06)` 阴影（安卓 / iOS 尚未加）。
+3. 自己发的 ActionCard（转发 AI 回复、定时用我身份）保留卡体 `#F0F5FF` + 卡头 `#D7E5FF`，并加 `1px #F4F6F8` 描边。PC 卡体另加 `0 0 4px rgba(31,35,41,.1)` 阴影（安卓 / iOS 尚未加）。
 
 ## 平台矩阵
 
@@ -15,7 +15,7 @@
 | 标题色（H1–H4 → `#3E7EFF`） | 基准 | ✅ | ✅ | ✅ |
 | 普通自己发退回线上色 | — | 🚧 已 push `9a3b6d172`，待真机 | 🚧 已 push `6e964addc`，待真机 | 🚧 已 push `0d00470c`，待热更新 |
 | 自己发 ActionCard 浅底 + `#F4F6F8` 描边 | 描边基准 | 🚧 同左 | 🚧 同左 | 🚧 同左 |
-| 自己发 ActionCard 卡体阴影 | — | ⬜ | ⬜ | 🚧 `0 0 8px rgba(31,35,41,.06)` 待热更新 |
+| 自己发 ActionCard 卡体阴影 | — | ⬜ | ⬜ | 🚧 `0 0 4px rgba(31,35,41,.1)` 待热更新 |
 | token 表登记 | ✅ | — | — | — |
 | 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译 | ✅ eslint 无输出 |
 | 运行时验收 | — | ⬜ | ⬜ | ⬜ |
@@ -34,7 +34,7 @@
 
 | 端 | 文件 | 改动 |
 |---|---|---|
-| PC | `chat-box.vue` / `msg-list.vue` / `reply-msg-list.vue` / `winbox-wrapper.vue` | 自己发 ActionCard 卡体加 `box-shadow: 0 0 8px rgba(31,35,41,.06)`；自己发 `.person-message` 放开 overflow，避免裁阴影 |
+| PC | `chat-box.vue` / `msg-list.vue` / `reply-msg-list.vue` / `winbox-wrapper.vue` | 自己发 ActionCard 卡体加 `box-shadow: 0 0 4px rgba(31,35,41,.1)`；自己发 `.person-message` 放开 overflow，避免裁阴影 |
 | PC | `msg-list.vue` / `reply-msg-list.vue` / `winbox-wrapper.vue` | 基底同步；ActionCard 加 `msg-box-actioncard` |
 | PC | `msg-txt-fold-expand.vue` / `msg-reply.vue` | 折叠渐变跟回 `#cce0fe` |
 | 安卓 | `shape_solid_dee8ff_...16dp.xml` | solid 退回 `#DEE8FF` |
@@ -59,7 +59,7 @@
 ## 关键决策记录
 
 - 2026-09-02 分流 = **自己发 + ActionCard**，不用 `fixTaskMessage`（转发会抹掉）
-- 2026-09-02 不做全端阴影。web `BaseMsgCard` 白卡只有描边；**PC 卡体后加** `0 0 8px rgba(31,35,41,.06)`，安卓 / iOS 仍无阴影
+- 2026-09-02 不做全端阴影。web `BaseMsgCard` 白卡只有描边；**PC 卡体后加** `0 0 4px rgba(31,35,41,.1)`，安卓 / iOS 仍无阴影
 - 2026-09-01 标题只染 H1–H4（仍有效）
 - 2026-09-01 PC 自己发气泡色有两层：`chat-box.vue` 的 `!important` 才是真生效（仍有效）
 - 2026-09-01 安卓不改 `color_DEE8FF` 资源，只改那张历史命名 drawable 的 solid（仍有效；浅底改走新 drawable）
