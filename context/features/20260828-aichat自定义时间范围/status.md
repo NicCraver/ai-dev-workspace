@@ -1,6 +1,6 @@
 # Status：aichat自定义时间范围
 
-> 最后更新：2026-09-01（iOS 回填改动已随 `7a96ed086` squash 并 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-03（**已收尾关闭**：三端改动全部在 origin，用户验收通过）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 分支：web `dev-date-range`（HEAD `17b6fc8`，含自定义时间框常显占位）已 merge 进 `feat/data-scope-storage-group`（`d245908`）｜ ios `feat/ios-agent-date-range` ｜ desktop `feat/ai-chat-date-range`
 
@@ -12,13 +12,13 @@
 |------|-----|---------|-----|---------|
 | 记忆条自定义档 + /date-range 页 | ✅ | ✅ | ✅ | ✅ |
 | 宿主回传桥接 | ✅ 修 wnsdk 通路（实例注入 + 载荷**平铺**） | ✅ window.WebView | ✅ 平铺优先 + data/success 嵌套兼容 | ✅ parent.postMessage |
-| 自定义档选项行 UI（常驻区间框 + 占位） | 🚧 `17b6fc8` 已合入数据范围分支，未页面自测 | ✅ 占位「请选择时间」+ 紧贴档名 | ✅ 占位 | ⬜ 无值时仍不显框 |
+| 自定义档选项行 UI（常驻区间框 + 占位） | ✅ `17b6fc8` 已合入数据范围分支 | ✅ 占位「请选择时间」+ 紧贴档名 | ✅ 占位 | ⬜ 无值时仍不显框（有意分叉，见遗留） |
 | 区间文案（移动端口径：跨年两端带年 + 月日补零） | — 保持原口径，未动 | ✅ DateRangeTextUtil | ✅ ZXAIAgentTimeData | — 保持原口径，未动 |
 | 弹层宽度按内容自适应 | — | ✅ 本就 WRAP_CONTENT | ✅ 时间/知识类型两个面板 | — |
 | 记忆 save/get 对照安卓补齐 | — | 参照源 | ✅ 4 处（详见 impl-notes） | — |
 | 单测 | ✅ host-bridge 9 例 | — | — | — |
-| 真机自测 | ⬜ 未自测（代码已改完） | 🚧 时间弹层关闭待复验 | 🚧 回填修复待复验 | ✅ 同事已过 |
-| 「请选择时间」打开 webview 不回填旧区间 | — | ✅ 仅 timeType=0 带 query | 🚧 代码已随 `7a96ed086` push，待真机 | — |
+| 真机自测 | ✅ 用户验收通过 | ✅ 用户验收通过 | ✅ 用户验收通过 | ✅ 同事已过 |
+| 「请选择时间」打开 webview 不回填旧区间 | — | ✅ 仅 timeType=0 带 query | ✅ `7a96ed086`，验收通过 | — |
 
 > 本迭代只动桥接层；功能主体（timeType=0 落库、载荷上送）此前已完成。
 
@@ -28,16 +28,16 @@
 
 ## 遗留（不阻塞收尾）
 
-- (web) 未做页面自测：确认后筛选条是「自定义」、再打开列表应仍选中自定义（不要回到近一周）。
-  代码已修并有单测覆盖归一逻辑，只差人跑一遍页面。
+> 2026-09-03 收尾：三端真机验收通过，功能从 ACTIVE 移除。commit 落点已核：安卓 `ab9b723b0` 在
+> `origin/master-3.6.23`；iOS `7a96ed086` 在 `origin/master-3.5.32`；web `17b6fc8` 已随
+> `feat/data-scope-storage-group` push。下面几条是有意保留的口径差异 / 未跑的辅助命令，不阻塞。
+
 - (web) 本地 node_modules 缺 prettier，`pnpm format` 未跑（`vue-tsc --noEmit` 已过，退出 0）。
 - (web/pc) 待定：无区间时是否也常驻显示占位框，与安卓/iOS 拉齐（当前 `v-if="hasRange"` 隐藏）。
   区间文案口径同理有意分叉（移动端整体判当年 + 补零），要不要拉齐是产品决定。
 - (ios) 2026-08-31：占位「请选择时间」打开 /date-range 回填旧区间——回填判据改为与框内文案一致（当前档=自定义 **且** 框里有区间文案才带 start/end）；get 回填非有效自定义时清掉本地旧区间。待真机确认日历为未选。
 - (ios) 并发 get 无 generation 防护（安卓有），快速连点数据胶囊理论上会被旧响应回写。详见 impl-notes。
-- **未 push**：android `master-3.6.23` ahead 3（含本功能 `ab9b723b0`，另有脏 5）。
-  iOS `feat/ios-agent-date-range` 已 synced（`7a96ed086`）。
-  web `dev-date-range` 已在 origin（`17b6fc8`），并已合入 `feat/data-scope-storage-group`。
+- ~~未 push~~ 2026-09-03 已核：三端 commit 全部在 origin（见上方收尾说明）。
 
 ## 关键决策记录
 
