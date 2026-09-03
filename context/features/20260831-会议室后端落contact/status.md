@@ -38,6 +38,12 @@
 
 `scripts/code-status.sh` 2026-09-02 13:01 左右：context `main` ahead 136 **干净**（上一笔 `1e14b55`）。本回合 apps 仍脏：meeting race 页、contact `BookingService` 隔离修复。智信四端本功能未动。
 
+**2026-09-03 复核（纯文档回合，未动任何 apps 代码）**：重跑 `scripts/code-status.sh`，脏区原样没变——
+meeting `main` ahead 4 / 脏 85，contact `feat/meetingroom` **仍无 upstream** / 脏 2（`BookingService.java`
++ `application.properties`）。即本功能的服务端改动至今**一次都没提交、没 push**，是当前最大的落地风险；
+`meeting_booking` 的区间唯一约束同样还没补。本回合只做了 9 个已验收功能的 status 收尾并从 ACTIVE 移除，
+context 已 push 到 `origin/main`。
+
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
 | meeting | main | ahead 4 | 脏(85) | **本功能** + 前端重构/位置描述混杂 | race 页未单独 commit；勿整仓提交 |
