@@ -14,10 +14,10 @@
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 根因定位（三端行为对比） | — | ✅ | ✅ | ✅ |
-| 去掉 20000 字符上限 | — | — | 🚧 代码改完，未编译 | ✅ 已提交 push |
+| 去掉 20000 字符上限 | — | — | ✅ 已提交 push | ✅ 已提交 push |
 | 单测调整（超长渲染 + escapeHtml 覆盖） | — | — | — | ✅ 51 passed |
 | lint | — | — | — | ✅ 无告警 |
-| 运行时自测（会话内 + 合并转发详情） | — | — | ⬜ | 🚧 dev:prod 已起，用户看效果中 |
+| 运行时自测（会话内 + 合并转发详情） | — | — | ✅ 用户验收通过 | 🚧 dev:prod 跑过，用户未明确反馈渲染结果 |
 
 安卓本回合只读代码做对比，未改（其卡片主路径本就没有这道闸）。web 不涉及。
 iOS 于 2026-09-03 追加：新分支 `fix/ios-markdown-length-limit`（自 `master-3.5.32`），去掉同一道闸——
@@ -55,7 +55,7 @@ iOS 超长退的是老正则，**老正则不认表格**，长文档里的表格
 | 端 | 分支 | 脏区 | 说明 |
 |---|---|---|---|
 | desktop | `master-3.4.27` | 仅本地调试 3 件 | `3570d8c5` 已 push。rebase 上游 `20edf0e4`（3.4.26→3.4.27）时 `package.json` 冲突，按本地调试约定解成 `name=zhixin-test` / `version=3.4.27-test`，**未 stage 未提交** |
-| ios | `fix/ios-markdown-length-limit`（自 `master-3.5.32`） | `ZXMarkdownManager.h/.m` 本次改动 + `project.pbxproj`（Xcode 打开时自动重排的噪声，勿提交） | 未提交。本仓库约定 AI 不跑 xcodebuild，编译与自测由人工在 Xcode 完成 |
+| ios | `fix/ios-markdown-length-limit`（自 `master-3.5.32`） | 仅 `project.pbxproj`（Xcode 打开时自动重排的噪声，未提交） | `9d389e3d7` 已 push，两个文件。编译与验收由用户在 Xcode 完成 |
 | android | 未切换 | 未改 | 仅读代码做行为对比 |
 | context | main | 本功能文档 | |
 
@@ -65,5 +65,6 @@ iOS 超长退的是老正则，**老正则不认表格**，长文档里的表格
 - **兜底走错分支的老问题仍在**（本次只按用户要求去上限）：`msg-actioncard.vue:209` / `msg-reply-poll.vue:136` 的 `isMarkdownText` 只判 `isMarkdown()`，不看 `USE_MARKDOWN` 也不看异常，解析异常时依旧「转义原文 + 无 `pre-wrap`」＝换行塌。建议后续导出 `shouldRenderMarkdown()` 统一判据。
 - **上不封顶的风险**：AI 生成长度没有天花板，10 万字级别只测了解析耗时，没测真实 DOM 排版。滚动明显顿的话再定一个大上限（如 20 万字）。
 - **安全**：`markdown-it` 开 `html: true` 不做 sanitize。以前超长正文被兜底顺手转义，现在与短文一致原样透传——不是新洞，是把短文早有的面扩到长文，需产品/安全知情。
-- **iOS 未编译未自测**：`ZXMarkdownManager.h/.m` 改完但没构建（仓库约定 AI 不跑 xcodebuild）。人工在 Xcode 用 `zhixinAppTest` + iPhone 15/iOS 17 clean build，拿同一条长文档看：表格出来没有、角标/插图占位符没漏、折叠展开正常。
-- **iOS 性能未量**：PC 侧只证明了 markdown-it 解析便宜，iOS 是 cmark + NSAttributedString + TextKit 排版，长文在 cell 里的构建耗时没测。自测时留意长文卡片首次出现和列表滚动是否卡顿。
+- ~~iOS 未编译未自测~~ 2026-09-03 用户在 Xcode 编译并验收通过，`9d389e3d7` 已 push。
+- **iOS 性能未量**：PC 侧只证明了 markdown-it 解析便宜，iOS 是 cmark + NSAttributedString + TextKit 排版，长文在 cell 里的构建耗时没单独量过（验收时未反馈卡顿）。极端长度（10 万字级）仍是未知数。
+- **PC 运行时自测结论未记**：`dev:prod` 跑过、用户看过，但没明确说渲染是否正确，矩阵那格仍挂 🚧。
