@@ -193,7 +193,10 @@ interface SegmentPostProcessor { CharSequence process(Spanned rendered); }
 两端一致：
 
 1. 解析异常 → 静默回退纯文本（PC 返回**转义后**的原文，不是空串），只打日志
-2. 正文 > 20000 字符 → 直接走纯文本
+2. ~~正文 > 20000 字符 → 直接走纯文本~~ **2026-09-03 PC 已去掉这条上限**，见
+   `20260903-pc-markdown长文渲染上限`。该兜底的呈现方式本身是坏的（转义原文经 v-html
+   塞进不保留空白的容器，换行全塌）；且安卓 AI 卡片主路径压根没接这道上限，只有
+   `renderSafely` 和流式渲染在用。iOS 仍保留 20000（超长退老正则，样式尚存）。
 3. 留一个开关常量（PC `USE_MARKDOWN`，安卓 `ZXMarkwonFactory.USE_MARKDOWN`），线上出问题不发版可回退
 
 安卓 AI 分支外层本来就有 `try/catch` 回退纯文本，`renderSafely` 是给另外两条渲染路径补的。
