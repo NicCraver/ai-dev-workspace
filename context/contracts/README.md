@@ -30,6 +30,7 @@ contracts/
 │  ├─ aiRobtChat.d.ts           # POST /v1/aiRobtChat（@智能体旁路）
 │  ├─ saveDataRange.d.ts        # POST /agentSetDataRangeExpand/saveDataRange
 │  ├─ getAgentDataRange.d.ts    # POST /agentSetDataRangeExpand/getAgentDataRange
+│  ├─ weekWorkDataRangeTree.d.ts # POST /corpPlateAccountRel/weekWorkDataRangeTree
 │  ├─ shareFileData.d.ts        # POST /agentFileShare/shareFileData
 │  ├─ shareFileDataList.d.ts    # POST /agentFileShare/shareFileDataList
 │  ├─ saveAgentSetInfo.d.ts     # POST /agentSetBasic/saveAgentSetInfo
