@@ -29,11 +29,18 @@
 
 | 文件 | 职责 |
 |---|---|
-| `useDataRangePicker.js` | 唯一逻辑源。状态（选中 Set、`extraSelected`、周工作 Set/Map、候选清单、收纳组、展开态、搜索态）+ 派生（计数、三态、`displayList`、`currentSelectableKeys`）+ 行为（`toggleItem` / `toggleStorage` / `toggleExpand` / `toggleSelectAllCurrent` / `onSearchSelect` / `removeItem` / `clearAll` / `selectAllItems` / 周工作三件套 / `buildSubmitPayload`）+ 取数 `load()` |
-| `DataRangeBody.vue` | 整个内容区。一级 tab（知识聊天 / 周工作）、二级 tab、三级胶囊、表头全选、`AiBoxVirtualList`、`OrgPicker`、`WeekWorkPicker`、搜索、已选 chip 弹层 |
-| `tabs.js` | `SCOPE_TABS` / `TABS` / `LIST_TABS`，现在两边各一份 |
+| `useDataRangePicker.js` | 唯一逻辑源。状态（选中 Set、`extraSelected`、周工作 Set/Map、候选清单、收纳组、展开态、搜索态）+ 派生（计数、三态、`displayList`、`currentSelectableKeys`）+ 行为（`toggleItem` / `toggleStorage` / `toggleExpand` / `toggleSelectAllCurrent` / `onSearchSelect` / `removeItem` / `clearAll` / `selectAllItems` / 周工作三件套）+ `init()` / `resetTransient()` / `buildSubmitPayload()` |
+| `DataRangeScopeTabs.vue` | 一级 tab 条（知识聊天 / 周工作）。位置由壳决定：PC 进 `AcDialog #custom-header`，移动进自绘 header |
+| `DataRangeSecretTip.vue` | 涉密说明气泡 |
+| `DataRangeSelectedBar.vue` | 已选计数 + chip 弹层 + 清空按钮（`section="selected" | "clear"` 分两块，PC 要塞进 AcDialog 两个不同 slot） |
+| `DataRangeBody.vue` | 内容区：二级 tab、三级胶囊、表头全选、`AiBoxVirtualList`、`OrgPicker`、`WeekWorkPicker` 挂载、搜索（PC 下拉 / 移动整屏层） |
+| `tabs.js` | `SCOPE_TABS` / `TABS` / `LIST_TABS` / `FALLBACK_SECRET_TIP`，现在两边各一份 |
 
-两个壳瘦身为容器：`SelectDataRangeDialog.vue` = `AcDialog` + `DataRangeBody variant="pc"`；`SelectDataRangePopup.vue` = `XPopup` + `DataRangeBody variant="mobile"`。壳保留各自的 props（`open` / `instant`）与 emit 出口，不含选择逻辑。
+两个壳瘦身为容器：`SelectDataRangeDialog.vue` = `AcDialog` + 四个 slot 装配；`SelectDataRangePopup.vue` = `XPopup` + 自绘 header/footer。壳保留各自的 props（`open` / `instant`）与 emit 出口，不含选择逻辑。
+
+**状态共享方式**：壳里创建 picker 实例，以 `:picker` prop 传给各共用组件（body 与 selected-bar 在 PC 上分处 AcDialog 不同 slot，必须共用同一实例）。不用 provide/inject —— 显式传参更好查。
+
+**依赖注入**：`useDataRangePicker.js` 不 import `@/server/module/personalAiFrame.js`，接口函数由壳作为 `deps` 传入。原因：`node --test` 不解析 vite 的 `@/` 别名，带别名的文件无法被单测直接 import（仓库既有 `useAiBoxPickerData.js` 也守这条）。
 
 ### 形态差异的注入方式
 
@@ -56,17 +63,17 @@
 - body `emit("submit", { scopes, flags })` 冒泡到壳，壳再按自己的协议对外（PC `update:open` 关窗，移动 `emit("submit")` 交给 `xPopupWrapper` resolve）
 - 已选计数 body `emit("update:count", n)`，壳自己渲染 `确定(N)`
 
-### 一级 tab 的归属（有视觉影响）
+### 一级 tab 的归属（写 plan 时修订，已无视觉风险）
 
-「知识、聊天 / 周工作」这条移进 `DataRangeBody` 顶部，PC 壳**不再使用 `AcDialog #custom-header`**。这条现在 PC 在标题栏、移动在自绘 header，是重复最刺眼的一处；不挪就仍要写两遍。
+「知识、聊天 / 周工作」这条抽成独立小件 `DataRangeScopeTabs.vue`，**位置仍由壳决定**：PC 放 `AcDialog #custom-header`，移动放自绘 header。标记只写一次，两端视觉零变动。
 
-代价：PC 上这条从标题栏位置下移到内容区顶部，需用 variant 调 padding / 高度对齐原样。**必须目视回归。**
+> 原方案是把它挪进 `DataRangeBody` 顶部、PC 放弃 `custom-header`，代价是 PC 上这条要从标题栏下移到内容区并调 padding 对齐。抽小件后这个取舍不存在了，作废。
 
-### 初始化时机
+### 初始化时机（写 plan 时修订）
 
-现在 PC 是 `watch(props.open)` 重置 + 取数，移动是 `onMounted`。统一到 body 的 `onMounted`：PC 壳用 `v-if="open"` 让 body 每次打开重建。
+picker 实例建在壳里（body 与 selected-bar 要共用它），初始化时机也就留在壳里：PC `watch(props.open)` 调 `picker.init()`（关闭时调 `resetTransient()`），移动 `onMounted` 调 `picker.init()`。各 3 行。
 
-前置确认：`AcDialog` 是否会提前挂载 content（若默认渲染，需 `destroyOnClose` 或壳内 `v-if`）。
+`AcDialog` 已确认带 `:destroy-on-close="true"`（`AcDialog.vue:5`），PC 每次打开都是新内容树，不需要额外加 `v-if`。
 
 ## 验证
 
@@ -84,7 +91,5 @@
 
 ## 风险
 
-- **一级 tab 位置视觉变化**：唯一会动到 UI 的点，靠目视兜。
-- **`AcDialog` 挂载时机**：若不支持延迟挂载，PC 需在壳里 `v-if`，且要确认关闭动画期间 body 卸载不会闪。
 - **移动搜索层聚焦**：`nextTick` + `searchInputRef.focus()` 从壳挪进 body 后仍要能拉起键盘，真机（iOS webview）验证。
 - 本次改动与活跃功能 `20260901-数据范围选择周工作` 在同一分支同一批文件上，先合一再继续周工作，避免两边各改一遍。
