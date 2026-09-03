@@ -1,6 +1,6 @@
 # Status：三端 markdown 标题上蓝 + 自己发气泡分流
 
-> 最后更新：2026-09-02（iOS 已合入 `master-3.5.32` `abd879309`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-03（安卓阴影改走光晕 9 图；iOS 已合入 `master-3.5.32` `abd879309`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 2026-09-01 把所有自己发气泡调浅到 `#F0F5FF`。2026-09-02 按验收收窄：
 
@@ -15,7 +15,8 @@
 | 标题色（H1–H4 → `#3E7EFF`） | 基准 | ✅ | ✅ | ✅ |
 | 普通自己发退回线上色 | — | 🚧 已 push `9a3b6d172`，待真机 | 🚧 已 push `6e964addc`，待真机 | 🚧 已 push `0d00470c`，待热更新 |
 | 自己发 ActionCard 浅底 + `#F4F6F8` 描边 | 描边基准 | 🚧 同左 | 🚧 同左 | 🚧 同左 |
-| 自己发 ActionCard 卡体阴影 | — | 🚧 4dp ambient，待真机 | 🚧 已合入 `master-3.5.32` `abd879309`，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
+| 自己发 ActionCard 卡体阴影 | — | 🚧 改走光晕 9 图（elevation 方案作废），待真机 | 🚧 已合入 `master-3.5.32` `abd879309`，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
+| 自己发 ActionCard「查看更多」遮罩贴卡体色 | — | 🚧 新建 `#F0F5FF` 渐变，待真机 | 未核 | ✅ `-webkit-mask-image` 渐变透明，天然贴底 |
 | token 表登记 | ✅ | — | — | — |
 | 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译 | ✅ eslint 无输出 |
 | 运行时验收 | — | ⬜ | ⬜ | ⬜ |
@@ -25,12 +26,27 @@
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
 | desktop | master-3.4.27 | synced | 干净（配置信息） | **本功能** | 阴影已 push `0ed5a52e`；`.env.test` 等未提交 |
-| android | master-3.6.23 | synced | 脏(4)：本功能阴影 + 旁路表格/9-patch | **本功能** | 阴影仍未 commit |
+| android | master-3.6.23 | synced | 脏(7)：本功能阴影/遮罩 3 新增 + 2 改 + 旁路表格 | **本功能** | 仍未 commit |
 | ios | master-3.5.32 | synced | 干净 | **本功能** | `abd879309` 已合入功能分支；冲突取新实现并补回高亮 TextView |
 | web | feat/data-scope-storage-group | synced | 干净 | 未改 | 只当描边基准 |
 | context | main | ahead | 本功能 docs | **本功能** | — |
 
-## 本次改动（2026-09-02 阴影移植）
+## 本次改动（2026-09-03 安卓阴影返工 + 折叠遮罩贴卡体色）
+
+真机看到的两个问题：自己发 AI 卡**没有阴影**；「查看更多」遮罩比卡体深，压出一条色带。
+
+| 文件 | 改动 |
+|------|------|
+| `base_util/.../drawable-xxhdpi/zu_zhi_robot_card_own_send_glow.9.png` | 新增。四周 4dp 均匀光晕的 9 图，`rgba(31,35,41,.1)`、sigma 2dp、圆角 16dp（右上直角，跟卡体一致）。生成脚本 `tools/gen_glow_9patch.py`，`aapt singleCrunch` 校验通过 |
+| `base_util/.../drawable/layer_zu_zhi_robot_card_own_send.xml` | 新增。layer-list = 光晕 9 图 + 卡体 shape 内缩 4dp |
+| `base_util/.../drawable/shape_vertical_graduated_trans_to_f0f5ff.xml` | 新增。折叠遮罩渐变末端 `#F0F5FF`，贴自己发卡体 |
+| `ActionCardMessageItemProvider.java` | 自己发组织卡背景换成上面的 layer；`setPadding(4dp)` 让出光晕，其余分支清零；`setExpandBackground` 自己发组织卡改用新渐变；**删掉** elevation 方案（margin / setElevation / ambient 色 / 向上放开 clip 的整套） |
+
+### 为什么放弃 elevation
+
+`setOutlineAmbientShadowColor(0x1A1F2329)`：颜色 alpha 会**乘**在系统本就很淡的 ambient 强度上（ambient 约 4%），10% × 4% ≈ 0.4%，等于没有；spot 又被关掉，所以真机一点阴影都看不见。把 ambient 调成不透明就只能拿到 Material 的默认观感，且 API < 28 根本改不了颜色。9 图把光晕画进 View 自身 bounds 里，顺带解决三件事：不用改父级 clip、不用外扩 margin、API 21 起表现一致。
+
+## 上一轮改动（2026-09-02 阴影移植）
 
 | 端 | 文件 | 改动 |
 |---|---|---|
@@ -43,13 +59,13 @@
 
 - (desktop) 客户端热更新后验：自己发 AI 卡四周浅阴影不被裁切；普通自己发言仍是 `#CCE0FE`、无阴影
 - (ios) 真机再验：别人转发的超高 AI 卡（发送人普通账号、知识来源空）也应自动折并出「查看更多」
-- (android) 真机验：自己发 AI 卡浅底 + 描边 + 四周浅阴影；普通自己发言仍是线上蓝
+- (android) 真机验：自己发 AI 卡浅底 + 描边 + 四周浅阴影（光晕 9 图）；「查看更多」遮罩与卡体同色不留带；卡体因让出 4dp 会比之前窄 8dp，看是否可接受；普通自己发言仍是线上蓝
+- (android) 卡头当前是 `shape_solid_c5d8ff_lefttop_radius_16dp`（#C5D8FF），本功能规则写的是 #D7E5FF。本回合没动，需确认哪个为准
 - (android) 2026-09-02 **自己发「查看更多」蒙层色带（已改代码，请再验）**：气泡 solid 已退回 `#DEE8FF`，但 `zu_zhi_robot_card_more_own_send.9.png` 9/1 仍停在 `#F0F5FF`，会在气泡上压出一条浅色带。已从调浅前提交还原 9-patch。收到消息的白色那张没动。
 - iOS 已合入 `master-3.5.32`（`abd879309`），真机再验阴影、转发卡折叠、高亮居中
-- 安卓阴影仍未 commit；`master-3.6.23` 是联调主干，走 MR，别直推。PC 已按用户指定推到 `master-3.4.27`（`0ed5a52e`）
+- 安卓阴影仍未 commit（`master-3.6.23` 工作区脏）；`master-3.6.23` 是联调主干，走 MR，别直推。PC 已按用户指定推到 `master-3.4.27`（`0ed5a52e`）
 - PC 勿提交 `.env.test` / `electron-builder.yml` / `package.json`（本地仍脏，未进本次提交）
 - 安卓还混着 markdown 表格列宽等旁路脏文件，提交时只挑本功能文件
-- (android) API < 28 没有 ambient/spot 色，会退化成系统默认方向阴影，真机若看起来像「底下一条黑」再改自定义 glow
 
 ## 关键决策记录
 
@@ -61,4 +77,6 @@
 - 2026-09-01 标题只染 H1–H4（仍有效）
 - 2026-09-01 PC 自己发气泡色有两层：`chat-box.vue` 的 `!important` 才是真生效（仍有效）
 - 2026-09-01 安卓不改 `color_DEE8FF` 资源，只改那张历史命名 drawable 的 solid（仍有效；浅底改走新 drawable）
+- 2026-09-03 安卓阴影改 9 图：`setOutlineAmbientShadowColor` 的 alpha 是**乘**在系统 ambient 强度上的，给 10% 等于给 0.4%，看不见。要 PC 那种 `0 0 4px` 均匀 halo 就别用 elevation，画进 9 图
+- 2026-09-03 安卓折叠遮罩要分两张：普通自己发文本贴 `#DEE8FF`（9 图），自己发 ActionCard 贴卡体 `#F0F5FF`（新 xml 渐变）。PC 用 `-webkit-mask-image` 走透明，天然不吃这个坑
 - 2026-09-02 自己发「查看更多」蒙层：PC 渐变已跟回 `#CCE0FE`；安卓真正露出来的是 9-patch `zu_zhi_robot_card_more_own_send`，气泡退回线上后必须把 9-patch 也退回，不能只改 xml 渐变。收到消息仍用白色那张。
