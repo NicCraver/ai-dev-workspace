@@ -6,10 +6,10 @@
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| 周工作 tab + 四级子 tab + mock 列表勾选 | 🚧 界面已写，待打开弹窗目视 | — | — | — |
+| 周工作 tab + 四级子 tab + 列表勾选 | 🚧 界面已写，待打开弹窗目视 | — | — | — |
 | 已选底栏合并（知识聊天 + 周工作） | 🚧 代码已接，待目视 | — | — | — |
 | save 透传记忆中的 weekWork* | ✅ 单测覆盖 | — | — | — |
-| 周工作树真实接口 | 🚧 契约已落，接口模块已提交（`c4f7f87`），尚未接线 | — | — | — |
+| 周工作树真实接口 | ❌ 前端已接完（`a6a24a4`），**后端接口未上线，五个网关前缀全 404** | — | — | — |
 | dataRangeList type=5 控制 tab 显隐 | ⬜ 现常显 | — | — | — |
 | 自测通过 | ⬜ 未在浏览器点开弹窗 | — | — | — |
 
@@ -32,7 +32,9 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
 ## 待办 / 阻塞
 
-- (web) 接线：`src/server/module/corpPlateAccountRel.js` 的 `getWeekWorkDataRangeTree` 已提交但无人调用，`WeekWorkPicker` 仍吃 `weekWorkMock.js`；接线时按契约把四棵树喂进去
+- **❌ 阻塞：后端 `POST /corpPlateAccountRel/weekWorkDataRangeTree` 未上线**。2026-09-03 用真实登录态在 192.168.10.25 试了 `/api/aiBasic`、`/api/contact/v1`、`/api/chat/v1`、`/aiChatApi`、`/api` 五个前缀，全部 404；`apps/contact` 仓库里也搜不到该接口。需要后端确认部署环境与最终路径
+- (web) 接口上线后：拿真回参核对适配层字段映射（现在只经契约验证，未经联调），对不上先改契约再改代码
+- (web) 周工作面板现在**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
 - (web) 接真实接口：按 tab 取对应树，不重复调；`multiCorp=false` 时第一层用 `tree[0].corpPlateList`；attentionTree 平铺
 - (web) 打开弹窗目视：全部胶囊才人+板块一起全选；其他 tab / 胶囊只勾当前列表
 - (web) tab 显隐改为 `dataRangeList` type=5 choose=1 才显示（现常显）
@@ -48,3 +50,6 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 - 2026-09-02 表头全选：只有「全部」tab 的「全部」胶囊才人+含团队工作一起勾；其它只勾当前列表
 - 2026-09-02 web 周工作改动从 `feat/data-scope-storage-group` 拆到 `feat/data-range-week-work`
 - 2026-09-03 树接口契约落地：一次四棵树；授权只在 allTree；「XXX团队工作」前端拼接；team/person 计数前端数节点
+- 2026-09-03 后端字段不直接进组件，中间加 `weekWorkAdapter.js`：界面只认内部节点形状，后端字段变动只改适配层
+- 2026-09-03 节点行标识与选中 key 分开：行用 `kind:id`（企业/板块/部门 id 跨表撞号），选中 key 仍用原始 id（要回传后端）
+- 2026-09-03 接口未上线期间**不回退 mock**，面板显示失败文案——避免假数据被当成联调通过
