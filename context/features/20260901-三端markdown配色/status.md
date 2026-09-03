@@ -15,7 +15,7 @@
 | 标题色（H1–H4 → `#3E7EFF`） | 基准 | ✅ | ✅ | ✅ |
 | 普通自己发退回线上色 | — | 🚧 已 push `9a3b6d172`，待真机 | 🚧 已 push `6e964addc`，待真机 | 🚧 已 push `0d00470c`，待热更新 |
 | 自己发 ActionCard 浅底 + `#F4F6F8` 描边 | 描边基准 | 🚧 同左 | 🚧 同左 | 🚧 同左 |
-| 自己发 ActionCard 卡体阴影 | — | 🚧 改走光晕 9 图（elevation 方案作废），待真机 | 🚧 已合入 `master-3.5.32` `abd879309`，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
+| 自己发 ActionCard 卡体阴影 | — | 🚧 光晕 9 图 + 负 margin 外扩，待真机 | 🚧 已合入 `master-3.5.32` `abd879309`，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
 | 自己发 ActionCard「查看更多」遮罩贴卡体色 | — | 🚧 新建 `#F0F5FF` 渐变，待真机 | 未核 | ✅ `-webkit-mask-image` 渐变透明，天然贴底 |
 | token 表登记 | ✅ | — | — | — |
 | 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译 | ✅ eslint 无输出 |
@@ -40,7 +40,16 @@
 | `base_util/.../drawable-xxhdpi/zu_zhi_robot_card_own_send_glow.9.png` | 新增。四周 4dp 均匀光晕的 9 图，`rgba(31,35,41,.1)`、sigma 2dp、圆角 16dp（右上直角，跟卡体一致）。生成脚本 `tools/gen_glow_9patch.py`，`aapt singleCrunch` 校验通过 |
 | `base_util/.../drawable/layer_zu_zhi_robot_card_own_send.xml` | 新增。layer-list = 光晕 9 图 + 卡体 shape 内缩 4dp |
 | `base_util/.../drawable/shape_vertical_graduated_trans_to_f0f5ff.xml` | 新增。折叠遮罩渐变末端 `#F0F5FF`，贴自己发卡体 |
-| `ActionCardMessageItemProvider.java` | 自己发组织卡背景换成上面的 layer；`setPadding(4dp)` 让出光晕，其余分支清零；`setExpandBackground` 自己发组织卡改用新渐变；**删掉** elevation 方案（margin / setElevation / ambient 色 / 向上放开 clip 的整套） |
+| `ActionCardMessageItemProvider.java` | 自己发组织卡背景换成上面的 layer；`applySelfCardGlowSpace()` 给光晕腾 4dp（padding 4dp + 左右 **-4dp 负 margin** + 祖先放开 clipChildren），其余分支清零；`setExpandBackground` 自己发组织卡改用新渐变；**删掉** elevation 方案 |
+
+### 光晕为什么要负 margin（第二轮返工）
+
+只加 padding 时，卡宽被头像位卡死（`fl_cov_msg_content` 夹在 `left_seat` / `right_seat` 之间），
+撑不开就只能把卡体挤窄 8dp，光晕看着像长在气泡内侧。改成左右 -4dp 负 margin 把 View 往外撑：
+`ProviderContainerView` 是 wrap_content 的 FrameLayout，宽度 = 卡宽 + 左右 margin = 原气泡宽，
+已读 / 状态等兄弟视图仍贴气泡边；卡体宽度不变，光晕落到气泡外。纵向不受限，靠 wrap_content 自己长高，
+所以上下不用负 margin（行高多 8dp，等于上下各多 4dp 间距）。负 margin 超出父容器分配范围，
+祖先必须 `setClipChildren(false)`（只动 clipChildren，不碰 clipToPadding，免得影响列表内边距）。
 
 ### 为什么放弃 elevation
 
@@ -59,7 +68,7 @@
 
 - (desktop) 客户端热更新后验：自己发 AI 卡四周浅阴影不被裁切；普通自己发言仍是 `#CCE0FE`、无阴影
 - (ios) 真机再验：别人转发的超高 AI 卡（发送人普通账号、知识来源空）也应自动折并出「查看更多」
-- (android) 真机验：自己发 AI 卡浅底 + 描边 + 四周浅阴影（光晕 9 图）；「查看更多」遮罩与卡体同色不留带；卡体因让出 4dp 会比之前窄 8dp，看是否可接受；普通自己发言仍是线上蓝
+- (android) 真机验：自己发 AI 卡浅底 + 描边 + 四周浅阴影（光晕 9 图）；「查看更多」遮罩与卡体同色不留带；卡体宽度应与之前一致（负 margin 外扩），光晕在气泡外侧；普通自己发言仍是线上蓝
 - (android) 卡头当前是 `shape_solid_c5d8ff_lefttop_radius_16dp`（#C5D8FF），本功能规则写的是 #D7E5FF。本回合没动，需确认哪个为准
 - (android) 2026-09-02 **自己发「查看更多」蒙层色带（已改代码，请再验）**：气泡 solid 已退回 `#DEE8FF`，但 `zu_zhi_robot_card_more_own_send.9.png` 9/1 仍停在 `#F0F5FF`，会在气泡上压出一条浅色带。已从调浅前提交还原 9-patch。收到消息的白色那张没动。
 - iOS 已合入 `master-3.5.32`（`abd879309`），真机再验阴影、转发卡折叠、高亮居中
