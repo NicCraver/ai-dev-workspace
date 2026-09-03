@@ -1,6 +1,6 @@
 # Status：PC 端集成 DeepSeek Harness（dsh）
 
-> 最后更新：2026-09-02 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-03 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 把开源的 DeepSeek Harness（`@deepseek-ai/dsh`）内嵌进智信 PC 端：侧边栏新增入口，点开即用；安装包自带独立 Node 运行时，**终端用户机器上无需任何 Node 环境**。
 
@@ -25,13 +25,63 @@
 
 ## 本回合各端现状（code-status）
 
-| 端 | 分支 | 说明 |
-|---|---|---|
-| desktop | `feat/dsh-integration`（新建，自 `master-3.4.27`） | `2d8b5821` 已提交，**未 push** |
-| context | main | 本功能文档 |
+2026-09-03 `code-status.sh` 输出：
+
+| 端 | 分支 | 同步 | 脏区 | 归属 |
+|---|---|---|---|---|
+| desktop | `feat/dsh-integration` | no upstream | 脏(3) 本地调试勿提交 | **本功能**，`2d8b5821` 已提交、**未 push** |
+| context | main | ahead 39 | 干净 | 本功能文档 |
+| android | master-3.6.23 | synced | 脏(4) | markdown 配色，非本功能 |
+| ios | master-3.5.32 | synced | 脏(1) | 同上，非本功能 |
+| meeting | main | ahead 4 | 脏(85) | 会议室系列，非本功能 |
+| contact | — | — | 脏(2) | 会议室后端，非本功能 |
+| web | feat/data-scope-storage-group | synced | 干净 | 非本功能 |
 
 > 提交时已按仓库禁忌排除 `.env.test` / `electron-builder.yml` / `package.json`——
 > 这三个文件工作区里的改动是本地调试用的（test 包名、arm64），与本功能无关。
+
+## 2026-09-03 回合
+
+打开上一回合的产物做 GUI 自测，**发现并修了第一个真实缺陷**。
+
+### 坑：Chromium 102 缺 `AbortSignal.timeout`
+
+现象：dsh 界面里点「选择工作区」，报
+
+```
+workspace create failed: internal: AbortSignal.timeout is not a function
+```
+
+文件夹选不了。
+
+根因：本端 Electron 19 的渲染层是 **Chromium 102**（2022-05），而 `AbortSignal.timeout`
+是 **Chrome 103** 才引入的。dsh 的前端是 2026 年的 TypeScript，按现代浏览器 target 编译，
+直接用了这个 API。服务端（内嵌 Node 24）有这个 API，所以问题只在 webview 侧。
+
+> 这正是 spec 第三节里点过名的「Chromium 102 渲染层特性受限」风险，第一次具体落地。
+
+修法：给 dsh 的 webview 挂 preload，做特性检测式 polyfill。
+新增 `static/plugin/dsh-webview-preload.js`，除 `AbortSignal.timeout` 外顺带补齐了
+同样可能被现代代码用到的：
+
+| API | 需要的 Chrome 版本 |
+|---|---|
+| `AbortSignal.timeout` | 103（**已确认撞上**） |
+| `Array.prototype.toSorted / toReversed / with / toSpliced` | 110 |
+| `AbortSignal.any` | 116 |
+| `Object.groupBy` / `Map.groupBy` | 117 |
+| `Promise.withResolvers` | 119 |
+
+webview 同时加了 `webpreferences="contextIsolation=0"`，否则 preload 里的补丁落不到页面全局。
+dsh 是本地回环页面，preload 只补纯 JS API、不暴露任何 Node 能力。
+
+路径取法与既有 `webview-control.vue` 一致（打包后 `static/` 被拷进 `dist/electron/static`）。
+
+> **这个坑不是 dsh 独有的**：任何内嵌按现代 target 编译的 Web 应用，在本端都会撞
+> Chromium 102 的天花板。后续遇到新的 `xxx is not a function`，往这个 preload 里加即可。
+
+android / ios / meeting / contact 四个仓库的脏区 mtime 全是 09-02（昨天 09:06–20:50），
+属于 markdown 配色与会议室那几个活跃功能的遗留，与本功能无关，本回合未触碰。
 
 ## 方案要点
 
