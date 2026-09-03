@@ -6,12 +6,12 @@
 
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
-| 周工作 tab + 四级子 tab + 列表勾选 | 🚧 界面已写，待打开弹窗目视 | — | — | — |
+| 周工作 tab + 四级子 tab + 列表勾选 | ✅ 真实数据已渲染并目视 | — | — | — |
 | 已选底栏合并（知识聊天 + 周工作） | 🚧 代码已接，待目视 | — | — | — |
 | save 透传记忆中的 weekWork* | ✅ 单测覆盖 | — | — | — |
-| 周工作树真实接口 | 🚧 前端已接完（`a6a24a4`），路径已更正，**待真实登录态验证一次成功返回** | — | — | — |
+| 周工作树真实接口 | ✅ 联调通过，四棵树按实际字段渲染 | — | — | — |
 | dataRangeList type=5 控制 tab 显隐 | ⬜ 现常显 | — | — | — |
-| 自测通过 | ⬜ 未在浏览器点开弹窗 | — | — | — |
+| 自测通过 | 🚧 渲染已目视，勾选/保存未验 | — | — | — |
 
 android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
@@ -24,6 +24,28 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 | desktop | feat/data-range-week-work | synced | 干净 | 本功能 | 未改 |
 | 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
 
+## 2026-09-03 联调回合
+
+拿真实登录态（userCode 换 token）跑通 `POST /personalAiFrame/weekWorkDataRangeTree`，
+真实数据已渲染。实测账号：李权泓（accountId `1880150187008081921`，corpId 6，天津美腾）。
+
+回参规模：28KB，单企业、3 个一级板块（人力资源部 / 信息技术部 / 运维部）、22 人、树深 2 层。
+
+四个子 tab 目视结果，与适配层离线跑出的结果一致：
+
+| tab | 团队 | 人员 |
+|---|---|---|
+| 全部 | 7 | 22（胶囊「全部 29」） |
+| 关注 | 1（人力资源部） | 4 |
+| 所属 | 5 | 17 |
+| 主管 | 2 | 5 |
+
+**与文档差了四处**（详见 impl-notes 联调坑与契约 Changelog）：回参包了两层、`dataCode`
+不能判类型、`userInfo.accountId` 恒 null、所属/主管树带空壳板块。头两条不处理面板会整片空白。
+
+顺带被实测证实的一条：真实数据里有 4 组 id 跨类型撞号（板块与其同名子团队同 id），
+行标识用「类型:id」是必要的，不是防御性设计。
+
 ## 本次改动
 
 **context** 新增契约 `personalAiFrame/weekWorkDataRangeTree.d.ts`：`POST /personalAiFrame/weekWorkDataRangeTree`（服务 aiBasic）。
@@ -32,11 +54,9 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
 ## 待办 / 阻塞
 
-- (web) 路径已更正为 `/personalAiFrame/weekWorkDataRangeTree`（后端最初给的 `/corpPlateAccountRel/...` 是错的），**尚未用真实登录态验证过一次成功返回** —— 下次拿到 userCode 时先确认不再 404
-- (web) 接口上线后：拿真回参核对适配层字段映射（现在只经契约验证，未经联调），对不上先改契约再改代码
-- (web) 周工作面板现在**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
-- (web) 接真实接口：按 tab 取对应树，不重复调；`multiCorp=false` 时第一层用 `tree[0].corpPlateList`；attentionTree 平铺
-- (web) 打开弹窗目视：全部胶囊才人+板块一起全选；其他 tab / 胶囊只勾当前列表
+- (web) 周工作面板**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
+- (web) 本次联调只覆盖**单企业**（multiCorp=false）与**无孤儿人员**（orphanUserList 空）；多企业分支与孤儿人员分支只有单测覆盖，等有多企业账号再验
+- (web) 剩余目视：全部胶囊才人+板块一起全选、其他 tab / 胶囊只勾当前列表；勾选后确定是否正确落库（本回合只验了渲染，没验勾选与保存）
 - (web) tab 显隐改为 `dataRangeList` type=5 choose=1 才显示（现常显）
 - (web) 确定暂不写 `weekWorkScopeList`，等接口；save 只透传记忆里已有的 weekWork*
 - (web) 新分支未 push，需要时 `git push -u origin feat/data-range-week-work`

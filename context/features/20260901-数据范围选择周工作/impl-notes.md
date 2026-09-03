@@ -69,8 +69,20 @@
   （前缀 `/api/aiBasic`）。契约与代码已更正。
   > 中途一度怀疑是前缀问题：行动中心（zx-operation-center）的 `corpPlateAccountRel/*`
   > 那一族接口确实走 `/api/actionCenter/v1`，但本接口不属于那一族，是 AI 框自己的接口。
-- 适配层的字段映射目前**只经过契约验证，未经联调验证**——真回参还没拿到过一次。
-  第一次联调时先核对字段名、嵌套层级与空值表现，对不上先改契约再改适配层。
+- **2026-09-03 首次联调，实际回参与文档差四处**（accountId=1880150187008081921，corpId=6，测试环境 192.168.10.25）。契约已按实际更正：
+  1. **回参包了两层** `{code,msg,data:{code,msg,data:{业务}}}`。web 的拦截器只解一层，
+     取数函数里必须再剥一层，否则适配层收到的是包裹对象，四棵树全空、面板一片空白 ——
+     **最坑的一条，不看回参根本发现不了**。
+  2. **`dataCode` 不能用来判节点类型**。实际取值是 `own_my_team` /
+     `own_my_attention_team_unit` / `own_attention_user_unit`（不是文档写的
+     `teamWork_plate` / `teamWork_member`），且同一个值团队和人员都在用。
+     判类型只能看 `team` / `person`（实测 26 个节点全都带，可靠）。
+  3. **`userInfo.accountId` 恒为 null**，人员的 accountId 在**节点自身的 `id`** 上；
+     `userInfo` 里只有 `nickName` / `avatar` 可用。
+  4. **所属 / 主管树里有空壳板块**（该关系为 false、`childUnitList` 为空），只是层级占位。
+     不按 `belong` / `manage` 过滤的话，所属 tab 会多出「人力资源部」「运维部」两个点不动的空条目。
+- **id 跨类型撞号已被实测证实**：真实数据里有 4 组，板块与其同名子团队用同一个 id
+  （如「前端开发组」的 id 等于 plateId）。这正是行标识必须用「类型:id」的原因。
 - 调接口需要 `clientType` 头（值取会话里的 `clientType`，如 `app`），缺了会返回
   `G_C_003 客户端类型不能为空`，而不是 401/404，容易误判成路径问题。
 

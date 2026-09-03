@@ -2,6 +2,16 @@
  * 契约：个人AI框域 · 周工作数据范围选择四棵树
  * POST /personalAiFrame/weekWorkDataRangeTree
  * Changelog:
+ * - 2026-09-03 **首次联调，按实际回参更正四处**（accountId=1880150187008081921，corpId=6）：
+ *   1. 回参**包了两层** `{code,msg,data:{code,msg,data:{业务}}}`，与其它接口的单层不同，
+ *      web 拦截器只解一层，调用方要再剥一层；
+ *   2. `dataCode` 实际取值是 `own_my_team` / `own_my_attention_team_unit` /
+ *      `own_attention_user_unit`，**不是** `teamWork_plate` / `teamWork_member`，
+ *      且同一个值团队与人员都在用，**不能拿它区分节点类型**——用 `team` / `person`；
+ *   3. `userInfo` 只有 `nickName` / `avatar` 有值，`accountId` **恒为 null**，
+ *      人员的 accountId 在**节点自身的 `id`** 上；
+ *   4. belongTree / manageTree 会带上**空壳板块**（该关系为 false、childUnitList 为空），
+ *      只是层级占位，前端按 `belong` / `manage` 标记过滤。
  * - 2026-09-03 路径更正：`/corpPlateAccountRel/weekWorkDataRangeTree` → `/personalAiFrame/weekWorkDataRangeTree`
  *   （后端最初给的路径写错了；服务仍是 aiBasic，前缀 `/api/aiBasic` 不变）
  * - 2026-09-03 新增。一次返回 allTree / attentionTree / belongTree / manageTree，
@@ -16,10 +26,15 @@
 
 import type { ApiResponse } from '../_common';
 
-/** 树节点数据类型 */
+/**
+ * 树节点数据类型（2026-09-03 实测值）
+ * 注意：团队与人员**共用**同一个值（如 own_my_team 两者都出现），
+ * 判类型只能用 `team` / `person`，不要用本字段。
+ */
 export type PersonalAiFrameWeekWorkDataCode =
-  | 'teamWork_plate'
-  | 'teamWork_member';
+  | 'own_my_team'
+  | 'own_my_attention_team_unit'
+  | 'own_attention_user_unit';
 
 /** 板块是否开启独立汇报：1-开启；0-关闭 */
 export type PersonalAiFrameWeekWorkEnableState = 0 | 1;
@@ -33,13 +48,17 @@ export interface PersonalAiFrameWeekWorkDataRangeTreeReq {
   accountId: string;
 }
 
-/** 人员信息（节点内 userInfo，头像来自 /account/selectFullPlatformAccount） */
+/**
+ * 人员信息（节点内 userInfo）
+ * 实测只有 nickName / avatar 有值；**accountId 恒为 null**，
+ * 人员的 accountId 取节点自身的 `id`。
+ */
 export interface PersonalAiFrameWeekWorkDataRangeAccountInfo {
-  /** 用户 accountId */
-  id?: string;
+  /** 实测恒为 null，勿用；人员 id 用节点的 id */
+  accountId?: string | null;
   /** 昵称 */
   nickName?: string;
-  /** 用户头像链接（来自 /account/selectFullPlatformAccount） */
+  /** 用户头像链接 */
   avatar?: string;
 }
 
@@ -48,11 +67,11 @@ export interface PersonalAiFrameWeekWorkDataRangeAccountInfo {
  * attentionTree 平铺使用本类型；allTree/belongTree/manageTree 的子节点与 orphanUserList 也用本类型
  */
 export interface PersonalAiFrameWeekWorkDataRangeTreeNode {
-  /** 数据类型：teamWork_plate-板块；teamWork_member-团队成员 */
+  /** 数据来源标记，团队与人员共用同值，**不可用于判类型**（判类型看 team / person） */
   dataCode?: PersonalAiFrameWeekWorkDataCode;
   /** 节点编码（同类型唯一、不变） */
   unitCode?: string;
-  /** teamWork_plate 时为板块 id；teamWork_member 时为部门 id 或 accountId */
+  /** 团队节点为板块/部门 id；人员节点为 accountId（人员取这个，不要取 userInfo.accountId） */
   id?: string;
   /** 节点名称 */
   title?: string;
@@ -188,12 +207,23 @@ export interface PersonalAiFrameWeekWorkDataRangeTreeData {
    * 节点带 corpId 供前端按需分组；不含授权数据
    */
   attentionTree?: PersonalAiFrameWeekWorkDataRangeTreeNode[];
-  /** 所属树：仅「我所属」关系的子树；不含授权数据 */
+  /**
+   * 所属树：仅「我所属」关系的子树；不含授权数据。
+   * 实测会带上 `belong=false` 且 `childUnitList` 为空的**空壳板块**作层级占位，
+   * 前端按 `belong` 过滤后再展示。
+   */
   belongTree?: PersonalAiFrameWeekWorkDataRangeCorpNode[];
-  /** 主管树：仅「我主管」关系的子树 */
+  /** 主管树：仅「我主管」关系的子树；同样会带空壳板块，按 `manage` 过滤 */
   manageTree?: PersonalAiFrameWeekWorkDataRangeCorpNode[];
 }
 
-/** POST /personalAiFrame/weekWorkDataRangeTree 完整回参 */
-export type PersonalAiFrameWeekWorkDataRangeTreeResp =
-  ApiResponse<PersonalAiFrameWeekWorkDataRangeTreeData>;
+/**
+ * POST /personalAiFrame/weekWorkDataRangeTree 完整回参
+ *
+ * ⚠ 本接口**包了两层** ApiResponse（实测 2026-09-03），与其它接口不同：
+ * `{code,msg,data:{code,msg,data:{multiCorp,allTree,…}}}`。
+ * web 的 http 拦截器解一层后拿到的是内层包裹，取业务数据还要再 `.data` 一次。
+ */
+export type PersonalAiFrameWeekWorkDataRangeTreeResp = ApiResponse<
+  ApiResponse<PersonalAiFrameWeekWorkDataRangeTreeData>
+>;
