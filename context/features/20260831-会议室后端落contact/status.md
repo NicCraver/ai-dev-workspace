@@ -1,6 +1,6 @@
 # Status：会议室后端落 contact
 
-> 最后更新：2026-09-02（收尾：code-status 刷新；正式预定 M4010 有 toast，race 页没有）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-03（从 ACTIVE 移除；apps 代码未动，遗留提交风险移交下一功能）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -20,6 +20,16 @@
 | 修改 / 释放 / 审计 / 管理员列表 | ✅ | — |
 | 切 baseURL 与路径、逐屏联调 | — | ✅ 本机 `/meeting/`；PC `/meeting/zx/` 未单独点 |
 
+## 收尾（2026-09-03）
+
+本回合**纯文档归档**，未改 `apps/contact` / `apps/meeting`。功能从 `ACTIVE` 拿掉，方便另开会议室迭代；矩阵格子不改（该完成的仍完成，未提交的不假装已入库）。
+
+下一功能若接着做，优先：
+
+1. **单独 commit** contact 的 `BookingService`（READ_COMMITTED + overlap `FOR UPDATE`），`application.properties` 不要带上
+2. meeting 脏区拆开：race 页 / Task 12 代理与路径、不要 `git add -A`
+3. `meeting_booking` 区间唯一约束仍未补；管理员判定仍待后端同事
+
 ## 待办 / 阻塞
 
 - (contact, 需外部确认) surefire 已圈定 `com/zgiot/zx/meetingroom/**`，但 `pom.xml` 仍解除了父 POM 的 `maven.test.skip`。**上线前问后端同事父 POM 为什么焊死跳过测试**，确认这个改动可接受
@@ -36,23 +46,17 @@
 
 ## 本回合各端现状（code-status）
 
-`scripts/code-status.sh` 2026-09-02 13:01 左右：context `main` ahead 136 **干净**（上一笔 `1e14b55`）。本回合 apps 仍脏：meeting race 页、contact `BookingService` 隔离修复。智信四端本功能未动。
-
-**2026-09-03 复核（纯文档回合，未动任何 apps 代码）**：重跑 `scripts/code-status.sh`，脏区原样没变——
-meeting `main` ahead 4 / 脏 85，contact `feat/meetingroom` **仍无 upstream** / 脏 2（`BookingService.java`
-+ `application.properties`）。即本功能的服务端改动至今**一次都没提交、没 push**，是当前最大的落地风险；
-`meeting_booking` 的区间唯一约束同样还没补。本回合只做了 9 个已验收功能的 status 收尾并从 ACTIVE 移除，
-context 已 push 到 `origin/main`。
+`scripts/code-status.sh` 2026-09-03：归档收尾，apps 仍脏且与 9-02 复核一致——contact 服务端改动**仍未 commit / push**。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| meeting | main | ahead 4 | 脏(85) | **本功能** + 前端重构/位置描述混杂 | race 页未单独 commit；勿整仓提交 |
-| contact | feat/meetingroom | 无 upstream | 脏(2) | **本功能** | `BookingService.java`；`application.properties` 勿提交 |
-| context | main | ahead 136 | 干净→本收尾再提交 | **本功能** | — |
-| web | feat/data-scope-storage-group | synced | 干净 | 旁路 | 本回合未改 |
+| meeting | main | ahead 4 | 脏(85) | 本功能 + 前端重构/位置描述（均归档） | race / Task 12 未单独 commit；勿整仓提交 |
+| contact | feat/meetingroom | 无 upstream | 脏(2) | 本功能（归档） | `BookingService.java`；`application.properties` 勿提交 |
+| context | main | ahead 2 | 干净→本收尾再提交 | 本功能归档 | — |
+| web | feat/data-range-week-work | 无 upstream | 脏(2) | 旁路（数据范围） | 不归本功能 |
 | android | master-3.6.23 | synced | 干净 | 旁路 | — |
-| ios | feat/ios-agent-date-range | synced | 干净 | 旁路 | — |
-| desktop | master-3.4.27 | synced | 脏(3) | 旁路 | `.env.test` 等本地调试勿提交 |
+| ios | master-3.5.32 | synced | 干净 | 旁路 | — |
+| desktop | feat/data-range-week-work | synced | 干净 | 旁路 | — |
 
 ## 验证
 
