@@ -1,0 +1,26 @@
+# Status：会议室埋点
+
+> 最后更新：2026-09-03 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+
+## 平台矩阵
+
+会议室走 WebView，代码在 meeting 前端 + contact 后端。四端复用同一套页面。
+
+| 任务 | web | android | ios | desktop |
+|------|-----|---------|-----|---------|
+| 页面开发（mock） | ✅ | — 复用 WebView | — 复用 WebView | — 复用 WebView |
+| 接口联调 | ✅ | — | — | — |
+| 自测通过 | 🚧 | — | — | — |
+
+说明：contact JUnit 9 绿、meeting node 129 绿。测试库已建 `meeting_event`。本地 contact 已用新 jar 重启；`POST /meetingRoom/events` 与 Vite `/meetingApi/events` 均 `accepted:1`，`GET /events/recent` 能读回。页面点击漏斗还没在浏览器里走完。
+
+## 待办 / 阻塞
+
+- (web) 打开看板 / 助手走一遍，用 recent 核对 `page_view` 与 `agent_*`
+- apps/meeting、apps/contact 代码未提交（contact 勿提交 `application.properties`）
+
+## 关键决策记录
+
+- 2026-09-03 独立表 `meeting_event`，不复用 `meeting_booking_audit`
+- 2026-09-03 助手成功只记 `agent_booked`，不与 `booking_submit` 双计
+- 2026-09-03 永不存用户说话原文；`GET /events/recent` 仅管理员
