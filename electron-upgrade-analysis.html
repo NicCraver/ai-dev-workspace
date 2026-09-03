@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智信 PC 端 Electron 升级可行性与风险分析</title>
+<style>
+  :root{
+    --ink:#1a1d21; --ink2:#3d444d; --ink3:#6b737d;
+    --line:#dfe3e8; --line2:#eef1f4; --bg:#ffffff; --bg2:#f7f8fa;
+    --hi:#b42318; --mid:#b54708; --lo:#175cd3; --ok:#067647;
+    --hi-bg:#fef3f2; --mid-bg:#fffaeb; --lo-bg:#eff8ff; --ok-bg:#ecfdf3;
+    --accent:#3E7EFF;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; padding:0 24px 96px;
+    font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    color:var(--ink); background:var(--bg);
+  }
+  .wrap{max-width:1160px;margin:0 auto}
+  code,kbd,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+  code{font-size:.88em;background:var(--bg2);border:1px solid var(--line2);border-radius:3px;padding:.08em .34em;white-space:nowrap}
+  pre{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--ink3);border-radius:4px;
+      padding:12px 14px;overflow-x:auto;font-size:12.5px;line-height:1.6;margin:12px 0}
+  pre code{background:none;border:0;padding:0;white-space:pre}
+
+  header.doc{border-bottom:2px solid var(--ink);padding:40px 0 20px;margin-bottom:8px}
+  header.doc h1{font-size:27px;margin:0 0 10px;letter-spacing:-.01em}
+  .meta{color:var(--ink3);font-size:13px;line-height:1.9}
+  .meta b{color:var(--ink2);font-weight:600}
+
+  h2{font-size:20px;margin:44px 0 4px;padding-bottom:8px;border-bottom:1px solid var(--line);letter-spacing:-.01em}
+  h2 .num{color:var(--accent);font-weight:700;margin-right:8px}
+  h3{font-size:16px;margin:26px 0 8px;color:var(--ink)}
+  h4{font-size:14px;margin:18px 0 6px;color:var(--ink2)}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0;padding-left:22px}
+  li{margin:5px 0}
+  a{color:var(--lo)}
+
+  .lead{color:var(--ink2);font-size:14px;margin:12px 0 0}
+
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--bg2);font-weight:600;font-size:13px;color:var(--ink2)}
+  thead th{position:sticky;top:0;z-index:2;box-shadow:inset 0 -1px 0 var(--line)}
+  tbody tr:nth-child(even){background:#fcfcfd}
+  td.n{white-space:nowrap}
+  .tw{overflow-x:auto;margin:14px 0}
+  .tw table{margin:0}
+
+  .tag{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:3px;
+       border:1px solid currentColor;line-height:1.6;white-space:nowrap}
+  .t-hi{color:var(--hi);background:var(--hi-bg)}
+  .t-mid{color:var(--mid);background:var(--mid-bg)}
+  .t-lo{color:var(--lo);background:var(--lo-bg)}
+  .t-ok{color:var(--ok);background:var(--ok-bg)}
+  .t-un{color:var(--ink3);background:var(--bg2)}
+
+  .box{border:1px solid var(--line);border-left:4px solid var(--ink3);background:var(--bg2);
+       padding:12px 16px;margin:16px 0;border-radius:0 4px 4px 0}
+  .box.hi{border-left-color:var(--hi);background:var(--hi-bg)}
+  .box.mid{border-left-color:var(--mid);background:var(--mid-bg)}
+  .box.ok{border-left-color:var(--ok);background:var(--ok-bg)}
+  .box.key{border-left-color:var(--accent);background:#f5f8ff}
+  .box>:first-child{margin-top:0}
+  .box>:last-child{margin-bottom:0}
+  .box .bt{font-weight:700;font-size:13.5px;display:block;margin-bottom:4px}
+
+  .ev{font-size:12.5px;color:var(--ink3);font-family:ui-monospace,Menlo,Consolas,monospace}
+  .ev b{color:var(--ink2);font-weight:600}
+
+  ol.sum{counter-reset:s;list-style:none;padding:0;margin:18px 0}
+  ol.sum>li{counter-increment:s;position:relative;padding:14px 16px 14px 52px;border:1px solid var(--line);
+            border-radius:4px;margin:10px 0;background:#fff}
+  ol.sum>li::before{content:counter(s);position:absolute;left:16px;top:13px;width:24px;height:24px;
+            border-radius:50%;background:var(--ink);color:#fff;font-size:13px;font-weight:700;
+            display:flex;align-items:center;justify-content:center}
+  ol.sum>li .st{font-weight:700;display:block;margin-bottom:3px;font-size:14.5px}
+  ol.sum>li p{margin:4px 0 0;font-size:13.5px;color:var(--ink2)}
+
+  .matrix{width:100%;table-layout:fixed;font-size:12.5px}
+  .matrix th,.matrix td{text-align:center;vertical-align:middle;height:78px}
+  .matrix td.cell{font-size:12px;line-height:1.5;text-align:left;padding:6px 8px}
+  .m-hi{background:var(--hi-bg)} .m-mid{background:var(--mid-bg)} .m-lo{background:var(--lo-bg)}
+  .matrix th.axis{background:#fff;border:0;font-size:12px;color:var(--ink3);width:88px}
+
+  .phase{border:1px solid var(--line);border-radius:4px;margin:14px 0;overflow:hidden}
+  .phase>.ph{background:var(--bg2);padding:9px 14px;font-weight:700;font-size:14px;border-bottom:1px solid var(--line)}
+  .phase>.pb{padding:12px 16px}
+  .phase>.pb>:first-child{margin-top:0}
+  .phase>.pb>:last-child{margin-bottom:0}
+
+  .toc{border:1px solid var(--line);border-radius:4px;padding:14px 18px;margin:24px 0;background:var(--bg2);font-size:13.5px}
+  .toc ol{margin:6px 0;padding-left:20px}
+  .toc li{margin:2px 0}
+
+  hr{border:0;border-top:1px solid var(--line);margin:32px 0}
+  .fine{font-size:12.5px;color:var(--ink3)}
+
+  @media print{
+    body{padding:0;font-size:11pt}
+    .wrap{max-width:none}
+    thead th{position:static;box-shadow:none}
+    table,.box,.phase,ol.sum>li,pre{break-inside:avoid;page-break-inside:avoid}
+    tr{break-inside:avoid;page-break-inside:avoid}
+    h2{break-after:avoid;page-break-after:avoid}
+    h2,h3{break-before:auto}
+    .tw{overflow:visible}
+    a{color:inherit;text-decoration:none}
+    .toc{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <h1>智信 PC 端（Electron）升级可行性与风险分析</h1>
+  <div class="meta">
+    <div><b>分析对象</b>：<code>apps/desktop</code>（zx-client-pc，electron-vue 脚手架）</div>
+    <div><b>代码基线</b>：分支 <code>master-3.4.27</code>，版本 <code>3.4.26-test</code>（工作区含本地调试改动）</div>
+    <div><b>当前运行时</b>：Electron 19.0.10 · Chromium 102 · Node 16 · ABI 106</div>
+    <div><b>日期</b>：2026-09-03　|　<b>方法</b>：静态代码取证（Grep/Read），未执行安装或构建</div>
+  </div>
+</header>
+
+<div class="toc">
+  <b>目录</b>
+  <ol>
+    <li>结论摘要</li>
+    <li>现状盘点</li>
+    <li>版本路径对比</li>
+    <li>Windows 7 分水岭（决策点）</li>
+    <li>破坏性变更逐条对照</li>
+    <li>原生模块与工具链</li>
+    <li>不升级的成本</li>
+    <li>风险矩阵</li>
+    <li>分阶段实施建议</li>
+    <li>附录：证据索引 / 未验证清单</li>
+  </ol>
+</div>
+
+<!-- ============ 1 ============ -->
+<h2><span class="num">1</span>结论摘要</h2>
+
+<ol class="sum">
+  <li>
+    <span class="st">阻塞点不是原生模块，是 IPC 架构——但它可以在不升级 Electron 的前提下先拆掉</span>
+    <p>三项必改改造（<code>ipcRenderer.sendTo</code> 15 处、<code>new-window</code> 事件 9 处、<code>@electron/remote</code> 36 处）
+    <b>全部能在 Electron 19 上完成并独立发版</b>。这意味着升级的主要工作量可以前置、可以灰度、可以和跳版解耦。
+    先改架构再跳版，比"一次性升上去再修一个月"风险低一个数量级。</p>
+  </li>
+  <li>
+    <span class="st">原生模块风险被高估：sqlite3 与 leveldown 都已是 N-API，跨 Electron 版本 ABI 稳定</span>
+    <p>实测 <code>node_modules/sqlite3/lib/binding/napi-v3-darwin-arm64/</code>、<code>leveldown@6.1.1</code>（依赖 <code>napi-macros</code> + <code>node-gyp-build</code>）。
+    N-API v3 与 Node/Electron 主版本无关，不需要按 Electron 版本重编译。真正需要验证的是 Electron 21 引入的
+    <b>V8 内存笼（memory cage）</b>对外部 ArrayBuffer 的限制，而非 <code>NODE_MODULE_VERSION</code>。</p>
+  </li>
+  <li>
+    <span class="st">Windows 7 是唯一的战略决策点，且它是产品决策不是技术决策</span>
+    <p>代码里有针对 Win7 的显式兜底（<code>src/main/index.js:82</code> 禁用硬件加速解决白屏），说明存量用户真实存在。
+    Electron 22 是最后一个支持 Win7/8/8.1 的主版本。<b>不确定 Win7 用户占比之前，任何升级目标版本都是拍脑袋。</b>
+    这个数字必须先拿到。</p>
+  </li>
+  <li>
+    <span class="st">macOS 签名与公证链路目前是死的，升级会强制暴露这个问题</span>
+    <p><code>electron-builder.yml</code> 中 <code>mac.identity: "~"</code>（跳过签名）；<code>scripts/notarize.js</code> 走的是
+    Apple 已于 2023-11 停用的 <code>altool</code> 路径，且未通过 <code>afterSign</code> 挂进构建流程——即当前 mac 包既没签名也没公证。
+    新版 Electron + 新版 electron-builder 对签名的强制性更高（Hardened Runtime、ASAR integrity），这条链路必须补齐。</p>
+  </li>
+  <li>
+    <span class="st">推荐路径：先做解耦改造 → 拿 Win7 数据 → 双轨发布</span>
+    <p>不建议"一步升到最新"，也不建议"停在 22 不动"。建议 <b>主线跳到当前稳定版</b>（Win10+/macOS 11+），
+    同时把 <b>Electron 22 冻结为 Win7 兼容分支</b>只修严重缺陷——这是 VS Code / Chrome 对 Win7 长尾的通行做法。
+    详见第 9 节。</p>
+  </li>
+</ol>
+
+<!-- ============ 2 ============ -->
+<h2><span class="num">2</span>现状盘点</h2>
+
+<h3>2.1 运行时与工具链版本</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:20%">项</th><th style="width:20%">当前</th><th style="width:16%">状态</th><th>说明与证据</th></tr></thead>
+<tbody>
+<tr><td class="n">Electron</td><td class="n">19.0.10</td><td><span class="tag t-hi">已 EOL</span></td>
+  <td>Chromium 102 / Node 16 / ABI 106。<span class="ev"><b>package.json</b> · <code>node_modules/electron/package.json</code> 实测 19.0.10</span></td></tr>
+<tr><td class="n">Vue</td><td class="n">2.7.14</td><td><span class="tag t-mid">EOL 但可用</span></td>
+  <td>Vue 2 已于 2023-12 停止维护。<b>与 Electron 升级无强耦合</b>，可独立决策，不应捆绑进本次范围。</td></tr>
+<tr><td class="n">webpack</td><td class="n">4.46.0</td><td><span class="tag t-mid">中风险</span></td>
+  <td>webpack 4 内部使用 <code>crypto.createHash("md4")</code>，在 Node 17+（OpenSSL 3）下抛 <code>ERR_OSSL_EVP_UNSUPPORTED</code>。见 6.3。</td></tr>
+<tr><td class="n">babel</td><td class="n">6.26 + 7 混用</td><td><span class="tag t-lo">低</span></td>
+  <td>决定了渲染层禁用 <code>?.</code> / <code>??</code>。Electron 升级不改变这一约束（约束来自构建期而非运行期）。</td></tr>
+<tr><td class="n">ESLint</td><td class="n">4.19.1</td><td><span class="tag t-lo">低</span></td>
+  <td>与 Electron 无关，但 <code>postinstall</code> 会自动 <code>lint:fix</code>，升级期间会制造 diff 噪声。</td></tr>
+<tr><td class="n">electron-builder</td><td class="n">23.0.3</td><td><span class="tag t-hi">必须同步升</span></td>
+  <td>builder 23 早于 Electron 22，对新版 Electron 的 fuses / ASAR integrity / 新签名流程无支持。</td></tr>
+<tr><td class="n">electron-updater</td><td class="n">4.3.8</td><td><span class="tag t-ok">未启用</span></td>
+  <td><b>实际未使用</b>——<code>src/main/index.js:459-469</code> 整段被 <code>/* */</code> 注释，是 electron-vue 模板残留。
+      升级实际走自建流程（<code>src/main/ipc/upgrade-ipc.js</code> + <code>process-manager/upgrade.js</code>，打开升级窗口）。<b>这显著降低了升级链路的风险。</b></td></tr>
+<tr><td class="n">electron-notarize</td><td class="n">1.0.0</td><td><span class="tag t-hi">已失效</span></td>
+  <td>包已更名 <code>@electron/notarize</code>；脚本走 altool（Apple 2023-11 停用）；且未挂 <code>afterSign</code>。见 6.4。</td></tr>
+<tr><td class="n">electron-rebuild</td><td class="n">1.11.0</td><td><span class="tag t-lo">低</span></td>
+  <td>已更名 <code>@electron/rebuild</code>。因原生模块是 N-API，实际重编译需求很低。</td></tr>
+<tr><td class="n">@electron/remote</td><td class="n">2.0.8</td><td><span class="tag t-mid">需升 + 需收敛</span></td>
+  <td>2.0.x 对 Electron 28+ 需升到 2.1.x。36 处引用，见 2.3。</td></tr>
+<tr><td class="n">构建机 Node</td><td class="n">14.21.3</td><td><span class="tag t-mid">强约束</span></td>
+  <td><code>package.json#volta</code> 锁定。与 webpack 4 / builder 版本形成连锁，见 6.3。</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>2.2 窗口安全配置全景</h3>
+<p>这是升级影响面最大的部分——Electron 20 起渲染进程默认沙箱化，每个窗口的 <code>webPreferences</code> 组合都要单独判定。</p>
+<div class="tw">
+<table>
+<thead><tr><th style="width:26%">创建点</th><th style="width:12%">nodeIntegration</th><th style="width:12%">contextIsolation</th><th style="width:12%">preload</th><th>其它关键项 / 20+ 沙箱判定</th></tr></thead>
+<tbody>
+<tr><td class="n"><code>main/config/index.js:33</code><br><span class="fine">主窗口基础配置</span></td>
+  <td class="n">true</td><td class="n">false</td><td class="n">—</td>
+  <td><code>nodeIntegrationInWorker:true</code>、<code>enableRemoteModule:true</code>（该选项自 Electron 14 起已无效）、
+      <code>webviewTag:true</code>、<code>allowRunningInsecureContent:true</code>、<code>enableBlinkFeatures:"CSSVariables,KeyboardEventKey"</code>。
+      <span class="tag t-ok">不受沙箱默认值影响</span>（nodeIntegration=true 隐含关闭沙箱）</td></tr>
+<tr><td class="n"><code>ipc/popup-ipc.js:36</code><br><span class="fine">弹出/独立窗口</span></td>
+  <td class="n">true</td><td class="n">false</td><td class="n"><code>webview.js</code></td>
+  <td><code>webSecurity:false</code>、<code>webviewTag:true</code>。<span class="tag t-ok">不受沙箱影响</span></td></tr>
+<tr><td class="n"><code>process-manager/main-view.js:269</code><br><span class="fine">外链新窗口（默认分支）</span></td>
+  <td class="n"><b>false</b></td><td class="n">未设（默认 true）</td><td class="n">—</td>
+  <td><code>webviewTag:false</code>、<code>nodeIntegrationInSubFrames:false</code>。
+      <span class="tag t-mid">Electron 20+ 将被沙箱化</span>——无 preload 无 node，预计影响小，但需回归外链页面行为</td></tr>
+<tr><td class="n"><code>process-manager/main-view.js:278</code><br><span class="fine">智信内嵌页（canUseZhixinApi）</span></td>
+  <td class="n">true</td><td class="n">false</td><td class="n"><code>webview.js</code></td>
+  <td><code>webSecurity:false</code>。<b>加载远端 URL 且开 node + 关同源策略</b>，见 7.3 安全分析</td></tr>
+<tr><td class="n"><code>process-manager/main-view.js:290</code><br><span class="fine">WPS/飞书授权页</span></td>
+  <td class="n">继承</td><td class="n">继承</td><td class="n">继承</td>
+  <td>额外 <code>webviewTag:true</code></td></tr>
+<tr><td class="n"><code>process-manager/upgrade.js:34</code></td><td class="n">true</td><td class="n">false</td><td class="n">—</td><td>升级窗口</td></tr>
+<tr><td class="n"><code>process-manager/setting-panel.main.js:40</code></td><td class="n">true</td><td class="n">false</td><td class="n">—</td><td>设置面板</td></tr>
+<tr><td class="n"><code>process-manager/screen-cut.js:59</code><br><code>process-manager/all-screen-cut.js:45</code></td>
+  <td class="n">true</td><td class="n">false</td><td class="n">—</td><td>截图窗口（两套实现并存）</td></tr>
+<tr><td class="n"><code>components/common/webview-control.vue:9</code><br><span class="fine">&lt;webview&gt; 标签</span></td>
+  <td class="n"><b>未声明</b></td><td class="n">0（属性）</td><td class="n"><code>webview.js</code></td>
+  <td><code>allowpopups</code>、<code>disablewebsecurity</code>、<code>@new-window</code>。
+      <span class="tag t-hi">最高风险点</span>——见 5.2 与 5.4</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box hi">
+  <span class="bt">这一格是升级的头号疑点</span>
+  <p><code>webview-control.vue</code> 的 <code>&lt;webview&gt;</code> <b>没有声明 <code>nodeintegration</code> 属性</b>，
+  却挂了一个内部 <code>require("electron")</code> 和 <code>require("@electron/remote")</code> 的 preload
+  （<code>static/plugin/webview.js:4-5</code>）。在 Electron 19 上这能工作，是因为宿主窗口开了 node 集成且 webview 尚未默认沙箱化。
+  <b>Electron 20 起 preload 默认在沙箱中运行，沙箱内 <code>require("@electron/remote")</code> 不可用。</b>
+  这会让整个内嵌 web 桥（AI 框 / 行动中心 / 群公告）在升级后直接失效，且失败方式是运行时报错而非编译报错——
+  webpack 编译能过、包能打出来、点进去才白屏。</p>
+  <p class="ev">证据：<b>src/renderer/components/common/webview-control.vue:9,12</b> · <b>static/plugin/webview.js:4-5,540</b></p>
+</div>
+
+<h3>2.3 <code>@electron/remote</code> 使用面</h3>
+<p>共 <b>36 处</b>引用：主进程 <code>enable()</code> 授权 <b>13 处</b>，渲染层 / preload 消费 <b>23 处</b>。</p>
+<div class="tw">
+<table>
+<thead><tr><th style="width:24%">remote API</th><th style="width:10%">次数</th><th style="width:20%">可否改 IPC</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td class="n"><code>remote.getCurrentWindow()</code></td><td class="n">11</td><td><span class="tag t-ok">可</span></td><td>窗口最大化/最小化/全屏等，全部可包成 <code>ipcRenderer.invoke</code></td></tr>
+<tr><td class="n"><code>remote.getGlobal()</code></td><td class="n">7</td><td><span class="tag t-ok">可</span></td><td>读主进程全局变量，改成一次性 IPC 查询或启动时注入</td></tr>
+<tr><td class="n"><code>remote.getCurrentWebContents()</code></td><td class="n">5</td><td><span class="tag t-mid">部分</span></td><td>用于取 <code>webContents.id</code> 做窗口间寻址，与 <code>sendTo</code> 改造耦合，一起做</td></tr>
+<tr><td class="n"><code>remote.screen</code></td><td class="n">4</td><td><span class="tag t-ok">可</span></td><td>截图模块取显示器信息，主进程算好下发</td></tr>
+<tr><td class="n"><code>remote.webContents</code> / <code>session</code></td><td class="n">5</td><td><span class="tag t-ok">可</span></td><td>清缓存等，天然属于主进程</td></tr>
+<tr><td class="n"><code>remote.Menu</code> / <code>MenuItem</code></td><td class="n">4</td><td><span class="tag t-ok">可</span></td><td>右键菜单，改主进程构建 + <code>popup()</code></td></tr>
+<tr><td class="n"><code>remote.dialog</code> / <code>app</code></td><td class="n">4</td><td><span class="tag t-ok">可</span></td><td>已有 <code>dialog-ipc.js</code> / <code>app-ipc.js</code>，直接扩通道</td></tr>
+</tbody>
+</table>
+</div>
+<div class="box key">
+  <span class="bt">好消息：remote 不是升级的硬阻塞</span>
+  <p><code>@electron/remote</code> 是社区维护包，2.1.x 支持到 Electron 28+，理论上"升个版本继续用"即可。
+  真正的问题是 <code>static/plugin/webview.js:5,540</code> 把 remote 暴露进了 <b>内嵌 web 能触达的 <code>window.webview</code> 接口面</b>
+  （<code>webview.js:654</code>），这既是安全问题也是跨端契约——动它要同步 <code>context/bridge.md</code> 与 web 端。
+  <b>建议：升级本身保留 remote（升到 2.1.x），把 remote 收敛作为独立的技术债任务，不塞进升级窗口。</b></p>
+</div>
+
+<h3>2.4 已确认的应用层遗留问题（与本次升级相关）</h3>
+<ul>
+  <li><code>src/main/index.js:9</code> 从 <code>electron</code> 解构导入 <code>webRequest</code> ——主进程模块中并不存在该导出（正确用法是 <code>session.webRequest</code>），当前为 <code>undefined</code>，未使用故未报错。升级时若开启更严格的模块检查会暴露。<span class="tag t-lo">低</span></li>
+  <li><code>src/main/config/index.js:41</code> <code>enableBlinkFeatures: "CSSVariables,KeyboardEventKey"</code> ——这两个 Blink 特性早已默认开启，标志名在新版 Chromium 中可能已移除，会产生启动告警。<span class="tag t-lo">低</span> <span class="tag t-un">需验证</span></li>
+  <li><code>src/main/index.js:88</code> <code>app.commandLine.appendSwitch("ignore-certificate-errors")</code> ——全局忽略证书错误。与升级无关，但升级回归时应一并评估。<span class="tag t-mid">安全</span></li>
+  <li>截图存在 <code>screen-cut</code> 与 <code>all-screen-cut</code> 两套并行实现，各自建窗口、各自 enable remote。升级回归成本翻倍。<span class="tag t-lo">低</span></li>
+</ul>
+
+<!-- ============ 3 ============ -->
+<h2><span class="num">3</span>版本路径对比</h2>
+
+<div class="box mid">
+  <span class="bt">版本对照表的可信度声明</span>
+  <p>下表 Electron ↔ Chromium/Node 的对应关系来自模型知识（截至 2026-05），<b>落地前必须以
+  <code>releases.electron.org</code> / 官方 <code>docs/breaking-changes.md</code> 复核</b>。
+  2026-09 的"当前稳定版"具体号本报告不臆测，以 38 作为分析基线并标注 <span class="tag t-un">需查证</span>。</p>
+</div>
+
+<div class="tw">
+<table>
+<thead><tr>
+  <th style="width:13%">档位</th><th style="width:10%">Electron</th><th style="width:11%">Chromium</th>
+  <th style="width:9%">Node</th><th style="width:12%">Win7/8</th><th style="width:12%">macOS 最低</th><th>定位</th>
+</tr></thead>
+<tbody>
+<tr><td class="n">（现状）</td><td class="n">19.0.10</td><td class="n">102</td><td class="n">16.14</td>
+  <td><span class="tag t-ok">支持</span></td><td class="n">10.13</td><td>2022-05 发布，早已停止安全更新</td></tr>
+<tr><td class="n"><b>A 保守档</b></td><td class="n"><b>22.3.x</b></td><td class="n">108</td><td class="n">16.17</td>
+  <td><span class="tag t-ok">支持（最后一个）</span></td><td class="n">10.13</td>
+  <td>保住 Win7 的天花板。买到 6 个 Chromium 版本的安全修复，但 22 本身也已 EOL</td></tr>
+<tr><td class="n"><b>B 中间档</b></td><td class="n"><b>32.x</b></td><td class="n">128</td><td class="n">20.16</td>
+  <td><span class="tag t-hi">不支持</span></td><td class="n">11+</td>
+  <td>Node 20 + 现代 Chromium，避开最新版的长尾问题；但同样已过维护窗口</td></tr>
+<tr><td class="n"><b>C 激进档</b></td><td class="n"><b>38.x 或更新</b> <span class="tag t-un">需查证</span></td><td class="n">140+</td><td class="n">22.18</td>
+  <td><span class="tag t-hi">不支持</span></td><td class="n">11+ <span class="tag t-un">需查证</span></td>
+  <td>唯一能持续拿到安全补丁的选项（Electron 仅维护最新 3 个主版本）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>3.1 三档代价明细</h3>
+<div class="tw">
+<table>
+<thead><tr>
+  <th style="width:16%">维度</th><th style="width:28%">A · Electron 22</th><th style="width:28%">B · Electron 32</th><th>C · 当前稳定版</th>
+</tr></thead>
+<tbody>
+<tr><td class="n"><b>必改代码</b></td>
+  <td>① <code>new-window</code> → <code>setWindowOpenHandler</code>（9 处）<br>② webview preload 沙箱验证/修复<br>③ V8 内存笼与原生模块验证</td>
+  <td>A 全部 + <br>④ <code>ipcRenderer.sendTo</code> 全量重构（15 处）<br>⑤ <code>@electron/remote</code> 升 2.1.x<br>⑥ Win7 兜底代码清理（<code>index.js:81-86</code>）</td>
+  <td>B 全部 + <br>⑦ <code>BrowserView</code> → <code>WebContentsView</code>（若使用）<span class="tag t-un">需查证</span><br>⑧ ASAR integrity / fuses 配置<br>⑨ 更长的 Chromium 行为长尾回归</td></tr>
+<tr><td class="n"><b>工具链同步</b></td>
+  <td>electron-builder → 24.x<br>构建 Node → 16.x</td>
+  <td>electron-builder → 25/26.x<br>构建 Node → 18/20.x<br><b>触发 webpack 4 md4 问题</b><br>@electron/notarize 2.x + notarytool</td>
+  <td>同 B，且 builder 需最新版<br>构建 Node → 20/22.x</td></tr>
+<tr><td class="n"><b>三方依赖</b></td>
+  <td>融云 SDK 兼容性验证<br>ffmpeg-installer 验证</td>
+  <td>同 A + <code>@electron/remote</code> 2.1<br>UI 三库（element-ui/iview）在 Chromium 128 的渲染回归</td>
+  <td>同 B，回归面更大</td></tr>
+<tr><td class="n"><b>预估工作量</b></td>
+  <td><b>6–10 人天</b><br><span class="fine">开发 4-6 + 回归 2-4</span></td>
+  <td><b>18–28 人天</b><br><span class="fine">开发 10-16 + 工具链 3-5 + 回归 5-7</span></td>
+  <td><b>28–45 人天</b><br><span class="fine">开发 14-20 + 工具链 4-6 + 回归 10-19</span></td></tr>
+<tr><td class="n"><b>回归范围</b></td>
+  <td>全部窗口打开路径（<code>new-window</code> 9 处）、外链跳转、WPS/飞书授权、截图两套</td>
+  <td>A 全部 + 内嵌 web 桥全通道（<code>window.webview</code> 全部方法）、多窗口互通、转发弹窗、Win10/11 全量</td>
+  <td>B 全部 + 全平台 UI 走查（三套 UI 库跨 32 个 Chromium 版本）、性能与内存基线对比</td></tr>
+<tr><td class="n"><b>安全补丁状态</b></td>
+  <td><span class="tag t-hi">仍无补丁</span>（22 已 EOL）</td>
+  <td><span class="tag t-hi">仍无补丁</span>（32 已过窗口）</td>
+  <td><span class="tag t-ok">持续可获得</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box hi">
+  <span class="bt">档 A 与档 B 的致命共性</span>
+  <p>Electron 只维护 <b>最新 3 个主版本</b>。升到 22 或 32 都<b>拿不到任何后续安全补丁</b>，意味着几个月后还要再升一次，
+  上面的工作量要再付一遍。<b>如果升级的动机里包含"安全"，A 和 B 都不成立</b>——它们只有在
+  "Win7 必须支持"（A）或"团队评估不敢一步到位、需要中间站"（B）时才有意义。</p>
+</div>
+
+<!-- ============ 4 ============ -->
+<h2><span class="num">4</span>Windows 7 分水岭</h2>
+
+<p>这是整个升级决策的分叉点，其它所有技术细节都从属于它。</p>
+
+<h3>4.1 事实</h3>
+<ul>
+  <li>Chromium 110 起要求 Windows 10 及以上；Chromium 109 是最后一个支持 Win7/8/8.1 的版本。</li>
+  <li>对应到 Electron：<b>Electron 22（Chromium 108）是最后一个可在 Win7 上运行的主版本</b>。Electron 23（Chromium 110）起，安装包在 Win7 上无法启动。</li>
+  <li>Windows 7 主流支持结束于 2015-01，扩展支持结束于 2020-01，ESU（付费扩展安全更新）也已于 2023-01 终止。</li>
+</ul>
+
+<h3>4.2 本仓库确实在服务 Win7 用户</h3>
+<pre><code>// src/main/index.js:80-86
+if (process.platform === "win32") {
+  // 解决 win7 运行之后的白屏问题
+  const isWin7 = os.release().startsWith("6.1");
+  if (isWin7) {
+    app.disableHardwareAcceleration();
+  }
+}</code></pre>
+<p>这不是防御性代码，是<b>为解决线上已发生的问题写的兜底</b>——说明 Win7 上有真实用户，且曾经报过白屏。
+同时 <code>electron-builder.yml</code> 的 win 目标为 <code>nsis / x64</code>（<code>ia32</code> 已注释掉），
+说明已经放弃了 32 位 Win7。</p>
+
+<h3>4.3 决策所需的输入（当前缺失）</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:34%">需要的数据</th><th style="width:22%">来源</th><th>它如何改变结论</th></tr></thead>
+<tbody>
+<tr><td>Win7/8.1 活跃客户端占比</td><td>登录埋点 / 客户端上报 <code>os.release()</code></td>
+  <td>&lt;1%：直接放弃，走档 C。1–5%：双轨发布。&gt;5%：需要业务层介入推动客户端换机</td></tr>
+<tr><td>Win7 用户的组织归属</td><td>账号体系关联</td>
+  <td>若集中在少数几个部门/客户，可定向推进；若长尾分散则只能双轨</td></tr>
+<tr><td>公司终端换机计划</td><td>IT / 行政</td>
+  <td>若已有 Win10 替换排期，可把升级排在其后，直接走档 C 省掉双轨成本</td></tr>
+<tr><td>Win7 终端的合规状态</td><td>信息安全部门</td>
+  <td>Win7 自身已无安全更新——继续支持它本身可能已违反内部合规要求，这条可以直接终结讨论</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>4.4 三种应对策略</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:16%">策略</th><th style="width:30%">做法</th><th style="width:26%">代价</th><th>适用条件</th></tr></thead>
+<tbody>
+<tr><td class="n"><b>放弃 Win7</b></td><td>直接升到当前稳定版，Win7 用户停留在旧版客户端并公告</td>
+  <td>最低。清理 <code>index.js:81-86</code> 即可</td><td>Win7 占比极低，或合规要求禁用 Win7</td></tr>
+<tr><td class="n"><b>双轨发布</b><br><span class="tag t-ok">推荐</span></td>
+  <td>主线升当前稳定版；同时保留 <code>legacy/electron-22</code> 分支，仅 cherry-pick 严重缺陷修复，独立出 Win7 安装包</td>
+  <td>中。需要独立的构建产物、独立升级源、明确的"该分支不做新功能"纪律</td>
+  <td>Win7 有可观存量但在收敛中。<b>这是 VS Code / Chrome 处理 Win7 长尾的标准做法</b></td></tr>
+<tr><td class="n"><b>停在 22</b></td><td>只升到 Electron 22，全平台统一</td>
+  <td>高（隐性）。等于付一次升级成本却拿不到安全补丁，几个月后重付</td>
+  <td>仅当 Win7 占比很高且短期无法收敛。<b>本报告不推荐</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ 5 ============ -->
+<h2><span class="num">5</span>破坏性变更逐条对照</h2>
+
+<p class="lead">"是否命中"一列只反映本仓库的静态代码事实。标 <span class="tag t-un">需验证</span> 的项无法靠静态分析定论，必须实机验证。</p>
+
+<div class="tw">
+<table>
+<thead><tr>
+  <th style="width:9%">引入版本</th><th style="width:20%">变更点</th><th style="width:9%">命中</th>
+  <th style="width:28%">证据</th><th>修法</th>
+</tr></thead>
+<tbody>
+
+<tr class="m-hi">
+  <td class="n">20</td>
+  <td><b>渲染进程默认沙箱化</b><br><span class="fine">preload 默认在沙箱中运行，无法 <code>require</code> 任意模块</span></td>
+  <td><span class="tag t-hi">是</span><br><span class="tag t-un">需验证</span></td>
+  <td><code>webview-control.vue:9,12</code> 的 <code>&lt;webview&gt;</code> 未声明 <code>nodeintegration</code>，
+      但 preload <code>static/plugin/webview.js:4-5</code> 内含<br>
+      <code>require("electron")</code> / <code>require("@electron/remote")</code></td>
+  <td>webview 标签补 <code>nodeintegration</code>，或宿主 <code>webPreferences</code> 显式 <code>sandbox:false</code>。
+      <b>更稳妥的长期解</b>：preload 改用 <code>contextBridge</code> 只暴露 IPC 白名单，不再 require remote。
+      其余窗口因 <code>nodeIntegration:true</code> 隐含关闭沙箱，不受影响</td>
+</tr>
+
+<tr class="m-mid">
+  <td class="n">21</td>
+  <td><b>V8 内存笼（pointer compression / memory cage）默认开启</b><br><span class="fine">原生模块不能再把外部内存直接作为 ArrayBuffer 后备存储</span></td>
+  <td><span class="tag t-un">需验证</span></td>
+  <td><code>sqlite3@5.0.2</code>（napi-v3）、<code>leveldown@6.1.1</code>（napi-macros）、
+      <code>node-machine-id</code>、<code>@ffmpeg-installer/ffmpeg</code></td>
+  <td>N-API 模块通常安全，但必须实测：起应用后跑一轮 sqlite 读写 + leveldb 读写，
+      观察是否出现 <code>Buffer</code> 相关崩溃。这是<b>档 A 也躲不掉</b>的验证项</td>
+</tr>
+
+<tr class="m-hi">
+  <td class="n">22</td>
+  <td><b><code>webContents</code> 的 <code>new-window</code> 事件移除</b><br><span class="fine">连带 <code>event.newGuest</code> 赋值机制失效</span></td>
+  <td><span class="tag t-hi">是 · 9 处</span></td>
+  <td class="ev">
+      popup-ipc.js:57, 235, 377, 481<br>
+      main-view.js:341, 392<br>
+      show-message-win.js:56<br>
+      main-view.js:342 <b>event.newGuest = sWin</b><br>
+      webview-control.vue:29 <b>@new-window</b>
+  </td>
+  <td>全部改 <code>webContents.setWindowOpenHandler(details =&gt; ...)</code>。
+      <code>event.newGuest</code> 这种"自己造窗口再塞回去"的模式在新 API 下需改为返回
+      <code>{action:"allow", overrideBrowserWindowOptions:{...}}</code> 并在
+      <code>did-create-window</code> 中做后续处理。
+      <b>注意</b>：<code>webview-control.vue:208</code> 已经在用 <code>setWindowOpenHandler</code>，
+      说明团队对新 API 不陌生，可作为改造模板</td>
+</tr>
+
+<tr class="m-lo">
+  <td class="n">14</td>
+  <td><code>webPreferences.enableRemoteModule</code> 失效</td>
+  <td><span class="tag t-ok">已无害</span></td>
+  <td><code>main/config/index.js:37</code></td>
+  <td>当前已是死配置（Electron 19 上就已无效），删除即可，不影响行为</td>
+</tr>
+
+<tr class="m-hi">
+  <td class="n">28</td>
+  <td><b><code>ipcRenderer.sendTo()</code> 移除</b><br><span class="fine">渲染进程之间不再能直接通信</span></td>
+  <td><span class="tag t-hi">是 · 15 处</span></td>
+  <td class="ev">
+      <b>src/renderer/views/main.vue</b> 13 处：<br>
+      981,1031,1052,1066,1080,1098,1119,<br>1154,1169,1187,1257,1287,1339<br>
+      （均为 <code>e.sender.sendTo(webContentsId,"trigger-result",…)</code>）<br>
+      <b>static/plugin/webview.js</b>：19, 26
+  </td>
+  <td>改为经主进程中转：渲染层 <code>ipcRenderer.send("relay", targetId, channel, ...args)</code>，
+      主进程用 <code>webContents.fromId(targetId).send(...)</code> 转发。
+      <b>这 15 处是内嵌 web 桥（<code>trigger-result</code> / <code>send-by-popup</code>）的骨架</b>，
+      改动必须同步 <code>context/bridge.md</code>，并与 web 端联调</td>
+</tr>
+
+<tr class="m-mid">
+  <td class="n">27</td>
+  <td>macOS 10.13 / 10.14 支持移除（最低 10.15）</td>
+  <td><span class="tag t-mid">需产品确认</span></td>
+  <td>无代码约束；<code>electron-builder.yml</code> 未设 <code>minimumSystemVersion</code></td>
+  <td>确认 mac 存量用户系统版本分布，必要时在 builder 中显式声明最低版本</td>
+</tr>
+
+<tr class="m-mid">
+  <td class="n">33 前后</td>
+  <td>macOS 最低要求进一步提高到 11+ <span class="tag t-un">需查证</span></td>
+  <td><span class="tag t-mid">需产品确认</span></td>
+  <td>同上</td>
+  <td>同上</td>
+</tr>
+
+<tr class="m-lo">
+  <td class="n">30</td>
+  <td><code>BrowserView</code> 弃用，转向 <code>WebContentsView</code></td>
+  <td><span class="tag t-ok">未命中</span></td>
+  <td>全仓库未检索到 <code>BrowserView</code> 使用；多窗口全部走独立 <code>BrowserWindow</code></td>
+  <td>无需处理。<b>这是本仓库架构的一处运气</b>——用 BrowserView 做多标签的项目在这一档会很痛</td>
+</tr>
+
+<tr class="m-lo">
+  <td class="n">17</td>
+  <td><code>desktopCapturer</code> 移出渲染进程</td>
+  <td><span class="tag t-ok">已合规</span></td>
+  <td><code>src/main/index.js:7,283</code> —— 已在主进程调用</td>
+  <td>无需处理</td>
+</tr>
+
+<tr class="m-lo">
+  <td class="n">26</td>
+  <td><code>webContents.getPrinters()</code> → <code>getPrintersAsync()</code></td>
+  <td><span class="tag t-ok">未命中</span></td>
+  <td>未检索到打印相关调用</td>
+  <td>—</td>
+</tr>
+
+<tr class="m-lo">
+  <td class="n">28</td>
+  <td><code>systemPreferences</code> 部分方法移除</td>
+  <td><span class="tag t-ok">未命中</span></td>
+  <td>未检索到 <code>systemPreferences</code> 使用</td>
+  <td>—</td>
+</tr>
+
+<tr class="m-lo">
+  <td class="n">跨版本</td>
+  <td><code>crashReporter</code> 行为变化（Crashpad 统一）</td>
+  <td><span class="tag t-lo">轻微</span></td>
+  <td><code>src/modules/crash-reporter.js:4</code> —— <code>submitURL</code> 指向内网
+      <code>http://192.168.5.55:33855/crash</code></td>
+  <td>参数形态基本兼容，但上报格式（minidump）在新版有变，需确认服务端能否解析。
+      优先级低（该服务是否还在运行也需确认）</td>
+</tr>
+
+<tr class="m-lo">
+  <td class="n">跨版本</td>
+  <td><code>enableBlinkFeatures</code> 标志名失效</td>
+  <td><span class="tag t-lo">轻微</span> <span class="tag t-un">需验证</span></td>
+  <td><code>src/main/config/index.js:41</code><br><code>"CSSVariables,KeyboardEventKey"</code></td>
+  <td>这两项在现代 Chromium 已是默认能力，直接删除该配置项</td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<div class="box key">
+  <span class="bt">对照表的核心读法</span>
+  <p>命中的高危项只有三个：<b>沙箱默认值</b>（Electron 20）、<b><code>new-window</code> 移除</b>（22）、
+  <b><code>sendTo</code> 移除</b>（28）。三者<b>全部集中在"窗口创建"与"跨窗口通信"这一个领域</b>，
+  而这个领域正好就是内嵌 web 桥的实现基础。<br>
+  这解释了为什么第 9 节把它们打包成一个可以<b>先于升级独立完成</b>的改造阶段——它们是同一件事。</p>
+</div>
+
+<!-- ============ 6 ============ -->
+<h2><span class="num">6</span>原生模块与工具链</h2>
+
+<h3>6.1 原生模块 ABI 判定</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:20%">模块</th><th style="width:12%">版本</th><th style="width:14%">绑定方式</th><th style="width:12%">跨版本 ABI</th><th>依据</th></tr></thead>
+<tbody>
+<tr><td class="n"><code>sqlite3</code></td><td class="n">5.0.2</td><td class="n">N-API (napi-v3)</td>
+  <td><span class="tag t-ok">稳定</span></td>
+  <td>实测 <code>node_modules/sqlite3/lib/binding/napi-v3-darwin-arm64/</code>。napi-v3 与 Node/Electron 主版本解耦</td></tr>
+<tr><td class="n"><code>leveldown</code></td><td class="n">6.1.1<br><span class="fine">（声明 ^5.6.0）</span></td><td class="n">N-API<br><span class="fine">napi-macros + node-gyp-build</span></td>
+  <td><span class="tag t-ok">稳定</span></td>
+  <td>实测 <code>node_modules/leveldown/package.json</code>。<b>注意版本漂移</b>：<code>package.json</code> 声明 5.6.0，
+      实际装的是 6.1.1（M1 适配的本地改动），说明 lockfile 与声明不一致</td></tr>
+<tr><td class="n"><code>node-machine-id</code></td><td class="n">1.1.12</td><td class="n">纯 JS（调系统命令）</td>
+  <td><span class="tag t-ok">无关</span></td>
+  <td>无原生绑定</td></tr>
+<tr><td class="n"><code>@ffmpeg-installer/ffmpeg</code></td><td class="n">1.1.0</td><td class="n">独立可执行文件</td>
+  <td><span class="tag t-ok">无关</span></td>
+  <td><code>file-manage-tool.js:176</code> 运行时 require，不参与 ABI</td></tr>
+<tr><td class="n"><code>@rongcloud/imlib-v2</code></td><td class="n">2.10.1</td><td class="n">纯 JS <span class="tag t-un">需验证</span></td>
+  <td><span class="tag t-un">需验证</span></td>
+  <td>融云 IM SDK。需确认其对 Chromium/Node 版本的假设，及是否有官方支持版本矩阵</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="bt">这一节推翻了一个常见假设</span>
+  <p>"Electron 升级 = 原生模块全部重编译 = 高风险"——<b>在本仓库不成立</b>。两个原生模块都已迁到 N-API，
+  <code>NODE_MODULE_VERSION</code> 变化不影响它们。<code>electron-builder install-app-deps</code>
+  仍会照常跑，但预期不会产生真正的重编译工作。<br>
+  真正需要花时间验证的是 <b>V8 内存笼</b>（Electron 21+）——这是行为层面的限制，不是 ABI 层面的，
+  不能靠看版本号判断，只能实机跑数据库读写。</p>
+  <p class="fine">附带发现：<code>package.json</code> 声明 <code>leveldown@^5.6.0</code> 但实际安装 6.1.1，
+  且 <code>yarn.lock</code> 与 <code>package-lock.json</code> 并存。升级前应先统一锁文件，否则"升级后出问题"
+  会分不清是 Electron 的锅还是依赖漂移的锅。</p>
+</div>
+
+<h3>6.2 electron-builder 升级链</h3>
+<ul>
+  <li>当前 <code>23.0.3</code>。builder 23 早于 Electron 22 发布，不认识后续版本的 fuses / ASAR integrity / 新的 mac 签名要求。</li>
+  <li>档 A（Electron 22）：升到 <b>24.x</b> 即可，24.x 仍兼容较老的构建 Node。</li>
+  <li>档 B/C：需要 <b>25.x / 26.x</b>，而这些版本要求构建机 <b>Node 18+</b> <span class="tag t-un">需查证具体下限</span>。</li>
+  <li><b>配置文件的组织问题</b>：<code>electron-builder.yml</code> 在 <code>.gitignore</code> 中且属仓库提交禁忌，
+      意味着升级所需的 builder 配置变更（fuses、minimumSystemVersion、签名参数）<b>没有可提交的落地位置</b>。
+      需要先解决这个流程问题——例如把配置拆成"可提交的基线 + 本地覆盖层"，或改用 <code>hook/</code> 中的代码路径注入
+      （<code>afterPackHook.js</code> / <code>afterAllArtifactBuildHook.js</code> 已是现成的可提交入口）。</li>
+</ul>
+
+<h3>6.3 构建 Node 版本的连锁反应</h3>
+<pre><code>volta 锁 Node 14.21.3
+      │
+      ├─ electron-builder 25+ 要求 Node 18+   ──┐
+      │                                          ├─→ 必须抬高构建 Node
+      └─ 档 B/C 的其它工具链也要求更高 Node    ──┘
+                                                 │
+                            Node 17+ 使用 OpenSSL 3，移除 md4
+                                                 │
+                     webpack 4 内部 crypto.createHash("md4")
+                                                 │
+                            ERR_OSSL_EVP_UNSUPPORTED（构建直接失败）</code></pre>
+<p>两个可选解：</p>
+<ol>
+  <li><b>临时绕过</b>：<code>NODE_OPTIONS=--openssl-legacy-provider</code>。改动最小，但把技术债往后推，且未来 Node 版本可能移除该开关。</li>
+  <li><b>正解</b>：webpack 4 → 5。webpack 5 用 md4 的 wasm 实现，无此问题。但这是<b>独立的大工程</b>
+      （webpack 5 对 Node polyfill 的处理方式变了，<code>target: "electron-renderer"</code> 下的
+      <code>externals</code> / <code>whiteListedModules</code> 机制都要重做，见
+      <code>.electron-vue/webpack.renderer.config.js:28-40</code>）。</li>
+</ol>
+<div class="box mid">
+  <span class="bt">建议</span>
+  <p>升级窗口内用方案 1 绕过，把 webpack 5 迁移<b>排成独立任务</b>。理由：把构建系统重写和运行时升级捆在一起，
+  出问题时无法二分定位。这两件事都足够大，必须串行做。</p>
+</div>
+
+<h3>6.4 macOS 签名与公证：当前是断的</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:26%">环节</th><th style="width:16%">当前状态</th><th>证据 / 问题</th></tr></thead>
+<tbody>
+<tr><td class="n">代码签名</td><td><span class="tag t-hi">未启用</span></td>
+  <td><code>electron-builder.yml</code> 中 <code>mac.identity: "~"</code> —— 显式跳过签名。
+      <span class="fine">（该文件在工作区有本地调试改动，需与主干版本比对确认此项是否为本地状态）</span> <span class="tag t-un">需验证</span></td></tr>
+<tr><td class="n">公证脚本挂载</td><td><span class="tag t-hi">未挂载</span></td>
+  <td><code>electron-builder.yml</code> 只配了 <code>afterPack</code> 与 <code>afterAllArtifactBuild</code>，
+      <b>没有 <code>afterSign</code></b>，而 <code>scripts/notarize.js</code> 正是设计成 afterSign 钩子的</td></tr>
+<tr><td class="n">公证实现</td><td><span class="tag t-hi">已失效</span></td>
+  <td><code>scripts/notarize.js:11,24-30</code> 使用 <code>electron-notarize</code> 的
+      <code>{appleId, appleIdPassword:"@keychain:Application Loader: …", ascProvider}</code> —— 这是
+      <b>altool</b> 参数形态。Apple 已于 2023-11-01 停止 altool 的公证服务，必须改用 <code>notarytool</code>
+      （需要 <code>teamId</code>，或 App Store Connect API Key）</td></tr>
+<tr><td class="n">包名</td><td><span class="tag t-mid">已废弃</span></td>
+  <td><code>electron-notarize</code> → <code>@electron/notarize</code>（2.x 起支持 notarytool）</td></tr>
+</tbody>
+</table>
+</div>
+<p>升级本身不会<i>制造</i>这个问题，但会<b>放大</b>它：新版 Chromium 对未签名应用的系统级限制更多
+（Gatekeeper、TCC 权限、屏幕录制授权——本应用用了 <code>desktopCapturer</code>，
+未签名应用在新版 macOS 上申请屏幕录制权限的体验会很差）。<b>建议把签名+公证补齐作为档 B/C 的前置条件。</b></p>
+
+<h3>6.5 Windows 签名</h3>
+<p><code>electron-builder.yml</code> 配了 <code>certificateFile: build/certificate/zhixin.pfx</code>
+与明文 <code>certificatePassword</code>。升级本身不影响，但两点需注意：</p>
+<ul>
+  <li>新版 builder 对 <code>signtool</code> 的调用方式有变化，需验证签名仍成功。</li>
+  <li>自 2023 年起，OV 代码签名证书要求私钥存放于硬件令牌/HSM，<code>.pfx</code> 文件形式的证书可能已无法续期。
+      <b>证书到期日需要确认</b>——这与升级无关但会在同一时间窗口爆发。 <span class="tag t-un">需查证</span></li>
+</ul>
+
+<!-- ============ 7 ============ -->
+<h2><span class="num">7</span>不升级的成本</h2>
+
+<h3>7.1 安全：3 年 10 个月无补丁</h3>
+<ul>
+  <li>Electron 官方只维护<b>最新 3 个主版本</b>。Electron 19 在 22 发布（2022-11）时即停止接收安全更新，
+      至今约 <b>3 年 10 个月</b>。</li>
+  <li>Chromium 102 → 140 之间累计 <b>38 个主版本</b>的安全修复全部缺失，其中包含多个
+      <b>被野外利用的 V8 类型混淆 / 释放后使用 0-day</b>。<span class="fine">（具体 CVE 编号本报告不列举，
+      需由安全团队从 Chrome Releases 公告核对 <span class="tag t-un">需查证</span>）</span></li>
+  <li><b>本应用的暴露面比普通 Electron 应用更大</b>，因为它把不受信内容加载进了高权限上下文——见 7.3。</li>
+</ul>
+
+<h3>7.2 Chromium 102 的 Web API 天花板（已经在造成实际故障）</h3>
+<p>这不是理论风险，已有实际案例：</p>
+<div class="tw">
+<table>
+<thead><tr><th style="width:32%">API</th><th style="width:14%">需要 Chrome</th><th>影响</th></tr></thead>
+<tbody>
+<tr><td class="n"><code>AbortSignal.timeout()</code></td><td class="n">103</td>
+  <td><b>已实际撞上</b>——内嵌应用报 <code>AbortSignal.timeout is not a function</code>，功能不可用，
+      靠 preload polyfill 兜底</td></tr>
+<tr><td class="n"><code>Array.prototype.toSorted/toReversed/with/toSpliced</code></td><td class="n">110</td><td>现代构建 target 默认输出，任何新依赖都可能带入</td></tr>
+<tr><td class="n"><code>AbortSignal.any()</code></td><td class="n">116</td><td>同上</td></tr>
+<tr><td class="n"><code>Object.groupBy</code> / <code>Map.groupBy</code></td><td class="n">117</td><td>同上</td></tr>
+<tr><td class="n"><code>Promise.withResolvers()</code></td><td class="n">119</td><td>同上</td></tr>
+<tr><td class="n">CSS <code>:has()</code></td><td class="n">105</td><td>现代 CSS 框架大量使用，样式静默失效（不报错，只是不生效——更难排查）</td></tr>
+<tr><td class="n">CSS 嵌套、容器查询</td><td class="n">112 / 105</td><td>同上</td></tr>
+</tbody>
+</table>
+</div>
+<div class="box hi">
+  <span class="bt">这条成本会随时间指数增长</span>
+  <p>智信 PC 端是<b>宿主</b>：它内嵌 web 端、行动中心、群公告、AI 框等多个独立演进的前端应用
+  （<code>main-view.js:150-160</code> 的 <code>canUseZhixinApi</code> 白名单）。这些应用由其它团队按现代浏览器
+  target 编译，<b>它们每引入一个新 API，PC 端就多一个线上故障</b>。<br>
+  polyfill 是治标：它只能补已经撞上的，且只能补纯 JS API——<b>CSS 特性无法 polyfill</b>。
+  当前的 preload 补丁清单已有 5 项，这个清单只会变长。<br>
+  <b>换个说法：不升级 Electron 的成本，正在以"每次内嵌应用迭代都可能炸"的形式，转嫁给其它三端团队。</b></p>
+</div>
+
+<h3>7.3 安全配置叠加带来的实际攻击面</h3>
+<p>把第 2.2 节的配置合起来看，<code>main-view.js:278-283</code> 这一档窗口同时满足：</p>
+<ul>
+  <li><code>nodeIntegration: true</code> —— 页面 JS 可直接 <code>require("child_process")</code></li>
+  <li><code>contextIsolation: false</code> —— 页面与 preload 共享同一 JS 上下文，无隔离</li>
+  <li><code>webSecurity: false</code> —— 同源策略关闭</li>
+  <li>加载的是 <b>远端 HTTP(S) URL</b>（白名单内的内嵌 web 应用）</li>
+  <li>叠加全局 <code>ignore-certificate-errors</code>（<code>index.js:88</code>）</li>
+</ul>
+<p>结果：<b>内嵌 web 应用上的任意一个 XSS，等价于 PC 端的远程代码执行</b>；
+中间人可以通过篡改被内嵌页面达到同样效果（证书校验已关）。
+过时的 Chromium 让这个链条的第一环（浏览器侧漏洞）也变得更容易。</p>
+<div class="box mid">
+  <span class="bt">与升级的关系</span>
+  <p>升级 Electron <b>不会</b>自动修复这个问题——这是应用自身的配置选择。但升级到 Electron 20+ 的
+  <b>默认沙箱化</b>会强迫团队重新审视每个窗口的权限（因为不审视就会坏），这是一次自然的收紧时机。
+  建议把"<code>webSecurity: false</code> 是否还必要"、"内嵌页是否真的需要 <code>nodeIntegration</code>"
+  作为升级改造的附带议题，而不是原样搬过去。</p>
+</div>
+
+<h3>7.4 生态与人力成本</h3>
+<ul>
+  <li><b>三方 SDK 的支持窗口</b>：融云 IM SDK 等对 Electron 19 / Chromium 102 的官方支持大概率已结束，出问题无法向厂商报障。</li>
+  <li><b>调试工具</b>：新版 Chrome DevTools 扩展、Vue DevTools 都不再兼容 Chromium 102，排障效率持续下降。</li>
+  <li><b>迁移成本随时间上升</b>：每多停留一个 Electron 版本周期，破坏性变更就多积累一层。
+      今天从 19 升到最新是 28-45 人天；一年后同样的跳跃只会更贵。</li>
+</ul>
+
+<!-- ============ 8 ============ -->
+<h2><span class="num">8</span>风险矩阵</h2>
+<p class="lead">横轴 = 发生概率，纵轴 = 发生后影响。格内为风险项编号，详见下方清单。</p>
+
+<div class="tw">
+<table class="matrix">
+<thead>
+<tr><th class="axis"></th><th style="width:30%">概率 低</th><th style="width:30%">概率 中</th><th style="width:30%">概率 高</th></tr>
+</thead>
+<tbody>
+<tr>
+  <th class="axis">影响<br><b>高</b></th>
+  <td class="cell m-mid">R7 融云 SDK 不兼容<br>R9 Win 签名证书失效</td>
+  <td class="cell m-hi">R3 V8 内存笼击穿原生模块<br>R8 内嵌 web 桥联调回归失败</td>
+  <td class="cell m-hi"><b>R1 webview preload 沙箱失效</b><br><b>R2 sendTo 移除断掉跨窗通信</b><br><b>R6 Win7 用户被静默弃用</b></td>
+</tr>
+<tr>
+  <th class="axis">影响<br><b>中</b></th>
+  <td class="cell m-lo">R12 crashReporter 上报格式变更</td>
+  <td class="cell m-mid">R5 mac 签名/公证链路补齐超期<br>R10 UI 三库跨 32 个 Chromium 版本渲染回归</td>
+  <td class="cell m-mid"><b>R4 new-window 改造遗漏窗口路径</b><br>R11 webpack 4 在新 Node 下构建失败</td>
+</tr>
+<tr>
+  <th class="axis">影响<br><b>低</b></th>
+  <td class="cell">—</td>
+  <td class="cell m-lo">R14 enableBlinkFeatures 标志告警</td>
+  <td class="cell m-lo">R13 依赖锁文件漂移干扰问题定位</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="tw">
+<table>
+<thead><tr><th style="width:6%">#</th><th style="width:24%">风险</th><th style="width:9%">等级</th><th>缓解措施</th></tr></thead>
+<tbody>
+<tr><td class="n">R1</td><td>webview preload 在沙箱下无法 require，内嵌 web 桥整体失效</td>
+  <td><span class="tag t-hi">高</span></td>
+  <td><b>升级前先在 Electron 19 上验证</b>：给 webview 显式加 <code>sandbox=false</code> 或 <code>nodeintegration</code>，
+      确认行为不变后再跳版。改造窗口内优先做 preload 的 <code>contextBridge</code> 化</td></tr>
+<tr><td class="n">R2</td><td><code>sendTo</code> 移除后 15 处跨窗口消息全断，且失败是运行时静默</td>
+  <td><span class="tag t-hi">高</span></td>
+  <td>改主进程中转，并<b>在 Electron 19 上先行上线验证</b>。为 <code>trigger-result</code> 通道补自动化冒烟测试
+      （当前 <code>test/unit</code> 几乎空置，这是最值得补测试的地方）</td></tr>
+<tr><td class="n">R3</td><td>V8 内存笼导致 sqlite3/leveldown 运行时崩溃</td>
+  <td><span class="tag t-hi">高</span></td>
+  <td>阶段 3 第一件事就是起最小 demo 跑数据库读写压测；若命中，升级 sqlite3 到 5.1.x+ / leveldown 到最新</td></tr>
+<tr><td class="n">R4</td><td><code>new-window</code> 改造遗漏某条窗口打开路径</td>
+  <td><span class="tag t-mid">中</span></td>
+  <td>9 处已全部定位（见 5 节）。以 <code>webview-control.vue:208</code> 现有实现为模板统一改造；
+      回归清单按窗口打开入口逐条走查</td></tr>
+<tr><td class="n">R5</td><td>mac 签名/公证补齐耗时超预期，卡住 mac 发版</td>
+  <td><span class="tag t-mid">中</span></td>
+  <td>作为<b>独立前置任务</b>在阶段 2 完成，不放在升级关键路径上。需提前申请 App Store Connect API Key</td></tr>
+<tr><td class="n">R6</td><td>Win7 用户升级后客户端无法启动，且无预警</td>
+  <td><span class="tag t-hi">高</span></td>
+  <td>阶段 0 拿到占比数据；采用双轨发布；升级源按 <code>os.release()</code> 分流，
+      Win7 客户端只推 legacy 分支的包</td></tr>
+<tr><td class="n">R7</td><td>融云 IM SDK 与新 Chromium/Node 不兼容</td>
+  <td><span class="tag t-mid">中</span></td>
+  <td>阶段 0 向融云确认支持矩阵；阶段 3 优先验证收发消息、音视频、离线推送</td></tr>
+<tr><td class="n">R8</td><td>内嵌 web 桥改造后与 web 端契约不一致</td>
+  <td><span class="tag t-hi">高</span></td>
+  <td>改动 <code>window.webview</code> 接口面时同步 <code>context/bridge.md</code>；
+      与 web 端团队约定联调窗口。<b>优先保持接口签名不变，只换内部实现</b></td></tr>
+<tr><td class="n">R9</td><td>Windows 代码签名证书（.pfx）已无法续期</td>
+  <td><span class="tag t-mid">中</span></td>
+  <td>与升级并行核查证书到期日与续期方式（HSM/令牌要求）</td></tr>
+<tr><td class="n">R10</td><td>三套 UI 库在新 Chromium 下渲染/交互回归</td>
+  <td><span class="tag t-mid">中</span></td>
+  <td>档 C 需安排完整 UI 走查。这也是"三库并存"技术债的一次性买单</td></tr>
+<tr><td class="n">R11</td><td>构建 Node 抬高后 webpack 4 md4 报错，构建中断</td>
+  <td><span class="tag t-mid">中</span></td>
+  <td>已知解：<code>--openssl-legacy-provider</code>。webpack 5 迁移单独排期</td></tr>
+<tr><td class="n">R12</td><td>崩溃上报服务端无法解析新格式 minidump</td>
+  <td><span class="tag t-lo">低</span></td>
+  <td>先确认 <code>192.168.5.55:33855</code> 是否还在服务；若已废弃则直接移除</td></tr>
+<tr><td class="n">R13</td><td>yarn.lock 与 package-lock.json 并存，依赖漂移混淆问题归因</td>
+  <td><span class="tag t-lo">低</span></td>
+  <td><b>阶段 1 之前先统一锁文件</b>并对齐 <code>leveldown</code> 声明版本与实装版本</td></tr>
+<tr><td class="n">R14</td><td><code>enableBlinkFeatures</code> 无效标志产生启动告警</td>
+  <td><span class="tag t-lo">低</span></td>
+  <td>直接删除该配置</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ 9 ============ -->
+<h2><span class="num">9</span>分阶段实施建议</h2>
+
+<div class="box key">
+  <span class="bt">总体策略：解耦优先，不做大爆炸式升级</span>
+  <p>第 5 节的三个高危破坏性变更（沙箱、<code>new-window</code>、<code>sendTo</code>），
+  <b>其目标写法在 Electron 19 上全部可用</b>——<code>setWindowOpenHandler</code> 从 12 起就有，
+  主进程中转从来就有，<code>sandbox:false</code> 显式声明在 19 上是幂等的。<br>
+  这意味着可以<b>先把代码改成"两个版本都能跑"的形态，在 Electron 19 上正常发版验证</b>，
+  等改造稳定后再单独跳版。跳版那一步的 diff 就只剩 <code>package.json</code> 的版本号和工具链，
+  出问题时二分定位成本极低。</p>
+</div>
+
+<div class="phase">
+  <div class="ph">阶段 0 · 决策输入收集　<span class="fine" style="font-weight:400">约 3–5 人天，可与阶段 1 并行</span></div>
+  <div class="pb">
+    <ul>
+      <li>埋点统计 <b>Win7/8.1 客户端占比</b>与 macOS 版本分布（这是唯一的阻塞项，没有它无法定目标版本）</li>
+      <li>向<b>融云</b>确认 IM SDK 对新版 Electron/Chromium 的支持矩阵</li>
+      <li>核查 <b>Windows 签名证书</b>到期日与续期方式；申请 <b>App Store Connect API Key</b>（公证用）</li>
+      <li>确认崩溃上报服务 <code>192.168.5.55:33855</code> 是否仍在运行</li>
+      <li>建立<b>性能基线</b>：当前版本的启动耗时、常驻内存、崩溃率——升级后要对比</li>
+    </ul>
+    <p><b>出口条件</b>：拿到 Win7 占比，据此在第 4.4 节三种策略中选定一种。</p>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph">阶段 1 · 前置清理　<span class="fine" style="font-weight:400">约 2–3 人天</span></div>
+  <div class="pb">
+    <ul>
+      <li><b>统一依赖锁文件</b>：删掉 <code>yarn.lock</code> 或 <code>package-lock.json</code> 之一；把
+          <code>leveldown</code> 的声明版本对齐到实装的 6.1.1（R13）</li>
+      <li>删除死配置：<code>enableRemoteModule</code>（<code>config/index.js:37</code>）、
+          <code>enableBlinkFeatures</code>（:41）、注释掉的 electron-updater 模板代码（<code>index.js:452-469</code>）</li>
+      <li>解决 <code>electron-builder.yml</code> 的<b>可提交性问题</b>——升级需要的配置变更必须有落地位置（见 6.2）</li>
+      <li>为 <code>trigger-result</code> 跨窗口通道补冒烟测试（当前 <code>test/unit</code> 几乎空置）</li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph">阶段 2 · 架构解耦改造（<b>仍在 Electron 19 上</b>）　<span class="fine" style="font-weight:400">约 8–12 人天</span></div>
+  <div class="pb">
+    <p>本阶段每一项都<b>可独立发版验证</b>，这是整个方案降低风险的核心。</p>
+    <ol>
+      <li><b><code>new-window</code> → <code>setWindowOpenHandler</code></b>（9 处）。
+          以 <code>webview-control.vue:208</code> 为模板。<code>main-view.js:342</code> 的
+          <code>event.newGuest</code> 模式需重构为 <code>overrideBrowserWindowOptions</code> + <code>did-create-window</code>。</li>
+      <li><b><code>ipcRenderer.sendTo</code> → 主进程中转</b>（15 处）。
+          新增 <code>ipc/relay-ipc.js</code>；<b>保持 <code>window.webview</code> 对外接口签名不变</b>，只换内部实现，
+          这样 web 端不需要改。同步 <code>context/bridge.md</code>。</li>
+      <li><b>显式化沙箱设置</b>：所有 <code>BrowserWindow</code> 与 <code>&lt;webview&gt;</code> 补上显式
+          <code>sandbox: false</code>（或对 webview 用 <code>nodeintegration</code>），
+          让 Electron 20 的默认值变化不再影响本应用。<b>这一步在 19 上是幂等的，零行为变化，但把 R1 提前消除。</b></li>
+      <li>（可选，建议）preload 的 <code>contextBridge</code> 化——若时间不够可推迟到升级后，
+          但需明确记为技术债。</li>
+    </ol>
+    <p><b>出口条件</b>：上述改造在 Electron 19 上完整发版并观察一个迭代周期，崩溃率无恶化。</p>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph">阶段 3 · 工具链升级　<span class="fine" style="font-weight:400">约 4–6 人天</span></div>
+  <div class="pb">
+    <ul>
+      <li>构建 Node：14.21.3 → 目标版本（按选定档位）。同步更新 <code>package.json#volta</code>。</li>
+      <li>加 <code>NODE_OPTIONS=--openssl-legacy-provider</code> 绕过 webpack 4 md4 问题（R11）。</li>
+      <li><code>electron-builder</code> 升级；验证 Windows 签名与 NSIS 产物。</li>
+      <li><b>补齐 macOS 签名 + 公证</b>：<code>electron-notarize</code> → <code>@electron/notarize</code> 2.x，
+          altool → notarytool，<code>electron-builder.yml</code> 补 <code>afterSign</code> 与真实
+          <code>mac.identity</code>。<b>此项可与其它工作并行，不占关键路径</b>（R5）。</li>
+      <li><code>electron-rebuild</code> → <code>@electron/rebuild</code>（低优先，N-API 下需求不大）。</li>
+    </ul>
+    <p><b>出口条件</b>：在<b>不改 Electron 版本</b>的前提下，新工具链能完整打出 win/mac 包并正常启动。</p>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph">阶段 4 · Electron 跳版　<span class="fine" style="font-weight:400">约 6–12 人天（按档位）</span></div>
+  <div class="pb">
+    <p>到这一步，代码 diff 理想情况下<b>只有 <code>package.json</code> 里的 electron 版本号</b>。</p>
+    <ol>
+      <li><b>第一件事</b>：最小 demo 验证 V8 内存笼与原生模块（R3）——sqlite3 读写 + leveldb 读写压测。
+          这一项若失败，整个升级要回到依赖层重新规划，必须最先做。</li>
+      <li>逐档验证：若选双轨，先出 legacy/electron-22 分支的 Win7 包并冻结；主线再跳目标版本。</li>
+      <li>回归清单按第 3.1 节"回归范围"逐项执行。重点：内嵌 web 桥全通道、多窗口互通、截图两套实现、
+          WPS/飞书授权页、转发弹窗。</li>
+      <li>对比阶段 0 采集的性能基线。</li>
+    </ol>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph">阶段 5 · 灰度发布　<span class="fine" style="font-weight:400">约 2–4 周日历时间</span></div>
+  <div class="pb">
+    <ul>
+      <li>利用现有的 <code>gray</code> 环境（<code>MODE_ENV=gray</code>，已有 <code>build:gray</code> / <code>pack:*-gray</code>）做内部灰度。</li>
+      <li>升级源按 <code>os.release()</code> 分流：Win7 客户端只推 legacy 包（R6）。</li>
+      <li>监控指标：崩溃率、启动成功率、内嵌 web 页面加载失败率、IM 消息收发成功率。</li>
+      <li>准备回滚方案：保留上一版本安装包与升级源开关。</li>
+    </ul>
+  </div>
+</div>
+
+<h3>9.1 总量与推荐</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:36%">路径</th><th style="width:18%">总工作量</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>阶段 0-5，目标档 A（Electron 22）</td><td class="n">约 25–35 人天</td><td>保 Win7，但拿不到安全补丁，几个月后需重来</td></tr>
+<tr><td>阶段 0-5，目标档 C（当前稳定版），放弃 Win7</td><td class="n">约 40–55 人天</td><td>一步到位，前提是 Win7 占比可忽略</td></tr>
+<tr><td><b>阶段 0-5，目标档 C + Electron 22 双轨</b> <span class="tag t-ok">推荐</span></td><td class="n">约 48–65 人天</td>
+  <td>比单轨多约 8–10 人天（legacy 分支的独立构建、独立升级源、分流逻辑），换取安全性与 Win7 兼容性同时成立</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="bt">明确推荐</span>
+  <p><b>推荐路径：阶段 0–5，主线升到当前稳定版并放弃 Win7，同时把 Electron 22 冻结为 legacy 分支服务 Win7 存量用户。</b></p>
+  <p>理由三条：</p>
+  <ol>
+    <li><b>只有当前稳定版能持续拿到安全补丁。</b>Electron 只维护最新 3 个主版本，升到 22 或 32 都是把同一笔钱付两遍。</li>
+    <li><b>阶段 2 的解耦改造把大部分风险前置了。</b>三个高危变更都能在 Electron 19 上先改先验证，
+        真正的跳版风险被压缩到"原生模块 + Chromium 渲染回归"两项，都是可测的。</li>
+    <li><b>双轨的增量成本（8–10 人天）远低于它消除的不确定性。</b>它把"Win7 占比"从一个阻塞决策的问题
+        降级成一个可以慢慢收敛的运营问题——不必等 IT 换完机才能动升级。</li>
+  </ol>
+  <p><b>唯一的前置条件</b>：阶段 0 必须先拿到 Win7 占比数据。若该数字 &lt;1%，直接砍掉双轨，
+  总量降到 40–55 人天。</p>
+</div>
+
+<div class="box mid">
+  <span class="bt">建议不要捆进本次升级的三件事</span>
+  <p>它们各自都是大工程，捆在一起会让问题无法二分定位：</p>
+  <ul>
+    <li><b>webpack 4 → 5</b>（用 <code>--openssl-legacy-provider</code> 先绕过）</li>
+    <li><b>Vue 2 → 3</b>（与 Electron 版本无耦合）</li>
+    <li><b><code>@electron/remote</code> 完全移除</b>（升到 2.1.x 即可满足升级需求；36 处收敛单独排期）</li>
+  </ul>
+</div>
+
+<!-- ============ 10 ============ -->
+<h2><span class="num">10</span>附录</h2>
+
+<h3>10.1 证据索引</h3>
+<div class="tw">
+<table>
+<thead><tr><th style="width:44%">文件:行号</th><th style="width:22%">对应结论</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td class="n">src/main/index.js:16</td><td>2.3</td><td><code>require("@electron/remote/main").initialize()</code></td></tr>
+<tr><td class="n">src/main/index.js:80-86</td><td>4.2</td><td>Win7 白屏兜底：<code>os.release().startsWith("6.1")</code> → <code>disableHardwareAcceleration()</code></td></tr>
+<tr><td class="n">src/main/index.js:88</td><td>7.3</td><td><code>appendSwitch("ignore-certificate-errors")</code></td></tr>
+<tr><td class="n">src/main/index.js:7,283</td><td>5</td><td><code>desktopCapturer.getSources</code>（已在主进程，合规）</td></tr>
+<tr><td class="n">src/main/index.js:9</td><td>2.4</td><td>从 <code>electron</code> 错误解构 <code>webRequest</code></td></tr>
+<tr><td class="n">src/main/index.js:452-469</td><td>2.1</td><td>electron-updater 整段被注释——<b>未启用</b></td></tr>
+<tr><td class="n">src/main/config/index.js:33-44</td><td>2.2</td><td>主窗口 webPreferences：nodeIntegration/enableRemoteModule/webviewTag/contextIsolation:false/enableBlinkFeatures</td></tr>
+<tr><td class="n">src/main/process-manager/main-view.js:269-273</td><td>2.2</td><td>外链窗口 <code>nodeIntegration:false</code>，未设 sandbox → 20+ 将被沙箱化</td></tr>
+<tr><td class="n">src/main/process-manager/main-view.js:278-283</td><td>2.2 / 7.3</td><td>智信内嵌页：nodeIntegration:true + contextIsolation:false + webSecurity:false + preload</td></tr>
+<tr><td class="n">src/main/process-manager/main-view.js:150-160</td><td>7.2</td><td><code>canUseZhixinApi</code> 白名单：<code>/zx-zhiwen</code>、<code>/tms/share</code>、<code>/action-center/</code></td></tr>
+<tr><td class="n">src/main/process-manager/main-view.js:341-342</td><td>5</td><td><code>on("new-window", …)</code> + <code>event.newGuest = sWin</code></td></tr>
+<tr><td class="n">src/main/process-manager/main-view.js:392</td><td>5</td><td>主窗口 <code>on("new-window", …)</code></td></tr>
+<tr><td class="n">src/main/process-manager/main-view.js:162-168</td><td>2.2</td><td><code>preloadFile()</code> → <code>static/plugin/webview.js</code></td></tr>
+<tr><td class="n">src/main/ipc/popup-ipc.js:36-42</td><td>2.2</td><td>弹窗 webPreferences（node+preload+webSecurity:false+webviewTag）</td></tr>
+<tr><td class="n">src/main/ipc/popup-ipc.js:57,235,377,481</td><td>5</td><td><code>on("new-window", newWindowHandler)</code> × 4</td></tr>
+<tr><td class="n">src/main/ipc/popup-ipc.js:49,213,356,462</td><td>2.3</td><td><code>remote/main.enable()</code> × 4</td></tr>
+<tr><td class="n">src/main/process-manager/show-message-win.js:56</td><td>5</td><td><code>on("new-window", …)</code></td></tr>
+<tr><td class="n">src/main/process-manager/upgrade.js:34-36</td><td>2.2</td><td>升级窗口 webPreferences</td></tr>
+<tr><td class="n">src/main/process-manager/setting-panel.main.js:40-42</td><td>2.2</td><td>设置面板 webPreferences</td></tr>
+<tr><td class="n">src/main/process-manager/screen-cut.js:59-64</td><td>2.2 / 2.4</td><td>截图窗口（实现一）</td></tr>
+<tr><td class="n">src/main/process-manager/all-screen-cut.js:45-51</td><td>2.2 / 2.4</td><td>截图窗口（实现二，并行存在）</td></tr>
+<tr><td class="n">src/main/ipc/upgrade-ipc.js:18-27</td><td>2.1</td><td>自建升级流程（<code>upgrade-version</code> IPC 开窗），非 electron-updater</td></tr>
+<tr><td class="n">src/main/modules/sqlite/index.js:3</td><td>6.1</td><td><code>require("sqlite3").verbose()</code></td></tr>
+<tr><td class="n">src/main/modules/leveldb/index.js:3-4</td><td>6.1</td><td><code>levelup</code> + <code>leveldown</code></td></tr>
+<tr><td class="n">src/modules/crash-reporter.js:1-8</td><td>5</td><td><code>crashReporter.start</code>，<code>submitURL: http://192.168.5.55:33855/crash</code></td></tr>
+<tr><td class="n">src/modules/utils/index.js:93</td><td>2.3</td><td><code>return require("@electron/remote")</code>（统一出口）</td></tr>
+<tr><td class="n"><b>src/renderer/views/main.vue</b>:981,1031,1052,1066,<br>1080,1098,1119,1154,1169,1187,1257,1287,1339</td>
+    <td>5</td><td><b><code>e.sender.sendTo(webContentsId,"trigger-result",…)</code> × 13</b></td></tr>
+<tr><td class="n">src/renderer/components/common/webview-control.vue:9-29</td><td>2.2 / 5</td>
+    <td><code>&lt;webview&gt;</code>：<code>:preload</code>、<code>webpreferences="contextIsolation=0"</code>、
+        <code>allowpopups</code>、<code>disablewebsecurity</code>、<code>@new-window</code>；未声明 <code>nodeintegration</code></td></tr>
+<tr><td class="n">src/renderer/components/common/webview-control.vue:208</td><td>5 / 9</td>
+    <td><b>已使用 <code>setWindowOpenHandler</code></b>——可作改造模板</td></tr>
+<tr><td class="n">static/plugin/webview.js:4-5</td><td>5.1</td><td>preload 内 <code>require("electron")</code> + <code>require("@electron/remote")</code></td></tr>
+<tr><td class="n">static/plugin/webview.js:19,26</td><td>5</td><td><code>ipcRenderer.sendTo(…)</code> × 2</td></tr>
+<tr><td class="n">static/plugin/webview.js:540</td><td>2.3</td><td><code>window.require("@electron/remote")</code> in <code>setFullScreen</code></td></tr>
+<tr><td class="n">static/plugin/webview.js:654</td><td>2.3</td><td><code>window.webview = webview</code>——对内嵌 web 的公开接口面</td></tr>
+<tr><td class="n">scripts/notarize.js:11,24-30</td><td>6.4</td><td><code>electron-notarize</code> + altool 参数形态（<code>@keychain:Application Loader:</code>、<code>ascProvider</code>）</td></tr>
+<tr><td class="n">electron-builder.yml</td><td>6.2 / 6.4 / 6.5</td>
+    <td><code>mac.identity:"~"</code>、无 <code>afterSign</code>、win <code>nsis/x64</code>（ia32 已注释）、
+        <code>certificateFile</code> + 明文 <code>certificatePassword</code>、
+        <code>afterPack</code>/<code>afterAllArtifactBuild</code> 两个 hook</td></tr>
+<tr><td class="n">.electron-vue/webpack.renderer.config.js:28-40,186</td><td>6.3</td>
+    <td><code>target:"electron-renderer"</code>、<code>whiteListedModules:["vue"]</code>、externals 机制</td></tr>
+<tr><td class="n">.electron-vue/webpack.main.config.js:16,68</td><td>6.3</td><td><code>externals</code> 取全部 dependencies、<code>target:"electron-main"</code></td></tr>
+<tr><td class="n">package.json#volta</td><td>2.1 / 6.3</td><td><code>{"node":"14.21.3"}</code></td></tr>
+<tr><td class="n">node_modules/sqlite3/lib/binding/napi-v3-darwin-arm64/</td><td>6.1</td><td>实测：N-API v3 绑定</td></tr>
+<tr><td class="n">node_modules/leveldown/package.json</td><td>6.1</td><td>实测 6.1.1，依赖 <code>napi-macros</code> + <code>node-gyp-build</code>（声明为 ^5.6.0，<b>版本漂移</b>）</td></tr>
+<tr><td class="n">node_modules/electron/package.json</td><td>2.1</td><td>实测 19.0.10</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>10.2 未验证 / 需查证清单</h3>
+<p class="lead">以下条目<b>不能作为决策依据</b>，须在阶段 0 逐条落实。</p>
+<div class="tw">
+<table>
+<thead><tr><th style="width:6%">#</th><th style="width:40%">待查证</th><th>为什么静态分析给不出答案</th></tr></thead>
+<tbody>
+<tr><td class="n">1</td><td>2026-09 的 Electron 当前稳定版号，及其 Chromium/Node 对应关系</td>
+  <td>本报告知识截至 2026-05，以 38 为分析基线。须查 <code>releases.electron.org</code></td></tr>
+<tr><td class="n">2</td><td>各破坏性变更的确切引入版本（尤其 <code>new-window</code> 移除 = 22、<code>sendTo</code> 移除 = 28）</td>
+  <td>须以官方 <code>docs/breaking-changes.md</code> 为准</td></tr>
+<tr><td class="n">3</td><td>Electron 20 的沙箱默认值对 <code>&lt;webview&gt;</code> guest 的确切作用方式</td>
+  <td>webview 的 preload 沙箱行为与普通 BrowserWindow 不同，且随版本调整过，<b>只能实机验证</b>（R1）</td></tr>
+<tr><td class="n">4</td><td>V8 内存笼是否影响本仓库的 sqlite3 5.0.2 / leveldown 6.1.1</td>
+  <td>行为层限制，非 ABI，看版本号判断不了（R3）</td></tr>
+<tr><td class="n">5</td><td>Win7/8.1 与 macOS 版本的实际用户分布</td>
+  <td>需埋点数据。<b>这是唯一阻塞决策的输入</b></td></tr>
+<tr><td class="n">6</td><td>融云 IM SDK 的 Electron 支持矩阵</td><td>需向厂商确认</td></tr>
+<tr><td class="n">7</td><td>Electron 33+ 的 macOS 最低版本要求</td><td>须查官方文档</td></tr>
+<tr><td class="n">8</td><td><code>BrowserView</code> 是否在未检索到的路径中被使用</td>
+  <td>已 Grep 未命中，但动态构造无法静态发现</td></tr>
+<tr><td class="n">9</td><td><code>electron-builder.yml</code> 主干版本与工作区版本的差异</td>
+  <td>该文件在 <code>.gitignore</code> 中，工作区含本地调试改动（test 包名、mac arm64 单架构），
+      <b>本报告读到的可能不是发布态配置</b></td></tr>
+<tr><td class="n">10</td><td>Windows 代码签名证书到期日与续期路径</td><td>需 IT/安全部门确认（R9）</td></tr>
+<tr><td class="n">11</td><td>崩溃上报服务 <code>192.168.5.55:33855</code> 是否在运行</td><td>需运维确认</td></tr>
+<tr><td class="n">12</td><td>Chromium 102 → 目标版本之间的具体 CVE 清单</td>
+  <td>本报告不臆造 CVE 编号，须由安全团队从 Chrome Releases 公告核对</td></tr>
+<tr><td class="n">13</td><td>electron-builder 25/26 对构建 Node 的确切最低要求</td><td>须查其 release notes</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>10.3 本次分析的边界</h3>
+<ul>
+  <li><b>方法</b>：纯静态代码取证（Grep / Read / 读 <code>node_modules</code> 元数据）。未执行 <code>npm install</code>、
+      未构建、未运行应用。</li>
+  <li><b>代码基线</b>：分支 <code>master-3.4.27</code>。工作区存在未提交改动
+      （<code>.env.test</code>、<code>electron-builder.yml</code>、<code>package.json</code>、
+      <code>src/lib/markdownUtils.js</code>、<code>test/unit/markdown-render.spec.js</code>），
+      其中前三个属仓库明令的本地调试文件——<b>涉及它们的结论已标注需以主干版本复核</b>。</li>
+  <li><b>未覆盖</b>：<code>apps/desktop</code> 之外的仓库（web / android / ios）；内嵌 web 应用自身的兼容性；
+      <code>feat/dsh-integration</code> 分支上的 DeepSeek Harness 集成代码（不在当前分支上）。</li>
+  <li><b>工作量估算</b>基于代码规模与改造点数量的经验推算，未考虑团队具体人力配置与并行度。</li>
+</ul>
+
+<hr>
+<p class="fine">本报告由静态代码分析生成于 2026-09-03。所有标注 <span class="tag t-un">需验证</span> /
+<span class="tag t-un">需查证</span> 的条目在落实前不构成决策依据。</p>
+
+</div>
+</body>
+</html>
