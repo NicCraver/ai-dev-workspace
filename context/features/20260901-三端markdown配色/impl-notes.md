@@ -23,7 +23,7 @@
 | 端 | 普通自己发 | 自己发 ActionCard |
 |---|---|---|
 | PC | 组织主题里自己发气泡退回线上色（真正盖住的是带 `!important` 的那层） | 外壳加独立 class，浅底 + 描边 + 阴影写在气泡外壳；自己发那列要放开 overflow，否则阴影被裁 |
-| 安卓 | 二十多处共用的那张发送气泡 shape 退回线上色 | 单独一张 shape：浅底 + 描边；阴影**不要用 elevation**（ambient 颜色的 alpha 是乘在系统本就 ~4% 的强度上，给 10% 就等于没有；spot 又是方向光；API<28 还改不了颜色），改成把 halo 画进 9 图，与卡体拼成 layer-list，宿主 View 让出同宽 padding；横向宽度被头像位卡死，还要用左右负 margin 把 View 外扩，否则卡体被挤窄、光晕看着长在气泡里，祖先同时放开 clipChildren |
+| 安卓 | 二十多处共用的那张发送气泡 shape 退回线上色 | 单独一张 shape：浅底 + 描边；阴影**不要用 elevation**（ambient 颜色的 alpha 是乘在系统本就 ~4% 的强度上，给 10% 就等于没有；spot 又是方向光；API<28 还改不了颜色），改成把 halo 画进 9 图，再用自定义 Drawable 把它 setBounds 到 View 外侧（Drawable 不受自身 bounds 裁剪），卡体照旧铺满。**不要靠 padding / margin 腾地方**：气泡宽度被头像位卡死，腾地方就等于把卡体挤窄。父级需 clipChildren=false |
 | iOS | 发送气泡宏退回线上色 | 机器人卡片 cell 自己覆盖浅底。描边和阴影画在外壳，内容放内层按圆角裁切。量折叠高度前必须先拿掉内层裁切。折叠名单是**所有 ActionCard**（不限发送人、不要求智能体账号或知识来源），对齐安卓；微信绿气泡除外 |
 
 ## 边界
