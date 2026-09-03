@@ -1,6 +1,6 @@
 # Status：会议室前端重构
 
-> 最后更新：2026-09-02（PC 选区不再抬高助手球；移动端仍避让底栏）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-03（从 ACTIVE 移除；设计系统与看板改动仍混在 meeting 脏区）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -15,14 +15,21 @@
 
 android / ios / desktop 不单独立项：会议室以内嵌 WebView 复用 meeting web。
 
+## 收尾（2026-09-03）
+
+本回合**纯文档归档**，未改 meeting 代码。从 `ACTIVE` 拿掉。矩阵里自测仍是 ✅，接口联调仍是「—」（本功能本来就不单独立项联调，切 Java 记在「后端落 contact」）。
+
+未提交清单仍在 `apps/meeting` 脏区，与位置描述、Task 12 混在一起；下一功能提交时按文件拆，不要整仓 add。
+
 ## 本回合各端现状（code-status）
 
-本回合：PC 看板首屏全屏加载；选中时段后 **不再** 给助手球/输入条加 `lifted`（确认卡贴在格子上，不必抬）。移动端 `MobileBookingPage` 仍 `lifted`。
+`scripts/code-status.sh` 2026-09-03。上一编码回合（09-02）：PC 看板首屏全屏加载；选中时段后 **不再** 给助手球/输入条加 `lifted`。移动端仍 `lifted`。本归档回合未再改代码。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| meeting | main | ahead 4 | 脏(多) | **本功能** + 位置描述 + 切 Java | 本回合只动 `BookingBoardPage` / 已有 `AcPageLoading.fullScreen`；勿整仓 add |
-| contact | feat/meetingroom | 无 upstream | 脏(1) | 会议室后端落contact | 管理员白名单，不归本功能 |
+| meeting | main | ahead 4 | 脏(85) | 本功能（归档）+ 位置描述/切 Java 混杂 | 设计系统与看板文件未单独 commit |
+| contact | feat/meetingroom | 无 upstream | 脏(2) | 后端落 contact（归档） | 不归本功能 |
+| context | main | ahead 2 | 干净→本收尾再提交 | 本功能归档 | — |
 
 ## 本次改动
 
