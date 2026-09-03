@@ -51,6 +51,8 @@ npm run build:clean
 - 多窗口 + `@electron/remote` + IPC 交错，窗口生命周期/单例/关闭逻辑易出竞态（`src/main/index.js` 的 `closeWin`/`gologin`/`realQuit` 等）。
 - 渲染层三套 UI 库（element-ui/ant-design-vue/iview）混用，体积大、风格不统一，新功能尽量沿用同域既有库。
 - **`uncaughtException` 处理器会写爆磁盘（实测 9 小时 291 GB）**：`src/main/index.js` 的处理器第一行是 `console.error(...)`；dev 模式下 stdout/stderr 是父进程管道，父端一断，`console.error` 同步抛 `EPIPE` → 又触发 `uncaughtException` → 再 `console.error`，自我循环。每圈 `Logger.error` 用 `appendFileSync` 追加约 771 B，实测 ~11,600 条/s ≈ 8.9 MB/s，日志落在 `~/Library/Application Support/zhixin-test/logs/error/<YYYY-MM-DD>`。放大器有三个：处理器内部做了可能抛异常的事；`src/modules/logger/index.js` 的 `saveLog` 无限速/去重/单文件上限（唯一清理 `deleteAllOverdue` 按**天**删且只在模块加载时跑一次）；`process.stdout/stderr` 没挂 `error` 监听。修法：stdout/stderr 吞掉 `EPIPE`，处理器全程 `try/catch` 且不再调 `console.*`，Logger 加同指纹限速 + 单文件上限。**排查磁盘异常时先看这个目录。**
+  - **只在 dev 模式复现**，需三个条件同时成立：① 是 dev 构建（`webpack.main.config.js` 未设 devtool，webpack 4 开发态默认 `eval`，栈里出现 `process.eval (webpack:///./src/main/index.js?:436:11)`；打包产物的栈是 `app.asar/dist/electron/main.js`）；② stdout/stderr 是管道——`dev-runner.js:138` `spawn(electron, args)` 用默认 `stdio:'pipe'`，父进程在 `:140/:144` 当读端（装好的包从 Finder/Dock 启动接的是 `/dev/null`，永远不会 EPIPE）；③ 出现「父死子活」的孤儿——关终端/IDE 打死 dev-runner 但 electron 没跟着退（正常退出走 `:147` 的 `close` → `process.exit()`，父子同归，无孤儿）。
+  - 但 Logger 无限速这条**对所有人生效**：任何高频重复异常都能写满磁盘，EPIPE 只是碰巧能自我喂食把频率拉满。限速与单文件上限该无条件补。
 
 ## 深度参考（组件级调研）
 - [转发弹窗（消息转发）](./desktop-forward-dialog.md) —— `transmit-message.vue` 全链路：UI/五条取数通道/三种转发模式/智能体字段/子组件契约/移植要点。关键词提醒：代码里「转发」=`transmit`。
