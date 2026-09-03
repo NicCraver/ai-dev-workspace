@@ -15,10 +15,10 @@
 | 标题色（H1–H4 → `#3E7EFF`） | 基准 | ✅ | ✅ | ✅ |
 | 普通自己发退回线上色 | — | 🚧 已 push `9a3b6d172`，待真机 | 🚧 已 push `6e964addc`，待真机 | 🚧 已 push `0d00470c`，待热更新 |
 | 自己发 ActionCard 浅底 + `#F4F6F8` 描边 | 描边基准 | 🚧 同左 | 🚧 同左 | 🚧 同左 |
-| 自己发 ActionCard 卡体阴影 | — | 🚧 光晕 9 图画到 bounds 外（不占布局），待真机 | 🚧 已合入 `master-3.5.32` `abd879309`，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
-| 自己发 ActionCard「查看更多」遮罩贴卡体色 | — | 🚧 新建 `#F0F5FF` 渐变，待真机 | 未核 | ✅ `-webkit-mask-image` 渐变透明，天然贴底 |
+| 自己发 ActionCard 卡体阴影 | — | 🚧 已 push `bc532ea3d`，待真机 | 🚧 已合入 `master-3.5.32` `abd879309`，待真机 | 🚧 已 push `0ed5a52e`，待热更新 |
+| 自己发 ActionCard「查看更多」遮罩贴卡体色 | — | 🚧 已 push `bc532ea3d`，待真机 | 未核 | ✅ `-webkit-mask-image` 渐变透明，天然贴底 |
 | token 表登记 | ✅ | — | — | — |
-| 折叠态正文不可拖动 | — | 🚧 换 `ZXNoScrollLinkMovementMethod`，待真机 | 未核 | 未核 |
+| 折叠态正文不可拖动 | — | 🚧 已 push `bc532ea3d`，待真机 | 未核 | 未核 |
 | 编译 / lint | — | ✅ `:IM:compileOnTestDebugJavaWithJavac` | — 未单独编译 | ✅ eslint 无输出 |
 | 运行时验收 | — | ⬜ | ⬜ | ⬜ |
 
@@ -27,7 +27,7 @@
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
 | desktop | master-3.4.27 | synced | 干净（配置信息） | **本功能** | 阴影已 push `0ed5a52e`；`.env.test` 等未提交 |
-| android | master-3.6.23 | synced | 脏(7)：本功能阴影/遮罩 3 新增 + 2 改 + 旁路表格 | **本功能** | 仍未 commit |
+| android | master-3.6.23 | ahead→已 push | 只剩旁路表格边框 1 件 | **本功能** | 本功能 7 个文件已提交 `bc532ea3d` 并按用户指定直推 master-3.6.23（未走 MR）|
 | ios | master-3.5.32 | synced | 干净 | **本功能** | `abd879309` 已合入功能分支；冲突取新实现并补回高亮 TextView |
 | web | feat/data-scope-storage-group | synced | 干净 | 未改 | 只当描边基准 |
 | context | main | ahead | 本功能 docs | **本功能** | — |
@@ -83,7 +83,7 @@
 - (android) 卡头当前是 `shape_solid_c5d8ff_lefttop_radius_16dp`（#C5D8FF），本功能规则写的是 #D7E5FF。本回合没动，需确认哪个为准
 - (android) 2026-09-02 **自己发「查看更多」蒙层色带（已改代码，请再验）**：气泡 solid 已退回 `#DEE8FF`，但 `zu_zhi_robot_card_more_own_send.9.png` 9/1 仍停在 `#F0F5FF`，会在气泡上压出一条浅色带。已从调浅前提交还原 9-patch。收到消息的白色那张没动。
 - iOS 已合入 `master-3.5.32`（`abd879309`），真机再验阴影、转发卡折叠、高亮居中
-- 安卓阴影仍未 commit（`master-3.6.23` 工作区脏）；`master-3.6.23` 是联调主干，走 MR，别直推。PC 已按用户指定推到 `master-3.4.27`（`0ed5a52e`）
+- 安卓本功能已提交 `bc532ea3d` 并**按用户指定直推** `master-3.6.23`（该分支是联调主干，惯例走 MR，这次没走）。旁路的表格边框改动仍留在工作区未提交。PC 已按用户指定推到 `master-3.4.27`（`0ed5a52e`）
 - PC 勿提交 `.env.test` / `electron-builder.yml` / `package.json`（本地仍脏，未进本次提交）
 - 安卓还混着 markdown 表格列宽等旁路脏文件，提交时只挑本功能文件
 
