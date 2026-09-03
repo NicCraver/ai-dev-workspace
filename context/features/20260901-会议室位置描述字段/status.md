@@ -1,6 +1,6 @@
 # Status：会议室新增「位置描述」字段
 
-> 最后更新：2026-09-01（本机 Java 联调已验存回显；meeting 代码仍混在脏区未单独 commit）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-03（从 ACTIVE 移除；contact 已入库，meeting 改动仍混在脏区）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 会议室除名称、建筑、楼层外，再维护一条「怎么找到这间屋子」的描述，例如「3号会议室在7层711办公室」「2号会议室在715财务办公室旁边」。
 
@@ -24,13 +24,22 @@
 | 移动端房间详情 / 房间卡片 | — | — | ✅ |
 | 运行时联调（起服务点一遍） | ✅ 本机 Java | ⬜ 未用 SQLite 当验收 | ✅ 管理端新建「联调B1」填「联调1层东侧」改西侧能回显 |
 
+## 收尾（2026-09-03）
+
+本回合**纯文档归档**，未改 apps 代码。从 `ACTIVE` 拿掉。contact 侧 `locationDesc` 已在 `723bd4756`；meeting server/web 的表单、列表、弹窗、卡片仍未单独 commit。
+
+下一功能若要交 meeting 代码：只 stage `room.ts` / 管理表单 / 看板弹窗相关文件，不要跟前端重构或 Task 12 捆在一起。清空位置描述再保存仍未单独点。
+
 ## 本回合各端现状（code-status）
+
+`scripts/code-status.sh` 2026-09-03。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| contact | feat/meetingroom | 无 upstream | 脏(1) | 会议室后端落contact | 仅 `meeting.admin.userIds`，与本字段无关，勿提交密码 |
-| meeting | main | ahead 4 | 脏(77) | **本功能** + 前端重构 + 切 Java | `room.ts` / 管理表单 / 看板弹窗仍未单独 commit |
-| 其余 | — | — | — | 其它活跃功能 | web 周工作脏区不归本功能 |
+| contact | feat/meetingroom | 无 upstream | 脏(2) | 后端落 contact（归档） | 脏的是 BookingService / properties，与本字段无关 |
+| meeting | main | ahead 4 | 脏(85) | 本功能（归档）+ 前端重构 + 切 Java | `room.ts` / 管理表单 / 看板弹窗仍未单独 commit |
+| context | main | ahead 2 | 干净→本收尾再提交 | 本功能归档 | — |
+| 其余 | — | — | — | 数据范围等旁路 | 不归本功能 |
 
 ## 本次改动
 
