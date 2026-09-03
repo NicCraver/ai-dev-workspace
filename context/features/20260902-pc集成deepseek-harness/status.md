@@ -1,6 +1,6 @@
 # Status：PC 端集成 DeepSeek Harness（dsh）
 
-> 最后更新：2026-09-03 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-03（含风险分析 risks.md） ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 把开源的 DeepSeek Harness（`@deepseek-ai/dsh`）内嵌进智信 PC 端：侧边栏新增入口，点开即用；安装包自带独立 Node 运行时，**终端用户机器上无需任何 Node 环境**。
 
@@ -151,6 +151,16 @@ android / ios / meeting / contact 四个仓库的脏区 mtime 全是 09-02（昨
 > `leveldown.node` 未变动；`sqlite3` 的 `lib/binding/napi-v3-darwin-arm64/node_sqlite3.node`
 > 被重新编译，但字节数与重编译前完全一致（1760432）——napi-v3 是稳定 ABI，与 Node/Electron
 > 版本无关。`node_modules` 无损伤。
+
+## 风险分析
+
+见同目录 [risks.md](./risks.md)——基于本地实测的未来坑位清单。核心结论：
+
+- **CSS 有 4 个 Chromium 102 不支持的特性**（`:has()` / `@container` / `color-mix()` / `subgrid`），**无法 polyfill 且静默失效**，是最该先看的一条
+- JS 侧 4 个缺口（`AbortSignal.timeout/any`、`toReversed`、`Promise.withResolvers`）已被现有 preload 全覆盖，这是目前「用起来问题不大」的原因
+- `showDirectoryPicker` 未被使用，此前担心的 File System Access API 问题**不成立**
+- 端口安全实测：只绑回环、跨站 Origin 被 403 拦，**风险低于 spec 第五节原先的判断**
+- 更新包体积（每次发版是否重下 417MB）与内网代理是两个必须先查清的工程问题
 
 ## 待办 / 阻塞
 
