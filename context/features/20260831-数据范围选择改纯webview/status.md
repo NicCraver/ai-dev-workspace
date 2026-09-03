@@ -1,8 +1,8 @@
 # Status：数据范围选择改纯 webview
 
-> 最后更新：2026-09-01（iOS 未推送 7 条 + 脏区已 squash 并 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-03（web 合入 `master-knowledge-number` 并 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
-分支：web `feat/data-scope-storage-group`（synced）｜ ios `feat/ios-agent-date-range`（synced，`7a96ed086`）
+分支：web `feat/data-scope-storage-group`（synced，`1267867`）｜ ios `feat/ios-agent-date-range`（synced，`7a96ed086`）
 
 > **2026-09-01 晚**：web 已部署测试环境，PC / 移动两端在浏览器实测通过（见下「验证记录」）。
 > iOS 承载方式改定：**OverFullScreen 模态 + 自定义右滑入**（不用 push，避免聊天页 `viewDidDisappear` 清筛选条）。
@@ -33,13 +33,16 @@ PC（Electron）也切了：`personal-ai-memory-bar` 的 a-modal 里换成 `data
 
 ### 本回合各端现状（code-status）
 
-本回合只 squash/push iOS，未改其它端代码。
+本回合只动 web：把 `master-knowledge-number` 合进 `feat/data-scope-storage-group` 并 push（`9cfe71c..1267867`）。两处冲突已合：`DataScopeBar` 保留开层前刷新记忆并加 `disabled` 直接 return；`SkillEditFormBody` 保留自定义起止时间，系统内置任务时时间选择器仍禁用。顺带带上知识切片召回 50、系统内置定时任务。contact / ios / meeting 脏区是别的功能遗留，本回合未改。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| ios | feat/ios-agent-date-range | synced | 干净 | **本功能** + 时间回填 + 配色 | HEAD `7a96ed086` 已 push |
-| web | feat/data-scope-storage-group | synced | 干净 | 本功能 | — |
-| android | master-3.6.23 | ahead 3 | 脏(5) | 其它 | 本回合未改 |
+| web | feat/data-scope-storage-group | synced | 干净 | **本功能** | HEAD `1267867` 已 push |
+| ios | fix/ios-markdown-length-limit | synced | 脏(1) `pbxproj` | 长文渲染上限 | Xcode 噪声，未提交 |
+| android | master-3.6.23 | synced | 干净 | 其它 | 本回合未改 |
+| desktop | feat/data-range-week-work | synced | 干净 | 周工作 | 本回合未改 |
+| contact | feat/meetingroom | no upstream | 脏(2) | 会议室 | 遗留 |
+| meeting | main | ahead 4 | 脏(85) | 会议室 | 遗留 |
 
 ## 验证记录（2026-09-01 浏览器实测）
 
@@ -67,6 +70,7 @@ PC（Electron）也切了：`personal-ai-memory-bar` 的 a-modal 里换成 `data
 
 ## 待办 / 阻塞
 
+- (web) 本分支现已混入 `master-knowledge-number`（召回 50 + 系统内置定时），提 MR 时这两块会跟数据范围一起走，拆不干净
 - (全端) `saveDataRange` 全量合并须透传 `weekWorkScopeList` 与 8 个 `weekWorkSelectAll*`，省略会冲掉后端周工作记忆
 - (web) `OrgPicker` 部门/人员层行高已从 60px 改为 48px（与公司层、`row-height` 对齐）。人员行仍是 40px 头像 + 双行文案，需打开弹层目视是否挤
 - (web) **测试环境是旧包**：真机截图里 `/m/data-range` 出的还是 PC `el-dialog`（440 宽、居中、
