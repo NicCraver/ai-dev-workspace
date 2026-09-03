@@ -1,6 +1,6 @@
 # Status：数据范围选择改纯 webview
 
-> 最后更新：2026-09-03（web 合入 `master-knowledge-number` 并 push）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-03（**已收尾关闭**：web `feat/data-scope-storage-group` 经 `stage` 合入 `release`，随版上线）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 分支：web `feat/data-scope-storage-group`（synced，`1267867`）｜ ios `feat/ios-agent-date-range`（synced，`7a96ed086`）
 
@@ -21,12 +21,12 @@
 | 移动 Home 个人 AI 框直调组件（不再走原生） | ✅ 浏览器实测通过 | — | — | — |
 | 移动 popup 全屏 + 去顶圆角 + 涉密入口 | ✅ | — | — | — |
 | 整页 webview（模态右滑入）+ `reportDataRange` handler | — | ✅ `APIMainActivity` 承载 | ✅ 真机验过 | — |
-| 原生会话筛选条入口切到 webview | — | ✅ 编译通过，待真机 | ✅ 真机验过 | — |
+| 原生会话筛选条入口切到 webview | — | ✅ | ✅ 真机验过 | — |
 | 「数据+N」排除收纳组（`scopeDataType=4`） | ✅ 早已如此 | — | ✅ 本轮补 | — |
 | `bridge.md` 登记 + impl-notes | ✅ | — | — | — |
-| 真机 / 浏览器自测 | ✅ PC + 移动都过 | — | ⬜ 待人工真机 | — |
+| 真机 / 浏览器自测 | ✅ PC + 移动都过 | — | ✅ 用户验收通过 | — |
 | 契约：dataRangeType=5 周工作 + weekWork* / showRangeTxt | ✅ context | — | — | — |
-| 新页 `/zx/data-range`（PC 弹窗形态）+ iframe 内嵌 | ✅ | — | — | ✅ lint 过，待真机 |
+| 新页 `/zx/data-range`（PC 弹窗形态）+ iframe 内嵌 | ✅ | — | — | ✅ |
 
 PC（Electron）也切了：`personal-ai-memory-bar` 的 a-modal 里换成 `data-range-iframe`，
 本端 2557 行的 `personal-ai-data-scope-dialog` + `personal-ai-data-scope/` 已无人引用（未删）。
@@ -69,6 +69,16 @@ PC（Electron）也切了：`personal-ai-memory-bar` 的 a-modal 里换成 `data
 `saveDataRange` 仍是全量写入：合并记忆时必须透传 `weekWork*`，省略会把后端已存的周工作选择冲掉。各端调用代码本回合未改。
 
 ## 待办 / 阻塞
+
+> **2026-09-03 收尾**：web `feat/data-scope-storage-group`（`1267867`）已经 `stage`（`fb1c1c9`）合入
+> `release`（`6f144d6`），随版上线；四端验收通过，功能从 ACTIVE 移除。下面原有条目保留作实现史，
+> 其中「测试环境是旧包」已因重新部署失效。
+>
+> **真正留到后续的三条**：① PC `personal-ai-data-scope-dialog.vue` + `personal-ai-data-scope/`
+> 共 2557 行已成死代码，确认线上无问题后再删；② 安卓 `SelectDataRangeActivity` 与 iOS
+> `ZXPersonalAiPickerController` 暂不下线（AI 框 H5 的 `selectDataRangeScope` 桥还在用）；
+> ③ `saveDataRange` 全量合并必须透传 `weekWorkScopeList` 与 8 个 `weekWorkSelectAll*`，
+> 否则冲掉后端周工作记忆——这条由 `20260901-数据范围选择周工作` 接着盯。
 
 - (web) 本分支现已混入 `master-knowledge-number`（召回 50 + 系统内置定时），提 MR 时这两块会跟数据范围一起走，拆不干净
 - (全端) `saveDataRange` 全量合并须透传 `weekWorkScopeList` 与 8 个 `weekWorkSelectAll*`，省略会冲掉后端周工作记忆
