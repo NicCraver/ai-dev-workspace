@@ -17,7 +17,7 @@
 
 | 路径 | 说明 |
 |------|------|
-| `apps/meeting/` | 智能会议室。**目前是个人项目**（远端在 GitHub `NicCraver/zx-meeting-room`，其余仓库都在公司内网 GitLab），正准备推进到公司。pnpm workspace 双包 `web/` + `server/`，内嵌于智信三端 WebView。约定见 `context/platforms/meeting.md` |
+| `apps/meeting/` | 智能会议室。**目前是个人项目**（远端在 GitHub `NicCraver/zx-meeting-room`，其余仓库都在公司内网 GitLab），正准备推进到公司。前端 Vue；后端在 `apps/contact`。内嵌于智信三端 WebView。约定见 `context/platforms/meeting.md` |
 | `apps/action-center/` | 行动中心（`zx-operation-center`），**公司的另一个 web 项目**。Vue 3 + Vite MPA 四入口。主要当**参考源**——抄它的交互 / 逻辑 / 界面到智信各端；未来也会直接迭代它自己。约定见 `context/platforms/action-center.md` |
 | `apps/contact/` | 通讯录 / 组织架构**后端服务**（`zx-contact`）。Spring Boot + Java 8 + MyBatis-Plus 微服务，四端消费它的接口。会议室后端功能在这里落地。约定见 `context/platforms/contact.md` |
 

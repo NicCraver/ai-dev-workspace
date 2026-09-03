@@ -9,7 +9,7 @@
 | 周工作 tab + 四级子 tab + 列表勾选 | 🚧 界面已写，待打开弹窗目视 | — | — | — |
 | 已选底栏合并（知识聊天 + 周工作） | 🚧 代码已接，待目视 | — | — | — |
 | save 透传记忆中的 weekWork* | ✅ 单测覆盖 | — | — | — |
-| 周工作树真实接口 | ❌ 前端已接完（`a6a24a4`），**后端接口未上线，五个网关前缀全 404** | — | — | — |
+| 周工作树真实接口 | 🚧 前端已接完（`a6a24a4`），路径已更正，**待真实登录态验证一次成功返回** | — | — | — |
 | dataRangeList type=5 控制 tab 显隐 | ⬜ 现常显 | — | — | — |
 | 自测通过 | ⬜ 未在浏览器点开弹窗 | — | — | — |
 
@@ -26,13 +26,13 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
 ## 本次改动
 
-**context** 新增契约 `personalAiFrame/weekWorkDataRangeTree.d.ts`：`POST /corpPlateAccountRel/weekWorkDataRangeTree`。
+**context** 新增契约 `personalAiFrame/weekWorkDataRangeTree.d.ts`：`POST /personalAiFrame/weekWorkDataRangeTree`（服务 aiBasic）。
 
 一次返回四棵树（allTree / attentionTree / belongTree / manageTree）。前端必知口径写在 Changelog：Jackson 剥 `is` 前缀、`enableState=1` 自行拼「XXX团队工作」、团队/人员个数前端数节点、授权只在全部树、单企业跳过企业层。
 
 ## 待办 / 阻塞
 
-- **❌ 阻塞：后端 `POST /corpPlateAccountRel/weekWorkDataRangeTree` 未上线**。2026-09-03 用真实登录态在 192.168.10.25 试了 `/api/aiBasic`、`/api/contact/v1`、`/api/chat/v1`、`/aiChatApi`、`/api` 五个前缀，全部 404；`apps/contact` 仓库里也搜不到该接口。需要后端确认部署环境与最终路径
+- (web) 路径已更正为 `/personalAiFrame/weekWorkDataRangeTree`（后端最初给的 `/corpPlateAccountRel/...` 是错的），**尚未用真实登录态验证过一次成功返回** —— 下次拿到 userCode 时先确认不再 404
 - (web) 接口上线后：拿真回参核对适配层字段映射（现在只经契约验证，未经联调），对不上先改契约再改代码
 - (web) 周工作面板现在**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
 - (web) 接真实接口：按 tab 取对应树，不重复调；`multiCorp=false` 时第一层用 `tree[0].corpPlateList`；attentionTree 平铺

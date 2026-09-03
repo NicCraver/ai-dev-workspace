@@ -1,7 +1,9 @@
 /**
  * 契约：个人AI框域 · 周工作数据范围选择四棵树
- * POST /corpPlateAccountRel/weekWorkDataRangeTree
+ * POST /personalAiFrame/weekWorkDataRangeTree
  * Changelog:
+ * - 2026-09-03 路径更正：`/corpPlateAccountRel/weekWorkDataRangeTree` → `/personalAiFrame/weekWorkDataRangeTree`
+ *   （后端最初给的路径写错了；服务仍是 aiBasic，前缀 `/api/aiBasic` 不变）
  * - 2026-09-03 新增。一次返回 allTree / attentionTree / belongTree / manageTree，
  *   前端按 tab 取对应树渲染，不重复调接口。
  *   Jackson 序列化 boolean 时剥掉 is 前缀，JSON key 为 team / person（非 isTeam / isPerson）。
@@ -25,7 +27,7 @@ export type PersonalAiFrameWeekWorkEnableState = 0 | 1;
 /** 是否系统板块：1-是；0-不是；2-系统全员 */
 export type PersonalAiFrameWeekWorkSystemPlate = 0 | 1 | 2;
 
-/** POST /corpPlateAccountRel/weekWorkDataRangeTree 入参 */
+/** POST /personalAiFrame/weekWorkDataRangeTree 入参 */
 export interface PersonalAiFrameWeekWorkDataRangeTreeReq {
   /** 当前登录账号 id；mock: '280' */
   accountId: string;
@@ -169,7 +171,7 @@ export interface PersonalAiFrameWeekWorkDataRangeCorpNode {
   orphanUserList?: PersonalAiFrameWeekWorkDataRangeTreeNode[];
 }
 
-/** POST /corpPlateAccountRel/weekWorkDataRangeTree 业务 data */
+/** POST /personalAiFrame/weekWorkDataRangeTree 业务 data */
 export interface PersonalAiFrameWeekWorkDataRangeTreeData {
   /**
    * 是否多企业
@@ -192,6 +194,6 @@ export interface PersonalAiFrameWeekWorkDataRangeTreeData {
   manageTree?: PersonalAiFrameWeekWorkDataRangeCorpNode[];
 }
 
-/** POST /corpPlateAccountRel/weekWorkDataRangeTree 完整回参 */
+/** POST /personalAiFrame/weekWorkDataRangeTree 完整回参 */
 export type PersonalAiFrameWeekWorkDataRangeTreeResp =
   ApiResponse<PersonalAiFrameWeekWorkDataRangeTreeData>;

@@ -62,13 +62,15 @@
 
 ## 联调坑（实际接口 ≠ 文档之处）
 
-- **2026-09-03：`POST /corpPlateAccountRel/weekWorkDataRangeTree` 线上不存在。**
-  拿真实登录态（userCode 换 token）在测试环境 192.168.10.25 上试了五个网关前缀
-  （`/api/aiBasic`、`/api/contact/v1`、`/api/chat/v1`、`/aiChatApi`、`/api`），**全部 404**；
-  `apps/contact` 仓库里也搜不到 `weekWorkDataRangeTree` / `CorpPlateAccountRel`。
-  结论：后端尚未落地，契约是照文档先写的，**真实回参没有校对过**。
-  适配层的字段映射目前**只经过契约验证，未经联调验证**——接口上线后第一件事是拿真回参核对
-  字段名、嵌套层级与空值表现，对不上先改契约再改适配层。
+- **2026-09-03：后端最初给的路径是错的。** 文档写的 `/corpPlateAccountRel/weekWorkDataRangeTree`
+  在测试环境 192.168.10.25 上五个网关前缀（`/api/aiBasic`、`/api/contact/v1`、`/api/chat/v1`、
+  `/aiChatApi`、`/api`）全部 404，`apps/contact` 仓库里也搜不到该接口。
+  后端确认真实路径是 **`/personalAiFrame/weekWorkDataRangeTree`**，服务仍是 aiBasic
+  （前缀 `/api/aiBasic`）。契约与代码已更正。
+  > 中途一度怀疑是前缀问题：行动中心（zx-operation-center）的 `corpPlateAccountRel/*`
+  > 那一族接口确实走 `/api/actionCenter/v1`，但本接口不属于那一族，是 AI 框自己的接口。
+- 适配层的字段映射目前**只经过契约验证，未经联调验证**——真回参还没拿到过一次。
+  第一次联调时先核对字段名、嵌套层级与空值表现，对不上先改契约再改适配层。
 - 调接口需要 `clientType` 头（值取会话里的 `clientType`，如 `app`），缺了会返回
   `G_C_003 客户端类型不能为空`，而不是 401/404，容易误判成路径问题。
 
