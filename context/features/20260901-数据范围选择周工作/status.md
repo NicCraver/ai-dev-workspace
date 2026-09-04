@@ -177,14 +177,44 @@ weekWorkModel 单测 19 条绿，`vue-tsc` exit 0。
 目视：团队胶囊勾「信息技术部」那份团队工作 → 美腾与表头「全部」半选，矿业/下属不受影响；
 人员胶囊勾信息技术部下一个人 → 信息技术部与美腾都半选。
 
+## 2026-09-04 周工作勾选真正落库
+
+按后端最新文档接上保存（此前只透传记忆里已有的周工作字段）。
+
+- 契约 `_shared.d.ts`：`scopeDataType` 由 1-4 扩到 **1-8**（部门联动按 tab 分：3/4 全部、5/6 所属、7/8 主管），
+  新增 `childScopeDataIdSet`（奇数=子级人员 id，偶数=子级板块 id）
+- `weekWorkModel`：部门联动 key 的类型由 tab 决定（`WEEK_WORK_DEPT_TYPES`）；
+  新增 `buildWeekWorkScopeList`（带子集）与 `buildWeekWorkSelectAllFlags`（八个标记）
+- `buildSaveDataRangePayload` 新增 `weekWork` 参数，**三态**：给了就写，null/未给则透传记忆
+  （用户没进周工作 tab 或取树失败时必须走透传，否则空集合会清掉后端已存的选择）
+- 回显：新增 `initialWeekWorkScopes` prop，三个入口（PC/移动 data-range 页、DataScopeBar）都接上；
+  DataScopeBar 的父级没透传这个字段，改为开层前刷记忆时就地取，取到过才允许覆盖
+- 关注 tab 的团队项改落 `plate`（scopeDataType=2）——关注没有部门层，后端也只有板块维度的标记
+
+**真实链路验过**（李峰）：所属 tab 勾「前端开发」→ 确定 → 抓到的入参：
+
+```json
+[{"scopeDataType":5,"scopeDataId":"2026578801252651029",
+  "childScopeDataIdSet":["1478260773032583169","291"]},
+ {"scopeDataType":6,"scopeDataId":"2026578801252651029","childScopeDataIdSet":[]},
+ {"scopeDataType":1,"scopeDataId":"1478260773032583169"},
+ {"scopeDataType":1,"scopeDataId":"291"},
+ {"scopeDataType":2,"scopeDataId":"2026578801252651029"}]
+```
+
+`getAgentDataRange` 读回只剩 3 条——**后端把已被联动覆盖的两条 type 1 吃掉了**，并进 type 5 的子集。
+据此回显改为展开 `childScopeDataIdSet`，重开后「前端开发」全选 + 含团队工作已勾（已选 9），
+「信息技术部」半选（李峰同时在它子树里，正确）。
+
+单测：weekWorkModel 26 / weekWorkAdapter 13 / dataRangeSavePayload 8 / useDataRangePicker 12 全绿，`vue-tsc` exit 0。
+
 ## 待办 / 阻塞
 
 - (web) 周工作面板**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
 - (web) 本次联调只覆盖**单企业**（multiCorp=false）与**无孤儿人员**（orphanUserList 空）；多企业分支与孤儿人员分支只有单测覆盖，等有多企业账号再验
-- (web) 勾选口径已按胶囊分维并目视；**勾选后点确定是否正确落库仍未验**
+- (web) 勾选→确定→落库→重开回显已在 PC 端走通；**移动端 `/m/data-range` 未验**
 - (web) `WeekWorkPicker.vue` 本回合与用户的图标改动同处一文件，未提交（模型层 `weekWorkModel.js` 改动同样未提交，避免拆出不自洽的 commit）
 - (web) tab 显隐改为 `dataRangeList` type=5 choose=1 才显示（现常显）
-- (web) 确定暂不写 `weekWorkScopeList`，等接口；save 只透传记忆里已有的 weekWork*
 - (web) 新分支未 push，需要时 `git push -u origin feat/data-range-week-work`
 
 ## 关键决策记录

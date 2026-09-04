@@ -3,6 +3,8 @@
  * Changelog:
  * - 2026-07-14 新增（群成员信息、附件、数据范围等）
  * - 2026-07-14 新增筛选类型 PersonalAiFrameFilterType / PersonalAiFrameFilterInfo（list / getFilter 共用）
+ * - 2026-09-04 周工作 scopeDataType 由 1-4 扩到 1-8（部门联动按 tab 分：3/4 全部、5/6 所属、7/8 主管）；
+ *   WeekWorkScope 新增 childScopeDataIdSet（3-8 必带；奇数=子级人员 id 集合，偶数=子级板块 id 集合）
  * - 2026-09-01 dataRangeType 补 5-周工作；新增周工作记忆类型 PersonalAiFrameWeekWork*
  * - 2026-07-16 dataRangeType 补齐 3-个人 / 4-分享；DataRangeScope 子项 scopeDataType/scopeDataId 改为必填（对齐 saveDataRange）
  * - 2026-07-16 附件 analysisStatus 补 3-没有得到分析（大小超限）（对齐 aiChat）
@@ -66,18 +68,27 @@ export interface PersonalAiFrameDataRangeChoose {
 
 /**
  * 周工作数据范围类型
- * 1-个人；2-板块；3-选中的部门（自动增减子级人员）；4-选中的部门（自动增减子级板块）
+ * 1-个人；2-板块；
+ * 部门联动按所在 tab 分三组（同一个部门在不同 tab 勾选 = 不同类型，各记一条）：
+ * 3/4-「全部」tab 选中的部门（3 联动子级人员、4 联动子级板块）
+ * 5/6-「所属」tab 选中的部门
+ * 7/8-「主管」tab 选中的部门
+ * 「关注」tab 是扁平列表、没有部门层，只会产出 1 / 2
  */
-export type PersonalAiFrameWeekWorkScopeDataType = 1 | 2 | 3 | 4;
+export type PersonalAiFrameWeekWorkScopeDataType = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 /** 周工作选中的人/板块/部门 */
 export interface PersonalAiFrameWeekWorkScope {
-  /**
-   * 1-个人；2-板块；3-选中的部门（自动增减子级人员）；4-选中的部门（自动增减子级板块）
-   */
+  /** 见 PersonalAiFrameWeekWorkScopeDataType */
   scopeDataType: number;
-  /** 个人=人员 id；板块=板块 id；3/4 选中的部门=板块 id */
+  /** 个人=人员 id；板块=板块 id；3-8 选中的部门=板块 id */
   scopeDataId: string;
+  /**
+   * scopeDataType 为 3-8 时必带：子级节点 id 集合，后端据此自动增减。
+   * 奇数（3/5/7）= 子级**人员** id 集合；偶数（4/6/8）= 子级**板块** id 集合。
+   * 1/2 不带此字段。
+   */
+  childScopeDataIdSet?: string[];
 }
 
 /** 周工作勾选全部：1-是；0-否 */
