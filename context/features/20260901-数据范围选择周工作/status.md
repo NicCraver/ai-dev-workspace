@@ -78,6 +78,7 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 - 全部 tab 有子节点的团队行尾加收纳组同款 pack/unfold 图标
 - 人员行主标题改回 nickName；副标题只显示上级团队，不再用企业名 / 把部门名当用户名
 - 企业行图标改用 OrgPicker 公司行 `company_organization.png`
+- 周工作 `listResetKey` 去掉展开数，展开/收起不再滚回顶（对齐收纳组 d91a48c7）
 
 ## 2026-09-04 勾选口径按胶囊分维
 
