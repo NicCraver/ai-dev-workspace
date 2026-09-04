@@ -77,11 +77,29 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 - 列表到页脚的空白：弹层内容改为 `flex-1 min-h-0` 链（`AcDialog` body / `WeekWorkPicker` / 虚拟列表），短列表也铺满到页脚
 - 全部 tab 有子节点的团队行尾加收纳组同款 pack/unfold 图标
 
+## 2026-09-04 勾选口径按胶囊分维
+
+部门行的「全选」判据以前不分胶囊，一律要求「人选齐 + 团队工作勾齐」。团队胶囊下人员行不显示，
+于是团队行永远勾不满。改为按胶囊只看一维（`deptCheckState(keys, dept, scope)` 与
+`toggleDeptPeople(keys, dept, scope)` 新增 scope 参数，取值 all / team / person）：
+
+| 胶囊 | 全选判据 | 勾整行写入 |
+|---|---|---|
+| 全部 | 人齐 + 团队工作齐 | 人员 + 板块 + 标记 3、4 |
+| 团队 | 只看团队工作 | 板块 + 标记 4 |
+| 人员 | 只看人 | 人员 + 标记 3 |
+
+部门联动标记也改为按维度给（有人才 type 3，有团队工作才 type 4），以前团队胶囊会写出
+「选了 0 个人的 type 3」。真实数据（李峰，多企业）目视：团队胶囊勾「信息技术部」只 +1（那份
+团队工作，行勾选框与「含团队工作」同步）；人员胶囊勾同一行 +16 人且不写板块。
+weekWorkModel 单测 19 条绿，`vue-tsc` exit 0。
+
 ## 待办 / 阻塞
 
 - (web) 周工作面板**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
 - (web) 本次联调只覆盖**单企业**（multiCorp=false）与**无孤儿人员**（orphanUserList 空）；多企业分支与孤儿人员分支只有单测覆盖，等有多企业账号再验
-- (web) 剩余目视：全部胶囊才人+板块一起全选、其他 tab / 胶囊只勾当前列表；勾选后确定是否正确落库（本回合只验了渲染，没验勾选与保存）
+- (web) 勾选口径已按胶囊分维并目视；**勾选后点确定是否正确落库仍未验**
+- (web) `WeekWorkPicker.vue` 本回合与用户的图标改动同处一文件，未提交（模型层 `weekWorkModel.js` 改动同样未提交，避免拆出不自洽的 commit）
 - (web) tab 显隐改为 `dataRangeList` type=5 choose=1 才显示（现常显）
 - (web) 确定暂不写 `weekWorkScopeList`，等接口；save 只透传记忆里已有的 weekWork*
 - (web) 新分支未 push，需要时 `git push -u origin feat/data-range-week-work`
