@@ -235,6 +235,19 @@ type3 16、type4 10、type5 9、type6 5、type7 2、type8 1，八个标记全部
 
 单测：weekWorkModel 26 / weekWorkAdapter 13 / dataRangeSavePayload 8 / useDataRangePicker 12 全绿。
 
+## 2026-09-04 清掉联动标记的残留路径
+
+回推方案落地后，`deptPeopleKey` / `deptPlateKey` / `WEEK_WORK_DEPT_TYPES` 全成了死代码，且留了个坑：
+关注 tab 的扁平项若是 `dept` 类型会落出 type 3 的 key，而保存时 3-8 一律从选中集合跳过
+（它们由三棵树回推），这条选择会被静默丢掉。
+
+- 删掉三个 marker key 工具，`isDeptMarkerType` 只留给回显判断用
+- `toggleFlatItem` / `isFlatItemSelected` 简化为「人 → type 1，其余 → type 2」
+
+实测（关注 tab 取消勾选「信息技术部」）：已选 44→43，入参 type2 8→7、type4 10→9、type6 5→4，
+`weekWorkSelectAllAttentionPlate` 1→0 —— 取消一份团队工作后，含它的父部门在板块维度不再选满，
+对应联动记录随之消失，四处口径自洽。单测 26/13/8/12 全绿，`vue-tsc` exit 0。
+
 ## 待办 / 阻塞
 
 - (web) 周工作面板**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
