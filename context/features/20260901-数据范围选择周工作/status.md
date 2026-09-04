@@ -20,7 +20,7 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
 | context | main | ahead 19 | 脏(package.json) | 编排 | 本功能 status 待提交 |
-| web | feat/data-range-week-work | 无 upstream | 脏(WeekWorkPicker + AiBoxSearchPanel) | **本功能** | 搜索周工作组织图标加大 |
+| web | feat/data-range-week-work | 无 upstream | 脏(picker + AcDialog) | **本功能** | 周工作列表高度铺满弹层 |
 | desktop | feat/data-range-week-work | synced | 干净 | 本功能 | 未改 |
 | 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
 
@@ -74,6 +74,7 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 - 组织图标在周工作列表、统一搜索命中行用 `!w-6 !h-6`（24px，与人员头像同大）；已选底栏仍走组件默认 16px
 - 「含团队工作」接到名称右侧，不再被 `flex-1` 顶到行尾
 - 筛选胶囊改为 `rounded-full`（高度 24px 的全圆胶囊，左右无竖边）
+- 列表到页脚的空白：弹层内容改为 `flex-1 min-h-0` 链（`AcDialog` body / `WeekWorkPicker` / 虚拟列表），短列表也铺满到页脚
 
 ## 待办 / 阻塞
 
