@@ -2,6 +2,7 @@
 
 > 最后更新：2026-09-04 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
+
 ## 平台矩阵
 
 会议室走 WebView，代码在 meeting 前端 + contact 后端。四端复用同一套页面。
@@ -25,3 +26,4 @@
 - 2026-09-03 助手成功只记 `agent_booked`，不与 `booking_submit` 双计
 - 2026-09-03 永不存用户说话原文；`GET /events/recent` 仅管理员
 - 2026-09-04 meeting 单测从 `node:test` 换成 Vitest 5（与埋点功能无关的工具升级）
+- 2026-09-04 `pnpm test:ui` 打开 Vitest UI（需 `--watch`，否则跑完就退出）

@@ -19,6 +19,7 @@ pnpm dev              # 前端，端口 6273；/meetingApi → Java 7004 /meetin
 pnpm build            # vue-tsc → main/zx/m → mergeDist 合并到 dist/
 pnpm build:prod       # 生产构建
 pnpm test             # Vitest 5，`src/features/**/tests/*.test.js`
+pnpm test:ui          # Vitest UI（默认 http://127.0.0.1:51204/__vitest__/）
 pnpm format           # prettier，仅作用于 src/
 ```
 > **无 ESLint**；类型检查用 `vue-tsc`（已内嵌在 build，也可 `pnpm typecheck`）。`tsconfig.json` 是 `checkJs: false`，
