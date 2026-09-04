@@ -29,3 +29,4 @@
 - 2026-09-04 `pnpm test:ui` 打开 Vitest UI（需 `--watch`，否则跑完就退出）
 - 2026-09-04 会议室前端加 Playwright UI E2E（`pnpm test:e2e`，9 条：PC 看板/预定/管理/助手 + 移动看板）
 - 2026-09-04 `pnpm test:e2e:headed` 弹出浏览器看着跑
+- 2026-09-04 前端暂移除周期预定（每周重复开关、管理页 allowRecurring、详情展示）；保存会议室固定 `allowRecurring: false`
