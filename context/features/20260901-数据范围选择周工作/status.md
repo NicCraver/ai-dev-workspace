@@ -71,7 +71,7 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
 `WeekWorkPicker` 三处视觉：
 
-- 组织图标在周工作列表、统一搜索命中行用 `!w-6 !h-6`（24px，与人员头像同大）；已选底栏仍走组件默认 16px
+- 组织图标：搜索命中行仍在名称前；周工作树/列表行改到名称后（与搜索同一套 `WeekWorkOrgIcon`，24px）
 - 「含团队工作」接到名称右侧，不再被 `flex-1` 顶到行尾
 - 筛选胶囊改为 `rounded-full`（高度 24px 的全圆胶囊，左右无竖边）
 - 列表到页脚的空白：弹层内容改为 `flex-1 min-h-0` 链（`AcDialog` body / `WeekWorkPicker` / 虚拟列表），短列表也铺满到页脚
