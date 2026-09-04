@@ -208,14 +208,18 @@ weekWorkModel 单测 19 条绿，`vue-tsc` exit 0。
 
 单测：weekWorkModel 26 / weekWorkAdapter 13 / dataRangeSavePayload 8 / useDataRangePicker 12 全绿，`vue-tsc` exit 0。
 
-## 2026-09-04 记忆读写日志（排查用）
+## 2026-09-04 周工作记忆读写日志（排查用）
 
-新增 `picker/dataRangeDebugLog.js`，读记忆与存记忆各打一条折叠日志（`console.groupCollapsed`）：
-基础字段、知识聊天选中表、三个全选标记、周工作 scopeList 表（类型带人话、子级数与前 5 个 id）、
-八个周工作标记表、原始/完整数据。三个入口都接了：PC `/zx/data-range`、移动 `/m/data-range`、聊天记忆栏。
+新增 `picker/dataRangeDebugLog.js`，读记忆与存记忆各打一条折叠日志（`console.groupCollapsed`），
+**只打周工作那部分**，字段中英对照：
 
-保存日志的标题带**周工作是覆盖还是透传记忆**，用来快速看出三态走了哪条。
-纯日志、异常吞掉，不参与业务。
+- 类型分布表：`scopeDataType=N` → 后端原文（如「所属的选中的部门（自动增减子级人员）」）+ 前端口径（「所属树 · 联动人员」）+ 条数
+- 明细表：列名用英文字段（`scopeDataType` / `scopeDataId` / `childScopeDataIdSet 子级数` / `子级(前5)`），值旁给中文
+- 八个标记表：行名是英文字段（`weekWorkSelectAllBelongTeamPlate` …），列给中文含义、值、是否全选
+- 字段缺失显示「—(未带)」，与「空数组」区分开
+
+三个入口都接了：PC `/zx/data-range`、移动 `/m/data-range`、聊天记忆栏。
+保存日志标题带**周工作是覆盖还是透传记忆**，一眼看出三态走了哪条。异常吞掉，不参与业务。
 
 ## 2026-09-04 联动记录改为按树回推（修正）
 
