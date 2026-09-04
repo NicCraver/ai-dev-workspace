@@ -1,6 +1,7 @@
 /**
  * 契约：智能会议室 · 预定生命周期
  * Changelog:
+ * - 2026-09-04 前端暂移除周期预定；`repeatWeekly` 保留字段但不再使用
  * - 2026-08-27 改预定、周循环展开、我的历史、审计日志
  */
 
@@ -13,7 +14,7 @@ export interface MeetingBookingWrite {
   end: string;
   title?: string;
   remark?: string | null;
-  /** 仅当会议室 allowRecurring 时生效；按周展开到可提前天数内 */
+  /** @deprecated 前端已移除周期预定入口，暂勿传 */
   repeatWeekly?: boolean;
 }
 
