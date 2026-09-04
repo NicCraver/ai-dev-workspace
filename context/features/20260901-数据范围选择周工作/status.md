@@ -1,6 +1,6 @@
 # Status：选择数据范围 · 周工作
 
-> 最后更新：2026-09-03 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-04 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -19,8 +19,8 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| context | main | ahead | 脏(本功能契约) | **本功能** | 新增 `weekWorkDataRangeTree` 契约 |
-| web | feat/data-range-week-work | 无 upstream | 干净 | **本功能** | 接口模块已提交 `c4f7f87`；分支另有重构与 release 合并，属 `20260903-数据范围选择组件合一` |
+| context | main | ahead 19 | 脏(package.json) | 编排 | 本功能 status 待提交 |
+| web | feat/data-range-week-work | 无 upstream | 脏(WeekWorkPicker) | **本功能** | 列表图标/含团队工作位置/胶囊圆角 |
 | desktop | feat/data-range-week-work | synced | 干净 | 本功能 | 未改 |
 | 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
 
@@ -66,6 +66,14 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
 真实数据目视：全部 25 = 团队 3 + 人员 22；人力资源部 4 / 信息技术部 18 / 运维部 3；
 四个无团队报告的组用层叠图标且无「含团队工作」。
+
+## 2026-09-04 周工作列表面板微调
+
+`WeekWorkPicker` 三处视觉：
+
+- 组织图标在列表里用 `!w-6 !h-6`（24px，与人员头像同大）；底栏/搜索仍走组件默认 16px
+- 「含团队工作」接到名称右侧，不再被 `flex-1` 顶到行尾
+- 筛选胶囊圆角 `rounded-1` → `rounded-2`（8px）
 
 ## 待办 / 阻塞
 
