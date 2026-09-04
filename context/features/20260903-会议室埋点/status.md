@@ -1,6 +1,6 @@
 # Status：会议室埋点
 
-> 最后更新：2026-09-03 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-04 ｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 ## 平台矩阵
 
@@ -12,7 +12,7 @@
 | 接口联调 | ✅ | — | — | — |
 | 自测通过 | 🚧 | — | — | — |
 
-说明：contact JUnit 9 绿、meeting node 129 绿。测试库已建 `meeting_event`。本地 contact 已用新 jar 重启；`POST /meetingRoom/events` 与 Vite `/meetingApi/events` 均 `accepted:1`，`GET /events/recent` 能读回。页面点击漏斗还没在浏览器里走完。
+说明：contact JUnit 9 绿。meeting 单测已切 Vitest 5（`pnpm test` → 27 files / 129 tests 绿）。测试库已建 `meeting_event`。本地 contact 已用新 jar 重启；`POST /meetingRoom/events` 与 Vite `/meetingApi/events` 均 `accepted:1`，`GET /events/recent` 能读回。页面点击漏斗还没在浏览器里走完。
 
 ## 待办 / 阻塞
 
@@ -24,3 +24,4 @@
 - 2026-09-03 独立表 `meeting_event`，不复用 `meeting_booking_audit`
 - 2026-09-03 助手成功只记 `agent_booked`，不与 `booking_submit` 双计
 - 2026-09-03 永不存用户说话原文；`GET /events/recent` 仅管理员
+- 2026-09-04 meeting 单测从 `node:test` 换成 Vitest 5（与埋点功能无关的工具升级）

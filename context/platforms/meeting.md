@@ -1,10 +1,10 @@
 # 智能会议室端一页纸
 
-> 保持在约 100 行以内。由 /distill 定期结晶更新，人工修正错误。最后更新：2026-09-03
+> 保持在约 100 行以内。由 /distill 定期结晶更新，人工修正错误。最后更新：2026-09-04
 
 ## 基本信息
 - 仓库：apps/meeting/（前端，独立 git，源码在仓库根 `src/`）。后端在 `apps/contact`（Java `/meetingRoom`）。
-- 前端技术栈：Vue 3.5（`<script setup>`）+ Vite 7 + Vue Router 4（文件式路由 `vite-plugin-pages`）
+- 前端技术栈：Vue 3.5（`<script setup>`）+ Vite 8 + Vue Router 4（文件式路由 `vite-plugin-pages`）
   + UnoCSS 66（presetWind3 / typography / icons）+ Element Plus（PC）+ Vant（移动）+ axios。
   状态管理用 composables（`src/composables/`），**无 Pinia/Vuex**。JS 为主，工具/类型用 TS。
 - 功能目录：`src/features/booking` 预定 · `agent` 助手 · `admin` 管理 · `race` 抢订 · `demo`。
@@ -18,6 +18,7 @@ pnpm i
 pnpm dev              # 前端，端口 6273；/meetingApi → Java 7004 /meetingRoom
 pnpm build            # vue-tsc → main/zx/m → mergeDist 合并到 dist/
 pnpm build:prod       # 生产构建
+pnpm test             # Vitest 5，`src/features/**/tests/*.test.js`
 pnpm format           # prettier，仅作用于 src/
 ```
 > **无 ESLint**；类型检查用 `vue-tsc`（已内嵌在 build，也可 `pnpm typecheck`）。`tsconfig.json` 是 `checkJs: false`，
