@@ -252,12 +252,30 @@ type3 16、type4 10、type5 9、type6 5、type7 2、type8 1，八个标记全部
 `weekWorkSelectAllAttentionPlate` 1→0 —— 取消一份团队工作后，含它的父部门在板块维度不再选满，
 对应联动记录随之消失，四处口径自洽。单测 26/13/8/12 全绿，`vue-tsc` exit 0。
 
+## 2026-09-04 数据类型胶囊补「周工作」
+
+`DataRangeBar` 弹层里 type=5 那一项之前没有文案与图标（`Agent_Chat_Ranges` 只到 dataType 4）。
+补上：`Agent_Chat_Ranges` 加 `{ dataType: 5, label: "周工作", icon: pngMwReport }`，
+`PERSONAL_AI_RANGE_LABEL_MAP` 加 `5: 周工作`（个人AI框专属，群/私聊不会回这一项）。
+
+**顺带把接口口径核实了**（李峰，`POST /sessionMsg/getLastSessionMessage`）：
+
+- `agentSetDataRangeExpandVo.dataRangeList` **确实回 `{dataRangeType:5, choose:1}`**
+- 同一个 VO 里**九个周工作字段全都有**：`weekWorkScopeList` + 八个 `weekWorkSelectAll*`
+
+目视：个人AI框弹层五项 = 个人知识 / 群聊、私聊知识 / 群聊、私聊记录 / 群聊、私聊文件 / **周工作**（蓝色报告图标）。
+
 ## 待办 / 阻塞
 
 - (web) 周工作面板**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
 - (web) 本次联调只覆盖**单企业**（multiCorp=false）与**无孤儿人员**（orphanUserList 空）；多企业分支与孤儿人员分支只有单测覆盖，等有多企业账号再验
 - (web) 勾选→确定→落库→重开回显已在 PC 端走通；**移动端 `/m/data-range` 未验**
-- (web) tab 显隐改为 `dataRangeList` type=5 choose=1 才显示（现常显）
+- (web) tab 显隐改为 `dataRangeList` type=5 choose=1 才显示（现常显）——
+  已确认接口回这个字段，可以接
+- (web) `Chat.vue` 的 `updateMemoryFromAgentSetting` 没把九个周工作字段写进 `conditionMode`，
+  于是 FilterBar → DataScopeBar 拿不到 `weekWorkScopeList`（现在靠 DataScopeBar 开层前自己再拉一次记忆兜底）。
+  接口既然回了，正解是从这条链路透传，把兜底去掉
+- (web) 「数据+N」胶囊只数知识聊天的选中，没算周工作
 - (web) 分支已 push 到 origin，GitLab 提示可建 MR（未建）
 
 ## 关键决策记录
