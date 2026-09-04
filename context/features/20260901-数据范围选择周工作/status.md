@@ -115,6 +115,20 @@ weekWorkModel 单测 19 条绿，`vue-tsc` exit 0。
 
 真实数据目视：搜「张」五个 tab 齐；搜「zzzz不存在」tab 条仍在，点「团队工作」显示空态图。
 
+## 2026-09-04 周工作搜索并入统一搜索
+
+周工作面板原来自带一个 `SearchInput` 做树内行内过滤，与知识聊天那边的 popover 式搜索两套行为。
+现在统一：
+
+- 新增 `dataRange/DataRangeSearchEntry.vue`——PC 出 `AiBoxSearchBox`、移动出搜索按钮，
+  两个一级 tab 共用这一个入口（知识聊天那边的内联写法也换成它）
+- `WeekWorkPicker` 去掉自带搜索与 `keyword`，子 tab 行改成 `#search` 插槽
+- **周工作主列表不再随关键字过滤**（与知识聊天一致），`listResetKey` 也去掉 keyword
+
+目视：周工作 tab 里输入框 placeholder 与知识那边同为「搜索联系人、群组」，
+搜「信息」出五个 tab、群组与团队工作混排；点结果里的「信息技术部团队工作」已选 6→7，
+关掉搜索后树里该行同步变半选（板块勾了、人没勾）。
+
 ## 待办 / 阻塞
 
 - (web) 周工作面板**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
