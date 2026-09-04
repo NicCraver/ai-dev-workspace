@@ -1,6 +1,6 @@
 # 智能会议室端一页纸
 
-> 保持在约 100 行以内。由 /distill 定期结晶更新，人工修正错误。最后更新：2026-09-04
+> 保持在约 100 行以内。由 /distill 定期结晶更新，人工修正错误。最后更新：2026-09-04（部署 base 改为 `/zx-ai-meet/`）
 
 ## 基本信息
 - 仓库：apps/meeting/（前端，独立 git，源码在仓库根 `src/`）。后端在 `apps/contact`（Java `/meetingRoom`）。
@@ -9,7 +9,7 @@
   状态管理用 composables（`src/composables/`），**无 Pinia/Vuex**。JS 为主，工具/类型用 TS。
 - 功能目录：`src/features/booking` 预定 · `agent` 助手 · `admin` 管理 · `race` 抢订 · `demo`。
 - 包管理 pnpm，根 `package.json#volta` 锁 node 22.16.0 / pnpm 10.22.0。
-- 目标环境：以 `/meeting/` 为 base 部署；既作独立 Web，也内嵌于智信 PC / iOS / 安卓 WebView。
+- 目标环境：以 `/zx-ai-meet/` 为 base 部署（Jenkins `moduleName`）；既作独立 Web，也内嵌于智信 PC / iOS / 安卓 WebView。
 
 ## 常用命令
 ```bash
@@ -35,7 +35,7 @@ pnpm format           # prettier，仅作用于 src/
   `src/mpa/mobile/main.js`。**新增全局插件/样式/指令要同步三处。**
 - **路由（文件式）**：三套虚拟模块 `~pages`(src/pages) / `~zx-pages`(src/mpa/desktop/pages) /
   `~m-pages`(src/mpa/mobile/pages)；`src/router.js` 另含版本自更新（动态 import 失败 →
-  比对 `/meeting/build_version` 与 `JENKINS_BUILD_NUMBER` → 提示刷新）。
+  比对 `/zx-ai-meet/build_version` 与 `JENKINS_BUILD_NUMBER` → 提示刷新）。
 - **网络层 `src/api/`**：`http.js` 是 axios 实例（baseURL `/meetingApi`，30s；请求拦截自动加
   `Authorization`/`zxCorpId`/`clientType`/`version`；响应拦截处理业务码：`M0000` 成功 /
   `O_T_001/002` 静默刷新 token / `O_T_003` 登录过期 / 失败重试 ≤3 次）。按业务域拆
@@ -55,12 +55,12 @@ pnpm format           # prettier，仅作用于 src/
 ## WebView 集成方式
 **当前未做 JSBridge。** token / corpId / clientType 由宿主拼在 URL query 上
 （`?token=&corpId=&clientType=`），前端 `bootstrapAuthFromUrl()` 落 sessionStorage。
-三端内嵌地址：PC → `/meeting/zx/`，iOS / 安卓 → `/meeting/m/`。
+三端内嵌地址：PC → `/zx-ai-meet/zx/`，iOS / 安卓 → `/zx-ai-meet/m/`。
 将来接桥（拟 `wnsdk.meeting.*` / `window.webview.ipcRenderer`）只改 `bootstrapAuthFromUrl()` 一处，
 协议须先写入 `context/bridge.md`。
 
 ## 已知坑
-- `base` 固定 `/meeting/`，部署路径须一致，否则资源 404。
+- `base` 固定 `/zx-ai-meet/`，部署路径须一致，否则资源 404。
 - `JENKINS_BUILD_NUMBER` / `__BUILD_TARGET__` 是 vite **编译期** define，改 env 必须重启 dev server。
 - dev 模式下三个入口都同时构建，`__BUILD_TARGET__` 恒为 `main`；要区分入口请读
   `window.__VITE_MPA_PLATFORM__`（zx/m 有值，main 为 undefined）。

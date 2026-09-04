@@ -1,6 +1,6 @@
 # Status：会议室埋点
 
-> 最后更新：2026-09-04（我的预定弹层限高 + e2e/单测）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
+> 最后更新：2026-09-04（部署 base 改为 `/zx-ai-meet/`）｜ 图例：⬜ 未开始 · 🚧 进行中 · ✅ 完成 · ❌ 阻塞
 
 
 ## 平台矩阵
@@ -13,16 +13,22 @@
 | 接口联调 | ✅ | — | — | — |
 | 自测通过 | 🚧 | — | — | — |
 
-说明：contact JUnit 9 绿。meeting 单测 `pnpm test` 27 files / 137 tests 绿（补了周视图 `occupancySource`）。Playwright `pnpm test:e2e` **10 条全绿**（原 9 条 + PC「我的预定不超出视口」）。测试库已建 `meeting_event`。本机 Java 7004 可用。埋点点击漏斗还没拿 `GET /events/recent` 人工对完。
+说明：contact JUnit 9 绿。meeting 单测 demo/telemetry 13 条绿（本次只跑了 base 相关）。测试库已建 `meeting_event`。本机 Java 7004 可用。埋点点击漏斗还没拿 `GET /events/recent` 人工对完。
 
 ## 本回合各端现状（code-status）
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| meeting | main | ahead 4 | 脏(含 web→根目录搬迁) | **本功能** | 弹层限高、XPopup 滑入、更多菜单「我的预定」、e2e |
+| meeting | main | 待推 base 改动 | 部署 base `/zx-ai-meet/` | **本功能** | 对齐 Jenkins moduleName |
 | contact | feat/meetingroom | 无 upstream | 脏(埋点 Java + 本地 properties) | 本功能 | 勿提交 `application.properties` |
-| context | main | ahead 39 | 脏(package.json) | 编排 | 本功能 status 待提交 |
-| web | feat/data-range-week-work | 无 upstream | 脏(周工作弹层) | 周工作 | 本回合未改 |
+| context | main | ahead 45 | 脏(status + meeting.md) | 编排 | 本功能文档 |
+| web | feat/data-range-week-work | synced | 干净 | 周工作 | 本回合未改 |
+
+## 2026-09-04 测试机部署路径
+
+- 测试机 OpenResty 按模块名挂静态资源，没有 `/meeting/`
+- 前端 `vite` `base` 改为 `/zx-ai-meet/`，与 `zx-webdeploy-test` 的 `moduleName` 一致
+- 接口仍是 `/meetingApi`（与静态 base 无关，测试机还要单独反代）
 
 ## 2026-09-04 我的预定 / 预约弹层
 
@@ -34,7 +40,8 @@
 ## 待办 / 阻塞
 
 - (web) 打开看板 / 助手走一遍，用 recent 核对 `page_view` 与 `agent_*`
-- apps/meeting、apps/contact 代码未提交（contact 勿提交 `application.properties`）
+- 改完 base 后需再打测试包；`/meetingApi` 测试机仍可能 404
+- apps/contact 代码未提交（勿提交 `application.properties`）
 
 ## 关键决策记录
 
@@ -46,3 +53,5 @@
 - 2026-09-04 会议室前端加 Playwright UI E2E（`pnpm test:e2e`，10 条全绿）
 - 2026-09-04 `pnpm test:e2e:headed` 弹出浏览器看着跑
 - 2026-09-04 前端暂移除周期预定（每周重复开关、管理页 allowRecurring、详情展示）；保存会议室固定 `allowRecurring: false`
+- 2026-09-04 我的预定弹层改卡片布局：下划线 Tab + 标签/时间/会议室分行 + 底栏操作
+- 2026-09-04 测试部署对齐模块名，`base` 从 `/meeting/` 改为 `/zx-ai-meet/`
