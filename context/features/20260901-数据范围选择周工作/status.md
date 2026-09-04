@@ -129,6 +129,23 @@ weekWorkModel 单测 19 条绿，`vue-tsc` exit 0。
 搜「信息」出五个 tab、群组与团队工作混排；点结果里的「信息技术部团队工作」已选 6→7，
 关掉搜索后树里该行同步变半选（板块勾了、人没勾）。
 
+## 2026-09-04 所属/主管改树渲染
+
+抓接口回参确认：`belongTree` / `manageTree` 与 `allTree` **同形**（企业 → `corpPlateList` →
+`childUnitList` 递归），最大层深分别是 4 和 3；`attentionTree` 才是平的（直接给 unitList）。
+之前把所属/主管摊平成「团队 + 人员」两列是错的，丢了层级。
+
+- 适配层新增 `pruneByRelation(nodes, relation)`：自己命中留、子孙命中当层级壳留、两头不沾整枝丢
+  （替掉 `flattenToTeamsAndPeople`，后者只剩单测夹具在用）
+- `WeekWorkPicker` 用 `isTreeTab` / `currentTree` 取代到处写的 `subTab === 'all'`，
+  三个树 tab 共用同一套渲染与勾选；`EMPTY_WEEK_WORK_TREES` 的 belong/manage 改成 `[]`
+- 切 tab 时展开态按当前树重置；树 tab 默认「全部」胶囊，关注仍默认「团队」
+
+真实数据（李峰）目视：所属 = 美腾（信息技术部 / 矿业研究设计院）+ 莱煤智能（前端开发），
+展开矿业研究设计院能看到 4 个人 + 梯流分选研究分院（再下还有一层）；胶囊「全部 35 = 团队 5 + 人员 30」
+与接口统计（人 30）对得上。主管 = 海纳新 → 智能信息事业部，全部 7 = 团队 1 + 人员 6。关注仍是扁平列表。
+单测：weekWorkModel 22 绿，weekWorkAdapter 13 绿（改写 1 条、新增 1 条），`vue-tsc` exit 0。
+
 ## 待办 / 阻塞
 
 - (web) 周工作面板**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
