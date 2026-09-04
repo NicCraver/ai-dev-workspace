@@ -21,6 +21,8 @@ pnpm build:prod       # 生产构建
 pnpm test             # Vitest 5 单测，`src/features/**/tests/*.test.js`
 pnpm test:ui          # Vitest UI
 pnpm test:e2e         # Playwright UI E2E（需 contact :7004；前端可 reuse :6273）
+pnpm test:e2e:headed  # 弹出 Chromium，放慢操作方便看
+pnpm test:e2e:ui      # Playwright 控制台，勾选用例再看浏览器
 pnpm format           # prettier，仅作用于 src/
 ```
 > **无 ESLint**；类型检查用 `vue-tsc`（已内嵌在 build，也可 `pnpm typecheck`）。`tsconfig.json` 是 `checkJs: false`，
