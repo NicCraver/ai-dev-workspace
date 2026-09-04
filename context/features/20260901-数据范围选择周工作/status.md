@@ -7,11 +7,11 @@
 | 任务 | web | android | ios | desktop |
 |------|-----|---------|-----|---------|
 | 周工作 tab + 四级子 tab + 列表勾选 | ✅ 真实数据渲染 + 按设计稿改版，已目视 | — | — | — |
-| 已选底栏合并（知识聊天 + 周工作） | 🚧 代码已接，待目视 | — | — | — |
-| save 透传记忆中的 weekWork* | ✅ 单测覆盖 | — | — | — |
+| 已选底栏合并（知识聊天 + 周工作） | ✅ 四分组锚点，已目视 | — | — | — |
+| 周工作勾选落库 + 回显 | ✅ 真实链路验过（PC） | — | — | — |
 | 周工作树真实接口 | ✅ 联调通过，四棵树按实际字段渲染 | — | — | — |
 | dataRangeList type=5 控制 tab 显隐 | ⬜ 现常显 | — | — | — |
-| 自测通过 | 🚧 渲染已目视，勾选/保存未验 | — | — | — |
+| 自测通过 | 🚧 PC 端渲染/勾选/保存/回显已过，移动端未验 | — | — | — |
 
 android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
@@ -19,8 +19,8 @@ android / ios / desktop 已内嵌 web 页，不单独做原生选择器。
 
 | 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
 |---|---|---|---|---|---|
-| context | main | ahead 19 | 脏(package.json) | 编排 | 本功能 status 待提交 |
-| web | feat/data-range-week-work | 无 upstream | 脏(picker + AcDialog) | **本功能** | 周工作列表高度铺满弹层 |
+| context | main | ahead | 干净 | 编排 | 本功能文档已提交 |
+| web | feat/data-range-week-work | 已 push（新建远程分支） | 干净 | **本功能** | 4d698fc 周工作落库 + 树渲染 + 统一搜索 |
 | desktop | feat/data-range-week-work | synced | 干净 | 本功能 | 未改 |
 | 其余 | — | — | — | 其它活跃功能 | 本回合未改 |
 
@@ -257,9 +257,8 @@ type3 16、type4 10、type5 9、type6 5、type7 2、type8 1，八个标记全部
 - (web) 周工作面板**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
 - (web) 本次联调只覆盖**单企业**（multiCorp=false）与**无孤儿人员**（orphanUserList 空）；多企业分支与孤儿人员分支只有单测覆盖，等有多企业账号再验
 - (web) 勾选→确定→落库→重开回显已在 PC 端走通；**移动端 `/m/data-range` 未验**
-- (web) `WeekWorkPicker.vue` 本回合与用户的图标改动同处一文件，未提交（模型层 `weekWorkModel.js` 改动同样未提交，避免拆出不自洽的 commit）
 - (web) tab 显隐改为 `dataRangeList` type=5 choose=1 才显示（现常显）
-- (web) 新分支未 push，需要时 `git push -u origin feat/data-range-week-work`
+- (web) 分支已 push 到 origin，GitLab 提示可建 MR（未建）
 
 ## 关键决策记录
 

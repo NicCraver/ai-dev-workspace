@@ -13,7 +13,23 @@
 | 接口联调 | ✅ | — | — | — |
 | 自测通过 | 🚧 | — | — | — |
 
-说明：contact JUnit 9 绿。meeting 单测已切 Vitest 5（`pnpm test` → 27 files / 129 tests 绿）。测试库已建 `meeting_event`。本地 contact 已用新 jar 重启；`POST /meetingRoom/events` 与 Vite `/meetingApi/events` 均 `accepted:1`，`GET /events/recent` 能读回。页面点击漏斗还没在浏览器里走完。
+说明：contact JUnit 9 绿。meeting 单测 `pnpm test` 27 files / 137 tests 绿（补了周视图 `occupancySource`）。Playwright `pnpm test:e2e` **10 条全绿**（原 9 条 + PC「我的预定不超出视口」）。测试库已建 `meeting_event`。本机 Java 7004 可用。埋点点击漏斗还没拿 `GET /events/recent` 人工对完。
+
+## 本回合各端现状（code-status）
+
+| 端 | 分支 | 同步 | 脏区 | 活跃功能 | 备注 |
+|---|---|---|---|---|---|
+| meeting | main | ahead 4 | 脏(含 web→根目录搬迁) | **本功能** | 弹层限高、XPopup 滑入、更多菜单「我的预定」、e2e |
+| contact | feat/meetingroom | 无 upstream | 脏(埋点 Java + 本地 properties) | 本功能 | 勿提交 `application.properties` |
+| context | main | ahead 39 | 脏(package.json) | 编排 | 本功能 status 待提交 |
+| web | feat/data-range-week-work | 无 upstream | 脏(周工作弹层) | 周工作 | 本回合未改 |
+
+## 2026-09-04 我的预定 / 预约弹层
+
+- `AcDialog` 内容区改 `flex-1 min-h-0`，避免百分比高度把列表顶出视口
+- 「我的预定」弹层 `max-height: min(80vh, 720px)`，列表自己滚
+- 预约弹层同样限高；移动端底部抽屉用 `transform` 滑入（原先 `margin-bottom: -100vh` 会让按钮落在视口外）
+- e2e：PC 打开「我的预定」必须整层在视口内；预定漏斗改选 19:00–20:00（默认时段常被占，22:00 又不在开放时间内）
 
 ## 待办 / 阻塞
 
