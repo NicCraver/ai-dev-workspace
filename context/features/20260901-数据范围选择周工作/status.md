@@ -208,6 +208,15 @@ weekWorkModel 单测 19 条绿，`vue-tsc` exit 0。
 
 单测：weekWorkModel 26 / weekWorkAdapter 13 / dataRangeSavePayload 8 / useDataRangePicker 12 全绿，`vue-tsc` exit 0。
 
+## 2026-09-04 记忆读写日志（排查用）
+
+新增 `picker/dataRangeDebugLog.js`，读记忆与存记忆各打一条折叠日志（`console.groupCollapsed`）：
+基础字段、知识聊天选中表、三个全选标记、周工作 scopeList 表（类型带人话、子级数与前 5 个 id）、
+八个周工作标记表、原始/完整数据。三个入口都接了：PC `/zx/data-range`、移动 `/m/data-range`、聊天记忆栏。
+
+保存日志的标题带**周工作是覆盖还是透传记忆**，用来快速看出三态走了哪条。
+纯日志、异常吞掉，不参与业务。
+
 ## 待办 / 阻塞
 
 - (web) 周工作面板**只走接口、失败即空面板**（按 2026-09-03 决策，不回退 mock）；`weekWorkMock.js` 仅剩单测夹具用途
